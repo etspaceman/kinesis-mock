@@ -22,7 +22,7 @@ object LibraryDependencies {
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
   }
 
-    object Ciris {
+  object Ciris {
     private val cirisVersion = "1.2.1"
     val core = "is.cir" %% "ciris" % cirisVersion
     val enumeratum = "is.cir" %% "ciris-enumeratum" % cirisVersion

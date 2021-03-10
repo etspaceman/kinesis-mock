@@ -1,8 +1,10 @@
 package kinesis.mock.cache
 
 import scala.concurrent.duration._
-import kinesis.mock.models.AwsRegion
+
 import ciris._
+
+import kinesis.mock.models.AwsRegion
 
 final case class CacheConfig(
     createStreamDuration: FiniteDuration,

@@ -2,11 +2,11 @@ package kinesis.mock
 package cache
 
 import cats.effect._
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 
 import kinesis.mock.api._
 import kinesis.mock.models._
-import cats.effect.concurrent.Ref
 
 class Cache private (
     ref: Ref[IO, Streams],

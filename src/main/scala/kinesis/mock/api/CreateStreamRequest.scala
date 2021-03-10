@@ -1,8 +1,9 @@
 package kinesis.mock
 package api
 
-import kinesis.mock.models._
 import io.circe._
+
+import kinesis.mock.models._
 
 final case class CreateStreamRequest(shardCount: Int, streamName: String) {
   def createStream(
