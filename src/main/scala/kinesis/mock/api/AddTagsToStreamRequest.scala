@@ -1,43 +1,24 @@
 package kinesis.mock
 package api
 
-import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
 
+// https://docs.aws.amazon.com/kinesis/latest/APIReference/API_AddTagsToStream.html
+// https://docs.aws.amazon.com/streams/latest/dev/tagging.html
+// https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
 final case class AddTagsToStreamRequest(
     streamName: String,
     tags: Map[String, String]
-)
-
-object AddTagsToStreamRequest {
-  implicit val addTagsToStreamRequestEncoder: Encoder[AddTagsToStreamRequest] =
-    Encoder.forProduct2("StreamName", "Tags")(x => (x.streamName, x.tags))
-  implicit val addTagsToStreamRequestDecoder
-      : Decoder[AddTagsToStreamRequest] = { x =>
+) {
+  def addTagsToStream(streams: Streams): Either[KinesisMockException, Streams] =
     for {
-      streamName <- x.downField("StreamName").as[String]
-      tags <- x.downField("Tags").as[Map[String, String]]
-    } yield AddTagsToStreamRequest(streamName, tags)
-  }
-
-  // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_AddTagsToStream.html
-  // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
-  // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
-  def addTagsToStream(
-      req: AddTagsToStreamRequest,
-      streams: Streams
-  ): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(req.streamName)
-      stream <- Either.fromOption(
-        streams.streams.find(_.name == req.streamName),
-        ResourceNotFoundException(s"Stream name ${req.streamName} not found")
-      )
-      _ <- CommonValidations.validateTagKeys(req.tags.keys)
+      _ <- CommonValidations.validateStreamName(streamName)
+      stream <- CommonValidations.findStream(streamName, streams)
+      _ <- CommonValidations.validateTagKeys(tags.keys)
       _ <- {
-        val valuesTooLong = req.tags.values.filter(x => x.length() > 255)
+        val valuesTooLong = tags.values.filter(x => x.length() > 255)
         if (valuesTooLong.nonEmpty)
           Left(
             InvalidArgumentException(
@@ -47,7 +28,7 @@ object AddTagsToStreamRequest {
         else Right(())
       }
       _ <- {
-        val invalidValues = req.tags.values.filterNot(x =>
+        val invalidValues = tags.values.filterNot(x =>
           x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
         )
         if (invalidValues.nonEmpty)
@@ -59,7 +40,7 @@ object AddTagsToStreamRequest {
         else Right(())
       }
       _ <- {
-        val numberOfTags = req.tags.size
+        val numberOfTags = tags.size
         if (numberOfTags > 10)
           Left(
             InvalidArgumentException(
@@ -69,7 +50,7 @@ object AddTagsToStreamRequest {
         else Right(())
       }
       _ <- {
-        val totalTagsAfterAppend = (stream.tags ++ req.tags).size
+        val totalTagsAfterAppend = (stream.tags ++ tags).size
         if (totalTagsAfterAppend > 50)
           Left(
             InvalidArgumentException(
@@ -79,7 +60,19 @@ object AddTagsToStreamRequest {
         else Right(())
       }
     } yield streams.copy(streams =
-      streams.streams.filterNot(_.name == req.streamName) :+
-        stream.copy(tags = stream.tags ++ req.tags)
+      streams.streams.filterNot(_.name == streamName) :+
+        stream.copy(tags = stream.tags ++ tags)
     )
+}
+
+object AddTagsToStreamRequest {
+  implicit val addTagsToStreamRequestEncoder: Encoder[AddTagsToStreamRequest] =
+    Encoder.forProduct2("StreamName", "Tags")(x => (x.streamName, x.tags))
+  implicit val addTagsToStreamRequestDecoder
+      : Decoder[AddTagsToStreamRequest] = { x =>
+    for {
+      streamName <- x.downField("StreamName").as[String]
+      tags <- x.downField("Tags").as[Map[String, String]]
+    } yield AddTagsToStreamRequest(streamName, tags)
+  }
 }

@@ -1,7 +1,6 @@
 package kinesis.mock
 package api
 
-import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -9,7 +8,32 @@ import kinesis.mock.models._
 final case class RemoveTagsFromStreamRequest(
     streamName: String,
     tagKeys: List[String]
-)
+) {
+  // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RemoveTagsFromStream.html
+  // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
+  // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
+  def removeTagsFromStream(
+      streams: Streams
+  ): Either[KinesisMockException, Streams] =
+    for {
+      _ <- CommonValidations.validateStreamName(streamName)
+      stream <- CommonValidations.findStream(streamName, streams)
+      _ <- CommonValidations.validateTagKeys(tagKeys)
+      _ <- {
+        val numberOfTags = tagKeys.length
+        if (numberOfTags > 10)
+          Left(
+            InvalidArgumentException(
+              s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
+            )
+          )
+        else Right(())
+      }
+    } yield streams.copy(streams =
+      streams.streams.filterNot(_.name == streamName) :+
+        stream.copy(tags = stream.tags -- tagKeys)
+    )
+}
 
 object RemoveTagsFromStreamRequest {
   implicit val removeTagsFromStreamRequestEncoder
@@ -23,30 +47,4 @@ object RemoveTagsFromStreamRequest {
     } yield RemoveTagsFromStreamRequest(streamName, tagKeys)
   }
 
-  // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RemoveTagsFromStream.html
-  def removeTagsFromStream(
-      req: RemoveTagsFromStreamRequest,
-      streams: Streams
-  ): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(req.streamName)
-      stream <- Either.fromOption(
-        streams.streams.find(_.name == req.streamName),
-        ResourceNotFoundException(s"Stream name ${req.streamName} not found")
-      )
-      _ <- CommonValidations.validateTagKeys(req.tagKeys)
-      _ <- {
-        val numberOfTags = req.tagKeys.length
-        if (numberOfTags > 10)
-          Left(
-            InvalidArgumentException(
-              s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
-            )
-          )
-        else Right(())
-      }
-    } yield streams.copy(streams =
-      streams.streams.filterNot(_.name == req.streamName) :+
-        stream.copy(tags = stream.tags -- req.tagKeys)
-    )
 }

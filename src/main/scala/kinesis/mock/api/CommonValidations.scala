@@ -1,6 +1,10 @@
 package kinesis.mock
 package api
 
+import cats.syntax.all._
+
+import kinesis.mock.models._
+
 object CommonValidations {
   def validateStreamName(
       streamName: String
@@ -22,6 +26,14 @@ object CommonValidations {
         )
       else Right(())
   } yield streamName
+
+  def findStream(
+      streamName: String,
+      streams: Streams
+  ): Either[KinesisMockException, Stream] = Either.fromOption(
+    streams.streams.find(_.name == streamName),
+    ResourceNotFoundException(s"Stream name ${streamName} not found")
+  )
 
   def validateTagKeys(
       keys: Iterable[String]

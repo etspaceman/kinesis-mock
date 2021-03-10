@@ -17,7 +17,7 @@ class Cache private (
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.addTagsToStream.tryAcquire.ifM(
       ref.get.flatMap(streams =>
-        AddTagsToStreamRequest.addTagsToStream(req, streams).traverse(ref.set)
+        req.addTagsToStream(streams).traverse(ref.set)
       ),
       IO.pure(
         Left(
@@ -33,8 +33,8 @@ class Cache private (
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.addTagsToStream.tryAcquire.ifM(
       ref.get.flatMap(streams =>
-        RemoveTagsFromStreamRequest
-          .removeTagsFromStream(req, streams)
+        req
+          .removeTagsFromStream(streams)
           .traverse(ref.set)
       ),
       IO.pure(
