@@ -30,10 +30,23 @@ object CommonValidations {
   def findStream(
       streamName: String,
       streams: Streams
-  ): Either[KinesisMockException, Stream] = Either.fromOption(
+  ): Either[KinesisMockException, StreamData] = Either.fromOption(
     streams.streams.find(_.name == streamName),
     ResourceNotFoundException(s"Stream name ${streamName} not found")
   )
+
+  def validateShardLimit(
+      shardCountToAdd: Int,
+      streams: Streams,
+      shardLimit: Int
+  ): Either[KinesisMockException, Int] =
+    if (streams.streams.map(_.data.size).sum + shardCountToAdd > shardLimit)
+      Left(
+        LimitExceededException(
+          s"Request would exceed the shard limit of $shardLimit"
+        )
+      )
+    else Right(shardCountToAdd)
 
   def validateTagKeys(
       keys: Iterable[String]

@@ -29,10 +29,7 @@ final case class RemoveTagsFromStreamRequest(
           )
         else Right(())
       }
-    } yield streams.copy(streams =
-      streams.streams.filterNot(_.name == streamName) :+
-        stream.copy(tags = stream.tags -- tagKeys)
-    )
+    } yield streams.updateStream(stream.copy(tags = stream.tags -- tagKeys))
 }
 
 object RemoveTagsFromStreamRequest {

@@ -10,6 +10,8 @@ libraryDependencies ++= Seq(
   Http4s.dsl,
   Circe.core,
   Circe.derivation,
+  Ciris.core,
+  Ciris.enumeratum,
   Enumeratum.core,
   MUnit % Test,
   MUnitCatsEffect2 % Test,

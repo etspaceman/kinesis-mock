@@ -59,10 +59,7 @@ final case class AddTagsToStreamRequest(
           )
         else Right(())
       }
-    } yield streams.copy(streams =
-      streams.streams.filterNot(_.name == streamName) :+
-        stream.copy(tags = stream.tags ++ tags)
-    )
+    } yield streams.updateStream(stream.copy(tags = stream.tags ++ tags))
 }
 
 object AddTagsToStreamRequest {
