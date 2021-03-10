@@ -1,15 +1,12 @@
 package kinesis.mock
+package cache
 
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.effect.{Concurrent, IO}
+import cats.effect._
 import cats.syntax.all._
 
 import kinesis.mock.api._
 import kinesis.mock.models._
-import scala.concurrent.duration._
-import ciris._
-import cats.effect.Timer
-import cats.effect.ContextShift
+import cats.effect.concurrent.Ref
 
 class Cache private (
     ref: Ref[IO, Streams],
@@ -67,6 +64,7 @@ class Cache private (
       )
       .traverse(updated =>
         (IO.sleep(config.createStreamDuration) *>
+          // Update the stream as ACTIVE after a small, configured delay
           IO(
             updated.findAndUpdateStream(req.streamName)(x =>
               x.copy(status = StreamStatus.ACTIVE)
@@ -81,37 +79,4 @@ object Cache {
     ref <- Ref.of[IO, Streams](Streams.empty)
     semaphores <- CacheSemaphores.create
   } yield new Cache(ref, semaphores, config)
-}
-
-final case class CacheSemaphores private (
-    addTagsToStream: Semaphore[IO],
-    removeTagsFromStream: Semaphore[IO]
-)
-
-object CacheSemaphores {
-  def create(implicit C: Concurrent[IO]): IO[CacheSemaphores] = for {
-    addTagsToStream <- Semaphore[IO](5)
-    removeTagsFromStream <- Semaphore[IO](5)
-  } yield new CacheSemaphores(addTagsToStream, removeTagsFromStream)
-}
-
-final case class CacheConfig(
-    createStreamDuration: FiniteDuration,
-    shardLimit: Int,
-    awsAccountId: String,
-    awsRegion: AwsRegion
-)
-
-object CacheConfig {
-  def read: ConfigValue[CacheConfig] = for {
-    createStreamDuration <- env("CREATE_STREAM_DURATION")
-      .as[FiniteDuration]
-      .default(500.millis)
-    shardLimit <- env("SHARD_LIMIT").as[Int].default(50)
-    awsAccountId <- env("AWS_ACCOUNT_ID").as[String].default("000000000000")
-    awsRegion <- env("AWS_REGION")
-      .or(env("AWS_DEFAULT_REGION"))
-      .as[AwsRegion]
-      .default(AwsRegion.US_EAST_1)
-  } yield CacheConfig(createStreamDuration, shardLimit, awsAccountId, awsRegion)
 }
