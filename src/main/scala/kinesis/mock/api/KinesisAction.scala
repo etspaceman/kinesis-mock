@@ -1,8 +1,10 @@
+package kinesis.mock.api
+
 import enumeratum._
 
 sealed trait KinesisAction extends EnumEntry
 
-object KinesisAction extends Enum[KinesisAction] with CirceEnum[KinesisAction] {
+object KinesisAction extends Enum[KinesisAction] {
   override val values = findValues
 
   case object AddTagsToStream extends KinesisAction

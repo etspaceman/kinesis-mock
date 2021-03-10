@@ -8,9 +8,9 @@ libraryDependencies ++= Seq(
   Http4s.blazeServer,
   Http4s.circe,
   Http4s.dsl,
+  Circe.core,
   Circe.derivation,
   Enumeratum.core,
-  Enumeratum.circe,
   MUnit % Test,
   MUnitCatsEffect2 % Test,
   Logback
