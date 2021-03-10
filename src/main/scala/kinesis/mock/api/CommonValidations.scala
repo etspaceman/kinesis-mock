@@ -22,7 +22,7 @@ object CommonValidations {
         )
       else Right(())
   } yield streamName
-  
+
   def validateTagKeys(
       keys: Iterable[String]
   ): Either[KinesisMockException, Iterable[String]] = for {
