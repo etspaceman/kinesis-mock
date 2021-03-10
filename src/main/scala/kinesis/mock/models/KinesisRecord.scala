@@ -3,7 +3,7 @@ package kinesis.mock.models
 import java.time.Instant
 
 final case class KinesisRecord(
-    sequenceNumber: SequenceNumber,
+    sequenceNumber: String,
     approximateArrivalTimestamp: Instant,
     encryptionType: EncryptionType,
     partitionKey: String,
