@@ -26,16 +26,17 @@ object StreamDescription {
       limit: Option[Int]
   ): StreamDescription = {
     val allShards = streamData.shards.keys.toList
+    val lim = Math.min(limit.getOrElse(100), 100)
 
     val (shards: List[Shard], hasMoreShards: Boolean) =
       exclusiveStartShardId match {
         case None =>
-          val s = allShards.take(limit.getOrElse(100))
+          val s = allShards.take(lim)
           (s, allShards.length > s.length)
         case Some(shardId) => {
           val indexOfShard = allShards.indexWhere(_.shardId == shardId)
           val allShardsAfterStart = allShards.splitAt(indexOfShard + 1)._2
-          val s = allShardsAfterStart.take(limit.getOrElse(100))
+          val s = allShardsAfterStart.take(lim)
           (s, allShardsAfterStart.length > s.length)
         }
       }

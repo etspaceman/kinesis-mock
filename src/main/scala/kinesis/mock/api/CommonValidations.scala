@@ -126,21 +126,21 @@ object CommonValidations {
 
   def validateShardId(shardId: String): Either[KinesisMockException, String] =
     for {
-    _ <-
-      if (!shardId.matches("[a-zA-Z0-9_.-]+"))
-        Left(
-          InvalidArgumentException(
-            s"Shard ID '$shardId' contains invalid characters"
+      _ <-
+        if (!shardId.matches("[a-zA-Z0-9_.-]+"))
+          Left(
+            InvalidArgumentException(
+              s"Shard ID '$shardId' contains invalid characters"
+            )
           )
-        )
-      else Right(())
-    _ <-
-      if (shardId.isEmpty || shardId.length() > 128)
-        Left(
-          InvalidArgumentException(
-            s"Shard ID must be between 1 and 128 characters. Invalid Shard ID: $shardId"
+        else Right(())
+      _ <-
+        if (shardId.isEmpty || shardId.length() > 128)
+          Left(
+            InvalidArgumentException(
+              s"Shard ID must be between 1 and 128 characters. Invalid Shard ID: $shardId"
+            )
           )
-        )
-      else Right(())
-  } yield shardId
+        else Right(())
+    } yield shardId
 }
