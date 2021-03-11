@@ -251,6 +251,23 @@ class Cache private (
         )
       )
     )
+
+  def describeStreamConsumer(
+      req: DescribeStreamConsumerRequest
+  ): IO[Either[KinesisMockException, DescribeStreamConsumerResponse]] =
+    semaphores.describeStreamConsumer.tryAcquireRelease(
+      ref.get.map(streams =>
+        req
+          .describeStreamConsumer(streams)
+          .toEither
+          .leftMap(KinesisMockException.aggregate)
+      ),
+      IO.pure(
+        Left(
+          LimitExceededException("Limit exceeded for DescribeStreamConsumer")
+        )
+      )
+    )
 }
 
 object Cache {
