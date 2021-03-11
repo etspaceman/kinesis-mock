@@ -47,7 +47,8 @@ object StreamData {
             SequenceNumberRange
               .stringifySequence(createTime, index, None, None, None),
             None
-          )
+          ),
+          true
         ) -> List.empty
       )
       .toMap

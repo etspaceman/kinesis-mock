@@ -124,6 +124,16 @@ class Cache private (
     ref.get.flatMap(streams =>
       req.increaseStreamRetention(streams).traverse(updated => ref.set(updated))
     )
+
+  def describeLimits: IO[Either[KinesisMockException, DescribeLimitsResponse]] =
+    semaphores.describeLimits.tryAcquire.ifM(
+      ref.get.map(streams =>
+        Right(DescribeLimitsResponse.get(config.shardLimit, streams))
+      ),
+      IO.pure(
+        Left(LimitExceededException(s"Rate limit exceeded for DescribeLimits"))
+      )
+    )
 }
 
 object Cache {

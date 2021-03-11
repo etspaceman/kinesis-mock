@@ -54,13 +54,25 @@ object CommonValidations {
       streams: Streams,
       shardLimit: Int
   ): Either[KinesisMockException, Int] =
-    if (streams.streams.map(_.data.size).sum + shardCountToAdd > shardLimit)
+    if (
+      streams.streams.map(_.data.keys.filter(_.isOpen).size).sum +
+        shardCountToAdd > shardLimit
+    )
       Left(
         LimitExceededException(
           s"Request would exceed the shard limit of $shardLimit"
         )
       )
     else Right(shardCountToAdd)
+
+  def validateShardCount(shardCount: Int): Either[KinesisMockException, Int] =
+    if (shardCount < 1 || shardCount > 1000)
+      Left(
+        LimitExceededException(
+          s"The shard count must be between 1 and 1000"
+        )
+      )
+    else Right(shardCount)
 
   def validateTagKeys(
       keys: Iterable[String]

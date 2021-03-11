@@ -22,10 +22,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: String) {
             )
           )
         else Right(())
-      _ <-
-        if (shardCount < 1)
-          Left(InvalidArgumentException("ShardCount must be > 1"))
-        else Right(())
+      _ <- CommonValidations.validateShardCount(shardCount)
       _ <-
         if (
           streams.streams.filter(_.status == StreamStatus.CREATING).length >= 5
