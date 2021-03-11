@@ -10,7 +10,7 @@ object DescribeLimitsResponse {
   def get(shardLimit: Int, streams: Streams): DescribeLimitsResponse =
     DescribeLimitsResponse(
       shardLimit,
-      streams.streams.map(_.data.keys.filter(_.isOpen).size).sum
+      streams.streams.map(_.shards.keys.filter(_.isOpen).size).sum
     )
 
   implicit val describeLimitsResponseCirceEncoder

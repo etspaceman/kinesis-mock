@@ -4,7 +4,9 @@ import enumeratum._
 
 sealed trait ShardLevelMetric extends EnumEntry
 
-object ShardLevelMetric extends Enum[ShardLevelMetric] {
+object ShardLevelMetric
+    extends Enum[ShardLevelMetric]
+    with CirceEnum[ShardLevelMetric] {
   override val values = findValues
 
   case object IncomingBytes extends ShardLevelMetric

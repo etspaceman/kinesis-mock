@@ -70,7 +70,7 @@ class Cache private (
               // Update the stream as ACTIVE after a small, configured delay
               IO(
                 updated.findAndUpdateStream(req.streamName)(x =>
-                  x.copy(status = StreamStatus.ACTIVE)
+                  x.copy(streamStatus = StreamStatus.ACTIVE)
                 )
               )).start.void
           )
@@ -132,7 +132,17 @@ class Cache private (
         Right(DescribeLimitsResponse.get(config.shardLimit, streams))
       ),
       IO.pure(
-        Left(LimitExceededException(s"Rate limit exceeded for DescribeLimits"))
+        Left(LimitExceededException("Rate limit exceeded for DescribeLimits"))
+      )
+    )
+
+  def describeStream(
+      req: DescribeStreamRequest
+  ): IO[Either[KinesisMockException, DescribeStreamResponse]] =
+    semaphores.describeStream.tryAcquireRelease(
+      ref.get.map(streams => req.describeStream(streams)),
+      IO.pure(
+        Left(LimitExceededException("Rate limit exceeded for DescribeStream"))
       )
     )
 }

@@ -15,7 +15,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: String) {
     for {
       _ <- CommonValidations.validateStreamName(streamName)
       _ <-
-        if (streams.streams.find(_.name == streamName).nonEmpty)
+        if (streams.streams.find(_.streamName == streamName).nonEmpty)
           Left(
             ResourceInUseException(
               s"Stream $streamName already exists"
@@ -25,7 +25,9 @@ final case class CreateStreamRequest(shardCount: Int, streamName: String) {
       _ <- CommonValidations.validateShardCount(shardCount)
       _ <-
         if (
-          streams.streams.filter(_.status == StreamStatus.CREATING).length >= 5
+          streams.streams
+            .filter(_.streamStatus == StreamStatus.CREATING)
+            .length >= 5
         )
           Left(
             LimitExceededException(

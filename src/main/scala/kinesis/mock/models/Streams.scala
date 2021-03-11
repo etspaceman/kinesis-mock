@@ -1,13 +1,17 @@
 package kinesis.mock
 package models
 
+import scala.collection.SortedMap
+
 final case class Streams(streams: List[StreamData]) {
   def updateStream(stream: StreamData): Streams =
-    copy(streams = streams.filterNot(_.name == stream.name) :+ stream)
+    copy(streams =
+      streams.filterNot(_.streamName == stream.streamName) :+ stream
+    )
   def findAndUpdateStream(streamName: String)(f: StreamData => StreamData) =
     copy(
-      streams = streams.filterNot(_.name == streamName) ++
-        streams.find(_.name == streamName).map(f).toList
+      streams = streams.filterNot(_.streamName == streamName) ++
+        streams.find(_.streamName == streamName).map(f).toList
     )
   def addStream(
       shardCount: Int,
@@ -26,12 +30,12 @@ final case class Streams(streams: List[StreamData]) {
 
   def deleteStream(streamName: String) =
     copy(streams =
-      streams.filterNot(_.name == streamName) ++ streams
-        .find(_.name == streamName)
+      streams.filterNot(_.streamName == streamName) ++ streams
+        .find(_.streamName == streamName)
         .map(stream =>
           stream.copy(
-            data = Map.empty,
-            status = StreamStatus.DELETING,
+            shards = SortedMap.empty,
+            streamStatus = StreamStatus.DELETING,
             tags = Map.empty,
             enhancedMonitoring = List.empty,
             consumers = List.empty
@@ -40,7 +44,7 @@ final case class Streams(streams: List[StreamData]) {
     )
 
   def removeStream(streamName: String) =
-    copy(streams = streams.filterNot(_.name == streamName))
+    copy(streams = streams.filterNot(_.streamName == streamName))
 
 }
 

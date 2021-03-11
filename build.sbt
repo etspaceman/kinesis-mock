@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   Ciris.core,
   Ciris.enumeratum,
   Enumeratum.core,
+  Enumeratum.circe,
   MUnit % Test,
   MUnitCatsEffect2 % Test,
   Logback

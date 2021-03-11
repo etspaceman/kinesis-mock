@@ -31,7 +31,7 @@ object CommonValidations {
       streamName: String,
       streams: Streams
   ): Either[KinesisMockException, StreamData] = Either.fromOption(
-    streams.streams.find(_.name == streamName),
+    streams.streams.find(_.streamName == streamName),
     ResourceNotFoundException(s"Stream name ${streamName} not found")
   )
 
@@ -41,8 +41,8 @@ object CommonValidations {
   ): Either[KinesisMockException, String] =
     if (
       streams.streams
-        .find(_.name == streamName)
-        .exists(_.status != StreamStatus.ACTIVE)
+        .find(_.streamName == streamName)
+        .exists(_.streamStatus != StreamStatus.ACTIVE)
     )
       Left(
         ResourceInUseException(s"Stream ${streamName} is not currently ACTIVE.")
@@ -55,7 +55,7 @@ object CommonValidations {
       shardLimit: Int
   ): Either[KinesisMockException, Int] =
     if (
-      streams.streams.map(_.data.keys.filter(_.isOpen).size).sum +
+      streams.streams.map(_.shards.keys.filter(_.isOpen).size).sum +
         shardCountToAdd > shardLimit
     )
       Left(
@@ -123,4 +123,13 @@ object CommonValidations {
         )
       )
     else Right(retentionPeriodHours)
+
+  def validateShardId(shardId: String): Either[KinesisMockException, String] =
+    if (!shardId.matches("[a-zA-Z0-9_.-]+"))
+      Left(
+        InvalidArgumentException(
+          s"ShardId $shardId contains invalid characters"
+        )
+      )
+    else Right(shardId)
 }
