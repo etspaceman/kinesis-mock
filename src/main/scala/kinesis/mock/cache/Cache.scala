@@ -73,13 +73,17 @@ class Cache private (
           .toEither
           .leftMap(KinesisMockException.aggregate)
           .traverse(updated =>
-            (IO.sleep(config.createStreamDuration) *>
-              // Update the stream as ACTIVE after a small, configured delay
-              IO(
-                updated.findAndUpdateStream(req.streamName)(x =>
-                  x.copy(streamStatus = StreamStatus.ACTIVE)
-                )
-              )).start.void
+            ref.set(updated) *>
+              (IO.sleep(config.createStreamDuration) *>
+                // Update the stream as ACTIVE after a small, configured delay
+                ref
+                  .set(
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
+                  )
+                  .start
+                  .void)
           )
       } yield res,
       IO.pure(
@@ -105,11 +109,12 @@ class Cache private (
           .toEither
           .leftMap(KinesisMockException.aggregate)
           .traverse(updated =>
-            (IO.sleep(config.deleteStreamDuration) *>
-              // Remove the stream after a small, configured delay
-              IO(
-                updated.removeStream(req.streamName)
-              )).start.void
+            ref.set(updated) *>
+              (IO.sleep(config.deleteStreamDuration) *>
+                // Remove the stream after a small, configured delay
+                ref.set(
+                  updated.removeStream(req.streamName)
+                )).start.void
           )
       } yield res,
       IO.pure(
@@ -129,7 +134,7 @@ class Cache private (
         .decreaseStreamRetention(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse(updated => ref.set(updated))
+        .traverse(ref.set)
     )
 
   def increaseStreamRetention(
@@ -140,7 +145,7 @@ class Cache private (
         .increaseStreamRetention(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse(updated => ref.set(updated))
+        .traverse(ref.set)
     )
 
   def describeLimits: IO[Either[KinesisMockException, DescribeLimitsResponse]] =
@@ -186,10 +191,10 @@ class Cache private (
               .flatMap { _ =>
                 (IO.sleep(config.registerStreamConsumerDuration) *>
                   // Update the consumer as ACTIVE after a small, configured delay
-                  IO(
-                    updated.streams.values
-                      .find(_.streamArn == req.streamArn)
-                      .map(stream =>
+                  updated.streams.values
+                    .find(_.streamArn == req.streamArn)
+                    .traverse(stream =>
+                      ref.set(
                         updated.updateStream(
                           stream.copy(consumers =
                             stream.consumers + (response.consumer.consumerName -> response.consumer
@@ -197,7 +202,7 @@ class Cache private (
                           )
                         )
                       )
-                  )).start.void
+                    )).start.void
               }
               .as(response)
           }
@@ -229,17 +234,17 @@ class Cache private (
               .flatMap { _ =>
                 (IO.sleep(config.deregisterStreamConsumerDuration) *>
                   // Remove the consumer after a small, configured delay
-                  IO(
-                    updated.streams.values
-                      .find(_.streamArn == req.streamArn)
-                      .map(stream =>
+                  updated.streams.values
+                    .find(_.streamArn == req.streamArn)
+                    .traverse(stream =>
+                      ref.set(
                         updated.updateStream(
                           stream.copy(consumers =
                             stream.consumers - consumer.consumerName
                           )
                         )
                       )
-                  )).start.void
+                    )).start.void
               }
           }
       ),
