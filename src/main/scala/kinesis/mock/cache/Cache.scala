@@ -7,6 +7,7 @@ import cats.syntax.all._
 
 import kinesis.mock.api._
 import kinesis.mock.models._
+import kinesis.mock.syntax.semaphore._
 
 class Cache private (
     ref: Ref[IO, Streams],
@@ -17,7 +18,7 @@ class Cache private (
   def addTagsToStream(
       req: AddTagsToStreamRequest
   ): IO[Either[KinesisMockException, Unit]] =
-    semaphores.addTagsToStream.tryAcquire.ifM(
+    semaphores.addTagsToStream.tryAcquireRelease(
       ref.get.flatMap(streams =>
         req.addTagsToStream(streams).traverse(ref.set)
       ),
@@ -33,7 +34,7 @@ class Cache private (
   def removeTagsFromStream(
       req: RemoveTagsFromStreamRequest
   ): IO[Either[KinesisMockException, Unit]] =
-    semaphores.addTagsToStream.tryAcquire.ifM(
+    semaphores.removeTagsFromStream.tryAcquireRelease(
       ref.get.flatMap(streams =>
         req
           .removeTagsFromStream(streams)
@@ -54,7 +55,7 @@ class Cache private (
       T: Timer[IO],
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, Unit]] =
-    semaphores.createStream.tryAcquire.ifM(
+    semaphores.createStream.tryAcquireRelease(
       for {
         streams <- ref.get
         res <- req
@@ -89,7 +90,7 @@ class Cache private (
       T: Timer[IO],
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, Unit]] =
-    semaphores.deleteStream.tryAcquire.ifM(
+    semaphores.deleteStream.tryAcquireRelease(
       for {
         streams <- ref.get
         res <- req
@@ -126,7 +127,7 @@ class Cache private (
     )
 
   def describeLimits: IO[Either[KinesisMockException, DescribeLimitsResponse]] =
-    semaphores.describeLimits.tryAcquire.ifM(
+    semaphores.describeLimits.tryAcquireRelease(
       ref.get.map(streams =>
         Right(DescribeLimitsResponse.get(config.shardLimit, streams))
       ),
