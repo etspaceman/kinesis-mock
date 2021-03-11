@@ -7,7 +7,7 @@ import io.circe._
 import kinesis.mock.models._
 
 final case class StreamDescription(
-    encryptionType: EncryptionType,
+    encryptionType: Option[EncryptionType],
     enhancedMonitoring: List[ShardLevelMetrics],
     hasMoreShards: Boolean,
     keyId: Option[String],
@@ -42,7 +42,7 @@ object StreamDescription {
       }
 
     StreamDescription(
-      streamData.encryptionType,
+      Some(streamData.encryptionType),
       streamData.enhancedMonitoring,
       hasMoreShards,
       streamData.keyId,
@@ -85,7 +85,9 @@ object StreamDescription {
   implicit val streamDescriptionCirceDecoder: Decoder[StreamDescription] = {
     x =>
       for {
-        encryptionType <- x.downField("EncryptionType").as[EncryptionType]
+        encryptionType <- x
+          .downField("EncryptionType")
+          .as[Option[EncryptionType]]
         enhancedMonitoring <- x
           .downField("EnhancedMonitoring")
           .as[List[ShardLevelMetrics]]
