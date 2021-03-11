@@ -1,6 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -12,54 +15,49 @@ final case class AddTagsToStreamRequest(
     streamName: String,
     tags: Map[String, String]
 ) {
-  def addTagsToStream(streams: Streams): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(streamName)
-      stream <- CommonValidations.findStream(streamName, streams)
-      _ <- CommonValidations.validateTagKeys(tags.keys)
-      _ <- {
-        val valuesTooLong = tags.values.filter(x => x.length() > 255)
-        if (valuesTooLong.nonEmpty)
-          Left(
-            InvalidArgumentException(
-              s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+  def addTagsToStream(
+      streams: Streams
+  ): ValidatedNel[KinesisMockException, Streams] =
+    CommonValidations
+      .findStream(streamName, streams)
+      .andThen(stream =>
+        (
+          CommonValidations.validateStreamName(streamName),
+          CommonValidations.validateTagKeys(tags.keys), {
+            val valuesTooLong = tags.values.filter(x => x.length() > 255)
+            if (valuesTooLong.nonEmpty)
+              InvalidArgumentException(
+                s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+              ).invalidNel
+            else Valid(())
+          }, {
+            val invalidValues = tags.values.filterNot(x =>
+              x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
             )
-          )
-        else Right(())
-      }
-      _ <- {
-        val invalidValues = tags.values.filterNot(x =>
-          x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
+            if (invalidValues.nonEmpty)
+              InvalidArgumentException(
+                s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
+              ).invalidNel
+            else Valid(())
+          }, {
+            val numberOfTags = tags.size
+            if (numberOfTags > 10)
+              InvalidArgumentException(
+                s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
+              ).invalidNel
+            else Valid(())
+          }, {
+            val totalTagsAfterAppend = (stream.tags ++ tags).size
+            if (totalTagsAfterAppend > 50)
+              InvalidArgumentException(
+                s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
+              ).invalidNel
+            else Valid(())
+          }
+        ).mapN((_, _, _, _, _, _) =>
+          streams.updateStream(stream.copy(tags = stream.tags ++ tags))
         )
-        if (invalidValues.nonEmpty)
-          Left(
-            InvalidArgumentException(
-              s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
-            )
-          )
-        else Right(())
-      }
-      _ <- {
-        val numberOfTags = tags.size
-        if (numberOfTags > 10)
-          Left(
-            InvalidArgumentException(
-              s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
-            )
-          )
-        else Right(())
-      }
-      _ <- {
-        val totalTagsAfterAppend = (stream.tags ++ tags).size
-        if (totalTagsAfterAppend > 50)
-          Left(
-            InvalidArgumentException(
-              s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
-            )
-          )
-        else Right(())
-      }
-    } yield streams.updateStream(stream.copy(tags = stream.tags ++ tags))
+      )
 }
 
 object AddTagsToStreamRequest {

@@ -3,6 +3,9 @@ package api
 
 import scala.concurrent.duration._
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -14,22 +17,24 @@ final case class DecreaseStreamRetentionRequest(
 ) {
   def decreaseStreamRetention(
       streams: Streams
-  ): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(streamName)
-      stream <- CommonValidations.findStream(streamName, streams)
-      _ <- CommonValidations.validateRetentionPeriodHours(retentionPeriodHours)
-      _ <-
-        if (stream.retentionPeriod.toHours < retentionPeriodHours)
-          Left(
+  ): ValidatedNel[KinesisMockException, Streams] =
+    CommonValidations
+      .findStream(streamName, streams)
+      .andThen(stream =>
+        (
+          CommonValidations.validateStreamName(streamName),
+          CommonValidations.validateRetentionPeriodHours(retentionPeriodHours),
+          if (stream.retentionPeriod.toHours < retentionPeriodHours)
             InvalidArgumentException(
               s"Provided RetentionPeriodHours $retentionPeriodHours is greater than the currently defined retention period ${stream.retentionPeriod.toHours}"
-            )
+            ).invalidNel
+          else Valid(())
+        ).mapN((_, _, _) =>
+          streams.updateStream(
+            stream.copy(retentionPeriod = retentionPeriodHours.hours)
           )
-        else Right(())
-    } yield streams.updateStream(
-      stream.copy(retentionPeriod = retentionPeriodHours.hours)
-    )
+        )
+      )
 }
 
 object DecreaseStreamRetentionRequest {

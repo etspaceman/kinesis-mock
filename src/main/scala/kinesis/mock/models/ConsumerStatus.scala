@@ -4,7 +4,9 @@ import enumeratum._
 
 sealed trait ConsumerStatus extends EnumEntry
 
-object ConsumerStatus extends Enum[ConsumerStatus] {
+object ConsumerStatus
+    extends Enum[ConsumerStatus]
+    with CirceEnum[ConsumerStatus] {
   override val values = findValues
 
   case object CREATING extends ConsumerStatus

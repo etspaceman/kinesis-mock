@@ -3,15 +3,16 @@ package models
 
 import scala.collection.SortedMap
 
-final case class Streams(streams: List[StreamData]) {
+final case class Streams(streams: Map[String, StreamData]) {
   def updateStream(stream: StreamData): Streams =
-    copy(streams =
-      streams.filterNot(_.streamName == stream.streamName) :+ stream
-    )
+    copy(streams = streams + (stream.streamName -> stream))
   def findAndUpdateStream(streamName: String)(f: StreamData => StreamData) =
     copy(
-      streams = streams.filterNot(_.streamName == streamName) ++
-        streams.find(_.streamName == streamName).map(f).toList
+      streams = streams ++
+        streams
+          .get(streamName)
+          .map(stream => (stream.streamName, f(stream)))
+          .toMap
     )
   def addStream(
       shardCount: Int,
@@ -20,34 +21,34 @@ final case class Streams(streams: List[StreamData]) {
       awsAccountId: String
   ): Streams =
     copy(streams =
-      streams :+ StreamData.create(
+      streams + (streamName -> StreamData.create(
         shardCount,
         streamName,
         awsRegion,
         awsAccountId
-      )
+      ))
     )
 
   def deleteStream(streamName: String) =
     copy(streams =
-      streams.filterNot(_.streamName == streamName) ++ streams
-        .find(_.streamName == streamName)
+      streams ++ streams
+        .get(streamName)
         .map(stream =>
-          stream.copy(
+          (streamName -> stream.copy(
             shards = SortedMap.empty,
             streamStatus = StreamStatus.DELETING,
             tags = Map.empty,
             enhancedMonitoring = List.empty,
-            consumers = List.empty
-          )
+            consumers = Map.empty
+          ))
         )
+        .toMap
     )
 
   def removeStream(streamName: String) =
-    copy(streams = streams.filterNot(_.streamName == streamName))
-
+    copy(streams = streams - streamName)
 }
 
 object Streams {
-  val empty = Streams(List.empty)
+  val empty = Streams(Map.empty)
 }

@@ -9,6 +9,8 @@ import kinesis.mock.models.AwsRegion
 final case class CacheConfig(
     createStreamDuration: FiniteDuration,
     deleteStreamDuration: FiniteDuration,
+    registerStreamConsumerDuration: FiniteDuration,
+    deregisterStreamConsumerDuration: FiniteDuration,
     shardLimit: Int,
     awsAccountId: String,
     awsRegion: AwsRegion
@@ -22,6 +24,14 @@ object CacheConfig {
     deleteStreamDuration <- env("DELETE_STREAM_DURATION")
       .as[FiniteDuration]
       .default(500.millis)
+    registerStreamConsumerDuration <- env("REGISTER_STREAM_CONSUMER_DURATION")
+      .as[FiniteDuration]
+      .default(500.millis)
+    deregisterStreamConsumerDuration <- env(
+      "DEREGISTER_STREAM_CONSUMER_DURATION"
+    )
+      .as[FiniteDuration]
+      .default(500.millis)
     shardLimit <- env("SHARD_LIMIT").as[Int].default(50)
     awsAccountId <- env("AWS_ACCOUNT_ID").as[String].default("000000000000")
     awsRegion <- env("AWS_REGION")
@@ -31,6 +41,8 @@ object CacheConfig {
   } yield CacheConfig(
     createStreamDuration,
     deleteStreamDuration,
+    registerStreamConsumerDuration,
+    deregisterStreamConsumerDuration,
     shardLimit,
     awsAccountId,
     awsRegion

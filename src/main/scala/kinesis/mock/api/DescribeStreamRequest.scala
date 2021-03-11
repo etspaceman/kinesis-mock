@@ -1,6 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -13,22 +16,30 @@ final case class DescribeStreamRequest(
 ) {
   def describeStream(
       streams: Streams
-  ): Either[KinesisMockException, DescribeStreamResponse] =
-    for {
-      _ <- CommonValidations.validateStreamName(streamName)
-      stream <- CommonValidations.findStream(streamName, streams)
-      _ <- exclusiveStartShardId match {
-        case Some(shardId) => CommonValidations.validateShardId(shardId)
-        case None          => Right(())
-      }
-      _ <- limit match {
-        case Some(l) if (l < 1 || l > 10000) =>
-          Left(InvalidArgumentException(s"Limit must be between 1 and 10000"))
-        case _ => Right(())
-      }
-    } yield DescribeStreamResponse(
-      StreamDescription.fromStreamData(stream, exclusiveStartShardId, limit)
-    )
+  ): ValidatedNel[KinesisMockException, DescribeStreamResponse] =
+    CommonValidations
+      .findStream(streamName, streams)
+      .andThen(stream =>
+        (
+          CommonValidations.validateStreamName(streamName),
+          exclusiveStartShardId match {
+            case Some(shardId) => CommonValidations.validateShardId(shardId)
+            case None          => Valid(())
+          },
+          limit match {
+            case Some(l) if (l < 1 || l > 10000) =>
+              InvalidArgumentException(
+                s"Limit must be between 1 and 10000"
+              ).invalidNel
+            case _ => Valid(())
+          }
+        ).mapN((_, _, _) =>
+          DescribeStreamResponse(
+            StreamDescription
+              .fromStreamData(stream, exclusiveStartShardId, limit)
+          )
+        )
+      )
 }
 
 object DescribeStreamRequest {

@@ -1,6 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -11,22 +14,23 @@ final case class DeleteStreamRequest(
 ) {
   def deleteStream(
       streams: Streams
-  ): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(streamName)
-      stream <- CommonValidations.findStream(streamName, streams)
-      _ <- CommonValidations.isStreamActive(streamName, streams)
-      _ <-
-        if (
-          enforceConsumerDeletion.exists(identity) && stream.consumers.nonEmpty
-        )
-          Left(
+  ): ValidatedNel[KinesisMockException, Streams] =
+    CommonValidations
+      .findStream(streamName, streams)
+      .andThen(stream =>
+        (
+          CommonValidations.validateStreamName(streamName),
+          CommonValidations.isStreamActive(streamName, streams),
+          if (
+            enforceConsumerDeletion
+              .exists(identity) && stream.consumers.nonEmpty
+          )
             ResourceInUseException(
               s"Consumers exist in stream $streamName and enforceConsumerDeletion is true"
-            )
-          )
-        else Right(())
-    } yield streams.deleteStream(streamName)
+            ).invalidNel
+          else Valid(())
+        ).mapN((_, _, _) => streams.deleteStream(streamName))
+      )
 }
 
 object DeleteStreamRequest {

@@ -6,7 +6,7 @@ import scala.concurrent.duration._
 import java.time.Instant
 
 final case class StreamData(
-    consumers: List[Consumer],
+    consumers: Map[String, Consumer],
     encryptionType: EncryptionType,
     enhancedMonitoring: List[ShardLevelMetrics],
     keyId: Option[String],
@@ -56,7 +56,7 @@ object StreamData {
           )
       )
     StreamData(
-      List.empty,
+      Map.empty,
       EncryptionType.NONE,
       List(ShardLevelMetrics(List.empty)),
       None,

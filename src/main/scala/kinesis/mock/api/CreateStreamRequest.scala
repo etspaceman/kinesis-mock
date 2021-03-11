@@ -1,6 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -11,32 +14,28 @@ final case class CreateStreamRequest(shardCount: Int, streamName: String) {
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: String
-  ): Either[KinesisMockException, Streams] =
-    for {
-      _ <- CommonValidations.validateStreamName(streamName)
-      _ <-
-        if (streams.streams.find(_.streamName == streamName).nonEmpty)
-          Left(
-            ResourceInUseException(
-              s"Stream $streamName already exists"
-            )
-          )
-        else Right(())
-      _ <- CommonValidations.validateShardCount(shardCount)
-      _ <-
-        if (
-          streams.streams
-            .filter(_.streamStatus == StreamStatus.CREATING)
-            .length >= 5
-        )
-          Left(
-            LimitExceededException(
-              "Limit for streams being created concurrently exceeded"
-            )
-          )
-        else Right(())
-      _ <- CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
-    } yield streams.addStream(shardCount, streamName, awsRegion, awsAccountId)
+  ): ValidatedNel[KinesisMockException, Streams] =
+    (
+      CommonValidations.validateStreamName(streamName),
+      if (streams.streams.get(streamName).nonEmpty)
+        ResourceInUseException(
+          s"Stream $streamName already exists"
+        ).invalidNel
+      else Valid(()),
+      CommonValidations.validateShardCount(shardCount),
+      if (
+        streams.streams.filter { case (_, stream) =>
+          stream.streamStatus == StreamStatus.CREATING
+        }.size >= 5
+      )
+        LimitExceededException(
+          "Limit for streams being created concurrently exceeded"
+        ).invalidNel
+      else Valid(()),
+      CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
+    ).mapN((_, _, _, _, _) =>
+      streams.addStream(shardCount, streamName, awsRegion, awsAccountId)
+    )
 }
 
 object CreateStreamRequest {
