@@ -125,11 +125,22 @@ object CommonValidations {
     else Right(retentionPeriodHours)
 
   def validateShardId(shardId: String): Either[KinesisMockException, String] =
-    if (!shardId.matches("[a-zA-Z0-9_.-]+"))
-      Left(
-        InvalidArgumentException(
-          s"ShardId $shardId contains invalid characters"
+    for {
+    _ <-
+      if (!shardId.matches("[a-zA-Z0-9_.-]+"))
+        Left(
+          InvalidArgumentException(
+            s"Shard ID '$shardId' contains invalid characters"
+          )
         )
-      )
-    else Right(shardId)
+      else Right(())
+    _ <-
+      if (shardId.isEmpty || shardId.length() > 128)
+        Left(
+          InvalidArgumentException(
+            s"Shard ID must be between 1 and 128 characters. Invalid Shard ID: $shardId"
+          )
+        )
+      else Right(())
+  } yield shardId
 }
