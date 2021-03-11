@@ -24,7 +24,7 @@ class Cache private (
       IO.pure(
         Left(
           LimitExceededException(
-            "Rate limit exceeded for AddTagsToStreamRequest"
+            "Rate limit exceeded for AddTagsToStream"
           )
         )
       )
@@ -42,7 +42,7 @@ class Cache private (
       IO.pure(
         Left(
           LimitExceededException(
-            "Rate limit exceeded for RemoveTagsFromStreamRequest"
+            "Rate limit exceeded for RemoveTagsFromStream"
           )
         )
       )
@@ -53,25 +53,63 @@ class Cache private (
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
-  ): IO[Either[KinesisMockException, Unit]] = for {
-    streams <- ref.get
-    res <- req
-      .createStream(
-        streams,
-        config.shardLimit,
-        config.awsRegion,
-        config.awsAccountId
+  ): IO[Either[KinesisMockException, Unit]] =
+    semaphores.createStream.tryAcquire.ifM(
+      for {
+        streams <- ref.get
+        res <- req
+          .createStream(
+            streams,
+            config.shardLimit,
+            config.awsRegion,
+            config.awsAccountId
+          )
+          .traverse(updated =>
+            (IO.sleep(config.createStreamDuration) *>
+              // Update the stream as ACTIVE after a small, configured delay
+              IO(
+                updated.findAndUpdateStream(req.streamName)(x =>
+                  x.copy(status = StreamStatus.ACTIVE)
+                )
+              )).start.void
+          )
+      } yield res,
+      IO.pure(
+        Left(
+          LimitExceededException(
+            "Rate limit exceeded for CreateStream"
+          )
+        )
       )
-      .traverse(updated =>
-        (IO.sleep(config.createStreamDuration) *>
-          // Update the stream as ACTIVE after a small, configured delay
-          IO(
-            updated.findAndUpdateStream(req.streamName)(x =>
-              x.copy(status = StreamStatus.ACTIVE)
-            )
-          )).start.void
+    )
+
+  def deleteStream(
+      req: DeleteStreamRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] =
+    semaphores.deleteStream.tryAcquire.ifM(
+      for {
+        streams <- ref.get
+        res <- req
+          .deleteStream(streams)
+          .traverse(updated =>
+            (IO.sleep(config.deleteStreamDuration) *>
+              // Remove the stream after a small, configured delay
+              IO(
+                updated.removeStream(req.streamName)
+              )).start.void
+          )
+      } yield res,
+      IO.pure(
+        Left(
+          LimitExceededException(
+            "Rate limit exceeded for CreateStream"
+          )
+        )
       )
-  } yield res
+    )
 }
 
 object Cache {

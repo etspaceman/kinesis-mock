@@ -23,6 +23,25 @@ final case class Streams(streams: List[StreamData]) {
         awsAccountId
       )
     )
+
+  def deleteStream(streamName: String) =
+    copy(streams =
+      streams.filterNot(_.name == streamName) ++ streams
+        .find(_.name == streamName)
+        .map(stream =>
+          stream.copy(
+            data = Map.empty,
+            status = StreamStatus.DELETING,
+            tags = Map.empty,
+            enhancedMonitoring = List.empty,
+            consumers = List.empty
+          )
+        )
+    )
+
+  def removeStream(streamName: String) =
+    copy(streams = streams.filterNot(_.name == streamName))
+
 }
 
 object Streams {

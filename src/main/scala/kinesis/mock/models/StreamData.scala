@@ -11,7 +11,8 @@ final case class StreamData(
     enhancedMonitoring: List[ShardLevelMetrics],
     keyId: Option[String],
     streamArn: String,
-    streamCreationTimestamp: Instant
+    streamCreationTimestamp: Instant,
+    consumers: List[Consumer]
 )
 
 object StreamData {
@@ -54,7 +55,8 @@ object StreamData {
       List(ShardLevelMetrics(List.empty)),
       None,
       s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
-      Instant.now()
+      Instant.now(),
+      List.empty
     )
   }
 }

@@ -35,6 +35,20 @@ object CommonValidations {
     ResourceNotFoundException(s"Stream name ${streamName} not found")
   )
 
+  def isStreamActive(
+      streamName: String,
+      streams: Streams
+  ): Either[KinesisMockException, String] =
+    if (
+      streams.streams
+        .find(_.name == streamName)
+        .exists(_.status != StreamStatus.ACTIVE)
+    )
+      Left(
+        ResourceInUseException(s"Stream ${streamName} is not currently ACTIVE.")
+      )
+    else Right(streamName)
+
   def validateShardLimit(
       shardCountToAdd: Int,
       streams: Streams,

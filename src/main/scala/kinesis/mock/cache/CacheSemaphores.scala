@@ -5,12 +5,21 @@ import cats.effect.concurrent.Semaphore
 
 final case class CacheSemaphores private (
     addTagsToStream: Semaphore[IO],
-    removeTagsFromStream: Semaphore[IO]
+    removeTagsFromStream: Semaphore[IO],
+    createStream: Semaphore[IO],
+    deleteStream: Semaphore[IO]
 )
 
 object CacheSemaphores {
   def create(implicit C: Concurrent[IO]): IO[CacheSemaphores] = for {
     addTagsToStream <- Semaphore[IO](5)
     removeTagsFromStream <- Semaphore[IO](5)
-  } yield new CacheSemaphores(addTagsToStream, removeTagsFromStream)
+    createStream <- Semaphore[IO](5)
+    deleteStream <- Semaphore[IO](5)
+  } yield new CacheSemaphores(
+    addTagsToStream,
+    removeTagsFromStream,
+    createStream,
+    deleteStream
+  )
 }
