@@ -1,5 +1,7 @@
 package kinesis.mock.models
 
+import scala.concurrent.duration._
+
 import java.time.Instant
 
 final case class StreamData(
@@ -12,13 +14,16 @@ final case class StreamData(
     keyId: Option[String],
     streamArn: String,
     streamCreationTimestamp: Instant,
-    consumers: List[Consumer]
+    consumers: List[Consumer],
+    retentionPeriod: FiniteDuration
 )
 
 object StreamData {
   val seqAdjustMs = 2000L
   val minHashKey: BigInt = BigInt(0)
   val maxHashKey: BigInt = BigInt("340282366920938463463374607431768211455")
+  val minRetentionPeriod = 24.hours
+  val maxRetentionPeriod = 365.days
 
   def create(
       shardCount: Int,
@@ -56,7 +61,8 @@ object StreamData {
       None,
       s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
       Instant.now(),
-      List.empty
+      List.empty,
+      minRetentionPeriod
     )
   }
 }

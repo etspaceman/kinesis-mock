@@ -110,6 +110,20 @@ class Cache private (
         )
       )
     )
+
+  def decreaseStreamRetention(
+      req: DecreaseStreamRetentionRequest
+  ): IO[Either[KinesisMockException, Unit]] =
+    ref.get.flatMap(streams =>
+      req.decreaseStreamRetention(streams).traverse(updated => ref.set(updated))
+    )
+
+  def increaseStreamRetention(
+      req: IncreaseStreamRetentionRequest
+  ): IO[Either[KinesisMockException, Unit]] =
+    ref.get.flatMap(streams =>
+      req.increaseStreamRetention(streams).traverse(updated => ref.set(updated))
+    )
 }
 
 object Cache {

@@ -98,4 +98,17 @@ object CommonValidations {
       else Right(())
     }
   } yield keys
+
+  def validateRetentionPeriodHours(
+      retentionPeriodHours: Int
+  ): Either[KinesisMockException, Int] =
+    if (
+      retentionPeriodHours < StreamData.minRetentionPeriod.toHours || retentionPeriodHours > StreamData.maxRetentionPeriod.toHours
+    )
+      Left(
+        InvalidArgumentException(
+          s"Retention period hours $retentionPeriodHours must be between ${StreamData.minRetentionPeriod.toHours} and ${StreamData.maxRetentionPeriod.toHours}"
+        )
+      )
+    else Right(retentionPeriodHours)
 }
