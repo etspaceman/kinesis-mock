@@ -199,4 +199,22 @@ object CommonValidations {
         s"NextToken length must be between 1 and 1048576"
       ).invalidNel
     else Valid(nextToken)
+
+  def validateMaxResults(
+      maxResults: Int
+  ): ValidatedNel[KinesisMockException, Int] =
+    if (maxResults < 1 || maxResults > 10000)
+      InvalidArgumentException(
+        s"MaxResults must be between 1 and 10000"
+      ).invalidNel
+    else Valid(maxResults)
+
+  def validateLimit(
+      limit: Int
+  ): ValidatedNel[KinesisMockException, Int] =
+    if (limit < 1 || limit > 10000)
+      InvalidArgumentException(
+        s"Limit must be between 1 and 10000"
+      ).invalidNel
+    else Valid(limit)
 }

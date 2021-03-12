@@ -39,11 +39,8 @@ final case class ListShardsRequest(
               CommonValidations.validateShardId(shardId),
               CommonValidations.findStream(streamName, streams),
               maxResults match {
-                case Some(l) if (l < 1 || l > 10000) =>
-                  InvalidArgumentException(
-                    s"MaxResults must be between 1 and 10000"
-                  ).invalidNel
-                case _ => Valid(())
+                case Some(l) => CommonValidations.validateMaxResults(l)
+                case _       => Valid(())
               },
               shardFilter match {
                 case Some(sf) => ListShardsRequest.validateShardFilter(sf)

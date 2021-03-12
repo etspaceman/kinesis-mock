@@ -27,11 +27,8 @@ final case class DescribeStreamRequest(
             case None          => Valid(())
           },
           limit match {
-            case Some(l) if (l < 1 || l > 10000) =>
-              InvalidArgumentException(
-                s"Limit must be between 1 and 10000"
-              ).invalidNel
-            case _ => Valid(())
+            case Some(l) => CommonValidations.validateLimit(l)
+            case _       => Valid(())
           }
         ).mapN((_, _, _) =>
           DescribeStreamResponse(
