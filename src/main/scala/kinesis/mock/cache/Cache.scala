@@ -354,6 +354,21 @@ class Cache private (
         Left(LimitExceededException("Limit exceeded for ListStreams"))
       )
     )
+
+  def listTagsForStream(
+      req: ListTagsForStreamRequest
+  ): IO[Either[KinesisMockException, ListTagsForStreamResponse]] =
+    semaphores.listTagsForStream.tryAcquireRelease(
+      ref.get.map(streams =>
+        req
+          .listTagsForStream(streams)
+          .toEither
+          .leftMap(KinesisMockException.aggregate)
+      ),
+      IO.pure(
+        Left(LimitExceededException("Limit exceeded for ListTagsForStream"))
+      )
+    )
 }
 
 object Cache {
