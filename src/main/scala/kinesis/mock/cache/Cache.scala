@@ -369,6 +369,58 @@ class Cache private (
         Left(LimitExceededException("Limit exceeded for ListTagsForStream"))
       )
     )
+
+  def startStreamEncryption(
+      req: StartStreamEncryptionRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] =
+    ref.get.flatMap(streams =>
+      req
+        .startStreamEncryption(streams)
+        .toEither
+        .leftMap(KinesisMockException.aggregate)
+        .traverse(updated =>
+          ref.set(updated) *>
+            (IO.sleep(config.startStreamEncryptionDuration) *>
+              // Update the stream as ACTIVE after a small, configured delay
+              ref
+                .set(
+                  updated.findAndUpdateStream(req.streamName)(x =>
+                    x.copy(streamStatus = StreamStatus.ACTIVE)
+                  )
+                )
+                .start
+                .void)
+        )
+    )
+
+  def stopStreamEncryption(
+      req: StopStreamEncryptionRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] =
+    ref.get.flatMap(streams =>
+      req
+        .stopStreamEncryption(streams)
+        .toEither
+        .leftMap(KinesisMockException.aggregate)
+        .traverse(updated =>
+          ref.set(updated) *>
+            (IO.sleep(config.stopStreamEncryptionDuration) *>
+              // Update the stream as ACTIVE after a small, configured delay
+              ref
+                .set(
+                  updated.findAndUpdateStream(req.streamName)(x =>
+                    x.copy(streamStatus = StreamStatus.ACTIVE)
+                  )
+                )
+                .start
+                .void)
+        )
+    )
 }
 
 object Cache {

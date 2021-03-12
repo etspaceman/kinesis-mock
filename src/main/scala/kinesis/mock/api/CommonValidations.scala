@@ -1,6 +1,10 @@
 package kinesis.mock
 package api
 
+import scala.util.Try
+
+import java.util.UUID
+
 import cats.data.Validated._
 import cats.data._
 import cats.syntax.all._
@@ -217,4 +221,44 @@ object CommonValidations {
         s"Limit must be between 1 and 10000"
       ).invalidNel
     else Valid(limit)
+
+  def validateKeyId(keyId: String): ValidatedNel[KinesisMockException, String] =
+    if (
+      keyId.startsWith("arn:") && (
+        (
+          keyId.matches("arn:aws.*:kms:.*:\\d{12}:key/.+") &&
+            Try(UUID.fromString(keyId.takeRight(36))).isFailure
+        ) ||
+          (
+            !keyId.matches("arn:aws.*:kms:.*:\\d{12}:alias/.+") &&
+              !keyId.matches("arn:aws.*:kms:.*:\\d{12}:key/.+")
+          )
+      )
+    )
+      InvalidArgumentException(
+        "Received KeyId ARN is not a properly formatted ARN"
+      ).invalidNel
+    else if (
+      !keyId.startsWith("alias/") ||
+      Try(UUID.fromString(keyId.takeRight(36))).isFailure
+    ) {
+      InvalidArgumentException(
+        "Received KeyId is not a properly formatted Alias or GUID"
+      ).invalidNel
+    } else if (keyId.isEmpty() || keyId.length() > 2048)
+      InvalidArgumentException(
+        "KeyId must be between 1 and 2048 characters"
+      ).invalidNel
+    else Valid(keyId)
+
+  def isKmsEncryptionType(
+      encryptionType: EncryptionType
+  ): ValidatedNel[KinesisMockException, EncryptionType] =
+    encryptionType match {
+      case EncryptionType.KMS => Valid(encryptionType)
+      case _ =>
+        InvalidArgumentException(
+          "KMS is the only valid EncryptionType for this request"
+        ).invalidNel
+    }
 }

@@ -11,6 +11,8 @@ final case class CacheConfig(
     deleteStreamDuration: FiniteDuration,
     registerStreamConsumerDuration: FiniteDuration,
     deregisterStreamConsumerDuration: FiniteDuration,
+    startStreamEncryptionDuration: FiniteDuration,
+    stopStreamEncryptionDuration: FiniteDuration,
     shardLimit: Int,
     awsAccountId: String,
     awsRegion: AwsRegion
@@ -25,6 +27,12 @@ object CacheConfig {
       .as[FiniteDuration]
       .default(500.millis)
     registerStreamConsumerDuration <- env("REGISTER_STREAM_CONSUMER_DURATION")
+      .as[FiniteDuration]
+      .default(500.millis)
+    startStreamEncryptionDuration <- env("START_STREAM_ENCRYPTION_DURATION")
+      .as[FiniteDuration]
+      .default(500.millis)
+    stopStreamEncryptionDuration <- env("STOP_STREAM_ENCRYPTION_DURATION")
       .as[FiniteDuration]
       .default(500.millis)
     deregisterStreamConsumerDuration <- env(
@@ -43,6 +51,8 @@ object CacheConfig {
     deleteStreamDuration,
     registerStreamConsumerDuration,
     deregisterStreamConsumerDuration,
+    startStreamEncryptionDuration,
+    stopStreamEncryptionDuration,
     shardLimit,
     awsAccountId,
     awsRegion
