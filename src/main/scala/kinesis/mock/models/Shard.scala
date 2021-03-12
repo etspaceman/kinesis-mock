@@ -11,7 +11,8 @@ final case class Shard(
     hashKeyRange: HashKeyRange,
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
-    shardId: String
+    shardId: String,
+    shardIndex: Int
 ) {
   val numericShardId: Int = shardId.takeRight(12).toInt
   val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
@@ -25,14 +26,15 @@ object Shard {
       x.numericShardId.compare(y.numericShardId)
   }
 
-  implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct7(
+  implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct8(
     "AdjacentParentShardId",
     "ClosedTimestamp",
     "CreatedAtTimestamp",
     "HashKeyRange",
     "ParentShardId",
     "SequenceNumberRange",
-    "ShardId"
+    "ShardId",
+    "ShardIndex"
   )(x =>
     (
       x.adjacentParentShardId,
@@ -41,7 +43,8 @@ object Shard {
       x.hashKeyRange,
       x.parentShardId,
       x.sequenceNumberRange,
-      x.shardId
+      x.shardId,
+      x.shardIndex
     )
   )
 
@@ -58,6 +61,7 @@ object Shard {
         .downField("SequenceNumberRange")
         .as[SequenceNumberRange]
       shardId <- x.downField("ShardId").as[String]
+      shardIndex <- x.downField("ShardIndex").as[Int]
     } yield Shard(
       adjacentParentShardId,
       closedTimestamp,
@@ -65,7 +69,8 @@ object Shard {
       hashKeyRange,
       parentShardId,
       sequenceNumberRange,
-      shardId
+      shardId,
+      shardIndex
     )
 
   }

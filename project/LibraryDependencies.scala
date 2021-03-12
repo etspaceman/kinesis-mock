@@ -8,6 +8,7 @@ object LibraryDependencies {
   val MUnitCatsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "0.13.0"
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
+  val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
 
   object Http4s {
     val http4sVersion = "0.21.16"

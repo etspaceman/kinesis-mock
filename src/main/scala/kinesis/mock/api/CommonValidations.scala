@@ -261,4 +261,26 @@ object CommonValidations {
           "KMS is the only valid EncryptionType for this request"
         ).invalidNel
     }
+
+  def validateSequenceNumber(
+      sequenceNumber: SequenceNumber
+  ): ValidatedNel[KinesisMockException, SequenceNumber] =
+    if (!sequenceNumber.value.matches("0|([1-9]\\d{0,128})"))
+      InvalidArgumentException(
+        s"SequenceNumber ${sequenceNumber.value} contains invalid characters"
+      ).invalidNel
+    else Valid(sequenceNumber)
+
+  def findShard(
+      shardId: String,
+      stream: StreamData
+  ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] =
+    stream.shards.find { case (shard, _) => shard.shardId == shardId } match {
+      case None =>
+        InvalidArgumentException(
+          s"Could not find shardId $shardId in stream ${stream.streamName}"
+        ).invalidNel
+      case Some(x) => Valid(x)
+    }
+
 }

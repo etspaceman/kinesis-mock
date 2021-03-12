@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   Ciris.enumeratum,
   Enumeratum.core,
   Enumeratum.circe,
+  JaxbApi,
   MUnit % Test,
   MUnitCatsEffect2 % Test,
   Logback

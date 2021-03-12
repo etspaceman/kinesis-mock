@@ -53,7 +53,8 @@ object StreamData {
                 None,
                 SequenceNumber.create(createTime, index, None, None, None)
               ),
-              Shard.shardId(index)
+              Shard.shardId(index),
+              index
             ) -> List.empty
           )
       )

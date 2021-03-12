@@ -421,6 +421,16 @@ class Cache private (
                 .void)
         )
     )
+
+  def getShardIterator(
+      req: GetShardIteratorRequest
+  ): IO[Either[KinesisMockException, GetShardIteratorResponse]] =
+    ref.get.map(streams =>
+      req
+        .getShardIterator(streams)
+        .toEither
+        .leftMap(KinesisMockException.aggregate)
+    )
 }
 
 object Cache {
