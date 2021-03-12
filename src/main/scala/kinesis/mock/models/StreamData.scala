@@ -41,6 +41,8 @@ object StreamData {
           .map(index =>
             Shard(
               None,
+              None,
+              createTime,
               HashKeyRange(
                 if (index < shardCount - 1) shardHash * BigInt(index + 1)
                 else maxHashKey - BigInt(1),

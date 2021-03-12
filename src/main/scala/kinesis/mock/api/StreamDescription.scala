@@ -12,7 +12,7 @@ final case class StreamDescription(
     hasMoreShards: Boolean,
     keyId: Option[String],
     retentionPeriodHours: Int,
-    shards: List[Shard],
+    shards: List[ShardSummary],
     streamArn: String,
     streamCreationTimestamp: Instant,
     streamName: String,
@@ -47,7 +47,7 @@ object StreamDescription {
       hasMoreShards,
       streamData.keyId,
       streamData.retentionPeriod.toHours.toInt,
-      shards,
+      shards.map(ShardSummary.fromShard),
       streamData.streamArn,
       streamData.streamCreationTimestamp,
       streamData.streamName,
@@ -94,7 +94,7 @@ object StreamDescription {
         hasMoreShards <- x.downField("HasMoreShards").as[Boolean]
         keyId <- x.downField("KeyId").as[Option[String]]
         retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
-        shards <- x.downField("Shards").as[List[Shard]]
+        shards <- x.downField("Shards").as[List[ShardSummary]]
         streamArn <- x.downField("StreamARN").as[String]
         streamCreationTimestamp <- x
           .downField("StreamCreationTimestamp")

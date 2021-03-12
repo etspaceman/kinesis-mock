@@ -314,6 +314,13 @@ class Cache private (
         .leftMap(KinesisMockException.aggregate)
         .traverse { case (updated, response) => ref.set(updated).as(response) }
     )
+
+  def listShards(
+      req: ListShardsRequest
+  ): IO[Either[KinesisMockException, ListShardsResponse]] =
+    ref.get.map(streams =>
+      req.listShards(streams).toEither.leftMap(KinesisMockException.aggregate)
+    )
 }
 
 object Cache {

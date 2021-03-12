@@ -1,9 +1,13 @@
 package kinesis.mock.models
 
+import java.time.Instant
+
 import io.circe._
 
 final case class Shard(
     adjacentParentShardId: Option[String],
+    closedTimestamp: Option[Instant],
+    createdAtTimestamp: Instant,
     hashKeyRange: HashKeyRange,
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
@@ -21,8 +25,10 @@ object Shard {
       x.numericShardId.compare(y.numericShardId)
   }
 
-  implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct5(
+  implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct7(
     "AdjacentParentShardId",
+    "ClosedTimestamp",
+    "CreatedAtTimestamp",
     "HashKeyRange",
     "ParentShardId",
     "SequenceNumberRange",
@@ -30,6 +36,8 @@ object Shard {
   )(x =>
     (
       x.adjacentParentShardId,
+      x.closedTimestamp,
+      x.createdAtTimestamp,
       x.hashKeyRange,
       x.parentShardId,
       x.sequenceNumberRange,
@@ -42,6 +50,8 @@ object Shard {
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
         .as[Option[String]]
+      closedTimestamp <- x.downField("ClosedTimestamp").as[Option[Instant]]
+      createdAtTimestamp <- x.downField("CreatedAtTimestamp").as[Instant]
       hashKeyRange <- x.downField("HashKeyRange").as[HashKeyRange]
       parentShardId <- x.downField("ParentShardId").as[Option[String]]
       sequenceNumberRange <- x
@@ -50,6 +60,8 @@ object Shard {
       shardId <- x.downField("ShardId").as[String]
     } yield Shard(
       adjacentParentShardId,
+      closedTimestamp,
+      createdAtTimestamp,
       hashKeyRange,
       parentShardId,
       sequenceNumberRange,

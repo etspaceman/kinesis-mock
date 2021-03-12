@@ -190,4 +190,13 @@ object CommonValidations {
           s"ConsumerName $consumerName not found on stream ${streamData.streamName}"
         )
       )
+
+  def validateNextToken(
+      nextToken: String
+  ): ValidatedNel[KinesisMockException, String] =
+    if (nextToken.isEmpty() || nextToken.length() > 1048576)
+      InvalidArgumentException(
+        s"NextToken length must be between 1 and 1048576"
+      ).invalidNel
+    else Valid(nextToken)
 }
