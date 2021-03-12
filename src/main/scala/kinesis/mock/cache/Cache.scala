@@ -318,8 +318,11 @@ class Cache private (
   def listShards(
       req: ListShardsRequest
   ): IO[Either[KinesisMockException, ListShardsResponse]] =
-    ref.get.map(streams =>
-      req.listShards(streams).toEither.leftMap(KinesisMockException.aggregate)
+    semaphores.listShards.tryAcquireRelease(
+      ref.get.map(streams =>
+        req.listShards(streams).toEither.leftMap(KinesisMockException.aggregate)
+      ),
+      IO.pure(Left(LimitExceededException("Limit exceeded for ListShards")))
     )
 }
 
