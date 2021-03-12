@@ -292,6 +292,28 @@ class Cache private (
         )
       )
     )
+
+  def disableEnhancedMonitoring(
+      req: DisableEnhancedMonitoringRequest
+  ): IO[Either[KinesisMockException, DisableEnhancedMonitoringResponse]] =
+    ref.get.flatMap(streams =>
+      req
+        .disableEnhancedMonitoring(streams)
+        .toEither
+        .leftMap(KinesisMockException.aggregate)
+        .traverse { case (updated, response) => ref.set(updated).as(response) }
+    )
+
+  def enableEnhancedMonitoring(
+      req: EnableEnhancedMonitoringRequest
+  ): IO[Either[KinesisMockException, EnableEnhancedMonitoringResponse]] =
+    ref.get.flatMap(streams =>
+      req
+        .enableEnhancedMonitoring(streams)
+        .toEither
+        .leftMap(KinesisMockException.aggregate)
+        .traverse { case (updated, response) => ref.set(updated).as(response) }
+    )
 }
 
 object Cache {
