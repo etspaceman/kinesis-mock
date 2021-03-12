@@ -15,7 +15,8 @@ final case class CacheSemaphores private (
     describeStreamConsumer: Semaphore[IO],
     describeStreamSummary: Semaphore[IO],
     listShards: Semaphore[IO],
-    listStreamConsumers: Semaphore[IO]
+    listStreamConsumers: Semaphore[IO],
+    listStreams: Semaphore[IO]
 )
 
 object CacheSemaphores {
@@ -32,6 +33,7 @@ object CacheSemaphores {
     describeStreamSummary <- Semaphore[IO](20)
     listShards <- Semaphore[IO](100)
     listStreamConsumers <- Semaphore[IO](5)
+    listStreams <- Semaphore[IO](5)
   } yield new CacheSemaphores(
     addTagsToStream,
     removeTagsFromStream,
@@ -44,6 +46,7 @@ object CacheSemaphores {
     describeStreamConsumer,
     describeStreamSummary,
     listShards,
-    listStreamConsumers
+    listStreamConsumers,
+    listStreams
   )
 }
