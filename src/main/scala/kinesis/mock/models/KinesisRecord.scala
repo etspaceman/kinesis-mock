@@ -2,10 +2,55 @@ package kinesis.mock.models
 
 import java.time.Instant
 
+import io.circe._
+
 final case class KinesisRecord(
-    sequenceNumber: SequenceNumber,
     approximateArrivalTimestamp: Instant,
+    data: Array[Byte],
     encryptionType: EncryptionType,
     partitionKey: String,
-    data: Array[Byte]
-)
+    sequenceNumber: SequenceNumber
+) {
+  val size = data.length +
+    encryptionType.entryName.getBytes("UTF-8").length +
+    partitionKey.getBytes("UTF-8").length +
+    sequenceNumber.value.getBytes("UTF-8").length +
+    approximateArrivalTimestamp.toString().getBytes("UTF-8").length
+}
+
+object KinesisRecord {
+  implicit val kinesisRecordCirceEncoder: Encoder[KinesisRecord] =
+    Encoder.forProduct5(
+      "ApproximateArrivalTimestamp",
+      "Data",
+      "EncryptionType",
+      "PartitionKey",
+      "SequenceNumber"
+    )(x =>
+      (
+        x.approximateArrivalTimestamp,
+        x.data,
+        x.encryptionType,
+        x.partitionKey,
+        x.sequenceNumber
+      )
+    )
+
+  implicit val kinesisRecordCirceDecoder: Decoder[KinesisRecord] =
+    x =>
+      for {
+        approximateArrivalTimestamp <- x
+          .downField("ApproximateArrivalTimestamp")
+          .as[Instant]
+        data <- x.downField("Data").as[Array[Byte]]
+        encryptionType <- x.downField("EncryptionType").as[EncryptionType]
+        partitionKey <- x.downField("PartitionKey").as[String]
+        sequenceNumber <- x.downField("SequenceNumber").as[SequenceNumber]
+      } yield KinesisRecord(
+        approximateArrivalTimestamp,
+        data,
+        encryptionType,
+        partitionKey,
+        sequenceNumber
+      )
+}

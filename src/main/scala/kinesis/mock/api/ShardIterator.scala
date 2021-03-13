@@ -1,16 +1,73 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
+
+import scala.util.Try
 
 import java.time.Instant
 import java.util.Base64
 
+import cats.data.Validated._
+import cats.data._
+import cats.syntax.all._
 import io.circe._
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import javax.xml.bind.DatatypeConverter
 
+import kinesis.mock.InvalidArgumentException
 import kinesis.mock.models.SequenceNumber
 
-final case class ShardIterator(value: String)
+final case class ShardIterator(value: String) {
+  def parse
+      : ValidatedNel[KinesisMockException, (String, String, SequenceNumber)] = {
+    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+    val decoded = Base64.getDecoder().decode(value)
+    if (decoded.length < 152 || decoded.length > 280)
+      InvalidArgumentException("Invalid shard iterator").invalidNel
+    else {
+      val now = Instant.now()
+      cipher.init(
+        Cipher.DECRYPT_MODE,
+        ShardIterator.iteratorPwdKey,
+        ShardIterator.iteratorPwdIv
+      )
+      val decrypted = new String(cipher.doFinal(decoded.drop(8)), "UTF-8")
+      val split = decrypted.split("/")
+      if (split.length != 5)
+        InvalidArgumentException("Invalid shard iterator").invalidNel
+      else {
+        val iteratorTimeMillis = split.head
+        val streamName = split(1)
+        val shardId = split(2)
+        val sequenceNumber = SequenceNumber(split(3))
+
+        (
+          CommonValidations.validateStreamName(streamName),
+          CommonValidations.validateShardId(shardId),
+          CommonValidations.validateSequenceNumber(sequenceNumber),
+          if (Try(iteratorTimeMillis.toLong).isFailure)
+            InvalidArgumentException(
+              "Invalid ShardIterator, the time argument is not numeric"
+            ).invalidNel
+          else Valid(()),
+          if (
+            Try(iteratorTimeMillis.toLong)
+              .exists(x => x <= 0 || x > now.toEpochMilli())
+          )
+            InvalidArgumentException(
+              "Invalid ShardIterator, the the time argument must be between 0 and now"
+            ).invalidNel
+          else Valid(()),
+          if (now.toEpochMilli() - iteratorTimeMillis.toLong > 300000)
+            InvalidArgumentException(
+              "The shard iterator has expired. Shard iterators are only avlid for 300 seconds"
+            ).invalidNel
+          else Valid(())
+        ).mapN((_, _, _, _, _, _) => (streamName, shardId, sequenceNumber))
+      }
+    }
+  }
+}
 
 object ShardIterator {
 
@@ -23,7 +80,7 @@ object ShardIterator {
   private val iteratorPwdIv = new IvParameterSpec(
     DatatypeConverter.parseHexBinary("7bf139dbabbea2d9995d6fcae1dff7da")
   )
-  
+
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L252
   def create(
       streamName: String,

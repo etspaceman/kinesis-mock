@@ -431,6 +431,12 @@ class Cache private (
         .toEither
         .leftMap(KinesisMockException.aggregate)
     )
+  def getRecords(
+      req: GetRecordsRequest
+  ): IO[Either[KinesisMockException, GetRecordsResponse]] =
+    ref.get.map(streams =>
+      req.getRecords(streams).toEither.leftMap(KinesisMockException.aggregate)
+    )
 }
 
 object Cache {
