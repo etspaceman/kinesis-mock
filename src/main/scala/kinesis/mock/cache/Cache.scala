@@ -1,6 +1,7 @@
 package kinesis.mock
 package cache
 
+import cats.Parallel
 import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.syntax.all._
@@ -444,6 +445,19 @@ class Cache private (
     streams <- ref.get
     put <- req
       .putRecord(streams)
+      .map(_.toEither.leftMap(KinesisMockException.aggregate))
+    _ <- put.traverse { case (updated, _) => ref.set(updated) }
+    res = put.map(_._2)
+  } yield res
+
+  def putRecords(
+      req: PutRecordsRequest
+  )(implicit
+      P: Parallel[IO]
+  ): IO[Either[KinesisMockException, PutRecordsResponse]] = for {
+    streams <- ref.get
+    put <- req
+      .putRecords(streams)
       .map(_.toEither.leftMap(KinesisMockException.aggregate))
     _ <- put.traverse { case (updated, _) => ref.set(updated) }
     res = put.map(_._2)
