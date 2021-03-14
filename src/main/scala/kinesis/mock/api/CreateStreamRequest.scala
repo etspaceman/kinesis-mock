@@ -3,7 +3,6 @@ package api
 
 import cats.data.Validated._
 import cats.data._
-import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe._
 
@@ -15,7 +14,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: String) {
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: String
-  )(implicit C: Concurrent[IO]): ValidatedNel[KinesisMockException, Streams] =
+  ): ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])] =
     (
       CommonValidations.validateStreamName(streamName),
       if (streams.streams.get(streamName).nonEmpty)

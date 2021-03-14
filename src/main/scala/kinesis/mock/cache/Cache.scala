@@ -3,7 +3,7 @@ package cache
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.Ref
+import cats.effect.concurrent.{Ref, Semaphore}
 import cats.syntax.all._
 
 import kinesis.mock.api._
@@ -11,7 +11,8 @@ import kinesis.mock.models._
 import kinesis.mock.syntax.semaphore._
 
 class Cache private (
-    ref: Ref[IO, Streams],
+    streamsRef: Ref[IO, Streams],
+    shardsSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
     semaphores: CacheSemaphores,
     config: CacheConfig
 ) {
@@ -20,10 +21,10 @@ class Cache private (
       req: AddTagsToStreamRequest
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.addTagsToStream.tryAcquireRelease(
-      ref.get.flatMap(streams =>
+      streamsRef.get.flatMap(streams =>
         req
           .addTagsToStream(streams)
-          .traverse(ref.set)
+          .traverse(streamsRef.set)
           .map(_.toEither.leftMap(KinesisMockException.aggregate))
       ),
       IO.pure(
@@ -39,12 +40,12 @@ class Cache private (
       req: RemoveTagsFromStreamRequest
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.removeTagsFromStream.tryAcquireRelease(
-      ref.get.flatMap(streams =>
+      streamsRef.get.flatMap(streams =>
         req
           .removeTagsFromStream(streams)
           .toEither
           .leftMap(KinesisMockException.aggregate)
-          .traverse(ref.set)
+          .traverse(streamsRef.set)
       ),
       IO.pure(
         Left(
@@ -63,7 +64,7 @@ class Cache private (
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.createStream.tryAcquireRelease(
       for {
-        streams <- ref.get
+        streams <- streamsRef.get
         res <- req
           .createStream(
             streams,
@@ -73,11 +74,17 @@ class Cache private (
           )
           .toEither
           .leftMap(KinesisMockException.aggregate)
-          .traverse(updated =>
-            ref.set(updated) *>
-              (IO.sleep(config.createStreamDuration) *>
+          .traverse { case (updated, shardSemaphoreKeys) =>
+            for {
+              _ <- streamsRef.set(updated)
+              newShardSemaphores <- shardSemaphoreKeys
+                .traverse(key => Semaphore[IO](1).map(s => key -> s))
+              _ <- shardsSemaphoresRef.update(shardSemaphores =>
+                shardSemaphores ++ newShardSemaphores
+              )
+              r <- (IO.sleep(config.createStreamDuration) *>
                 // Update the stream as ACTIVE after a small, configured delay
-                ref
+                streamsRef
                   .set(
                     updated.findAndUpdateStream(req.streamName)(x =>
                       x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -85,7 +92,9 @@ class Cache private (
                   )
                   .start
                   .void)
-          )
+            } yield r
+
+          }
       } yield res,
       IO.pure(
         Left(
@@ -104,19 +113,25 @@ class Cache private (
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.deleteStream.tryAcquireRelease(
       for {
-        streams <- ref.get
+        streams <- streamsRef.get
         res <- req
           .deleteStream(streams)
           .toEither
           .leftMap(KinesisMockException.aggregate)
-          .traverse(updated =>
-            ref.set(updated) *>
-              (IO.sleep(config.deleteStreamDuration) *>
+          .traverse { case (updated, shardSemaphoreKeys) =>
+            for {
+              _ <- streamsRef.set(updated)
+              _ <- shardsSemaphoresRef.update(shardsSemaphores =>
+                shardsSemaphores -- shardSemaphoreKeys
+              )
+              r <- (IO.sleep(config.deleteStreamDuration) *>
                 // Remove the stream after a small, configured delay
-                ref.set(
+                streamsRef.set(
                   updated.removeStream(req.streamName)
                 )).start.void
-          )
+            } yield r
+
+          }
       } yield res,
       IO.pure(
         Left(
@@ -130,28 +145,28 @@ class Cache private (
   def decreaseStreamRetention(
       req: DecreaseStreamRetentionRequest
   ): IO[Either[KinesisMockException, Unit]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .decreaseStreamRetention(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse(ref.set)
+        .traverse(streamsRef.set)
     )
 
   def increaseStreamRetention(
       req: IncreaseStreamRetentionRequest
   ): IO[Either[KinesisMockException, Unit]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .increaseStreamRetention(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse(ref.set)
+        .traverse(streamsRef.set)
     )
 
   def describeLimits: IO[Either[KinesisMockException, DescribeLimitsResponse]] =
     semaphores.describeLimits.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         Right(DescribeLimitsResponse.get(config.shardLimit, streams))
       ),
       IO.pure(
@@ -163,7 +178,7 @@ class Cache private (
       req: DescribeStreamRequest
   ): IO[Either[KinesisMockException, DescribeStreamResponse]] =
     semaphores.describeStream.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .describeStream(streams)
           .toEither
@@ -178,7 +193,7 @@ class Cache private (
       req: DescribeStreamSummaryRequest
   ): IO[Either[KinesisMockException, DescribeStreamSummaryResponse]] =
     semaphores.describeStream.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .describeStreamSummary(streams)
           .toEither
@@ -200,13 +215,13 @@ class Cache private (
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, RegisterStreamConsumerResponse]] =
     semaphores.registerStreamConsumer.tryAcquireRelease(
-      ref.get.flatMap(streams =>
+      streamsRef.get.flatMap(streams =>
         req
           .registerStreamConsumer(streams)
           .toEither
           .leftMap(KinesisMockException.aggregate)
           .traverse { case (updated, response) =>
-            ref
+            streamsRef
               .set(updated)
               .flatMap { _ =>
                 (IO.sleep(config.registerStreamConsumerDuration) *>
@@ -214,7 +229,7 @@ class Cache private (
                   updated.streams.values
                     .find(_.streamArn == req.streamArn)
                     .traverse(stream =>
-                      ref.set(
+                      streamsRef.set(
                         updated.updateStream(
                           stream.copy(consumers =
                             stream.consumers + (response.consumer.consumerName -> response.consumer
@@ -243,13 +258,13 @@ class Cache private (
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, Unit]] =
     semaphores.deregisterStreamConsumer.tryAcquireRelease(
-      ref.get.flatMap(streams =>
+      streamsRef.get.flatMap(streams =>
         req
           .deregisterStreamConsumer(streams)
           .toEither
           .leftMap(KinesisMockException.aggregate)
           .traverse { case (updated, consumer) =>
-            ref
+            streamsRef
               .set(updated)
               .flatMap { _ =>
                 (IO.sleep(config.deregisterStreamConsumerDuration) *>
@@ -257,7 +272,7 @@ class Cache private (
                   updated.streams.values
                     .find(_.streamArn == req.streamArn)
                     .traverse(stream =>
-                      ref.set(
+                      streamsRef.set(
                         updated.updateStream(
                           stream.copy(consumers =
                             stream.consumers - consumer.consumerName
@@ -281,7 +296,7 @@ class Cache private (
       req: DescribeStreamConsumerRequest
   ): IO[Either[KinesisMockException, DescribeStreamConsumerResponse]] =
     semaphores.describeStreamConsumer.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .describeStreamConsumer(streams)
           .toEither
@@ -297,30 +312,34 @@ class Cache private (
   def disableEnhancedMonitoring(
       req: DisableEnhancedMonitoringRequest
   ): IO[Either[KinesisMockException, DisableEnhancedMonitoringResponse]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .disableEnhancedMonitoring(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse { case (updated, response) => ref.set(updated).as(response) }
+        .traverse { case (updated, response) =>
+          streamsRef.set(updated).as(response)
+        }
     )
 
   def enableEnhancedMonitoring(
       req: EnableEnhancedMonitoringRequest
   ): IO[Either[KinesisMockException, EnableEnhancedMonitoringResponse]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .enableEnhancedMonitoring(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
-        .traverse { case (updated, response) => ref.set(updated).as(response) }
+        .traverse { case (updated, response) =>
+          streamsRef.set(updated).as(response)
+        }
     )
 
   def listShards(
       req: ListShardsRequest
   ): IO[Either[KinesisMockException, ListShardsResponse]] =
     semaphores.listShards.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req.listShards(streams).toEither.leftMap(KinesisMockException.aggregate)
       ),
       IO.pure(Left(LimitExceededException("Limit exceeded for ListShards")))
@@ -330,7 +349,7 @@ class Cache private (
       req: ListStreamConsumersRequest
   ): IO[Either[KinesisMockException, ListStreamConsumersResponse]] =
     semaphores.listStreamConsumers.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .listStreamConsumers(streams)
           .toEither
@@ -345,7 +364,7 @@ class Cache private (
       req: ListStreamsRequest
   ): IO[Either[KinesisMockException, ListStreamsResponse]] =
     semaphores.listStreams.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .listStreams(streams)
           .toEither
@@ -360,7 +379,7 @@ class Cache private (
       req: ListTagsForStreamRequest
   ): IO[Either[KinesisMockException, ListTagsForStreamResponse]] =
     semaphores.listTagsForStream.tryAcquireRelease(
-      ref.get.map(streams =>
+      streamsRef.get.map(streams =>
         req
           .listTagsForStream(streams)
           .toEither
@@ -377,16 +396,16 @@ class Cache private (
       T: Timer[IO],
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, Unit]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .startStreamEncryption(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
         .traverse(updated =>
-          ref.set(updated) *>
+          streamsRef.set(updated) *>
             (IO.sleep(config.startStreamEncryptionDuration) *>
               // Update the stream as ACTIVE after a small, configured delay
-              ref
+              streamsRef
                 .set(
                   updated.findAndUpdateStream(req.streamName)(x =>
                     x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -403,16 +422,16 @@ class Cache private (
       T: Timer[IO],
       CS: ContextShift[IO]
   ): IO[Either[KinesisMockException, Unit]] =
-    ref.get.flatMap(streams =>
+    streamsRef.get.flatMap(streams =>
       req
         .stopStreamEncryption(streams)
         .toEither
         .leftMap(KinesisMockException.aggregate)
         .traverse(updated =>
-          ref.set(updated) *>
+          streamsRef.set(updated) *>
             (IO.sleep(config.stopStreamEncryptionDuration) *>
               // Update the stream as ACTIVE after a small, configured delay
-              ref
+              streamsRef
                 .set(
                   updated.findAndUpdateStream(req.streamName)(x =>
                     x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -426,7 +445,7 @@ class Cache private (
   def getShardIterator(
       req: GetShardIteratorRequest
   ): IO[Either[KinesisMockException, GetShardIteratorResponse]] =
-    ref.get.map(streams =>
+    streamsRef.get.map(streams =>
       req
         .getShardIterator(streams)
         .toEither
@@ -435,18 +454,19 @@ class Cache private (
   def getRecords(
       req: GetRecordsRequest
   ): IO[Either[KinesisMockException, GetRecordsResponse]] =
-    ref.get.map(streams =>
+    streamsRef.get.map(streams =>
       req.getRecords(streams).toEither.leftMap(KinesisMockException.aggregate)
     )
 
   def putRecord(
       req: PutRecordRequest
   ): IO[Either[KinesisMockException, PutRecordResponse]] = for {
-    streams <- ref.get
+    streams <- streamsRef.get
+    shardSemaphores <- shardsSemaphoresRef.get
     put <- req
-      .putRecord(streams)
+      .putRecord(streams, shardSemaphores)
       .map(_.toEither.leftMap(KinesisMockException.aggregate))
-    _ <- put.traverse { case (updated, _) => ref.set(updated) }
+    _ <- put.traverse { case (updated, _) => streamsRef.set(updated) }
     res = put.map(_._2)
   } yield res
 
@@ -455,11 +475,12 @@ class Cache private (
   )(implicit
       P: Parallel[IO]
   ): IO[Either[KinesisMockException, PutRecordsResponse]] = for {
-    streams <- ref.get
+    streams <- streamsRef.get
+    shardSemaphores <- shardsSemaphoresRef.get
     put <- req
-      .putRecords(streams)
+      .putRecords(streams, shardSemaphores)
       .map(_.toEither.leftMap(KinesisMockException.aggregate))
-    _ <- put.traverse { case (updated, _) => ref.set(updated) }
+    _ <- put.traverse { case (updated, _) => streamsRef.set(updated) }
     res = put.map(_._2)
   } yield res
 }
@@ -467,6 +488,9 @@ class Cache private (
 object Cache {
   def apply(config: CacheConfig)(implicit C: Concurrent[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](Streams.empty)
+    shardsSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+      Map.empty
+    )
     semaphores <- CacheSemaphores.create
-  } yield new Cache(ref, semaphores, config)
+  } yield new Cache(ref, shardsSemaphoresRef, semaphores, config)
 }

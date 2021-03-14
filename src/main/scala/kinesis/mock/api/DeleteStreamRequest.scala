@@ -14,7 +14,7 @@ final case class DeleteStreamRequest(
 ) {
   def deleteStream(
       streams: Streams
-  ): ValidatedNel[KinesisMockException, Streams] =
+  ): ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])] =
     CommonValidations
       .findStream(streamName, streams)
       .andThen(stream =>

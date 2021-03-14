@@ -5,8 +5,6 @@ import scala.concurrent.duration._
 
 import java.time.Instant
 
-import cats.effect.{Concurrent, IO}
-
 final case class StreamData(
     consumers: Map[String, Consumer],
     encryptionType: EncryptionType,
@@ -33,7 +31,7 @@ object StreamData {
       streamName: String,
       awsRegion: AwsRegion,
       awsAccountId: String
-  )(implicit C: Concurrent[IO]): StreamData = {
+  ): (StreamData, List[ShardSemaphoresKey]) = {
     val shardHash = maxHashKey / BigInt(shardCount)
     val createTime = Instant.now().minusMillis(seqAdjustMs)
     val shards: SortedMap[Shard, List[KinesisRecord]] =
@@ -60,18 +58,21 @@ object StreamData {
             ) -> List.empty
           )
       )
-    StreamData(
-      Map.empty,
-      EncryptionType.NONE,
-      List(ShardLevelMetrics(List.empty)),
-      None,
-      minRetentionPeriod,
-      shards,
-      s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
-      Instant.now(),
-      streamName,
-      StreamStatus.CREATING,
-      Map.empty
+    (
+      StreamData(
+        Map.empty,
+        EncryptionType.NONE,
+        List(ShardLevelMetrics(List.empty)),
+        None,
+        minRetentionPeriod,
+        shards,
+        s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
+        Instant.now(),
+        streamName,
+        StreamStatus.CREATING,
+        Map.empty
+      ),
+      shards.keys.toList.map(shard => ShardSemaphoresKey(streamName, shard))
     )
   }
 }

@@ -3,8 +3,6 @@ package models
 
 import scala.collection.SortedMap
 
-import cats.effect.{Concurrent, IO}
-
 final case class Streams(streams: Map[String, StreamData]) {
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams + (stream.streamName -> stream))
@@ -21,30 +19,41 @@ final case class Streams(streams: Map[String, StreamData]) {
       streamName: String,
       awsRegion: AwsRegion,
       awsAccountId: String
-  )(implicit C: Concurrent[IO]): Streams =
-    copy(streams =
-      streams + (streamName -> StreamData.create(
-        shardCount,
-        streamName,
-        awsRegion,
-        awsAccountId
-      ))
+  ): (Streams, List[ShardSemaphoresKey]) = {
+    val created = StreamData.create(
+      shardCount,
+      streamName,
+      awsRegion,
+      awsAccountId
     )
 
-  def deleteStream(streamName: String) =
-    copy(streams =
-      streams ++ streams
+    (copy(streams = streams + (streamName -> created._1)), created._2)
+  }
+
+  def deleteStream(streamName: String): (Streams, List[ShardSemaphoresKey]) =
+    (
+      copy(streams =
+        streams ++ streams
+          .get(streamName)
+          .map(stream =>
+            (streamName -> stream.copy(
+              shards = SortedMap.empty,
+              streamStatus = StreamStatus.DELETING,
+              tags = Map.empty,
+              enhancedMonitoring = List.empty,
+              consumers = Map.empty
+            ))
+          )
+          .toMap
+      ),
+      streams
         .get(streamName)
-        .map(stream =>
-          (streamName -> stream.copy(
-            shards = SortedMap.empty,
-            streamStatus = StreamStatus.DELETING,
-            tags = Map.empty,
-            enhancedMonitoring = List.empty,
-            consumers = Map.empty
-          ))
+        .toList
+        .flatMap(x =>
+          x.shards.keys.toList.map(shard =>
+            ShardSemaphoresKey(x.streamName, shard)
+          )
         )
-        .toMap
     )
 
   def removeStream(streamName: String) =

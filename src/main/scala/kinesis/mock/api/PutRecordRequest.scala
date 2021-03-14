@@ -9,10 +9,11 @@ import java.util.Base64
 import cats.data.Validated._
 import cats.data._
 import cats.effect.IO
+import cats.effect.concurrent.Semaphore
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.models.{SequenceNumber, _}
+import kinesis.mock.models._
 
 final case class PutRecordRequest(
     data: Array[Byte],
@@ -22,7 +23,8 @@ final case class PutRecordRequest(
     streamName: String
 ) {
   def putRecord(
-      streams: Streams
+      streams: Streams,
+      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]]
   ): IO[ValidatedNel[KinesisMockException, (Streams, PutRecordResponse)]] = {
     val now = Instant.now()
     CommonValidations
@@ -30,6 +32,7 @@ final case class PutRecordRequest(
       .andThen { stream =>
         (
           CommonValidations.validateStreamName(streamName),
+          CommonValidations.isStreamActive(streamName, streams),
           sequenceNumberForOrdering match {
             case None => Valid(())
             case Some(seqNo) =>
@@ -49,7 +52,7 @@ final case class PutRecordRequest(
             case None => Valid(())
           },
           CommonValidations.computeShard(partitionKey, explicitHashKey, stream)
-        ).mapN { case (_, _, _, _, (shard, records)) =>
+        ).mapN { case (_, _, _, _, _, (shard, records)) =>
           (stream, shard, records)
         }
       }
@@ -62,7 +65,7 @@ final case class PutRecordRequest(
           Some(now)
         )
         // Use a semaphore to ensure synchronous operations on the shard
-        shard.semaphore.acquire.map(_ =>
+        shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire.map(_ =>
           (
             streams.updateStream(
               stream.copy(

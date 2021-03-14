@@ -8,17 +8,24 @@ import cats.Parallel
 import cats.data.Validated._
 import cats.data._
 import cats.effect.IO
+import cats.effect.concurrent.Semaphore
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.models.{KinesisRecord, SequenceNumber, Streams}
+import kinesis.mock.models.{
+  KinesisRecord,
+  SequenceNumber,
+  ShardSemaphoresKey,
+  Streams
+}
 
 final case class PutRecordsRequest(
     records: List[PutRecordsRequestEntry],
     streamName: String
 ) {
   def putRecords(
-      streams: Streams
+      streams: Streams,
+      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]]
   )(implicit
       P: Parallel[IO]
   ): IO[ValidatedNel[KinesisMockException, (Streams, PutRecordsResponse)]] = {
@@ -29,6 +36,7 @@ final case class PutRecordsRequest(
       .andThen { stream =>
         (
           CommonValidations.validateStreamName(streamName),
+          CommonValidations.isStreamActive(streamName, streams),
           records.traverse(x =>
             (
               CommonValidations.validatePartitionKey(x.partitionKey),
@@ -41,7 +49,7 @@ final case class PutRecordsRequest(
                 .computeShard(x.partitionKey, x.explicitHashKey, stream)
             ).mapN { case (_, _, (shard, records)) => (shard, records, x) }
           )
-        ).mapN((_, recs) => (stream, recs))
+        ).mapN((_, _, recs) => (stream, recs))
       }
       .traverse { case (stream, recs) =>
         val grouped = recs
@@ -79,14 +87,15 @@ final case class PutRecordsRequest(
 
         grouped
           .parTraverse { case ((shard, currentRecords), recordsToAdd) =>
-            shard.semaphore.acquire.map(_ =>
-              (
-                shard,
+            shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire.map(
+              _ =>
                 (
-                  (currentRecords ++ recordsToAdd.map(_._1)),
-                  recordsToAdd.map(_._2)
+                  shard,
+                  (
+                    (currentRecords ++ recordsToAdd.map(_._1)),
+                    recordsToAdd.map(_._2)
+                  )
                 )
-              )
             )
           }
           .map { newShards =>
