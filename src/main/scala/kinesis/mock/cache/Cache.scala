@@ -437,6 +437,17 @@ class Cache private (
     ref.get.map(streams =>
       req.getRecords(streams).toEither.leftMap(KinesisMockException.aggregate)
     )
+
+  def putRecord(
+      req: PutRecordRequest
+  ): IO[Either[KinesisMockException, PutRecordResponse]] = for {
+    streams <- ref.get
+    put <- req
+      .putRecord(streams)
+      .map(_.toEither.leftMap(KinesisMockException.aggregate))
+    _ <- put.traverse { case (updated, _) => ref.set(updated) }
+    res = put.map(_._2)
+  } yield res
 }
 
 object Cache {

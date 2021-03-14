@@ -10,6 +10,11 @@ object LibraryDependencies {
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
 
+  object Aws {
+    val sdkVersion = "2.16.18"
+    val utils = "software.amazon.awssdk" % "utils" % sdkVersion
+  }
+
   object Http4s {
     val http4sVersion = "0.21.16"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion

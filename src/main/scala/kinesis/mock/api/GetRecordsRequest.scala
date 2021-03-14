@@ -17,14 +17,14 @@ final case class GetRecordsRequest(
   def getRecords(
       streams: Streams
   ): ValidatedNel[KinesisMockException, GetRecordsResponse] =
-    shardIterator.parse.andThen { case (streamName, shardId, sequenceNumber) =>
+    shardIterator.parse.andThen { case parts =>
       CommonValidations
-        .isStreamActive(streamName, streams)
+        .isStreamActive(parts.streamName, streams)
         .andThen(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(parts.streamName, streams)
             .andThen(stream =>
-              CommonValidations.findShard(shardId, stream).andThen {
+              CommonValidations.findShard(parts.shardId, stream).andThen {
                 case (shard, data) =>
                   (limit match {
                     case Some(l) => CommonValidations.validateLimit(l)
@@ -41,7 +41,8 @@ final case class GetRecordsRequest(
                               .filter(_.parentShardId.contains(s.shardId))
                           )
                         )
-                      data.find(_.sequenceNumber == sequenceNumber) match {
+                      data
+                        .find(_.sequenceNumber == parts.sequenceNumber) match {
                         case Some(record) if record == data.last =>
                           Valid(
                             GetRecordsResponse(
@@ -74,8 +75,8 @@ final case class GetRecordsRequest(
                               childShards,
                               millisBehindLatest,
                               ShardIterator.create(
-                                streamName,
-                                shardId,
+                                parts.streamName,
+                                parts.shardId,
                                 records.last.sequenceNumber
                               ),
                               records

@@ -3,11 +3,13 @@ package api
 
 import scala.util.Try
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import cats.data.Validated._
 import cats.data._
 import cats.syntax.all._
+import software.amazon.awssdk.utils.Md5Utils
 
 import kinesis.mock.models._
 
@@ -283,4 +285,58 @@ object CommonValidations {
       case Some(x) => Valid(x)
     }
 
+  def computeShard(
+      partitionKey: String,
+      explicitHashKey: Option[String],
+      stream: StreamData
+  ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] = {
+    Try(
+      Md5Utils.computeMD5Hash(
+        explicitHashKey
+          .getOrElse(partitionKey)
+          .getBytes(StandardCharsets.US_ASCII)
+      )
+    ).toValidated
+      .leftMap(e =>
+        NonEmptyList.one(
+          InvalidArgumentException(
+            s"Could not compute MD5 hash, ${e.getMessage()}"
+          )
+        )
+      )
+      .andThen { hashBytes =>
+        val hashInt = BigInt.apply(1, hashBytes)
+
+        stream.shards
+          .collectFirst {
+            case (shard, data)
+                if hashInt >= shard.hashKeyRange.startingHashKey && hashInt <= shard.hashKeyRange.endingHashKey =>
+              (shard, data)
+          } match {
+          case None =>
+            InvalidArgumentException(
+              "Could not find shard for partitionKey"
+            ).invalidNel
+          case Some(x) => Valid(x)
+        }
+      }
+  }
+
+  def validateExplicitHashKey(
+      explicitHashKey: String
+  ): ValidatedNel[KinesisMockException, String] =
+    if (!explicitHashKey.matches("0|([1-9]\\d{0,38})"))
+      InvalidArgumentException(
+        "ExplicitHashKey contains invalid characters"
+      ).invalidNel
+    else Valid(explicitHashKey)
+
+  def validatePartitionKey(
+      partitionKey: String
+  ): ValidatedNel[KinesisMockException, String] =
+    if (partitionKey.isEmpty() || partitionKey.length > 256)
+      InvalidArgumentException(
+        "Partition key must be between 1 and 256 in length"
+      ).invalidNel
+    else Valid(partitionKey)
 }

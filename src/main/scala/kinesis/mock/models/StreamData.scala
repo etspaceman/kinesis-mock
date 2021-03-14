@@ -5,6 +5,8 @@ import scala.concurrent.duration._
 
 import java.time.Instant
 
+import cats.effect.{Concurrent, IO}
+
 final case class StreamData(
     consumers: Map[String, Consumer],
     encryptionType: EncryptionType,
@@ -31,7 +33,7 @@ object StreamData {
       streamName: String,
       awsRegion: AwsRegion,
       awsAccountId: String
-  ): StreamData = {
+  )(implicit C: Concurrent[IO]): StreamData = {
     val shardHash = maxHashKey / BigInt(shardCount)
     val createTime = Instant.now().minusMillis(seqAdjustMs)
     val shards: SortedMap[Shard, List[KinesisRecord]] =

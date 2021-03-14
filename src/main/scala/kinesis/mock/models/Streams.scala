@@ -3,6 +3,8 @@ package models
 
 import scala.collection.SortedMap
 
+import cats.effect.{Concurrent, IO}
+
 final case class Streams(streams: Map[String, StreamData]) {
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams + (stream.streamName -> stream))
@@ -19,7 +21,7 @@ final case class Streams(streams: Map[String, StreamData]) {
       streamName: String,
       awsRegion: AwsRegion,
       awsAccountId: String
-  ): Streams =
+  )(implicit C: Concurrent[IO]): Streams =
     copy(streams =
       streams + (streamName -> StreamData.create(
         shardCount,

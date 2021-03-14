@@ -5,6 +5,7 @@ name := "kinesis-mock"
 description := "A Mock API for AWS Kinesis using FS2 and Http4s"
 scalaVersion := "2.13.4"
 libraryDependencies ++= Seq(
+  Aws.utils,
   Http4s.blazeServer,
   Http4s.circe,
   Http4s.dsl,

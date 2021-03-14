@@ -18,8 +18,7 @@ import kinesis.mock.InvalidArgumentException
 import kinesis.mock.models.SequenceNumber
 
 final case class ShardIterator(value: String) {
-  def parse
-      : ValidatedNel[KinesisMockException, (String, String, SequenceNumber)] = {
+  def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     val decoded = Base64.getDecoder().decode(value)
     if (decoded.length < 152 || decoded.length > 280)
@@ -63,11 +62,19 @@ final case class ShardIterator(value: String) {
               "The shard iterator has expired. Shard iterators are only avlid for 300 seconds"
             ).invalidNel
           else Valid(())
-        ).mapN((_, _, _, _, _, _) => (streamName, shardId, sequenceNumber))
+        ).mapN((_, _, _, _, _, _) =>
+          ShardIteratorParts(streamName, shardId, sequenceNumber)
+        )
       }
     }
   }
 }
+
+final case class ShardIteratorParts(
+    streamName: String,
+    shardId: String,
+    sequenceNumber: SequenceNumber
+)
 
 object ShardIterator {
 
