@@ -279,7 +279,7 @@ object CommonValidations {
   ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] =
     stream.shards.find { case (shard, _) => shard.shardId == shardId } match {
       case None =>
-        InvalidArgumentException(
+        ResourceNotFoundException(
           s"Could not find shardId $shardId in stream ${stream.streamName}"
         ).invalidNel
       case Some(x) => Valid(x)

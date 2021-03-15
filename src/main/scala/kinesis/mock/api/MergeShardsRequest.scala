@@ -26,22 +26,38 @@ final case class MergeShardsRequest(
       .andThen { stream =>
         (
           CommonValidations.validateStreamName(streamName),
+          CommonValidations.isStreamActive(streamName, streams),
           CommonValidations.validateShardId(shardToMerge),
           CommonValidations.validateShardId(adjacentShardToMerge),
           CommonValidations.findShard(adjacentShardToMerge, stream).andThen {
             case (adjacentShard, adjacentData) =>
-              CommonValidations.findShard(shardToMerge, stream).andThen {
-                case (shard, shardData) =>
-                  if (adjacentShard.hashKeyRange.isAdjacent(shard.hashKeyRange))
-                    Valid(((adjacentShard, adjacentData), (shard, shardData)))
-                  else
-                    InvalidArgumentException(
-                      "Provided shards are not adjacent"
-                    ).invalidNel
+              CommonValidations.isShardOpen(adjacentShard).andThen { _ =>
+                CommonValidations.findShard(shardToMerge, stream).andThen {
+                  case (shard, shardData) =>
+                    CommonValidations.isShardOpen(shard).andThen { _ =>
+                      if (
+                        adjacentShard.hashKeyRange
+                          .isAdjacent(shard.hashKeyRange)
+                      )
+                        Valid(
+                          ((adjacentShard, adjacentData), (shard, shardData))
+                        )
+                      else
+                        InvalidArgumentException(
+                          "Provided shards are not adjacent"
+                        ).invalidNel
+                    }
+                }
               }
           }
         ).mapN {
-          case (_, _, _, ((adjacentShard, adjacentData), (shard, shardData))) =>
+          case (
+                _,
+                _,
+                _,
+                _,
+                ((adjacentShard, adjacentData), (shard, shardData))
+              ) =>
             (stream, (adjacentShard, adjacentData), (shard, shardData))
         }
       }
@@ -74,7 +90,7 @@ final case class MergeShardsRequest(
             ),
             Shard.shardId(newShardIndex),
             newShardIndex
-          ) -> (adjacentData ++ shardData).sortBy(_.sequenceNumber.numericValue)
+          ) -> List.empty
 
           val oldShards: List[(Shard, List[KinesisRecord])] = List(
             adjacentShard.copy(

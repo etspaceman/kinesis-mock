@@ -489,31 +489,72 @@ class Cache private (
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
-  ): IO[Either[KinesisMockException, Unit]] = for {
-    streams <- streamsRef.get
-    shardSemaphores <- shardsSemaphoresRef.get
-    result <- req
-      .mergeShards(streams, shardSemaphores)
-      .map(_.toEither.leftMap(KinesisMockException.aggregate))
-    res <- result.traverse { case (updated, newShardsSemaphoreKey) =>
-      streamsRef.set(updated) *>
-        Semaphore[IO](1).flatMap(semaphore =>
-          shardsSemaphoresRef.update(shardsSemaphore =>
-            shardsSemaphore ++ List(newShardsSemaphoreKey -> semaphore)
-          )
-        )
-      (IO.sleep(config.mergeShardsDuration) *>
-        // Update the stream as ACTIVE after a small, configured delay
-        streamsRef
-          .set(
-            updated.findAndUpdateStream(req.streamName)(x =>
-              x.copy(streamStatus = StreamStatus.ACTIVE)
+  ): IO[Either[KinesisMockException, Unit]] =
+    semaphores.mergeShards.tryAcquireRelease(
+      for {
+        streams <- streamsRef.get
+        shardSemaphores <- shardsSemaphoresRef.get
+        result <- req
+          .mergeShards(streams, shardSemaphores)
+          .map(_.toEither.leftMap(KinesisMockException.aggregate))
+        res <- result.traverse { case (updated, newShardsSemaphoreKey) =>
+          streamsRef.set(updated) *>
+            Semaphore[IO](1).flatMap(semaphore =>
+              shardsSemaphoresRef.update(shardsSemaphore =>
+                shardsSemaphore ++ List(newShardsSemaphoreKey -> semaphore)
+              )
             )
-          )
-          .start
-          .void)
-    }
-  } yield res
+          (IO.sleep(config.mergeShardsDuration) *>
+            // Update the stream as ACTIVE after a small, configured delay
+            streamsRef
+              .set(
+                updated.findAndUpdateStream(req.streamName)(x =>
+                  x.copy(streamStatus = StreamStatus.ACTIVE)
+                )
+              )
+              .start
+              .void)
+        }
+      } yield res,
+      IO.pure(Left(LimitExceededException("Limit Exceeded for MergeShards")))
+    )
+
+  def splitShard(
+      req: SplitShardRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] =
+    semaphores.splitShard.tryAcquireRelease(
+      for {
+        streams <- streamsRef.get
+        shardSemaphores <- shardsSemaphoresRef.get
+        result <- req
+          .splitShard(streams, shardSemaphores)
+          .map(_.toEither.leftMap(KinesisMockException.aggregate))
+        res <- result.traverse { case (updated, newShardsSemaphoreKeys) =>
+          streamsRef.set(updated) *>
+            Semaphore[IO](1)
+              .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
+              .flatMap(semaphores =>
+                shardsSemaphoresRef.update(shardsSemaphore =>
+                  shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
+                )
+              )
+          (IO.sleep(config.splitShardDuration) *>
+            // Update the stream as ACTIVE after a small, configured delay
+            streamsRef
+              .set(
+                updated.findAndUpdateStream(req.streamName)(x =>
+                  x.copy(streamStatus = StreamStatus.ACTIVE)
+                )
+              )
+              .start
+              .void)
+        }
+      } yield res,
+      IO.pure(Left(LimitExceededException("Limit Exceeded for SplitShard")))
+    )
 }
 
 object Cache {
