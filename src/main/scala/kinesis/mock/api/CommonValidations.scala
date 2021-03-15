@@ -91,6 +91,22 @@ object CommonValidations {
       ).invalidNel
     else streamName.valid
 
+  def isStreamActiveOrUpdating(
+      streamName: String,
+      streams: Streams
+  ): ValidatedNel[KinesisMockException, String] =
+    if (
+      streams.streams
+        .get(streamName)
+        .exists(x =>
+          x.streamStatus != StreamStatus.ACTIVE || x.streamStatus != StreamStatus.UPDATING
+        )
+    )
+      ResourceInUseException(
+        s"Stream ${streamName} is not currently ACTIVE or UPDATING."
+      ).invalidNel
+    else streamName.valid
+
   def validateShardLimit(
       shardCountToAdd: Int,
       streams: Streams,

@@ -32,7 +32,7 @@ final case class PutRecordRequest(
       .andThen { stream =>
         (
           CommonValidations.validateStreamName(streamName),
-          CommonValidations.isStreamActive(streamName, streams),
+          CommonValidations.isStreamActiveOrUpdating(streamName, streams),
           sequenceNumberForOrdering match {
             case None => Valid(())
             case Some(seqNo) =>

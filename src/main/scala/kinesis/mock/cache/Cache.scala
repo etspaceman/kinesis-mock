@@ -530,7 +530,7 @@ class Cache private (
         streams <- streamsRef.get
         shardSemaphores <- shardsSemaphoresRef.get
         result <- req
-          .splitShard(streams, shardSemaphores)
+          .splitShard(streams, shardSemaphores, config.shardLimit)
           .map(_.toEither.leftMap(KinesisMockException.aggregate))
         res <- result.traverse { case (updated, newShardsSemaphoreKeys) =>
           streamsRef.set(updated) *>
@@ -555,6 +555,41 @@ class Cache private (
       } yield res,
       IO.pure(Left(LimitExceededException("Limit Exceeded for SplitShard")))
     )
+
+  def updateShardCount(
+      req: UpdateShardCountRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] =
+    for {
+      streams <- streamsRef.get
+      shardSemaphores <- shardsSemaphoresRef.get
+      result <- req
+        .updateShardCount(streams, shardSemaphores, config.shardLimit)
+        .map(_.toEither.leftMap(KinesisMockException.aggregate))
+      res <- result.traverse { case (updated, newShardsSemaphoreKeys) =>
+        streamsRef.set(updated) *>
+          Semaphore[IO](1)
+            .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
+            .flatMap(semaphores =>
+              shardsSemaphoresRef.update(shardsSemaphore =>
+                shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
+              )
+            )
+        (IO.sleep(config.updateShardCountDuration) *>
+          // Update the stream as ACTIVE after a small, configured delay
+          streamsRef
+            .set(
+              updated.findAndUpdateStream(req.streamName)(x =>
+                x.copy(streamStatus = StreamStatus.ACTIVE)
+              )
+            )
+            .start
+            .void)
+      }
+    } yield res
+
 }
 
 object Cache {

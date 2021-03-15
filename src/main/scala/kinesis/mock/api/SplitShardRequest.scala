@@ -12,6 +12,7 @@ import io.circe._
 
 import kinesis.mock.models._
 
+// https://docs.aws.amazon.com/kinesis/latest/APIReference/API_SplitShard.html
 final case class SplitShardRequest(
     newStartingHashKey: String,
     shardToSplit: String,
@@ -19,7 +20,8 @@ final case class SplitShardRequest(
 ) {
   def splitShard(
       streams: Streams,
-      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]]
+      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]],
+      shardLimit: Int
   ): IO[
     ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])]
   ] = CommonValidations
@@ -34,6 +36,11 @@ final case class SplitShardRequest(
             "NewStartingHashKey contains invalid characters"
           ).invalidNel
         } else Valid(newStartingHashKey),
+        if (streams.streams.values.map(_.shards.size).sum + 1 > shardLimit)
+          LimitExceededException(
+            "Operation would exceed the configured shard limit for the account"
+          ).invalidNel
+        else Valid(()),
         CommonValidations.findShard(shardToSplit, stream).andThen {
           case (shard, shardData) =>
             CommonValidations.isShardOpen(shard).andThen { _ =>
@@ -48,7 +55,7 @@ final case class SplitShardRequest(
                 ).invalidNel
             }
         }
-      ).mapN { case (_, _, _, _, (shard, shardData)) =>
+      ).mapN { case (_, _, _, _, _, (shard, shardData)) =>
         (shard, shardData, stream)
       }
     }

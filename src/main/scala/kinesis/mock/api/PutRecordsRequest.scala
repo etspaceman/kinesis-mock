@@ -36,7 +36,7 @@ final case class PutRecordsRequest(
       .andThen { stream =>
         (
           CommonValidations.validateStreamName(streamName),
-          CommonValidations.isStreamActive(streamName, streams),
+          CommonValidations.isStreamActiveOrUpdating(streamName, streams),
           records.traverse(x =>
             (
               CommonValidations.validatePartitionKey(x.partitionKey),

@@ -12,6 +12,7 @@ import io.circe._
 
 import kinesis.mock.models._
 
+// https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
 final case class MergeShardsRequest(
     adjacentShardToMerge: String,
     shardToMerge: String,

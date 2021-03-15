@@ -21,7 +21,7 @@ final case class GetRecordsRequest(
   ): ValidatedNel[KinesisMockException, GetRecordsResponse] =
     shardIterator.parse.andThen { case parts =>
       CommonValidations
-        .isStreamActive(parts.streamName, streams)
+        .isStreamActiveOrUpdating(parts.streamName, streams)
         .andThen(_ =>
           CommonValidations
             .findStream(parts.streamName, streams)
