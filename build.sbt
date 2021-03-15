@@ -52,3 +52,7 @@ addCommandAlias(
   "prettyCheck",
   ";fixCheck;fmtCheck"
 )
+addCommandAlias(
+  "validate",
+  ";cpl;prettyCheck"
+)
