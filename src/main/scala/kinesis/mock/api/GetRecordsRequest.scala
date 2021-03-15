@@ -3,6 +3,8 @@ package api
 
 import scala.annotation.tailrec
 
+import java.util.Base64
+
 import cats.data.Validated._
 import cats.data._
 import cats.syntax.all._
@@ -31,63 +33,74 @@ final case class GetRecordsRequest(
                     case None    => Valid(())
                   }).andThen {
                     _ =>
-                      val allShards = stream.shards.keys.toList
-                      val childShards = allShards
-                        .filter(_.parentShardId.contains(shard.shardId))
-                        .map(s =>
-                          ChildShard.fromShard(
-                            s,
-                            allShards
-                              .filter(_.parentShardId.contains(s.shardId))
-                          )
-                        )
-                      data
-                        .find(_.sequenceNumber == parts.sequenceNumber) match {
-                        case Some(record) if record == data.last =>
-                          Valid(
-                            GetRecordsResponse(
-                              childShards,
-                              0L,
-                              shardIterator,
-                              List.empty
-                            )
-                          )
+                      CommonValidations
+                        .isShardOpen(shard)
+                        .andThen {
+                          _ =>
+                            val allShards = stream.shards.keys.toList
+                            val childShards = allShards
+                              .filter(_.parentShardId.contains(shard.shardId))
+                              .map(s =>
+                                ChildShard.fromShard(
+                                  s,
+                                  allShards
+                                    .filter(_.parentShardId.contains(s.shardId))
+                                )
+                              )
+                            data
+                              .find(
+                                _.sequenceNumber == parts.sequenceNumber
+                              ) match {
+                              case Some(record) if record == data.last =>
+                                Valid(
+                                  GetRecordsResponse(
+                                    childShards,
+                                    0L,
+                                    shardIterator,
+                                    List.empty
+                                  )
+                                )
 
-                        case Some(record) => {
-                          val maxRecords = limit.getOrElse(10000)
-                          val firstIndex = data.indexOf(record)
-                          val lastIndex =
-                            Math.min(firstIndex + maxRecords, data.length - 1)
+                              case Some(record) => {
+                                val maxRecords = limit.getOrElse(10000)
+                                val firstIndex = data.indexOf(record)
+                                val lastIndex =
+                                  Math.min(
+                                    firstIndex + maxRecords,
+                                    data.length - 1
+                                  )
 
-                          val records = GetRecordsRequest.getRecords(
-                            data.slice(firstIndex, lastIndex),
-                            maxRecords,
-                            List.empty,
-                            0,
-                            0
-                          )
-                          val millisBehindLatest =
-                            data.last.approximateArrivalTimestamp.toEpochMilli -
-                              record.approximateArrivalTimestamp.toEpochMilli()
+                                val records = GetRecordsRequest.getRecords(
+                                  data.slice(firstIndex, lastIndex),
+                                  maxRecords,
+                                  List.empty,
+                                  0,
+                                  0
+                                )
+                                val millisBehindLatest =
+                                  data.last.approximateArrivalTimestamp.toEpochMilli -
+                                    record.approximateArrivalTimestamp
+                                      .toEpochMilli()
 
-                          Valid(
-                            GetRecordsResponse(
-                              childShards,
-                              millisBehindLatest,
-                              ShardIterator.create(
-                                parts.streamName,
-                                parts.shardId,
-                                records.last.sequenceNumber
-                              ),
-                              records
-                            )
-                          )
+                                Valid(
+                                  GetRecordsResponse(
+                                    childShards,
+                                    millisBehindLatest,
+                                    ShardIterator.create(
+                                      parts.streamName,
+                                      parts.shardId,
+                                      records.last.sequenceNumber
+                                    ),
+                                    records
+                                  )
+                                )
+                              }
+                              case None =>
+                                ResourceNotFoundException(
+                                  s"Record for provided SequenceNumber not found"
+                                ).invalidNel
+                            }
                         }
-                        case None =>
-                          ResourceNotFoundException(
-                            s"Record for provided SequenceNumber not found"
-                          ).invalidNel
-                      }
                   }
               }
             )
@@ -106,10 +119,11 @@ object GetRecordsRequest {
       totalSize: Int,
       totalRecords: Int
   ): List[KinesisRecord] = data match {
-    case Nil => results
+    case Nil =>
+      results.map(x => x.copy(data = Base64.getEncoder().encode(x.data)))
     case head :: _
         if head.size + totalSize > maxReturnSize || totalRecords + 1 > maxRecords =>
-      results
+      results.map(x => x.copy(data = Base64.getEncoder().encode(x.data)))
     case head :: tail =>
       getRecords(
         tail,

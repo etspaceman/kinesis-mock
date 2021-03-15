@@ -483,6 +483,37 @@ class Cache private (
     _ <- put.traverse { case (updated, _) => streamsRef.set(updated) }
     res = put.map(_._2)
   } yield res
+
+  def mergeShards(
+      req: MergeShardsRequest
+  )(implicit
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[Either[KinesisMockException, Unit]] = for {
+    streams <- streamsRef.get
+    shardSemaphores <- shardsSemaphoresRef.get
+    result <- req
+      .mergeShards(streams, shardSemaphores)
+      .map(_.toEither.leftMap(KinesisMockException.aggregate))
+    res <- result.traverse { case (updated, newShardsSemaphoreKey) =>
+      streamsRef.set(updated) *>
+        Semaphore[IO](1).flatMap(semaphore =>
+          shardsSemaphoresRef.update(shardsSemaphore =>
+            shardsSemaphore ++ List(newShardsSemaphoreKey -> semaphore)
+          )
+        )
+      (IO.sleep(config.mergeShardsDuration) *>
+        // Update the stream as ACTIVE after a small, configured delay
+        streamsRef
+          .set(
+            updated.findAndUpdateStream(req.streamName)(x =>
+              x.copy(streamStatus = StreamStatus.ACTIVE)
+            )
+          )
+          .start
+          .void)
+    }
+  } yield res
 }
 
 object Cache {

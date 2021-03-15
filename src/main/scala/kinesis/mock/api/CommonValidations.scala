@@ -339,4 +339,9 @@ object CommonValidations {
         "Partition key must be between 1 and 256 in length"
       ).invalidNel
     else Valid(partitionKey)
+
+  def isShardOpen(shard: Shard): ValidatedNel[KinesisMockException, Shard] =
+    if (!shard.isOpen)
+      ResourceInUseException(s"Shard ${shard.shardId} is not active").invalidNel
+    else Valid(shard)
 }

@@ -13,6 +13,7 @@ final case class CacheConfig(
     deregisterStreamConsumerDuration: FiniteDuration,
     startStreamEncryptionDuration: FiniteDuration,
     stopStreamEncryptionDuration: FiniteDuration,
+    mergeShardsDuration: FiniteDuration,
     shardLimit: Int,
     awsAccountId: String,
     awsRegion: AwsRegion
@@ -40,6 +41,11 @@ object CacheConfig {
     )
       .as[FiniteDuration]
       .default(500.millis)
+    mergeShardsDuration <- env(
+      "MERGE_SHARDS_DURATION"
+    )
+      .as[FiniteDuration]
+      .default(500.millis)
     shardLimit <- env("SHARD_LIMIT").as[Int].default(50)
     awsAccountId <- env("AWS_ACCOUNT_ID").as[String].default("000000000000")
     awsRegion <- env("AWS_REGION")
@@ -53,6 +59,7 @@ object CacheConfig {
     deregisterStreamConsumerDuration,
     startStreamEncryptionDuration,
     stopStreamEncryptionDuration,
+    mergeShardsDuration,
     shardLimit,
     awsAccountId,
     awsRegion

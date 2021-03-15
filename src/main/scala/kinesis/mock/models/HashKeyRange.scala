@@ -2,7 +2,11 @@ package kinesis.mock.models
 
 import io.circe._
 
-final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt)
+final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
+  def isAdjacent(other: HashKeyRange): Boolean =
+    endingHashKey == other.startingHashKey + BigInt(1) ||
+      startingHashKey == other.endingHashKey + BigInt(1)
+}
 
 object HashKeyRange {
   implicit val hashKeyRangeCirceEncoder: Encoder[HashKeyRange] =

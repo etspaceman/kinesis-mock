@@ -47,6 +47,11 @@ final case class PutRecordsRequest(
               },
               CommonValidations
                 .computeShard(x.partitionKey, x.explicitHashKey, stream)
+                .andThen { case (shard, records) =>
+                  CommonValidations
+                    .isShardOpen(shard)
+                    .map(_ => (shard, records))
+                }
             ).mapN { case (_, _, (shard, records)) => (shard, records, x) }
           )
         ).mapN((_, _, recs) => (stream, recs))

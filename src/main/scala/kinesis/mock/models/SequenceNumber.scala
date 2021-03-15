@@ -11,6 +11,14 @@ import cats.syntax.all._
 import io.circe._
 
 final case class SequenceNumber(value: String) {
+  def numericValue: BigInt = value match {
+    case "LATEST"       => BigInt(-1)
+    case "TRIM_HORIZON" => BigInt(-2)
+    case "AT_TIMESTAMP" => BigInt(-3)
+    case "SHARD_END"    => SequenceNumber.shardEndNumber
+    case x              => BigInt(x)
+  }
+
   def parse: ValidatedNel[KinesisMockException, Either[
     String,
     SequenceNumberParts
@@ -93,6 +101,8 @@ final case class SequenceNumberParts(
 )
 
 object SequenceNumber {
+  val shardEndNumber = BigInt("7fffffffffffffff", 16)
+  val shardEnd = SequenceNumber(shardEndNumber.toString)
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L177-L186
   def create(
       shardCreateTime: Instant,
