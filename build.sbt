@@ -54,5 +54,5 @@ addCommandAlias(
 )
 addCommandAlias(
   "validate",
-  ";cpl;prettyCheck"
+  ";cpl;prettyCheck;test"
 )
