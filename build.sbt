@@ -4,21 +4,24 @@ organization := "io.github.etspaceman"
 name := "kinesis-mock"
 description := "A Mock API for AWS Kinesis using FS2 and Http4s"
 scalaVersion := "2.13.4"
+resolvers += Resolver.bintrayRepo("wolfendale", "maven")
 libraryDependencies ++= Seq(
   Aws.utils,
   Http4s.blazeServer,
   Http4s.circe,
   Http4s.dsl,
   Circe.core,
-  Circe.derivation,
   Ciris.core,
   Ciris.enumeratum,
   Enumeratum.core,
   Enumeratum.circe,
   JaxbApi,
-  MUnit % Test,
-  MUnitCatsEffect2 % Test,
-  Logback
+  Logback,
+  Circe.parser % Test,
+  Enumeratum.scalacheck % Test,
+  Munit.core % Test,
+  Munit.catsEffect2 % Test,
+  Munit.scalacheck % Test
 )
 semanticdbEnabled := true
 semanticdbVersion := "4.4.2"

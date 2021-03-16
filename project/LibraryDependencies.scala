@@ -4,11 +4,16 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.11.3"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.5.0"
-  val MUnit = "org.scalameta" %% "munit" % "0.7.20"
-  val MUnitCatsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "0.13.0"
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
+
+  object Munit {
+    val munitVersion = "0.7.22"
+    val core = "org.scalameta" %% "munit" % munitVersion
+    val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "0.13.0"
+  }
 
   object Aws {
     val sdkVersion = "2.16.18"
@@ -25,7 +30,7 @@ object LibraryDependencies {
   object Circe {
     val circeVersion = "0.13.0"
     val core = "io.circe" %% "circe-core" % circeVersion
-    val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
+    val parser = "io.circe" %% "circe-parser" % circeVersion
   }
 
   object Ciris {
@@ -38,6 +43,7 @@ object LibraryDependencies {
     val enumeratumVersion = "1.6.1"
     val core = "com.beachape" %% "enumeratum" % enumeratumVersion
     val circe = "com.beachape" %% "enumeratum-circe" % enumeratumVersion
+    val scalacheck = "com.beachape" %% "enumeratum-scalacheck" % enumeratumVersion
   }
 
   object Kinesis {
