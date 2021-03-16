@@ -12,9 +12,8 @@ final case class Consumer(
 )
 
 object Consumer {
-  val seqAdjustMs = 2000L
   def create(streamArn: String, consumerName: String): Consumer = {
-    val consumerCreationTimestamp = Instant.now().minusMillis(seqAdjustMs)
+    val consumerCreationTimestamp = Instant.now()
     Consumer(
       s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}",
       consumerCreationTimestamp,

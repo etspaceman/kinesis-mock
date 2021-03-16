@@ -46,94 +46,117 @@ final case class GetShardIteratorRequest(
           CommonValidations.validateShardId(shardId),
           CommonValidations.findShard(shardId, stream).andThen {
             case (shard, data) =>
-              (shardIteratorType, startingSequenceNumber, timestamp) match {
-                case (ShardIteratorType.TRIM_HORIZON, _, _) =>
-                  Valid(
-                    GetShardIteratorResponse(
-                      ShardIterator.create(
-                        streamName,
-                        shardId,
-                        shard.sequenceNumberRange.startingSequenceNumber
-                      )
+              if (data.isEmpty)
+                Valid(
+                  GetShardIteratorResponse(
+                    ShardIterator.create(
+                      streamName,
+                      shardId,
+                      shard.sequenceNumberRange.startingSequenceNumber
                     )
                   )
-                case (ShardIteratorType.LATEST, _, _) =>
-                  Valid(
-                    GetShardIteratorResponse(
-                      ShardIterator.create(
-                        streamName,
-                        shardId,
-                        data.last.sequenceNumber
-                      )
-                    )
-                  )
-                case (ShardIteratorType.AT_TIMESTAMP, _, Some(ts)) =>
-                  val now = Instant.now()
-                  if (ts.toEpochMilli() < now.toEpochMilli())
-                    InvalidArgumentException(
-                      s"Timestamp cannot be in the future"
-                    ).invalidNel
-                  else
+                )
+              else
+                (shardIteratorType, startingSequenceNumber, timestamp) match {
+                  case (ShardIteratorType.TRIM_HORIZON, _, _) =>
                     Valid(
                       GetShardIteratorResponse(
                         ShardIterator.create(
                           streamName,
                           shardId,
-                          data
-                            .find(
-                              _.approximateArrivalTimestamp.toEpochMilli() >= ts
-                                .toEpochMilli()
-                            )
-                            .map(_.sequenceNumber)
-                            .getOrElse(data.last.sequenceNumber)
+                          shard.sequenceNumberRange.startingSequenceNumber
                         )
                       )
                     )
-                case (ShardIteratorType.AT_SEQUENCE_NUMBER, Some(seqNo), _) =>
-                  data.find(_.sequenceNumber == seqNo) match {
-                    case Some(record) =>
+                  case (ShardIteratorType.LATEST, _, _) =>
+                    Valid(
+                      GetShardIteratorResponse(
+                        ShardIterator.create(
+                          streamName,
+                          shardId,
+                          data.last.sequenceNumber
+                        )
+                      )
+                    )
+                  case (ShardIteratorType.AT_TIMESTAMP, _, Some(ts)) =>
+                    val now = Instant.now()
+                    if (ts.toEpochMilli() < now.toEpochMilli())
+                      InvalidArgumentException(
+                        s"Timestamp cannot be in the future"
+                      ).invalidNel
+                    else
                       Valid(
                         GetShardIteratorResponse(
                           ShardIterator.create(
                             streamName,
                             shardId,
-                            record.sequenceNumber
+                            data
+                              .findLast(
+                                _.approximateArrivalTimestamp
+                                  .toEpochMilli() < ts
+                                  .toEpochMilli()
+                              )
+                              .map(_.sequenceNumber)
+                              .getOrElse(data.last.sequenceNumber)
                           )
                         )
                       )
-                    case None =>
-                      InvalidArgumentException(
-                        s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
-                      ).invalidNel
-                  }
+                  case (ShardIteratorType.AT_SEQUENCE_NUMBER, Some(seqNo), _) =>
+                    data.find(_.sequenceNumber == seqNo) match {
+                      case Some(record) =>
+                        if (record == data.head)
+                          Valid(
+                            GetShardIteratorResponse(
+                              ShardIterator.create(
+                                streamName,
+                                shardId,
+                                shard.sequenceNumberRange.startingSequenceNumber
+                              )
+                            )
+                          )
+                        else
+                          Valid(
+                            GetShardIteratorResponse(
+                              ShardIterator.create(
+                                streamName,
+                                shardId,
+                                data(data.indexOf(record) - 1).sequenceNumber
+                              )
+                            )
+                          )
+                      case None =>
+                        ResourceNotFoundException(
+                          s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
+                        ).invalidNel
+                    }
 
-                case (
-                      ShardIteratorType.AFTER_SEQUENCE_NUMBER,
-                      Some(seqNo),
-                      _
-                    ) =>
-                  data.find(_.sequenceNumber == seqNo) match {
-                    case Some(record) =>
-                      Valid(
-                        GetShardIteratorResponse(
-                          ShardIterator.create(
-                            streamName,
-                            shardId,
-                            data(data.indexOf(record) + 1).sequenceNumber
+                  case (
+                        ShardIteratorType.AFTER_SEQUENCE_NUMBER,
+                        Some(seqNo),
+                        _
+                      ) =>
+                    data.find(_.sequenceNumber == seqNo) match {
+                      case Some(record) =>
+                        Valid(
+                          GetShardIteratorResponse(
+                            ShardIterator.create(
+                              streamName,
+                              shardId,
+                              data(data.indexOf(record) + 1).sequenceNumber
+                            )
                           )
                         )
-                      )
-                    case None =>
-                      InvalidArgumentException(
-                        s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
-                      ).invalidNel
-                  }
+                      case None =>
+                        ResourceNotFoundException(
+                          s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
+                        ).invalidNel
+                    }
 
-                case _ =>
-                  InvalidArgumentException(
-                    s"Request for GetShardIterator invalid. ShardIteratorType: ${shardIteratorType}, StartingSequenceNumber: ${startingSequenceNumber}, Timestamp: ${timestamp}"
-                  ).invalidNel
-              }
+                  case _ =>
+                    InvalidArgumentException(
+                      s"Request for GetShardIterator invalid. ShardIteratorType: ${shardIteratorType}, StartingSequenceNumber: ${startingSequenceNumber}, Timestamp: ${timestamp}"
+                    ).invalidNel
+                }
           }
         ).mapN((_, _, _, _, _, res) => res)
       )

@@ -26,82 +26,129 @@ final case class GetRecordsRequest(
           CommonValidations
             .findStream(parts.streamName, streams)
             .andThen(stream =>
-              CommonValidations.findShard(parts.shardId, stream).andThen {
-                case (shard, data) =>
-                  (limit match {
-                    case Some(l) => CommonValidations.validateLimit(l)
-                    case None    => Valid(())
-                  }).andThen {
-                    _ =>
-                      CommonValidations
-                        .isShardOpen(shard)
-                        .andThen {
-                          _ =>
-                            val allShards = stream.shards.keys.toList
-                            val childShards = allShards
-                              .filter(_.parentShardId.contains(shard.shardId))
-                              .map(s =>
-                                ChildShard.fromShard(
-                                  s,
-                                  allShards
-                                    .filter(_.parentShardId.contains(s.shardId))
+              CommonValidations.findShard(parts.shardId, stream).andThen { case (shard, data) =>
+                (limit match {
+                  case Some(l) => CommonValidations.validateLimit(l)
+                  case None    => Valid(())
+                }).andThen { _ =>
+                  CommonValidations
+                    .isShardOpen(shard)
+                    .andThen { _ =>
+                      val allShards = stream.shards.keys.toList
+                      val childShards = allShards
+                        .filter(_.parentShardId.contains(shard.shardId))
+                        .map(s =>
+                          ChildShard.fromShard(
+                            s,
+                            allShards
+                              .filter(
+                                _.parentShardId.contains(s.shardId)
+                              )
+                          )
+                        )
+                      if (data.isEmpty) {
+                        Valid(
+                          GetRecordsResponse(
+                            childShards,
+                            0L,
+                            shardIterator,
+                            data
+                          )
+                        )
+                      } else {
+                        if (
+                          parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber
+                        ) {
+                          val maxRecords = limit.getOrElse(10000)
+                          val firstIndex = 0
+                          val lastIndex =
+                            Math.min(
+                              firstIndex + maxRecords,
+                              data.length - 1
+                            )
+
+                          val records = GetRecordsRequest.getRecords(
+                            data.slice(firstIndex, lastIndex),
+                            maxRecords,
+                            List.empty,
+                            0,
+                            0
+                          )
+                          val millisBehindLatest =
+                            data.last.approximateArrivalTimestamp.toEpochMilli -
+                              records.head.approximateArrivalTimestamp
+                                .toEpochMilli()
+
+                          Valid(
+                            GetRecordsResponse(
+                              childShards,
+                              millisBehindLatest,
+                              ShardIterator.create(
+                                parts.streamName,
+                                parts.shardId,
+                                records.last.sequenceNumber
+                              ),
+                              records
+                            )
+                          )
+                        } else {
+                          data
+                            .find(
+                              _.sequenceNumber == parts.sequenceNumber
+                            ) match {
+                            case Some(record) if record == data.last =>
+                              Valid(
+                                GetRecordsResponse(
+                                  childShards,
+                                  0L,
+                                  shardIterator,
+                                  List.empty
                                 )
                               )
-                            data
-                              .find(
-                                _.sequenceNumber == parts.sequenceNumber
-                              ) match {
-                              case Some(record) if record == data.last =>
-                                Valid(
-                                  GetRecordsResponse(
-                                    childShards,
-                                    0L,
-                                    shardIterator,
-                                    List.empty
-                                  )
+
+                            case Some(record) => {
+                              val maxRecords = limit.getOrElse(10000)
+                              val firstIndex = data.indexOf(record)
+                              val lastIndex =
+                                Math.min(
+                                  firstIndex + maxRecords,
+                                  data.length - 1
                                 )
 
-                              case Some(record) => {
-                                val maxRecords = limit.getOrElse(10000)
-                                val firstIndex = data.indexOf(record)
-                                val lastIndex =
-                                  Math.min(
-                                    firstIndex + maxRecords,
-                                    data.length - 1
-                                  )
+                              val records = GetRecordsRequest.getRecords(
+                                data.slice(firstIndex, lastIndex),
+                                maxRecords,
+                                List.empty,
+                                0,
+                                0
+                              )
+                              val millisBehindLatest =
+                                data.last.approximateArrivalTimestamp.toEpochMilli -
+                                  record.approximateArrivalTimestamp
+                                    .toEpochMilli()
 
-                                val records = GetRecordsRequest.getRecords(
-                                  data.slice(firstIndex, lastIndex),
-                                  maxRecords,
-                                  List.empty,
-                                  0,
-                                  0
+                              Valid(
+                                GetRecordsResponse(
+                                  childShards,
+                                  millisBehindLatest,
+                                  ShardIterator.create(
+                                    parts.streamName,
+                                    parts.shardId,
+                                    records.last.sequenceNumber
+                                  ),
+                                  records
                                 )
-                                val millisBehindLatest =
-                                  data.last.approximateArrivalTimestamp.toEpochMilli -
-                                    record.approximateArrivalTimestamp
-                                      .toEpochMilli()
-
-                                Valid(
-                                  GetRecordsResponse(
-                                    childShards,
-                                    millisBehindLatest,
-                                    ShardIterator.create(
-                                      parts.streamName,
-                                      parts.shardId,
-                                      records.last.sequenceNumber
-                                    ),
-                                    records
-                                  )
-                                )
-                              }
-                              case None =>
-                                ResourceNotFoundException(
-                                  s"Record for provided SequenceNumber not found"
-                                ).invalidNel
+                              )
                             }
+                            case None =>
+                              ResourceNotFoundException(
+                                s"Record for provided SequenceNumber not found"
+                              ).invalidNel
+                          }
                         }
-                  }
+                      }
+                    }
+                }
               }
             )
         )
