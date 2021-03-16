@@ -31,4 +31,11 @@ object arbitrary {
       consumerStatus
     )
   )
+
+  implicit val hashKeyRangeArbitrary: Arbitrary[HashKeyRange] = Arbitrary(
+    for {
+      startingHashKey <- Gen.posNum[Int].map(BigInt.apply)
+      endingHashKey <- Gen.posNum[Int].map(i => BigInt(i) + startingHashKey)
+    } yield HashKeyRange(startingHashKey, endingHashKey)
+  )
 }

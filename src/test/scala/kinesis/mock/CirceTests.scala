@@ -8,7 +8,7 @@ import io.circe.parser._
 import scala.reflect.ClassTag
 
 import kinesis.mock.models._
-// import kinesis.mock.api._
+import kinesis.mock.api._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 
@@ -23,7 +23,7 @@ class CirceTests extends munit.ScalaCheckSuite {
       forAll { a: A =>
         val encoded = a.asJson.noSpaces
         val decoded = parse(encoded).flatMap(_.as[A])
-        
+
         decoded.contains(
           a
         ) :| s"\n\tInput: ${a}\n\tEncoded: ${encoded}\n\tDecoded: ${decoded}"
@@ -33,5 +33,13 @@ class CirceTests extends munit.ScalaCheckSuite {
 
   identityLawTest[AwsRegion]
   identityLawTest[Consumer]
+  identityLawTest[ConsumerStatus]
+  identityLawTest[EncryptionType]
+  identityLawTest[HashKeyRange]
+  identityLawTest[ShardLevelMetric]
+  identityLawTest[StreamStatus]
+  identityLawTest[ScalingType]
+  identityLawTest[ShardFilterType]
+  identityLawTest[ShardIteratorType]
 
 }
