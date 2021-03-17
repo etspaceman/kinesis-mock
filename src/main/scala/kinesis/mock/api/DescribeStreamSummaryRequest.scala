@@ -5,6 +5,7 @@ import cats.data._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamSummary.html
 final case class DescribeStreamSummaryRequest(
@@ -31,4 +32,6 @@ object DescribeStreamSummaryRequest {
   implicit val describeStreamSummaryRequestDecoder
       : Decoder[DescribeStreamSummaryRequest] =
     _.downField("StreamName").as[String].map(DescribeStreamSummaryRequest.apply)
+  implicit val describeStreamSummaryRequestEq
+      : Eq[DescribeStreamSummaryRequest] = Eq.fromUniversalEquals
 }

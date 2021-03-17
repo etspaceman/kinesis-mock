@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models.SequenceNumber
+import cats.kernel.Eq
 
 final case class PutRecordsResultEntry(
     errorCode: Option[PutRecordsErrorCode],
@@ -37,4 +38,7 @@ object PutRecordsResultEntry {
         sequenceNumber,
         shardId
       )
+
+  implicit val putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
+    Eq.fromUniversalEquals
 }

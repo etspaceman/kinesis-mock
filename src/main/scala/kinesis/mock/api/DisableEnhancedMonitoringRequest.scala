@@ -5,6 +5,7 @@ import cats.data._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(
@@ -42,12 +43,12 @@ final case class DisableEnhancedMonitoringRequest(
 }
 
 object DisableEnhancedMonitoringRequest {
-  implicit val DisableEnhancedMonitoringRequestEncoder
+  implicit val disableEnhancedMonitoringRequestEncoder
       : Encoder[DisableEnhancedMonitoringRequest] =
     Encoder.forProduct2("ShardLevelMetrics", "StreamName")(x =>
       (x.shardLevelMetrics, x.streamName)
     )
-  implicit val DisableEnhancedMonitoringRequestDecoder
+  implicit val disableEnhancedMonitoringRequestDecoder
       : Decoder[DisableEnhancedMonitoringRequest] = { x =>
     for {
       shardLevelMetrics <- x
@@ -56,4 +57,6 @@ object DisableEnhancedMonitoringRequest {
       streamName <- x.downField("StreamName").as[String]
     } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
   }
+  implicit val disableEnhancedMonitoringRequestEq
+      : Eq[DisableEnhancedMonitoringRequest] = Eq.fromUniversalEquals
 }

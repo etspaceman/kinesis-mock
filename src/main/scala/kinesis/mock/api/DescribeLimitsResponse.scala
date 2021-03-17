@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models.Streams
+import cats.kernel.Eq
 
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
 
@@ -25,4 +26,6 @@ object DescribeLimitsResponse {
       shardLimit <- x.downField("ShardLimit").as[Int]
     } yield DescribeLimitsResponse(openShardCount, shardLimit)
   }
+  implicit val describeLimitsResponseEq: Eq[DescribeLimitsResponse] =
+    Eq.fromUniversalEquals
 }

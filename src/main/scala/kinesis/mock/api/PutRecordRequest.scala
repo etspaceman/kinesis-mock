@@ -14,6 +14,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class PutRecordRequest(
     data: Array[Byte],
@@ -33,6 +34,7 @@ final case class PutRecordRequest(
         (
           CommonValidations.validateStreamName(streamName),
           CommonValidations.isStreamActiveOrUpdating(streamName, streams),
+          CommonValidations.validateData(data),
           sequenceNumberForOrdering match {
             case None => Valid(())
             case Some(seqNo) =>
@@ -57,7 +59,7 @@ final case class PutRecordRequest(
               CommonValidations.isShardOpen(shard).map(_ => (shard, records))
 
             }
-        ).mapN { case (_, _, _, _, _, (shard, records)) =>
+        ).mapN { case (_, _, _, _, _, _, (shard, records)) =>
           (stream, shard, records)
         }
       }
@@ -127,4 +129,11 @@ object PutRecordRequest {
         sequenceNumberForOrdering,
         streamName
       )
+
+  implicit val putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
+    x.data.sameElements(y.data) &&
+      x.explicitHashKey == y.explicitHashKey &&
+      x.partitionKey == y.partitionKey &&
+      x.sequenceNumberForOrdering == y.sequenceNumberForOrdering &&
+      x.streamName == y.streamName
 }

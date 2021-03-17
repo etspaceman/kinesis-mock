@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class StopStreamEncryptionRequest(
     encryptionType: EncryptionType,
@@ -50,4 +51,7 @@ object StopStreamEncryptionRequest {
       keyId <- x.downField("KeyId").as[String]
       streamName <- x.downField("StreamName").as[String]
     } yield StopStreamEncryptionRequest(encryptionType, keyId, streamName)
+
+  implicit val stopStreamEncryptionRequestEq: Eq[StopStreamEncryptionRequest] =
+    Eq.fromUniversalEquals
 }

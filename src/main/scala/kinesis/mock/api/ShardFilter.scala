@@ -3,6 +3,7 @@ package kinesis.mock.api
 import java.time.Instant
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class ShardFilter(
     shardId: Option[String],
@@ -22,4 +23,6 @@ object ShardFilter {
       timestamp <- x.downField("Timestamp").as[Option[Instant]]
       `type` <- x.downField("Type").as[ShardFilterType]
     } yield ShardFilter(shardId, timestamp, `type`)
+
+  implicit val shardFilterEq: Eq[ShardFilter] = Eq.fromUniversalEquals
 }

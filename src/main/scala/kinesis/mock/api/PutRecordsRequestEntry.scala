@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
@@ -29,4 +30,9 @@ object PutRecordsRequestEntry {
         explicitHashKey,
         partitionKey
       )
+
+  implicit val putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
+    x.data.sameElements(y.data) &&
+      x.explicitHashKey == y.explicitHashKey &&
+      x.partitionKey == y.partitionKey
 }

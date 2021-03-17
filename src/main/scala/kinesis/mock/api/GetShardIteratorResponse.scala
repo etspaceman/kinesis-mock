@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class GetShardIteratorResponse(shardIterator: ShardIterator)
 
@@ -13,4 +14,6 @@ object GetShardIteratorResponse {
     _.downField("ShardIterator")
       .as[ShardIterator]
       .map(GetShardIteratorResponse.apply)
+  implicit val getShardIteratorResponseEq: Eq[GetShardIteratorResponse] =
+    Eq.fromUniversalEquals
 }

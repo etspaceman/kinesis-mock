@@ -9,6 +9,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class ListStreamConsumersRequest(
     maxResults: Option[Int],
@@ -88,4 +89,7 @@ object ListStreamConsumersRequest {
       streamArn,
       streamCreationTimestamp
     )
+
+  implicit val listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
+    Eq.fromUniversalEquals
 }

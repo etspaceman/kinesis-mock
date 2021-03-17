@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class DeleteStreamRequest(
     streamName: String,
@@ -46,6 +47,6 @@ object DeleteStreamRequest {
           .downField("EnforceConsumerDeletion")
           .as[Option[Boolean]]
       } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
-
   }
+  implicit val deleteStreamRequestEq: Eq[DeleteStreamRequest] = Eq.fromUniversalEquals
 }

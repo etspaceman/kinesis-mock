@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models.ShardLevelMetric
+import cats.kernel.Eq
 
 final case class EnableEnhancedMonitoringResponse(
     currentShardLevelMetrics: List[ShardLevelMetric],
@@ -37,4 +38,6 @@ object EnableEnhancedMonitoringResponse {
       streamName
     )
   }
+  implicit val enableEnhancedMonitoringResponseEq
+      : Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
 }

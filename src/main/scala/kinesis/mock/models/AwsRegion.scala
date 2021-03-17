@@ -8,7 +8,8 @@ sealed abstract class AwsRegion(override val entryName: String)
 object AwsRegion
     extends Enum[AwsRegion]
     with CirisEnum[AwsRegion]
-    with CirceEnum[AwsRegion] {
+    with CirceEnum[AwsRegion]
+    with CatsEnum[AwsRegion] {
   override val values = findValues
   case object US_GOV_EAST_1 extends AwsRegion("us-gov-west-1")
   case object US_EAST_1 extends AwsRegion("us-east-1")

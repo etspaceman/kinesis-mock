@@ -5,6 +5,7 @@ import java.time.Instant
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
@@ -114,4 +115,7 @@ object StreamDescription {
         streamStatus
       )
   }
+
+  implicit val streamDescriptionEq: Eq[StreamDescription] =
+    Eq.fromUniversalEquals
 }

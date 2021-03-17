@@ -1,6 +1,7 @@
 package kinesis.mock.models
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
   def isAdjacent(other: HashKeyRange): Boolean =
@@ -21,4 +22,6 @@ object HashKeyRange {
       startingHashKey <- x.downField("StartingHashKey").as[BigInt]
     } yield HashKeyRange(endingHashKey, startingHashKey)
   }
+
+  implicit val hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
 }

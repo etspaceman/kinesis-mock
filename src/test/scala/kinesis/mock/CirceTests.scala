@@ -1,5 +1,6 @@
 package kinesis.mock
 
+import cats.syntax.all._
 import enumeratum.scalacheck._
 import io.circe.Encoder
 import io.circe.Decoder
@@ -13,9 +14,10 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 
 import kinesis.mock.instances.arbitrary._
+import cats.kernel.Eq
 
 class CirceTests extends munit.ScalaCheckSuite {
-  def identityLawTest[A: Encoder: Decoder: Arbitrary](implicit
+  def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](implicit
       loc: munit.Location,
       CT: ClassTag[A]
   ) =
@@ -24,9 +26,8 @@ class CirceTests extends munit.ScalaCheckSuite {
         val encoded = a.asJson.noSpaces
         val decoded = parse(encoded).flatMap(_.as[A])
 
-        decoded.contains(
-          a
-        ) :| s"\n\tInput: ${a}\n\tEncoded: ${encoded}\n\tDecoded: ${decoded}"
+        decoded.exists(_ === a) :| s"\n\tInput:\n\t${a}\n\tDecoded:\n\t${decoded
+          .fold(_.toString, _.toString)}"
       }
 
     }
@@ -36,10 +37,17 @@ class CirceTests extends munit.ScalaCheckSuite {
   identityLawTest[ConsumerStatus]
   identityLawTest[EncryptionType]
   identityLawTest[HashKeyRange]
+  identityLawTest[KinesisRecord]
   identityLawTest[ShardLevelMetric]
   identityLawTest[StreamStatus]
   identityLawTest[ScalingType]
+  identityLawTest[SequenceNumber]
+  identityLawTest[SequenceNumberConstant]
+  identityLawTest[SequenceNumberRange]
+    
+
   identityLawTest[ShardFilterType]
   identityLawTest[ShardIteratorType]
+  
 
 }

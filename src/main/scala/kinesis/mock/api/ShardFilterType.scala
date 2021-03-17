@@ -6,7 +6,8 @@ sealed trait ShardFilterType extends EnumEntry
 
 object ShardFilterType
     extends Enum[ShardFilterType]
-    with CirceEnum[ShardFilterType] {
+    with CirceEnum[ShardFilterType]
+    with CatsEnum[ShardFilterType] {
   override val values = findValues
 
   case object AFTER_SHARD_ID extends ShardFilterType

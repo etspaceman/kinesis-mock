@@ -11,6 +11,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class GetRecordsRequest(
     limit: Option[Int],
@@ -192,4 +193,7 @@ object GetRecordsRequest {
         limit <- x.downField("Limit").as[Option[Int]]
         shardIterator <- x.downField("ShardIterator").as[ShardIterator]
       } yield GetRecordsRequest(limit, shardIterator)
+
+  implicit val getRecordsRequestEq: Eq[GetRecordsRequest] =
+    Eq.fromUniversalEquals
 }

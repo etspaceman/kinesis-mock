@@ -3,6 +3,8 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models.KinesisRecord
+import cats.kernel.Eq
+import cats.syntax.all._
 
 final case class GetRecordsResponse(
     childShards: List[ChildShard],
@@ -35,4 +37,10 @@ object GetRecordsResponse {
         nextShardIterator,
         records
       )
+
+  implicit val getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>
+    x.childShards == y.childShards &&
+      x.millisBehindLatest == y.millisBehindLatest &&
+      x.nextShardIterator == y.nextShardIterator &&
+      x.records === y.records
 }

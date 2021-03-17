@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class ListTagsForStreamResponse(
     hasMoreTags: Boolean,
@@ -19,4 +20,7 @@ object ListTagsForStreamResponse {
         hasMoreTags <- x.downField("HasMoreTags").as[Boolean]
         tags <- x.downField("Tags").as[Map[String, String]]
       } yield ListTagsForStreamResponse(hasMoreTags, tags)
+
+  implicit val listTagsForStreamResponseEq: Eq[ListTagsForStreamResponse] =
+    Eq.fromUniversalEquals
 }

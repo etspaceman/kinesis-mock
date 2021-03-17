@@ -1,6 +1,7 @@
 package kinesis.mock.models
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class ShardLevelMetrics(shardLevelMetrics: List[ShardLevelMetric])
 
@@ -12,4 +13,5 @@ object ShardLevelMetrics {
       .as[List[ShardLevelMetric]]
       .map(ShardLevelMetrics.apply)
   }
+  implicit val shardLevelMetricsEq: Eq[ShardLevelMetrics] = Eq.fromUniversalEquals
 }

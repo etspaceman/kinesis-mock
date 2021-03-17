@@ -9,6 +9,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_IncreaseStreamRetention.html
 final case class IncreaseStreamRetentionRequest(
@@ -50,4 +51,6 @@ object IncreaseStreamRetentionRequest {
       streamName <- x.downField("StreamName").as[String]
     } yield IncreaseStreamRetentionRequest(retentionPeriodHours, streamName)
   }
+  implicit val increaseStreamRetentionRequestEq
+      : Eq[IncreaseStreamRetentionRequest] = Eq.fromUniversalEquals
 }

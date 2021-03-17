@@ -9,6 +9,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class GetShardIteratorRequest(
     shardId: String,
@@ -201,4 +202,7 @@ object GetShardIteratorRequest {
         streamName,
         timestamp
       )
+
+  implicit val getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
+    Eq.fromUniversalEquals
 }

@@ -6,7 +6,8 @@ sealed trait ShardIteratorType extends EnumEntry
 
 object ShardIteratorType
     extends Enum[ShardIteratorType]
-    with CirceEnum[ShardIteratorType] {
+    with CirceEnum[ShardIteratorType]
+    with CatsEnum[ShardIteratorType] {
   override val values = findValues
 
   case object AT_SEQUENCE_NUMBER extends ShardIteratorType

@@ -9,23 +9,26 @@ import cats.data.Validated._
 import cats.data._
 import cats.syntax.all._
 import io.circe._
+import cats.kernel.Eq
 
 final case class SequenceNumber(value: String) {
-  def numericValue: BigInt = value match {
-    case "LATEST"       => BigInt(-1)
-    case "TRIM_HORIZON" => BigInt(-2)
-    case "AT_TIMESTAMP" => BigInt(-3)
-    case "SHARD_END"    => SequenceNumber.shardEndNumber
-    case x              => BigInt(x)
-  }
+  def numericValue: BigInt =
+    SequenceNumberConstant.withNameOption(value) match {
+      case None                                      => BigInt(value)
+      case Some(SequenceNumberConstant.LATEST)       => BigInt(-1)
+      case Some(SequenceNumberConstant.TRIM_HORIZON) => BigInt(-2)
+      case Some(SequenceNumberConstant.AT_TIMESTAMP) => BigInt(-3)
+      case Some(SequenceNumberConstant.SHARD_END) =>
+        SequenceNumber.shardEndNumber
+    }
 
   def parse: ValidatedNel[KinesisMockException, Either[
     String,
     SequenceNumberParts
   ]] = {
     value match {
-      case "LATEST" | "TRIM_HORIZON" | "AT_TIMESTAMP" | "SHARD_END" =>
-        Valid(Left(value))
+      case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
+        Valid(Left(x))
       case x => {
         val seqNum =
           if (BigInt(x) < BigInt(2).pow(124))
@@ -135,4 +138,5 @@ object SequenceNumber {
     Encoder[String].contramap(_.value)
   implicit val sequenceNumberCirceDecoder: Decoder[SequenceNumber] =
     Decoder[String].map(SequenceNumber.apply)
+  implicit val sequenceNumberEq: Eq[SequenceNumber] = Eq.fromUniversalEquals
 }

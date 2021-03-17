@@ -18,6 +18,7 @@ import kinesis.mock.models.{
   ShardSemaphoresKey,
   Streams
 }
+import cats.kernel.Eq
 
 final case class PutRecordsRequest(
     records: List[PutRecordsRequestEntry],
@@ -45,6 +46,7 @@ final case class PutRecordsRequest(
                   CommonValidations.validateExplicitHashKey(explHashKey)
                 case None => Valid(())
               },
+              CommonValidations.validateData(x.data),
               CommonValidations
                 .computeShard(x.partitionKey, x.explicitHashKey, stream)
                 .andThen { case (shard, records) =>
@@ -52,7 +54,7 @@ final case class PutRecordsRequest(
                     .isShardOpen(shard)
                     .map(_ => (shard, records))
                 }
-            ).mapN { case (_, _, (shard, records)) => (shard, records, x) }
+            ).mapN { case (_, _, _, (shard, records)) => (shard, records, x) }
           )
         ).mapN((_, _, recs) => (stream, recs))
       }
@@ -134,4 +136,8 @@ object PutRecordsRequest {
       records <- x.downField("Records").as[List[PutRecordsRequestEntry]]
       streamName <- x.downField("StreamName").as[String]
     } yield PutRecordsRequest(records, streamName)
+
+  implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
+    x.records === y.records &&
+      x.streamName == y.streamName
 }

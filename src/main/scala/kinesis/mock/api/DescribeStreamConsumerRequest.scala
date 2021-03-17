@@ -6,6 +6,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamConsumer.html
 final case class DescribeStreamConsumerRequest(
@@ -56,4 +57,6 @@ object DescribeStreamConsumerRequest {
       streamArn
     )
   }
+  implicit val describeStreamConsumerEq: Eq[DescribeStreamConsumerRequest] =
+    Eq.fromUniversalEquals
 }

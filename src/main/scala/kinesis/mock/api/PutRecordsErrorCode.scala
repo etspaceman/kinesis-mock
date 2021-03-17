@@ -6,7 +6,8 @@ sealed trait PutRecordsErrorCode extends EnumEntry
 
 object PutRecordsErrorCode
     extends Enum[PutRecordsErrorCode]
-    with CirceEnum[PutRecordsErrorCode] {
+    with CirceEnum[PutRecordsErrorCode]
+    with CatsEnum[PutRecordsErrorCode] {
   override val values = findValues
 
   case object InternalFailure extends PutRecordsErrorCode

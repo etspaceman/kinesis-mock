@@ -3,6 +3,7 @@ package kinesis.mock.models
 import java.time.Instant
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class Consumer(
     consumerArn: String,
@@ -50,4 +51,6 @@ object Consumer {
       consumerStatus
     )
   }
+
+  implicit val consumerEq: Eq[Consumer] = Eq.fromUniversalEquals
 }

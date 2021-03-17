@@ -6,7 +6,8 @@ sealed trait ShardLevelMetric extends EnumEntry
 
 object ShardLevelMetric
     extends Enum[ShardLevelMetric]
-    with CirceEnum[ShardLevelMetric] {
+    with CirceEnum[ShardLevelMetric]
+    with CatsEnum[ShardLevelMetric] {
   override val values = findValues
 
   case object IncomingBytes extends ShardLevelMetric

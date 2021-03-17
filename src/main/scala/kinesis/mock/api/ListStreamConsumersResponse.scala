@@ -4,6 +4,7 @@ package api
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class ListStreamConsumersResponse(
     consumers: List[Consumer],
@@ -24,4 +25,7 @@ object ListStreamConsumersResponse {
         consumers <- x.downField("Consumers").as[List[Consumer]]
         nextToken <- x.downField("NextToken").as[Option[String]]
       } yield ListStreamConsumersResponse(consumers, nextToken)
+
+  implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
+    Eq.fromUniversalEquals
 }

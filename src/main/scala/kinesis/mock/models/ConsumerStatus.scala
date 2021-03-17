@@ -6,7 +6,8 @@ sealed trait ConsumerStatus extends EnumEntry
 
 object ConsumerStatus
     extends Enum[ConsumerStatus]
-    with CirceEnum[ConsumerStatus] {
+    with CirceEnum[ConsumerStatus]
+    with CatsEnum[ConsumerStatus] {
   override val values = findValues
 
   case object CREATING extends ConsumerStatus

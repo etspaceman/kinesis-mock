@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   Circe.core,
   Ciris.core,
   Ciris.enumeratum,
+  Enumeratum.cats,
   Enumeratum.core,
   Enumeratum.circe,
   JaxbApi,

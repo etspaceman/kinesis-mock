@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class CreateStreamRequest(shardCount: Int, streamName: String) {
   def createStream(
@@ -49,6 +50,8 @@ object CreateStreamRequest {
         shardCount <- x.downField("ShardCount").as[Int]
         streamName <- x.downField("StreamName").as[String]
       } yield CreateStreamRequest(shardCount, streamName)
-
   }
+
+  implicit val createStreamRequestEq: Eq[CreateStreamRequest] =
+    Eq.fromUniversalEquals
 }

@@ -11,6 +11,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_SplitShard.html
 final case class SplitShardRequest(
@@ -137,4 +138,7 @@ object SplitShardRequest {
         shardToSplit <- x.downField("ShardToSplit").as[String]
         streamName <- x.downField("StreamName").as[String]
       } yield SplitShardRequest(newStartingHashKey, shardToSplit, streamName)
+
+  implicit val splitShardRequestEq: Eq[SplitShardRequest] =
+    Eq.fromUniversalEquals
 }

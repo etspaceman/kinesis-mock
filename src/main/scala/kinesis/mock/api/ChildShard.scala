@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class ChildShard(
     hashKeyRange: HashKeyRange,
@@ -29,4 +30,6 @@ object ChildShard {
       parentShards <- x.downField("ParentShards").as[List[String]]
       shardId <- x.downField("ShardId").as[String]
     } yield ChildShard(hashKeyRange, parentShards, shardId)
+
+  implicit val childShardEq: Eq[ChildShard] = Eq.fromUniversalEquals
 }

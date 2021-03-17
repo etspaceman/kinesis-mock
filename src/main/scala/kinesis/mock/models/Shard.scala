@@ -5,6 +5,7 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class Shard(
     adjacentParentShardId: Option[String],
@@ -109,6 +110,7 @@ object Shard {
       shardId,
       shardIndex
     )
-
   }
+
+  implicit val shardEq: Eq[Shard] = Eq.fromUniversalEquals
 }

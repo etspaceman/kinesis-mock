@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStream.html
 final case class DescribeStreamRequest(
@@ -40,11 +41,11 @@ final case class DescribeStreamRequest(
 }
 
 object DescribeStreamRequest {
-  implicit val DescribeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
+  implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
     Encoder.forProduct3("ExclusiveStartShardId", "Limit", "StreamName")(x =>
       (x.exclusiveStartShardId, x.limit, x.streamName)
     )
-  implicit val DescribeStreamRequestDecoder: Decoder[DescribeStreamRequest] = {
+  implicit val describeStreamRequestDecoder: Decoder[DescribeStreamRequest] = {
     x =>
       for {
         exclusiveStartShardId <- x
@@ -54,4 +55,6 @@ object DescribeStreamRequest {
         streamName <- x.downField("StreamName").as[String]
       } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName)
   }
+  implicit val describeStreamRequestEq: Eq[DescribeStreamRequest] =
+    Eq.fromUniversalEquals
 }

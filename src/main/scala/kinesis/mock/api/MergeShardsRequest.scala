@@ -11,6 +11,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
 final case class MergeShardsRequest(
@@ -137,4 +138,7 @@ object MergeShardsRequest {
         shardToMerge <- x.downField("ShardToMerge").as[String]
         streamName <- x.downField("StreamName").as[String]
       } yield MergeShardsRequest(adjacentShardToMerge, shardToMerge, streamName)
+
+  implicit val mergeShardsRequestEq: Eq[MergeShardsRequest] =
+    Eq.fromUniversalEquals
 }

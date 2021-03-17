@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models.Streams
+import cats.kernel.Eq
 
 final case class ListTagsForStreamRequest(
     exclusiveStartTagKey: Option[String],
@@ -64,4 +65,7 @@ object ListTagsForStreamRequest {
         limit <- x.downField("Limit").as[Option[Int]]
         streamName <- x.downField("StreamName").as[String]
       } yield ListTagsForStreamRequest(exclusiveStartTagKey, limit, streamName)
+
+  implicit val listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
+    Eq.fromUniversalEquals
 }

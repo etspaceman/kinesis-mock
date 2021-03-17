@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class PutRecordResponse(
     encryptionType: EncryptionType,
@@ -23,4 +24,7 @@ object PutRecordResponse {
         sequenceNumber <- x.downField("SequenceNumber").as[SequenceNumber]
         shardId <- x.downField("ShardId").as[String]
       } yield PutRecordResponse(encryptionType, sequenceNumber, shardId)
+
+  implicit val putRecordResponseEq: Eq[PutRecordResponse] =
+    Eq.fromUniversalEquals
 }

@@ -13,6 +13,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateShardCount.html
 final case class UpdateShardCountRequest(
@@ -123,4 +124,7 @@ object UpdateShardCountRequest {
       streamName <- x.downField("StreamName").as[String]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
     } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
+
+  implicit val updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
+    Eq.fromUniversalEquals
 }

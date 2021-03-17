@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
 final case class RegisterStreamConsumerRequest(
@@ -70,4 +71,6 @@ object RegisterStreamConsumerRequest {
       streamArn <- x.downField("StreamARN").as[String]
     } yield RegisterStreamConsumerRequest(consumerName, streamArn)
   }
+  implicit val registerStreamConsumerRequestEq
+      : Eq[RegisterStreamConsumerRequest] = Eq.fromUniversalEquals
 }

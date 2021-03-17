@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class ShardSummary(
     adjacentParentShardId: Option[String],
@@ -57,4 +58,5 @@ object ShardSummary {
       shardId
     )
   }
+  implicit val shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
 }

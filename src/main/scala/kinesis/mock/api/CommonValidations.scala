@@ -360,4 +360,11 @@ object CommonValidations {
     if (!shard.isOpen)
       ResourceInUseException(s"Shard ${shard.shardId} is not active").invalidNel
     else Valid(shard)
+
+  def validateData(
+      data: Array[Byte]
+  ): ValidatedNel[KinesisMockException, Array[Byte]] =
+    if (data.length > 1048576)
+      InvalidArgumentException("Data object is too large").invalidNel
+    else Valid(data)
 }

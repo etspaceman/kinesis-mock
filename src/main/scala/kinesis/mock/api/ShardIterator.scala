@@ -16,6 +16,7 @@ import javax.xml.bind.DatatypeConverter
 
 import kinesis.mock.InvalidArgumentException
 import kinesis.mock.models.SequenceNumber
+import cats.kernel.Eq
 
 final case class ShardIterator(value: String) {
   def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {
@@ -115,4 +116,6 @@ object ShardIterator {
 
   implicit val shardIteratorCirceDecoder: Decoder[ShardIterator] =
     Decoder[String].map(ShardIterator.apply)
+
+  implicit val shardIteratorEq: Eq[ShardIterator] = Eq.fromUniversalEquals
 }

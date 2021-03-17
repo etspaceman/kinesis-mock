@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import io.circe._
+import cats.kernel.Eq
 
 final case class DescribeStreamSummaryResponse(
     streamDescriptionSummary: StreamDescriptionSummary
@@ -17,4 +18,6 @@ object DescribeStreamSummaryResponse {
       .as[StreamDescriptionSummary]
       .map(DescribeStreamSummaryResponse.apply)
   }
+  implicit val describeStreamSummaryResponseEq
+      : Eq[DescribeStreamSummaryResponse] = Eq.fromUniversalEquals
 }

@@ -9,6 +9,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DecreaseStreamRetention.html
 final case class DecreaseStreamRetentionRequest(
@@ -50,4 +51,6 @@ object DecreaseStreamRetentionRequest {
       streamName <- x.downField("StreamName").as[String]
     } yield DecreaseStreamRetentionRequest(retentionPeriodHours, streamName)
   }
+  implicit val decreaseStreamRetentionEq: Eq[DecreaseStreamRetentionRequest] =
+    Eq.fromUniversalEquals
 }

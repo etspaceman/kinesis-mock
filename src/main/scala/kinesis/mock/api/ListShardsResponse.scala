@@ -3,6 +3,7 @@ package kinesis.mock.api
 import io.circe._
 
 import kinesis.mock.models._
+import cats.kernel.Eq
 
 final case class ListShardsResponse(
     nextToken: Option[String],
@@ -18,4 +19,6 @@ object ListShardsResponse {
         nextToken <- x.downField("NextToken").as[Option[String]]
         shards <- x.downField("Shards").as[List[Shard]]
       } yield ListShardsResponse(nextToken, shards)
+  implicit val listShardsResponseEq: Eq[ListShardsResponse] =
+    Eq.fromUniversalEquals
 }
