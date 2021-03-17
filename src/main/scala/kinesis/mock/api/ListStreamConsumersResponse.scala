@@ -1,10 +1,10 @@
 package kinesis.mock
 package api
 
+import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 final case class ListStreamConsumersResponse(
     consumers: List[Consumer],

@@ -1,20 +1,19 @@
 package kinesis.mock
 
-import cats.syntax.all._
-import enumeratum.scalacheck._
-import io.circe.Encoder
-import io.circe.Decoder
-import io.circe.syntax._
-import io.circe.parser._
 import scala.reflect.ClassTag
 
-import kinesis.mock.models._
-import kinesis.mock.api._
+import cats.kernel.Eq
+import cats.syntax.all._
+import enumeratum.scalacheck._
+import io.circe.parser._
+import io.circe.syntax._
+import io.circe.{Decoder, Encoder}
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 
+import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
-import cats.kernel.Eq
+import kinesis.mock.models._
 
 class CirceTests extends munit.ScalaCheckSuite {
   def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](implicit
@@ -39,15 +38,15 @@ class CirceTests extends munit.ScalaCheckSuite {
   identityLawTest[HashKeyRange]
   identityLawTest[KinesisRecord]
   identityLawTest[ShardLevelMetric]
-  identityLawTest[StreamStatus]
-  identityLawTest[ScalingType]
+  identityLawTest[ShardLevelMetrics]
   identityLawTest[SequenceNumber]
   identityLawTest[SequenceNumberConstant]
   identityLawTest[SequenceNumberRange]
-    
+  identityLawTest[Shard]
+  identityLawTest[StreamStatus]
 
+  identityLawTest[ScalingType]
   identityLawTest[ShardFilterType]
   identityLawTest[ShardIteratorType]
-  
 
 }

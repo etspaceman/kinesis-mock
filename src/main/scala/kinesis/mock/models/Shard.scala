@@ -4,8 +4,8 @@ import scala.collection.SortedMap
 
 import java.time.Instant
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class Shard(
     adjacentParentShardId: Option[String],

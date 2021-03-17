@@ -1,9 +1,9 @@
 package kinesis.mock.api
 
+import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models.Streams
-import cats.kernel.Eq
 
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
 

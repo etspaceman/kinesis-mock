@@ -1,9 +1,9 @@
 package kinesis.mock.api
 
+import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 final case class ShardSummary(
     adjacentParentShardId: Option[String],

@@ -3,11 +3,11 @@ package api
 
 import cats.data.Validated._
 import cats.data._
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 final case class DeleteStreamRequest(
     streamName: String,
@@ -48,5 +48,6 @@ object DeleteStreamRequest {
           .as[Option[Boolean]]
       } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
   }
-  implicit val deleteStreamRequestEq: Eq[DeleteStreamRequest] = Eq.fromUniversalEquals
+  implicit val deleteStreamRequestEq: Eq[DeleteStreamRequest] =
+    Eq.fromUniversalEquals
 }

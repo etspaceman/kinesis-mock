@@ -5,11 +5,11 @@ import java.time.Instant
 
 import cats.data.Validated._
 import cats.data._
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListShards.html
 final case class ListShardsRequest(
@@ -199,7 +199,8 @@ object ListShardsRequest {
     )
   }
 
-  implicit val listShardsRequestEq: Eq[ListShardsRequest] = Eq.fromUniversalEquals
+  implicit val listShardsRequestEq: Eq[ListShardsRequest] =
+    Eq.fromUniversalEquals
 
   def createNextToken(streamName: String, shardId: String): String =
     s"$streamName::$shardId"

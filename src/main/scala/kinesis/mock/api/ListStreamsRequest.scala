@@ -3,11 +3,11 @@ package api
 
 import cats.data.Validated._
 import cats.data._
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models.Streams
-import cats.kernel.Eq
 
 final case class ListStreamsRequest(
     exclusiveStartStreamName: Option[String],

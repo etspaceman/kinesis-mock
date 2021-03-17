@@ -1,9 +1,9 @@
 package kinesis.mock.api
 
+import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models.SequenceNumber
-import cats.kernel.Eq
 
 final case class PutRecordsResultEntry(
     errorCode: Option[PutRecordsErrorCode],

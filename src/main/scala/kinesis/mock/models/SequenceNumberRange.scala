@@ -1,7 +1,7 @@
 package kinesis.mock.models
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class SequenceNumberRange(
     endingSequenceNumber: Option[SequenceNumber],
@@ -26,5 +26,6 @@ object SequenceNumberRange {
       } yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
   }
 
-  implicit val sequenceNumberRangeEq: Eq[SequenceNumberRange] = Eq.fromUniversalEquals
+  implicit val sequenceNumberRangeEq: Eq[SequenceNumberRange] =
+    Eq.fromUniversalEquals
 }

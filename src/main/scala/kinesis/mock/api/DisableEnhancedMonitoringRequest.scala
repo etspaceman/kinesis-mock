@@ -2,10 +2,10 @@ package kinesis.mock
 package api
 
 import cats.data._
+import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(

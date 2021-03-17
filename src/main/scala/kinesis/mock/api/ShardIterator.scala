@@ -8,6 +8,7 @@ import java.util.Base64
 
 import cats.data.Validated._
 import cats.data._
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 import javax.crypto.Cipher
@@ -16,7 +17,6 @@ import javax.xml.bind.DatatypeConverter
 
 import kinesis.mock.InvalidArgumentException
 import kinesis.mock.models.SequenceNumber
-import cats.kernel.Eq
 
 final case class ShardIterator(value: String) {
   def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {

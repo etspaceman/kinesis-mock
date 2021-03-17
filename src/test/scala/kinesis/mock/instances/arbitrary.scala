@@ -1,11 +1,11 @@
 package kinesis.mock.instances
 
-import org.scalacheck.{Arbitrary, Gen}
+import java.time.Instant
+
 import enumeratum.scalacheck._
+import org.scalacheck.{Arbitrary, Gen}
 
 import kinesis.mock.models._
-// import kinesis.mock.api._
-import java.time.Instant
 
 object arbitrary {
   val streamArnGen: Gen[String] = for {
@@ -97,4 +97,35 @@ object arbitrary {
         )
       } yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
     )
+
+  implicit val shardLevelMetricsArbitrary: Arbitrary[ShardLevelMetrics] =
+    Arbitrary(
+      Gen
+        .listOf(Arbitrary.arbitrary[ShardLevelMetric])
+        .map(ShardLevelMetrics.apply)
+    )
+
+  implicit val shardArbitrary: Arbitrary[Shard] = Arbitrary(
+    for {
+      shardIndex <- Gen.choose(100, 1000)
+      shardId = Shard.shardId(shardIndex)
+      createdAtTimestamp <- nowGen.map(_.minusSeconds(10000))
+      adjacentParentShardId <- Gen.option(Gen.const(Shard.shardId(0)))
+      parentShardId <- Gen.option(Gen.const(Shard.shardId(1)))
+      hashKeyRange <- hashKeyRangeArbitrary.arbitrary
+      sequenceNumberRange <- sequenceNumberRangeArbitrary.arbitrary
+      closedTimestamp <- Gen
+        .option(nowGen)
+        .map(ts => sequenceNumberRange.endingSequenceNumber.flatMap(_ => ts))
+    } yield Shard(
+      adjacentParentShardId,
+      closedTimestamp,
+      createdAtTimestamp,
+      hashKeyRange,
+      parentShardId,
+      sequenceNumberRange,
+      shardId,
+      shardIndex
+    )
+  )
 }

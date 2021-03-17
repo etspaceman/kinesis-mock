@@ -1,7 +1,7 @@
 package kinesis.mock.api
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class ListStreamsResponse(
     hasMoreStreams: Boolean,

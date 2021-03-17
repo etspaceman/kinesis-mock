@@ -1,7 +1,7 @@
 package kinesis.mock.models
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
   def isAdjacent(other: HashKeyRange): Boolean =

@@ -9,6 +9,7 @@ import cats.data.Validated._
 import cats.data._
 import cats.effect.IO
 import cats.effect.concurrent.Semaphore
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
@@ -18,7 +19,6 @@ import kinesis.mock.models.{
   ShardSemaphoresKey,
   Streams
 }
-import cats.kernel.Eq
 
 final case class PutRecordsRequest(
     records: List[PutRecordsRequestEntry],

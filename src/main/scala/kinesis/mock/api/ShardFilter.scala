@@ -2,8 +2,8 @@ package kinesis.mock.api
 
 import java.time.Instant
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class ShardFilter(
     shardId: Option[String],

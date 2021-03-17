@@ -7,11 +7,11 @@ import java.util.Base64
 
 import cats.data.Validated._
 import cats.data._
+import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
-import cats.kernel.Eq
 
 final case class GetRecordsRequest(
     limit: Option[Int],

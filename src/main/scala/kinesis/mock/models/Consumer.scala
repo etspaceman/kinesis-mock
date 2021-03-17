@@ -2,8 +2,8 @@ package kinesis.mock.models
 
 import java.time.Instant
 
-import io.circe._
 import cats.kernel.Eq
+import io.circe._
 
 final case class Consumer(
     consumerArn: String,
