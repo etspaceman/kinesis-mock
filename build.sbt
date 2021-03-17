@@ -2,8 +2,8 @@ import LibraryDependencies._
 
 organization := "io.github.etspaceman"
 name := "kinesis-mock"
-description := "A Mock API for AWS Kinesis using FS2 and Http4s"
-scalaVersion := "2.13.4"
+description := "A Mock API for AWS Kinesis"
+scalaVersion := "2.13.5"
 resolvers += Resolver.bintrayRepo("wolfendale", "maven")
 libraryDependencies ++= Seq(
   Aws.utils,
@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
   Munit.scalacheck % Test
 )
 semanticdbEnabled := true
-semanticdbVersion := "4.4.2"
+semanticdbVersion := "4.4.10"
 ThisBuild / scalafixDependencies += OrganizeImports
 scalacOptions ++= ScalacSettings.settings
 scalacOptions in (Compile, console) ~= {
