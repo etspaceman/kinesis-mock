@@ -1,5 +1,7 @@
 package kinesis.mock.instances
 
+import scala.concurrent.duration._
+
 import java.time.Instant
 
 import enumeratum.scalacheck._
@@ -332,5 +334,138 @@ object arbitrary {
     Arbitrary(
       streamDescriptionArb.arbitrary.map(DescribeStreamResponse.apply)
     )
+
+  implicit val describeStreamSummaryRequestArb
+      : Arbitrary[DescribeStreamSummaryRequest] = Arbitrary(
+    streamNameGen.map(DescribeStreamSummaryRequest.apply)
+  )
+
+  implicit val streamDescriptionSummaryArb
+      : Arbitrary[StreamDescriptionSummary] = Arbitrary(
+    for {
+      consumerCount <- Gen.option(Gen.choose(1, 20))
+      encryptionType <- Gen.option(Arbitrary.arbitrary[EncryptionType])
+      enhancedMonitoring <- Gen
+        .choose(0, 1)
+        .flatMap(size =>
+          Gen.listOfN(size, shardLevelMetricsArbitrary.arbitrary)
+        )
+      keyId <- Gen.option(keyIdGen)
+      openShardCount <- Gen.choose(1, 50)
+      retentionPeriodHours <- retentionPeriodHoursGen
+      streamCreationTimestamp <- nowGen
+      streamName <- streamNameGen
+      streamArn <- arnGen("kinesis", "stream", streamName)
+      streamStatus <- Arbitrary.arbitrary[StreamStatus]
+    } yield StreamDescriptionSummary(
+      consumerCount,
+      encryptionType,
+      enhancedMonitoring,
+      keyId,
+      openShardCount,
+      retentionPeriodHours,
+      streamArn,
+      streamCreationTimestamp,
+      streamName,
+      streamStatus
+    )
+  )
+
+  implicit val describeStreamSummaryResponseArb
+      : Arbitrary[DescribeStreamSummaryResponse] = Arbitrary(
+    streamDescriptionSummaryArb.arbitrary.map(
+      DescribeStreamSummaryResponse.apply
+    )
+  )
+
+  implicit val disableEnhancedMonitoringRequestArb
+      : Arbitrary[DisableEnhancedMonitoringRequest] = Arbitrary(
+    for {
+      shardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      streamName <- streamNameGen
+    } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
+  )
+
+  implicit val disableEnhancedMonitoringResponseArb
+      : Arbitrary[DisableEnhancedMonitoringResponse] = Arbitrary(
+    for {
+      currentShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      streamName <- streamNameGen
+    } yield DisableEnhancedMonitoringResponse(
+      currentShardLevelMetrics,
+      desiredShardLevelMetrics,
+      streamName
+    )
+  )
+
+  implicit val enableEnhancedMonitoringRequestArb
+      : Arbitrary[EnableEnhancedMonitoringRequest] = Arbitrary(
+    for {
+      shardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      streamName <- streamNameGen
+    } yield EnableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
+  )
+
+  implicit val enableEnhancedMonitoringResponseArb
+      : Arbitrary[EnableEnhancedMonitoringResponse] = Arbitrary(
+    for {
+      currentShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
+      )
+      streamName <- streamNameGen
+    } yield EnableEnhancedMonitoringResponse(
+      currentShardLevelMetrics,
+      desiredShardLevelMetrics,
+      streamName
+    )
+  )
+
+  val shardIteratorGen: Gen[ShardIterator] = for {
+    streamName <- streamNameGen
+    shardId <- Gen.choose(0, 1000).map(Shard.shardId)
+    sequenceNumber <- sequenceNumberArbitrary.arbitrary
+  } yield ShardIterator.create(streamName, shardId, sequenceNumber)
+
+  implicit val getRecordsRequestArb: Arbitrary[GetRecordsRequest] = Arbitrary(
+    for {
+      limit <- Gen.option(limitGen)
+      shardIterator <- shardIteratorGen
+    } yield GetRecordsRequest(limit, shardIterator)
+  )
+
+  val childShardGen: Gen[ChildShard] = for {
+    shardIndex <- Gen.choose(100, 1000)
+    shardId = Shard.shardId(shardIndex)
+    parentShards = List.range(0, shardIndex).map(Shard.shardId)
+    hashKeyRange <- hashKeyRangeArbitrary.arbitrary
+  } yield ChildShard(hashKeyRange, parentShards, shardId)
+
+  implicit val getRecordsResponseArb: Arbitrary[GetRecordsResponse] = Arbitrary(
+    for {
+      childShards <- Gen.listOf(childShardGen)
+      millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
+      nextShardIterator <- shardIteratorGen
+      records <- Gen
+        .choose(0, 100)
+        .flatMap(size => Gen.listOfN(size, kineisRecordArbitrary.arbitrary))
+    } yield GetRecordsResponse(
+      childShards,
+      millisBehindLatest,
+      nextShardIterator,
+      records
+    )
+  )
 
 }

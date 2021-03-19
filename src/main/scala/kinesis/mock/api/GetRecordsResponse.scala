@@ -28,7 +28,7 @@ object GetRecordsResponse {
     x =>
       for {
         childShards <- x.downField("ChildShards").as[List[ChildShard]]
-        millisBehindLatest <- x.downField("ShardIterator").as[Long]
+        millisBehindLatest <- x.downField("MillisBehindLatest").as[Long]
         nextShardIterator <- x.downField("NextShardIterator").as[ShardIterator]
         records <- x.downField("Records").as[List[KinesisRecord]]
       } yield GetRecordsResponse(
