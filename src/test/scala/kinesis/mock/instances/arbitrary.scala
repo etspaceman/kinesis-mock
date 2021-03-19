@@ -468,4 +468,95 @@ object arbitrary {
     )
   )
 
+  implicit val getShardIteratorRequestArb: Arbitrary[GetShardIteratorRequest] =
+    Arbitrary(
+      for {
+        shardId <- Gen.choose(0, 1000).map(Shard.shardId)
+        shardIteratorType <- Arbitrary.arbitrary[ShardIteratorType]
+        startingSequenceNumber <- shardIteratorType match {
+          case ShardIteratorType.AFTER_SEQUENCE_NUMBER |
+              ShardIteratorType.AT_SEQUENCE_NUMBER =>
+            sequenceNumberArbitrary.arbitrary.map(x => Some(x))
+          case _ => Gen.const(None)
+        }
+        streamName <- streamNameGen
+        timestamp <- shardIteratorType match {
+          case ShardIteratorType.AT_TIMESTAMP => nowGen.map(x => Some(x))
+          case _                              => Gen.const(None)
+        }
+      } yield GetShardIteratorRequest(
+        shardId,
+        shardIteratorType,
+        startingSequenceNumber,
+        streamName,
+        timestamp
+      )
+    )
+
+  implicit val getShardIteratorResponseArb
+      : Arbitrary[GetShardIteratorResponse] = Arbitrary(
+    shardIteratorGen.map(GetShardIteratorResponse.apply)
+  )
+
+  implicit val increaseStreamRetentionRequestArb
+      : Arbitrary[IncreaseStreamRetentionRequest] = Arbitrary(
+    for {
+      retentionPeriodHours <- retentionPeriodHoursGen
+      streamName <- streamNameGen
+    } yield IncreaseStreamRetentionRequest(retentionPeriodHours, streamName)
+  )
+
+  def nextTokenGen(exclusiveStartShardIndex: Option[Int]): Gen[String] = for {
+    streamName <- streamNameGen
+    lastShardId <-
+      Gen
+        .choose(exclusiveStartShardIndex.getOrElse(0), 1000)
+        .map(Shard.shardId)
+  } yield ListShardsRequest.createNextToken(streamName, lastShardId)
+
+  implicit val listShardsRequestArb: Arbitrary[ListShardsRequest] = Arbitrary(
+    for {
+      exclusiveStartShardIndex <- Gen.option(Gen.choose(0, 1000))
+      exclusiveStartShardId = exclusiveStartShardIndex.map(Shard.shardId)
+      maxResults <- Gen.option(Gen.choose(1, 10000))
+      nextToken <- Gen.option(nextTokenGen(exclusiveStartShardIndex))
+      shardFilterType <- Arbitrary.arbitrary[ShardFilterType]
+      shardFilterShardId <- shardFilterType match {
+        case ShardFilterType.AFTER_SHARD_ID =>
+          Gen
+            .choose(exclusiveStartShardIndex.getOrElse(0), 1000)
+            .map(Shard.shardId)
+            .map(x => Some(x))
+        case _ => Gen.const(None)
+      }
+      shardFilterTimestamp <- shardFilterType match {
+        case ShardFilterType.AT_TIMESTAMP => nowGen.map(x => Some(x))
+        case _                            => Gen.const(None)
+      }
+      shardFilter <- Gen.option(
+        Gen.const(
+          ShardFilter(shardFilterShardId, shardFilterTimestamp, shardFilterType)
+        )
+      )
+      streamCreationTimestamp <- Gen.option(nowGen)
+      streamName <- Gen.option(streamNameGen)
+    } yield ListShardsRequest(
+      exclusiveStartShardId,
+      maxResults,
+      nextToken,
+      shardFilter,
+      streamCreationTimestamp,
+      streamName
+    )
+  )
+
+  implicit val listShardsResponseArb: Arbitrary[ListShardsResponse] = Arbitrary(
+    for {
+      nextToken <- Gen.option(nextTokenGen(None))
+      shards <- Gen.sequence[List[Shard], Shard](
+        List.range(0, 100).map(x => shardGen(x))
+      )
+    } yield ListShardsResponse(nextToken, shards)
+  )
+
 }

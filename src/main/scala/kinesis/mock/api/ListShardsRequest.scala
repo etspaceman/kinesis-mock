@@ -185,8 +185,8 @@ object ListShardsRequest {
       maxResults <- x.downField("MaxResults").as[Option[Int]]
       nextToken <- x.downField("NextToken").as[Option[String]]
       shardFilter <- x.downField("ShardFilter").as[Option[ShardFilter]]
-      shardCreationTimestamp <- x
-        .downField("ShardCreationTimestamp")
+      streamCreationTimestamp <- x
+        .downField("StreamCreationTimestamp")
         .as[Option[Instant]]
       streamName <- x.downField("StreamName").as[Option[String]]
     } yield ListShardsRequest(
@@ -194,7 +194,7 @@ object ListShardsRequest {
       maxResults,
       nextToken,
       shardFilter,
-      shardCreationTimestamp,
+      streamCreationTimestamp,
       streamName
     )
   }

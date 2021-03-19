@@ -170,7 +170,7 @@ object GetShardIteratorRequest {
       "ShardId",
       "ShardIteratorType",
       "StartingSequenceNumber",
-      "Streamname",
+      "StreamName",
       "Timestamp"
     )(x =>
       (
