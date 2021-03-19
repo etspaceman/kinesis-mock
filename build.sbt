@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   Enumeratum.scalacheck % Test,
   Munit.core % Test,
   Munit.catsEffect2 % Test,
-  Munit.scalacheck % Test
+  Munit.scalacheck % Test,
+  ScalacheckGenRegexp % Test
 )
 semanticdbEnabled := true
 semanticdbVersion := "4.4.10"

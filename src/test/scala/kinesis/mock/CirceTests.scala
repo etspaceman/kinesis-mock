@@ -45,8 +45,19 @@ class CirceTests extends munit.ScalaCheckSuite {
   identityLawTest[Shard]
   identityLawTest[StreamStatus]
 
+  identityLawTest[AddTagsToStreamRequest]
+  identityLawTest[CreateStreamRequest]
+  identityLawTest[DecreaseStreamRetentionRequest]
+  identityLawTest[DeleteStreamRequest]
+  identityLawTest[DeregisterStreamConsumerRequest]
+  identityLawTest[DescribeLimitsResponse]
+  identityLawTest[DescribeStreamConsumerRequest]
+  identityLawTest[DescribeStreamRequest]
+  identityLawTest[DescribeStreamResponse]
   identityLawTest[ScalingType]
   identityLawTest[ShardFilterType]
   identityLawTest[ShardIteratorType]
+  identityLawTest[ShardSummary]
+  identityLawTest[StreamDescription]
 
 }

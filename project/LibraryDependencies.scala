@@ -7,6 +7,7 @@ object LibraryDependencies {
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
+  val ScalacheckGenRegexp = "wolfendale" %% "scalacheck-gen-regexp" % "0.1.2"
 
   object Munit {
     val munitVersion = "0.7.22"
