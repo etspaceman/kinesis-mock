@@ -22,13 +22,10 @@ final case class SequenceNumber(value: String) {
         SequenceNumber.shardEndNumber
     }
 
-  def parse: ValidatedNel[KinesisMockException, Either[
-    String,
-    SequenceNumberParts
-  ]] = {
+  def parse: ValidatedNel[KinesisMockException, SequenceNumberParseResult] = {
     value match {
       case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
-        Valid(Left(x))
+        Valid(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))
       case x => {
         val seqNum =
           if (BigInt(x) < BigInt(2).pow(124))
@@ -46,17 +43,20 @@ final case class SequenceNumber(value: String) {
           else initial
         }
         (
-          Try(BigInt(seqIndexHex.head.toString, 16)),
+          Try(BigInt(seqIndexHex, 16)),
           Try(BigInt(shardCreateSecsHex, 16)),
           Try(BigInt(seqTimeHex, 16)),
           Try(BigInt(shardIndexHex, 16))
         ) match {
           case (
-                Success(seqIndex),
+                Success(_),
                 _,
                 _,
                 _
-              ) if seqIndex.toInt > 7 =>
+              )
+              if seqIndexHex.headOption
+                .map(x => BigInt(x.toString(), 16))
+                .exists(_ > 7) =>
             InvalidArgumentException("Sequence index too high").invalidNel
           case (
                 _,
@@ -74,14 +74,12 @@ final case class SequenceNumber(value: String) {
                 Success(shardIndex)
               ) =>
             Valid(
-              Right(
-                SequenceNumberParts(
-                  Instant.ofEpochSecond(shardCreateSecs.toLong),
-                  shardIndex.toInt,
-                  hex.slice(27, 29),
-                  seqIndex.toInt,
-                  Instant.ofEpochSecond(seqTime.toLong)
-                )
+              SequenceNumberParts(
+                Instant.ofEpochSecond(shardCreateSecs.toLong),
+                shardIndex.toInt,
+                hex.slice(27, 29),
+                seqIndex.toInt,
+                Instant.ofEpochSecond(seqTime.toLong)
               )
             )
           case _ =>
@@ -95,13 +93,18 @@ final case class SequenceNumber(value: String) {
   }
 }
 
+sealed trait SequenceNumberParseResult
+
 final case class SequenceNumberParts(
     shardCreateTime: Instant,
     shardIndex: Int,
     byte1: String,
     seqIndex: Int,
     seqTime: Instant
-)
+) extends SequenceNumberParseResult
+
+final case class SequenceNumberConstantResult(constant: SequenceNumberConstant)
+    extends SequenceNumberParseResult
 
 object SequenceNumber {
   val shardEndNumber = BigInt("7fffffffffffffff", 16)
@@ -123,10 +126,10 @@ object SequenceNumber {
           ("0000000000000000" + BigInt(seqIndex.getOrElse(0)).toString(16))
             .takeRight(16) +
           byte1.getOrElse("00") +
-          "00000000" + BigInt(
+          ("00000000" + BigInt(
             seqTime.getOrElse(shardCreateTime).getEpochSecond()
           )
-            .toString(16)
+            .toString(16))
             .takeRight(9) +
           ("0000000" + BigInt(shardIndex).toString(16)).takeRight(8) +
           "2",

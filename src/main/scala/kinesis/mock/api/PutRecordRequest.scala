@@ -39,7 +39,7 @@ final case class PutRecordRequest(
             case None => Valid(())
             case Some(seqNo) =>
               seqNo.parse.andThen {
-                case Right(parts)
+                case parts: SequenceNumberParts
                     if parts.seqTime.toEpochMilli > now.toEpochMilli =>
                   InvalidArgumentException(
                     s"Sequence time in the future"
