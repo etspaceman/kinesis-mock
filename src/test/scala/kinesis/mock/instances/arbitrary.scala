@@ -47,13 +47,13 @@ object arbitrary {
     }
   )
 
-  val consuemrNameGen: Gen[String] = Gen
+  val consumerNameGen: Gen[String] = Gen
     .choose(1, 128)
     .flatMap(size => Gen.resize(size, RegexpGen.from("[a-zA-Z0-9_.-]+")))
 
   val consumerArnGen: Gen[String] = for {
     streamArn <- streamArnGen
-    consumerName <- consuemrNameGen
+    consumerName <- consumerNameGen
     consumerCreationTimestamp <- nowGen
   } yield s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}"
 
@@ -61,7 +61,7 @@ object arbitrary {
     for {
       streamArn <- streamArnGen
       consumerCreationTimestamp <- nowGen
-      consumerName <- consuemrNameGen
+      consumerName <- consumerNameGen
       consumerArn =
         s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}"
       consumerStatus <- Arbitrary.arbitrary[ConsumerStatus]
@@ -80,10 +80,13 @@ object arbitrary {
     } yield HashKeyRange(startingHashKey, endingHashKey)
   )
 
-  implicit val kineisRecordArbitrary: Arbitrary[KinesisRecord] = Arbitrary(
+  val dataGen: Gen[Array[Byte]] =
+    Arbitrary.arbitrary[Array[Byte]].suchThat(_.length < 1048576)
+
+  implicit val kinesisRecordArbitrary: Arbitrary[KinesisRecord] = Arbitrary(
     for {
       approximateArrivalTimestamp <- nowGen
-      data <- Arbitrary.arbitrary[Array[Byte]].suchThat(_.length < 1048576)
+      data <- dataGen
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       partitionKey <- Gen
         .choose(1, 256)
@@ -226,12 +229,12 @@ object arbitrary {
       } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
     )
 
-  implicit val deregisterStreamConsumeRequestArb
+  implicit val deregisterStreamConsumerRequestArb
       : Arbitrary[DeregisterStreamConsumerRequest] = Arbitrary(
     for {
       consumerArn <- Gen.option(consumerArnGen)
       consumerName <-
-        if (consumerArn.isEmpty) consuemrNameGen.map(x => Some(x))
+        if (consumerArn.isEmpty) consumerNameGen.map(x => Some(x))
         else Gen.const(None)
       streamArn <-
         if (consumerArn.isEmpty) streamArnGen.map(x => Some(x))
@@ -256,7 +259,7 @@ object arbitrary {
     for {
       consumerArn <- Gen.option(consumerArnGen)
       consumerName <-
-        if (consumerArn.isEmpty) consuemrNameGen.map(x => Some(x))
+        if (consumerArn.isEmpty) consumerNameGen.map(x => Some(x))
         else Gen.const(None)
       streamArn <-
         if (consumerArn.isEmpty) streamArnGen.map(x => Some(x))
@@ -459,7 +462,7 @@ object arbitrary {
       nextShardIterator <- shardIteratorGen
       records <- Gen
         .choose(0, 100)
-        .flatMap(size => Gen.listOfN(size, kineisRecordArbitrary.arbitrary))
+        .flatMap(size => Gen.listOfN(size, kinesisRecordArbitrary.arbitrary))
     } yield GetRecordsResponse(
       childShards,
       millisBehindLatest,
@@ -514,12 +517,8 @@ object arbitrary {
         .map(Shard.shardId)
   } yield ListShardsRequest.createNextToken(streamName, lastShardId)
 
-  implicit val listShardsRequestArb: Arbitrary[ListShardsRequest] = Arbitrary(
+  def shardFilterGen(exclusiveStartShardIndex: Option[Int]): Gen[ShardFilter] =
     for {
-      exclusiveStartShardIndex <- Gen.option(Gen.choose(0, 1000))
-      exclusiveStartShardId = exclusiveStartShardIndex.map(Shard.shardId)
-      maxResults <- Gen.option(Gen.choose(1, 10000))
-      nextToken <- Gen.option(nextTokenGen(exclusiveStartShardIndex))
       shardFilterType <- Arbitrary.arbitrary[ShardFilterType]
       shardFilterShardId <- shardFilterType match {
         case ShardFilterType.AFTER_SHARD_ID =>
@@ -533,11 +532,23 @@ object arbitrary {
         case ShardFilterType.AT_TIMESTAMP => nowGen.map(x => Some(x))
         case _                            => Gen.const(None)
       }
-      shardFilter <- Gen.option(
+      shardFilter <-
         Gen.const(
           ShardFilter(shardFilterShardId, shardFilterTimestamp, shardFilterType)
         )
-      )
+    } yield shardFilter
+
+  implicit val shardFilterArbitrary: Arbitrary[ShardFilter] = Arbitrary(
+    shardFilterGen(None)
+  )
+
+  implicit val listShardsRequestArb: Arbitrary[ListShardsRequest] = Arbitrary(
+    for {
+      exclusiveStartShardIndex <- Gen.option(Gen.choose(0, 1000))
+      exclusiveStartShardId = exclusiveStartShardIndex.map(Shard.shardId)
+      maxResults <- Gen.option(Gen.choose(1, 10000))
+      nextToken <- Gen.option(nextTokenGen(exclusiveStartShardIndex))
+      shardFilter <- Gen.option(shardFilterGen(exclusiveStartShardIndex))
       streamCreationTimestamp <- Gen.option(nowGen)
       streamName <- Gen.option(streamNameGen)
     } yield ListShardsRequest(
@@ -558,5 +569,205 @@ object arbitrary {
       )
     } yield ListShardsResponse(nextToken, shards)
   )
+
+  implicit val listStreamConsumersRequestArb
+      : Arbitrary[ListStreamConsumersRequest] = Arbitrary(
+    for {
+      maxResults <- Gen.option(limitGen)
+      nextToken <- Gen.option(consumerNameGen)
+      streamArn <- streamArnGen
+      streamCreationTimestamp <- Gen.option(nowGen)
+    } yield ListStreamConsumersRequest(
+      maxResults,
+      nextToken,
+      streamArn,
+      streamCreationTimestamp
+    )
+  )
+
+  implicit val listStreamConsumersResponseArb
+      : Arbitrary[ListStreamConsumersResponse] = Arbitrary(
+    for {
+      size <- Gen.choose(0, 20)
+      consumers <- Gen.listOfN(size, consumerArbitrary.arbitrary)
+      nextToken = consumers.lastOption.map(_.consumerName)
+    } yield ListStreamConsumersResponse(consumers, nextToken)
+  )
+
+  implicit val listStreamsRequestArb: Arbitrary[ListStreamsRequest] = Arbitrary(
+    for {
+      exclusiveStartStreamName <- Gen.option(streamNameGen)
+      limit <- Gen.option(limitGen)
+    } yield ListStreamsRequest(exclusiveStartStreamName, limit)
+  )
+
+  implicit val listStreamsResponseArb: Arbitrary[ListStreamsResponse] =
+    Arbitrary(
+      for {
+        hasMoreStreams <- Arbitrary.arbitrary[Boolean]
+        size <- Gen.choose(0, 50)
+        streamNames <- Gen.listOfN(size, streamNameGen)
+      } yield ListStreamsResponse(hasMoreStreams, streamNames)
+    )
+
+  implicit val listTagsForStreamRequestArb
+      : Arbitrary[ListTagsForStreamRequest] = Arbitrary(
+    for {
+      exclusiveStartTagKey <- Gen.option(tagKeyGen)
+      limit <- Gen.option(limitGen)
+      streamName <- streamNameGen
+    } yield ListTagsForStreamRequest(exclusiveStartTagKey, limit, streamName)
+  )
+
+  implicit val listTagsForStreamResponseArb
+      : Arbitrary[ListTagsForStreamResponse] = Arbitrary(
+    for {
+      hasMoreTags <- Arbitrary.arbitrary[Boolean]
+      tags <- tagsGen
+    } yield ListTagsForStreamResponse(hasMoreTags, tags)
+  )
+
+  implicit val mergeShardsRequestArb: Arbitrary[MergeShardsRequest] = Arbitrary(
+    for {
+      adjacentShardToMerge <- Gen.choose(0, 1000).map(Shard.shardId)
+      shardToMerge <- Gen
+        .choose(0, 1000)
+        .map(Shard.shardId)
+        .suchThat(_ != adjacentShardToMerge)
+      streamName <- streamNameGen
+    } yield MergeShardsRequest(adjacentShardToMerge, shardToMerge, streamName)
+  )
+
+  val explicitHashKeyGen: Gen[String] = RegexpGen.from("0|([1-9]\\d{0,38})")
+  val partitionKeyGen: Gen[String] =
+    Gen.choose(1, 256).flatMap(size => Gen.stringOfN(size, Gen.alphaNumChar))
+
+  implicit val putRecordRequestArb: Arbitrary[PutRecordRequest] = Arbitrary(
+    for {
+      data <- dataGen
+      explicitHashKey <- Gen.option(explicitHashKeyGen)
+      partitionKey <- partitionKeyGen
+      sequenceNumberForOrdering <- Gen.option(sequenceNumberArbitrary.arbitrary)
+      streamName <- streamNameGen
+    } yield PutRecordRequest(
+      data,
+      explicitHashKey,
+      partitionKey,
+      sequenceNumberForOrdering,
+      streamName
+    )
+  )
+
+  implicit val putRecordResponseArb: Arbitrary[PutRecordResponse] = Arbitrary(
+    for {
+      encryptionType <- Arbitrary.arbitrary[EncryptionType]
+      sequenceNumber <- sequenceNumberArbitrary.arbitrary
+      shardId <- Gen.choose(0, 1000).map(Shard.shardId)
+    } yield PutRecordResponse(encryptionType, sequenceNumber, shardId)
+  )
+
+  implicit val putRecordsRequestEntryArb: Arbitrary[PutRecordsRequestEntry] =
+    Arbitrary(
+      for {
+        data <- dataGen
+        explicitHashKey <- Gen.option(explicitHashKeyGen)
+        partitionKey <- partitionKeyGen
+      } yield PutRecordsRequestEntry(data, explicitHashKey, partitionKey)
+    )
+
+  implicit val putRecordsRequestArb: Arbitrary[PutRecordsRequest] = Arbitrary(
+    for {
+      recordsSize <- Gen.choose(0, 500)
+      records <- Gen.listOfN(recordsSize, putRecordsRequestEntryArb.arbitrary)
+      streamName <- streamNameGen
+    } yield PutRecordsRequest(records, streamName)
+  )
+
+  implicit val putRecordsResultEntry: Arbitrary[PutRecordsResultEntry] =
+    Arbitrary(
+      for {
+        errorCode <- Gen.option(Arbitrary.arbitrary[PutRecordsErrorCode])
+        errorMessage <- errorCode match {
+          case Some(_) => Gen.stringOfN(256, Gen.alphaNumChar).map(Some(_))
+          case None    => Gen.const(None)
+        }
+        sequenceNumber <- errorCode match {
+          case Some(_) => Gen.const(None)
+          case None    => sequenceNumberArbitrary.arbitrary.map(Some(_))
+        }
+        shardId <- errorCode match {
+          case Some(_) => Gen.const(None)
+          case None    => Gen.option(Gen.choose(0, 1000).map(Shard.shardId))
+        }
+      } yield PutRecordsResultEntry(
+        errorCode,
+        errorMessage,
+        sequenceNumber,
+        shardId
+      )
+    )
+
+  implicit val putRecordsResponseArb: Arbitrary[PutRecordsResponse] = Arbitrary(
+    for {
+      encryptionType <- Arbitrary.arbitrary[EncryptionType]
+      failedRecordCount <- Gen.choose(0, 500)
+      recordsSize <- Gen.choose(failedRecordCount, 500)
+      records <- Gen.listOfN(recordsSize, putRecordsResultEntry.arbitrary)
+    } yield PutRecordsResponse(encryptionType, failedRecordCount, records)
+  )
+
+  implicit val registerStreamConsumerRequestArb
+      : Arbitrary[RegisterStreamConsumerRequest] = Arbitrary(
+    for {
+      consumerName <- consumerNameGen
+      streamArn <- streamArnGen
+    } yield RegisterStreamConsumerRequest(consumerName, streamArn)
+  )
+
+  implicit val registerStreamConsumerResponseArb
+      : Arbitrary[RegisterStreamConsumerResponse] = Arbitrary(
+    consumerArbitrary.arbitrary.map(RegisterStreamConsumerResponse.apply)
+  )
+
+  implicit val shardIteratorArbitrary: Arbitrary[ShardIterator] = Arbitrary(
+    shardIteratorGen
+  )
+
+  implicit val splitShardRequestArb: Arbitrary[SplitShardRequest] = Arbitrary(
+    for {
+      newStartingHashKey <- hashKeyRangeArbitrary.arbitrary.map(
+        _.startingHashKey.toString
+      )
+      shardToSplit <- Gen.choose(0, 1000).map(Shard.shardId)
+      streamName <- streamNameGen
+    } yield SplitShardRequest(newStartingHashKey, shardToSplit, streamName)
+  )
+
+  implicit val startStreamEncryptionRequestArb
+      : Arbitrary[StartStreamEncryptionRequest] = Arbitrary(
+    for {
+      encryptionType <- Arbitrary.arbitrary[EncryptionType]
+      keyId <- keyIdGen
+      streamName <- streamNameGen
+    } yield StartStreamEncryptionRequest(encryptionType, keyId, streamName)
+  )
+
+  implicit val stopStreamEncryptionRequestArb
+      : Arbitrary[StopStreamEncryptionRequest] = Arbitrary(
+    for {
+      encryptionType <- Arbitrary.arbitrary[EncryptionType]
+      keyId <- keyIdGen
+      streamName <- streamNameGen
+    } yield StopStreamEncryptionRequest(encryptionType, keyId, streamName)
+  )
+
+  implicit val updateShardCountRequestArb: Arbitrary[UpdateShardCountRequest] =
+    Arbitrary(
+      for {
+        scalingType <- Arbitrary.arbitrary[ScalingType]
+        streamName <- streamNameGen
+        targetShardCount <- Gen.choose(1, 1000)
+      } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
+    )
 
 }
