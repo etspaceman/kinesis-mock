@@ -1,113 +1,139 @@
 package kinesis.mock
 
-import scala.util.Random
-
 import java.time.Instant
 
 import kinesis.mock.models._
+import org.scalacheck.Prop._
+import eu.timepit.refined.W
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.numeric.Interval
+import eu.timepit.refined.types.numeric.PosInt
+import eu.timepit.refined.scalacheck.numeric._
 
-class SequenceNumberTests extends munit.FunSuite {
-  test("It should create and parse correctly") {
-    val shardCreateTime = Instant.now()
-    val shardIndex = Random.between(0, 1000)
-    val seqIndex = Some(Random.between(0, 1000))
-    val seqTime = Some(Instant.now().plusSeconds(5))
+class SequenceNumberTests extends munit.ScalaCheckSuite {
+  property("It should create and parse correctly")(forAll {
+    (
+        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
+          W.`0L`.T,
+          W.`16025174999L`.T
+        ],
+        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
+        seqIndex: PosInt,
+        seqTimeEpochSeconds: Long Refined Interval.Closed[
+          W.`0L`.T,
+          W.`16025174999L`.T
+        ]
+    ) =>
+      val shardCreateTime =
+        Instant.ofEpochSecond(shardCreateTimeEpochSeconds.value.toLong)
+      val seqTime =
+        Instant.ofEpochSecond(seqTimeEpochSeconds.value.toLong)
 
-    val sequenceNumber =
-      SequenceNumber.create(
-        shardCreateTime,
-        shardIndex,
-        None,
-        seqIndex,
-        seqTime
-      )
+      val sequenceNumber =
+        SequenceNumber.create(
+          shardCreateTime,
+          shardIndex.value,
+          None,
+          Some(seqIndex.value),
+          Some(seqTime)
+        )
 
-    val parsed = sequenceNumber.parse
+      val parsed = sequenceNumber.parse
 
-    assert(
-      parsed.isValid && parsed.exists {
+      (parsed.isValid && parsed.exists {
         case x: SequenceNumberParts =>
-          seqIndex.contains(x.seqIndex) &&
+          seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            seqTime.exists(y =>
-              y.getEpochSecond() == x.seqTime.getEpochSecond()
-            ) &&
-            x.shardIndex == shardIndex
+            seqTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            x.shardIndex == shardIndex.value
 
         case _ => false
-      },
-      s"shardCreateTime: $shardCreateTime\n" +
-        s"shardIndex: $shardIndex\n" +
-        s"seqIndex: $seqIndex\n" +
-        s"seqTime: $seqTime\n" +
+      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+        s"shardIndex: ${shardIndex.value}\n" +
+        s"seqIndex: ${seqIndex.value}\n" +
+        s"seqTime: ${seqTime}\n" +
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
-    )
-  }
+  })
 
-  test("It should substitute shardCreateTime for seqTime") {
-    val shardCreateTime = Instant.now()
-    val shardIndex = Random.between(0, 1000)
-    val seqIndex = Some(Random.between(0, 1000))
+  property("It should substitute shardCreateTime for seqTime")(forAll {
+    (
+        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
+          W.`0L`.T,
+          W.`16025174999L`.T
+        ],
+        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
+        seqIndex: PosInt
+    ) =>
+      val shardCreateTime =
+        Instant.ofEpochSecond(shardCreateTimeEpochSeconds.value.toLong)
 
-    val sequenceNumber =
-      SequenceNumber.create(
-        shardCreateTime,
-        shardIndex,
-        None,
-        seqIndex,
-        None
-      )
+      val sequenceNumber =
+        SequenceNumber.create(
+          shardCreateTime,
+          shardIndex.value,
+          None,
+          Some(seqIndex.value),
+          None
+        )
 
-    val parsed = sequenceNumber.parse
+      val parsed = sequenceNumber.parse
 
-    assert(
-      parsed.isValid && parsed.exists {
+      (parsed.isValid && parsed.exists {
         case x: SequenceNumberParts =>
-          seqIndex.contains(x.seqIndex) &&
+          seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            x.seqTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            x.shardIndex == shardIndex
+            shardCreateTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            x.shardIndex == shardIndex.value
 
         case _ => false
-      },
-      s"shardCreateTime: $shardCreateTime\n" +
-        s"shardIndex: $shardIndex\n" +
-        s"seqIndex: $seqIndex\n" +
+      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+        s"shardIndex: ${shardIndex.value}\n" +
+        s"seqIndex: ${seqIndex.value}\n" +
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
-    )
-  }
+  })
 
-  test("It should substitute 0 for seqIndex") {
-    val shardCreateTime = Instant.now()
-    val shardIndex = Random.between(0, 1000)
+  property("It should substitute 0 for seqIndex")(forAll {
+    (
+        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
+          W.`0L`.T,
+          W.`16025174999L`.T
+        ],
+        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
+        seqTimeEpochSeconds: Long Refined Interval.Closed[
+          W.`0L`.T,
+          W.`16025174999L`.T
+        ]
+    ) =>
+      val shardCreateTime =
+        Instant.ofEpochSecond(shardCreateTimeEpochSeconds.value.toLong)
+      val seqTime =
+        Instant.ofEpochSecond(seqTimeEpochSeconds.value.toLong)
 
-    val sequenceNumber =
-      SequenceNumber.create(
-        shardCreateTime,
-        shardIndex,
-        None,
-        None,
-        None
-      )
+      val sequenceNumber =
+        SequenceNumber.create(
+          shardCreateTime,
+          shardIndex.value,
+          None,
+          None,
+          Some(seqTime)
+        )
 
-    val parsed = sequenceNumber.parse
+      val parsed = sequenceNumber.parse
 
-    assert(
-      parsed.isValid && parsed.exists {
+      (parsed.isValid && parsed.exists {
         case x: SequenceNumberParts =>
           x.seqIndex == 0 &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            x.seqTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            x.shardIndex == shardIndex
+            seqTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            x.shardIndex == shardIndex.value
 
         case _ => false
-      },
-      s"shardCreateTime: $shardCreateTime\n" +
-        s"shardIndex: $shardIndex\n" +
+      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+        s"shardIndex: ${shardIndex.value}\n" +
+        s"seqTime: ${seqTime}\n" +
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
-    )
-  }
+  })
 }

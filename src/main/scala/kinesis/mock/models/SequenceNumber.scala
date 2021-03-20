@@ -63,7 +63,7 @@ final case class SequenceNumber(value: String) {
                 Success(shardCreatedSecs),
                 _,
                 _
-              ) if shardCreatedSecs.toLong > 16025175000L =>
+              ) if shardCreatedSecs.toLong >= 16025175000L =>
             InvalidArgumentException(
               s"Date too large: $shardCreatedSecs"
             ).invalidNel

@@ -23,6 +23,7 @@ libraryDependencies ++= Seq(
   Munit.core % Test,
   Munit.catsEffect2 % Test,
   Munit.scalacheck % Test,
+  Refined.scalacheck % Test,
   ScalacheckGenRegexp % Test
 )
 semanticdbEnabled := true

@@ -55,4 +55,9 @@ object LibraryDependencies {
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
   }
+
+  object Refined {
+    val refinedVersion = "0.9.21"
+    val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
+  }
 }
