@@ -283,7 +283,11 @@ object CommonValidations {
   def validateSequenceNumber(
       sequenceNumber: SequenceNumber
   ): ValidatedNel[KinesisMockException, SequenceNumber] =
-    if (!sequenceNumber.value.matches("0|([1-9]\\d{0,128})"))
+    if (
+      SequenceNumberConstant
+        .withNameOption(sequenceNumber.value)
+        .isEmpty && !sequenceNumber.value.matches("0|([1-9]\\d{0,128})")
+    )
       InvalidArgumentException(
         s"SequenceNumber ${sequenceNumber.value} contains invalid characters"
       ).invalidNel
