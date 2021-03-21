@@ -2,13 +2,14 @@ package kinesis.mock
 
 import java.time.Instant
 
-import kinesis.mock.models._
-import org.scalacheck.Prop._
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.Interval
-import eu.timepit.refined.types.numeric.PosInt
 import eu.timepit.refined.scalacheck.numeric._
+import eu.timepit.refined.types.numeric.PosInt
+import org.scalacheck.Prop._
+
+import kinesis.mock.models._
 
 class SequenceNumberTests extends munit.ScalaCheckSuite {
   property("It should create and parse correctly")(forAll {
