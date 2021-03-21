@@ -1,4 +1,4 @@
-package kinesis.mock
+package kinesis.mock.models
 
 import java.time.Instant
 

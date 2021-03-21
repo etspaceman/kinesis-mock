@@ -1,4 +1,4 @@
-package kinesis.mock
+package kinesis.mock.models
 
 import org.scalacheck.Prop._
 
