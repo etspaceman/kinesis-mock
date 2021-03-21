@@ -3,10 +3,10 @@ package models
 
 import scala.collection.SortedMap
 
-final case class Streams(streams: Map[String, StreamData]) {
+final case class Streams(streams: Map[StreamName, StreamData]) {
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams + (stream.streamName -> stream))
-  def findAndUpdateStream(streamName: String)(f: StreamData => StreamData) =
+  def findAndUpdateStream(streamName: StreamName)(f: StreamData => StreamData) =
     copy(
       streams = streams ++
         streams
@@ -16,7 +16,7 @@ final case class Streams(streams: Map[String, StreamData]) {
     )
   def addStream(
       shardCount: Int,
-      streamName: String,
+      streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: String
   ): (Streams, List[ShardSemaphoresKey]) = {
@@ -30,7 +30,9 @@ final case class Streams(streams: Map[String, StreamData]) {
     (copy(streams = streams + (streamName -> created._1)), created._2)
   }
 
-  def deleteStream(streamName: String): (Streams, List[ShardSemaphoresKey]) =
+  def deleteStream(
+      streamName: StreamName
+  ): (Streams, List[ShardSemaphoresKey]) =
     (
       copy(streams =
         streams ++ streams
@@ -56,7 +58,7 @@ final case class Streams(streams: Map[String, StreamData]) {
         )
     )
 
-  def removeStream(streamName: String) =
+  def removeStream(streamName: StreamName) =
     copy(streams = streams - streamName)
 }
 

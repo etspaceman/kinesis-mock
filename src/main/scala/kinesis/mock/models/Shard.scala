@@ -14,10 +14,8 @@ final case class Shard(
     hashKeyRange: HashKeyRange,
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
-    shardId: String,
-    shardIndex: Int
+    shardId: ShardId
 ) {
-  val numericShardId: Int = shardId.takeRight(12).toInt
   val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
 }
 
@@ -25,9 +23,6 @@ object Shard {
 
   val minHashKey: BigInt = BigInt(0)
   val maxHashKey: BigInt = BigInt("340282366920938463463374607431768211455")
-
-  def shardId(shardIndex: Int): String =
-    "shardId-" + s"00000000000$shardIndex".takeRight(12)
 
   def newShards(
       shardCount: Int,
@@ -53,15 +48,14 @@ object Shard {
               None,
               SequenceNumber.create(createTime, index, None, None, None)
             ),
-            shardId(index),
-            index
+            ShardId.create(index)
           ) -> List.empty
         )
     )
   }
   implicit val shardOrdering: Ordering[Shard] = new Ordering[Shard] {
     override def compare(x: Shard, y: Shard): Int =
-      x.numericShardId.compare(y.numericShardId)
+      Ordering[ShardId].compare(x.shardId, y.shardId)
   }
 
   implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct8(
@@ -81,8 +75,8 @@ object Shard {
       x.hashKeyRange,
       x.parentShardId,
       x.sequenceNumberRange,
-      x.shardId,
-      x.shardIndex
+      x.shardId.shardId,
+      x.shardId.index
     )
   )
 
@@ -107,8 +101,7 @@ object Shard {
       hashKeyRange,
       parentShardId,
       sequenceNumberRange,
-      shardId,
-      shardIndex
+      ShardId(shardId, shardIndex)
     )
   }
 

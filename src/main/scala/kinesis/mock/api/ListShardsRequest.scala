@@ -18,7 +18,7 @@ final case class ListShardsRequest(
     nextToken: Option[String],
     shardFilter: Option[ShardFilter],
     streamCreationTimestamp: Option[Instant],
-    streamName: Option[String]
+    streamName: Option[StreamName]
 ) {
   def listShards(
       streams: Streams
@@ -51,7 +51,8 @@ final case class ListShardsRequest(
               val allShards = stream.shards.keys.toList
               val lastShardIndex = allShards.length - 1
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
-              val firstIndex = allShards.indexWhere(_.shardId == shardId) + 1
+              val firstIndex =
+                allShards.indexWhere(_.shardId.shardId == shardId) + 1
               val lastIndex = Math.min(firstIndex + limit, lastShardIndex) + 1
               val shards = allShards.slice(firstIndex, lastIndex)
               val nextToken =
@@ -59,7 +60,7 @@ final case class ListShardsRequest(
                 else
                   Some(
                     ListShardsRequest
-                      .createNextToken(streamName, shards.last.shardId)
+                      .createNextToken(streamName, shards.last.shardId.shardId)
                   )
               ListShardsResponse(nextToken, shards)
             })
@@ -121,7 +122,7 @@ final case class ListShardsRequest(
                     if sf.`type` == ShardFilterType.AFTER_SHARD_ID => {
                   val index = sf.shardId
                     .map(eShardId =>
-                      allShards.indexWhere(_.shardId == eShardId) + 1
+                      allShards.indexWhere(_.shardId.shardId == eShardId) + 1
                     )
                     .getOrElse(0)
                   allShards.slice(index, allShards.length - 1)
@@ -132,7 +133,7 @@ final case class ListShardsRequest(
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
               val firstIndex = exclusiveStartShardId
                 .map(eShardId =>
-                  filteredShards.indexWhere(_.shardId == eShardId) + 1
+                  filteredShards.indexWhere(_.shardId.shardId == eShardId) + 1
                 )
                 .getOrElse(0)
               val lastIndex = Math.min(firstIndex + limit, lastShardIndex) + 1
@@ -142,7 +143,7 @@ final case class ListShardsRequest(
                 else
                   Some(
                     ListShardsRequest
-                      .createNextToken(sName, shards.last.shardId)
+                      .createNextToken(sName, shards.last.shardId.shardId)
                   )
               ListShardsResponse(nextToken, shards)
             })
@@ -188,7 +189,7 @@ object ListShardsRequest {
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Option[Instant]]
-      streamName <- x.downField("StreamName").as[Option[String]]
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
     } yield ListShardsRequest(
       exclusiveStartShardId,
       maxResults,
@@ -202,15 +203,15 @@ object ListShardsRequest {
   implicit val listShardsRequestEq: Eq[ListShardsRequest] =
     Eq.fromUniversalEquals
 
-  def createNextToken(streamName: String, shardId: String): String =
+  def createNextToken(streamName: StreamName, shardId: String): String =
     s"$streamName::$shardId"
   def parseNextToken(
       nextToken: String
-  ): ValidatedNel[KinesisMockException, (String, String)] = {
+  ): ValidatedNel[KinesisMockException, (StreamName, String)] = {
     val split = nextToken.split("::")
     if (split.length != 2)
       InvalidArgumentException(s"NextToken is improperly formatted").invalidNel
-    else Valid((split.head, split(1)))
+    else Valid((StreamName(split.head), split(1)))
   }
   def validateShardFilter(
       shardFilter: ShardFilter

@@ -16,7 +16,7 @@ final case class StreamDescriptionSummary(
     retentionPeriodHours: Int,
     streamArn: String,
     streamCreationTimestamp: Instant,
-    streamName: String,
+    streamName: StreamName,
     streamStatus: StreamStatus
 )
 
@@ -77,7 +77,7 @@ object StreamDescriptionSummary {
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Instant]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
     } yield StreamDescriptionSummary(
       consumerCount,

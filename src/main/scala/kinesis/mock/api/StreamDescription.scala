@@ -16,7 +16,7 @@ final case class StreamDescription(
     shards: List[ShardSummary],
     streamArn: String,
     streamCreationTimestamp: Instant,
-    streamName: String,
+    streamName: StreamName,
     streamStatus: StreamStatus
 )
 
@@ -35,7 +35,7 @@ object StreamDescription {
           val s = allShards.take(lim)
           (s, allShards.length > s.length)
         case Some(shardId) => {
-          val indexOfShard = allShards.indexWhere(_.shardId == shardId)
+          val indexOfShard = allShards.indexWhere(_.shardId.shardId == shardId)
           val allShardsAfterStart = allShards.splitAt(indexOfShard + 1)._2
           val s = allShardsAfterStart.take(lim)
           (s, allShardsAfterStart.length > s.length)
@@ -100,7 +100,7 @@ object StreamDescription {
         streamCreationTimestamp <- x
           .downField("StreamCreationTimestamp")
           .as[Instant]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
         streamStatus <- x.downField("StreamStatus").as[StreamStatus]
       } yield StreamDescription(
         encryptionType,

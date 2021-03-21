@@ -15,8 +15,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import javax.xml.bind.DatatypeConverter
 
-import kinesis.mock.InvalidArgumentException
-import kinesis.mock.models.SequenceNumber
+import kinesis.mock.models._
 
 final case class ShardIterator(value: String) {
   def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {
@@ -35,7 +34,7 @@ final case class ShardIterator(value: String) {
       InvalidArgumentException("Invalid shard iterator").invalidNel
     else {
       val iteratorTimeMillis = split.head
-      val streamName = split(1)
+      val streamName = StreamName(split(1))
       val shardId = split(2)
       val sequenceNumber = SequenceNumber(split(3))
 
@@ -69,7 +68,7 @@ final case class ShardIterator(value: String) {
 }
 
 final case class ShardIteratorParts(
-    streamName: String,
+    streamName: StreamName,
     shardId: String,
     sequenceNumber: SequenceNumber
 )
@@ -88,7 +87,7 @@ object ShardIterator {
 
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L252
   def create(
-      streamName: String,
+      streamName: StreamName,
       shardId: String,
       sequenceNumber: SequenceNumber
   ): ShardIterator = {

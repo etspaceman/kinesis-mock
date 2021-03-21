@@ -19,7 +19,7 @@ object ShardSummary {
     shard.hashKeyRange,
     shard.parentShardId,
     shard.sequenceNumberRange,
-    shard.shardId
+    shard.shardId.shardId
   )
 
   implicit val shardSummaryCirceEncoder: Encoder[ShardSummary] =

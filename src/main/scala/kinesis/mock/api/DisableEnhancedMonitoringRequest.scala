@@ -10,7 +10,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(
     shardLevelMetrics: List[ShardLevelMetric],
-    streamName: String
+    streamName: StreamName
 ) {
   def disableEnhancedMonitoring(
       streams: Streams
@@ -54,7 +54,7 @@ object DisableEnhancedMonitoringRequest {
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
         .as[List[ShardLevelMetric]]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
     } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
   }
   implicit val disableEnhancedMonitoringRequestEq

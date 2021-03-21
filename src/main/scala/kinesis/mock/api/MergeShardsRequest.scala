@@ -17,7 +17,7 @@ import kinesis.mock.models._
 final case class MergeShardsRequest(
     adjacentShardToMerge: String,
     shardToMerge: String,
-    streamName: String
+    streamName: StreamName
 ) {
   def mergeShards(
       streams: Streams,
@@ -66,9 +66,9 @@ final case class MergeShardsRequest(
       .traverse {
         case (stream, (adjacentShard, adjacentData), (shard, shardData)) => {
           val now = Instant.now()
-          val newShardIndex = stream.shards.keys.map(_.shardIndex).max + 1
+          val newShardIndex = stream.shards.keys.map(_.shardId.index).max + 1
           val newShard: (Shard, List[KinesisRecord]) = Shard(
-            Some(adjacentShard.shardId),
+            Some(adjacentShard.shardId.shardId),
             None,
             now,
             HashKeyRange(
@@ -81,7 +81,7 @@ final case class MergeShardsRequest(
                 shard.hashKeyRange.startingHashKey.toLong
               )
             ),
-            Some(shard.shardId),
+            Some(shard.shardId.shardId),
             SequenceNumberRange(
               None,
               if (
@@ -90,8 +90,7 @@ final case class MergeShardsRequest(
                 adjacentShard.sequenceNumberRange.startingSequenceNumber
               else shard.sequenceNumberRange.startingSequenceNumber
             ),
-            Shard.shardId(newShardIndex),
-            newShardIndex
+            ShardId.create(newShardIndex)
           ) -> List.empty
 
           val oldShards: List[(Shard, List[KinesisRecord])] = List(
@@ -136,7 +135,7 @@ object MergeShardsRequest {
       for {
         adjacentShardToMerge <- x.downField("AdjacentShardToMerge").as[String]
         shardToMerge <- x.downField("ShardToMerge").as[String]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
       } yield MergeShardsRequest(adjacentShardToMerge, shardToMerge, streamName)
 
   implicit val mergeShardsRequestEq: Eq[MergeShardsRequest] =

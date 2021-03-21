@@ -15,15 +15,15 @@ import kinesis.mock.models._
 
 object CommonValidations {
   def validateStreamName(
-      streamName: String
-  ): ValidatedNel[KinesisMockException, String] =
+      streamName: StreamName
+  ): ValidatedNel[KinesisMockException, StreamName] =
     (
-      if (!streamName.matches("[a-zA-Z0-9_.-]+"))
+      if (!streamName.streamName.matches("[a-zA-Z0-9_.-]+"))
         InvalidArgumentException(
           s"Stream Name '$streamName' contains invalid characters"
         ).invalidNel
       else Valid(()),
-      if (streamName.isEmpty || streamName.length() > 128)
+      if (streamName.streamName.isEmpty || streamName.streamName.length() > 128)
         InvalidArgumentException(
           s"Stream name must be between 1 and 128 characters. Invalid stream name: $streamName"
         ).invalidNel
@@ -46,7 +46,7 @@ object CommonValidations {
   ).mapN((_, _) => streamArn)
 
   def findStream(
-      streamName: String,
+      streamName: StreamName,
       streams: Streams
   ): ValidatedNel[KinesisMockException, StreamData] =
     streams.streams
@@ -78,9 +78,9 @@ object CommonValidations {
       )
 
   def isStreamActive(
-      streamName: String,
+      streamName: StreamName,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedNel[KinesisMockException, StreamName] =
     if (
       streams.streams
         .get(streamName)
@@ -92,9 +92,9 @@ object CommonValidations {
     else streamName.valid
 
   def isStreamActiveOrUpdating(
-      streamName: String,
+      streamName: StreamName,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedNel[KinesisMockException, StreamName] =
     if (
       streams.streams
         .get(streamName)
@@ -297,7 +297,9 @@ object CommonValidations {
       shardId: String,
       stream: StreamData
   ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] =
-    stream.shards.find { case (shard, _) => shard.shardId == shardId } match {
+    stream.shards.find { case (shard, _) =>
+      shard.shardId.shardId == shardId
+    } match {
       case None =>
         ResourceNotFoundException(
           s"Could not find shardId $shardId in stream ${stream.streamName}"

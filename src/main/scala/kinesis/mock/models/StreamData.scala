@@ -14,7 +14,7 @@ final case class StreamData(
     shards: SortedMap[Shard, List[KinesisRecord]],
     streamArn: String,
     streamCreationTimestamp: Instant,
-    streamName: String,
+    streamName: StreamName,
     streamStatus: StreamStatus,
     tags: Map[String, String],
     shardCountUpdates: List[Instant]
@@ -26,7 +26,7 @@ object StreamData {
 
   def create(
       shardCount: Int,
-      streamName: String,
+      streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: String
   ): (StreamData, List[ShardSemaphoresKey]) = {

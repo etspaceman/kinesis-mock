@@ -12,7 +12,7 @@ import kinesis.mock.models._
 final case class StartStreamEncryptionRequest(
     encryptionType: EncryptionType,
     keyId: String,
-    streamName: String
+    streamName: StreamName
 ) {
   def startStreamEncryption(
       streams: Streams
@@ -49,7 +49,7 @@ object StartStreamEncryptionRequest {
     for {
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
       keyId <- x.downField("KeyId").as[String]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
     } yield StartStreamEncryptionRequest(encryptionType, keyId, streamName)
 
   implicit val startStreamEncryptionRequestEq

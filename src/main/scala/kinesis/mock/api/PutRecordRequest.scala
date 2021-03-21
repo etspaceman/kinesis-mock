@@ -21,7 +21,7 @@ final case class PutRecordRequest(
     explicitHashKey: Option[String],
     partitionKey: String,
     sequenceNumberForOrdering: Option[SequenceNumber],
-    streamName: String
+    streamName: StreamName
 ) {
   def putRecord(
       streams: Streams,
@@ -66,7 +66,7 @@ final case class PutRecordRequest(
       .traverse { case (stream, shard, records) =>
         val seqNo = SequenceNumber.create(
           shard.createdAtTimestamp,
-          shard.shardIndex,
+          shard.shardId.index,
           None,
           Some(records.length - 1),
           Some(now)
@@ -87,7 +87,11 @@ final case class PutRecordRequest(
                 )
               )
             ),
-            PutRecordResponse(stream.encryptionType, seqNo, shard.shardId)
+            PutRecordResponse(
+              stream.encryptionType,
+              seqNo,
+              shard.shardId.shardId
+            )
           )
         )
       }
@@ -121,7 +125,7 @@ object PutRecordRequest {
         sequenceNumberForOrdering <- x
           .downField("SequenceNumberForOrdering")
           .as[Option[SequenceNumber]]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
       } yield PutRecordRequest(
         data,
         explicitHashKey,

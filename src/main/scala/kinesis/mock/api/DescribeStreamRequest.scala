@@ -13,7 +13,7 @@ import kinesis.mock.models._
 final case class DescribeStreamRequest(
     exclusiveStartShardId: Option[String],
     limit: Option[Int],
-    streamName: String
+    streamName: StreamName
 ) {
   def describeStream(
       streams: Streams
@@ -52,7 +52,7 @@ object DescribeStreamRequest {
           .downField("ExclusiveStartShardId")
           .as[Option[String]]
         limit <- x.downField("Limit").as[Option[Int]]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
       } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName)
   }
   implicit val describeStreamRequestEq: Eq[DescribeStreamRequest] =

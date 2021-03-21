@@ -18,7 +18,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateShardCount.html
 final case class UpdateShardCountRequest(
     scalingType: ScalingType,
-    streamName: String,
+    streamName: StreamName,
     targetShardCount: Int
 ) {
   def updateShardCount(
@@ -92,7 +92,7 @@ final case class UpdateShardCountRequest(
             val newShards = Shard.newShards(
               targetShardCount,
               now,
-              oldShards.map(_._1.shardIndex).max + 1
+              oldShards.map(_._1.shardId.index).max + 1
             )
 
             (
@@ -121,7 +121,7 @@ object UpdateShardCountRequest {
       : Decoder[UpdateShardCountRequest] = x =>
     for {
       scalingType <- x.downField("ScalingType").as[ScalingType]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
     } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
 

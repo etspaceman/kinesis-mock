@@ -3,12 +3,12 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
-import kinesis.mock.models.ShardLevelMetric
+import kinesis.mock.models._
 
 final case class DisableEnhancedMonitoringResponse(
     currentShardLevelMetrics: List[ShardLevelMetric],
     desiredShardLevelMetrics: List[ShardLevelMetric],
-    streamName: String
+    streamName: StreamName
 )
 
 object DisableEnhancedMonitoringResponse {
@@ -31,7 +31,7 @@ object DisableEnhancedMonitoringResponse {
       desiredShardLevelMetrics <- x
         .downField("DesiredShardLevelMetrics")
         .as[List[ShardLevelMetric]]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
     } yield DisableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,

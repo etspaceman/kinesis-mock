@@ -10,7 +10,7 @@ import io.circe._
 import kinesis.mock.models._
 
 final case class DeleteStreamRequest(
-    streamName: String,
+    streamName: StreamName,
     enforceConsumerDeletion: Option[Boolean]
 ) {
   def deleteStream(
@@ -42,7 +42,7 @@ object DeleteStreamRequest {
   implicit val deleteStreamRequestCirceDecoder: Decoder[DeleteStreamRequest] = {
     x =>
       for {
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
         enforceConsumerDeletion <- x
           .downField("EnforceConsumerDeletion")
           .as[Option[Boolean]]

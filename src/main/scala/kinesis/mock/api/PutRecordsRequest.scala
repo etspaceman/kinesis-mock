@@ -13,16 +13,11 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.models.{
-  KinesisRecord,
-  SequenceNumber,
-  ShardSemaphoresKey,
-  Streams
-}
+import kinesis.mock.models._
 
 final case class PutRecordsRequest(
     records: List[PutRecordsRequestEntry],
-    streamName: String
+    streamName: StreamName
 ) {
   def putRecords(
       streams: Streams,
@@ -68,7 +63,7 @@ final case class PutRecordsRequest(
               list.map(_._3).zipWithIndex.map { case (entry, index) =>
                 val seqNo = SequenceNumber.create(
                   shard.createdAtTimestamp,
-                  shard.shardIndex,
+                  shard.shardId.index,
                   None,
                   Some((records.length - 1) + index),
                   Some(now)
@@ -85,7 +80,7 @@ final case class PutRecordsRequest(
                     None,
                     None,
                     Some(seqNo),
-                    Some(shard.shardId)
+                    Some(shard.shardId.shardId)
                   )
                 )
               }
@@ -134,7 +129,7 @@ object PutRecordsRequest {
   implicit val putRecordsRequestCirceDecoder: Decoder[PutRecordsRequest] = x =>
     for {
       records <- x.downField("Records").as[List[PutRecordsRequestEntry]]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
     } yield PutRecordsRequest(records, streamName)
 
   implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>

@@ -17,7 +17,7 @@ import kinesis.mock.models._
 final case class SplitShardRequest(
     newStartingHashKey: String,
     shardToSplit: String,
-    streamName: String
+    streamName: StreamName
 ) {
   def splitShard(
       streams: Streams,
@@ -63,7 +63,7 @@ final case class SplitShardRequest(
     .traverse { case (shard, shardData, stream) =>
       val now = Instant.now()
       val newStartingHashKeyNumber = BigInt(newStartingHashKey)
-      val newShardIndex1 = stream.shards.keys.map(_.shardIndex).max + 1
+      val newShardIndex1 = stream.shards.keys.map(_.shardId.index).max + 1
       val newShardIndex2 = newShardIndex1 + 1
       val newShard1: (Shard, List[KinesisRecord]) = Shard(
         None,
@@ -73,13 +73,12 @@ final case class SplitShardRequest(
           shard.hashKeyRange.startingHashKey,
           newStartingHashKeyNumber - BigInt(1)
         ),
-        Some(shard.shardId),
+        Some(shard.shardId.shardId),
         SequenceNumberRange(
           None,
           SequenceNumber.create(now, newShardIndex1, None, None, None)
         ),
-        Shard.shardId(newShardIndex1),
-        newShardIndex1
+        ShardId.create(newShardIndex1)
       ) -> List.empty
 
       val newShard2: (Shard, List[KinesisRecord]) = Shard(
@@ -90,13 +89,12 @@ final case class SplitShardRequest(
           newStartingHashKeyNumber,
           shard.hashKeyRange.endingHashKey
         ),
-        Some(shard.shardId),
+        Some(shard.shardId.shardId),
         SequenceNumberRange(
           None,
           SequenceNumber.create(now, newShardIndex2, None, None, None)
         ),
-        Shard.shardId(newShardIndex2),
-        newShardIndex2
+        ShardId.create(newShardIndex2)
       ) -> List.empty
 
       val newShards = List(newShard1, newShard2)
@@ -136,7 +134,7 @@ object SplitShardRequest {
       for {
         newStartingHashKey <- x.downField("NewStartingHashKey").as[String]
         shardToSplit <- x.downField("ShardToSplit").as[String]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
       } yield SplitShardRequest(newStartingHashKey, shardToSplit, streamName)
 
   implicit val splitShardRequestEq: Eq[SplitShardRequest] =

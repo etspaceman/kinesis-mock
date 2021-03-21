@@ -43,6 +43,7 @@ class CirceTests extends munit.ScalaCheckSuite {
   identityLawTest[SequenceNumberConstant]
   identityLawTest[SequenceNumberRange]
   identityLawTest[Shard]
+  identityLawTest[StreamName]
   identityLawTest[StreamStatus]
 
   identityLawTest[AddTagsToStreamRequest]

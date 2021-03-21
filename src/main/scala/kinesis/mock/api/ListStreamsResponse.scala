@@ -3,9 +3,11 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.models.StreamName
+
 final case class ListStreamsResponse(
     hasMoreStreams: Boolean,
-    streamNames: List[String]
+    streamNames: List[StreamName]
 )
 
 object ListStreamsResponse {
@@ -18,7 +20,7 @@ object ListStreamsResponse {
     x =>
       for {
         hasMoreStreams <- x.downField("HasMoreStreams").as[Boolean]
-        streamNames <- x.downField("StreamNames").as[List[String]]
+        streamNames <- x.downField("StreamNames").as[List[StreamName]]
       } yield ListStreamsResponse(hasMoreStreams, streamNames)
 
   implicit val listStreamsResponseEq: Eq[ListStreamsResponse] =

@@ -15,8 +15,8 @@ object ChildShard {
   def fromShard(shard: Shard, parentShards: List[Shard]): ChildShard =
     ChildShard(
       shard.hashKeyRange,
-      parentShards.map(_.shardId),
-      shard.shardId
+      parentShards.map(_.shardId.shardId),
+      shard.shardId.shardId
     )
 
   implicit val childShardCirceEncoder: Encoder[ChildShard] =

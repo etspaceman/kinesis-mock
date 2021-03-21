@@ -14,7 +14,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_IncreaseStreamRetention.html
 final case class IncreaseStreamRetentionRequest(
     retentionPeriodHours: Int,
-    streamName: String
+    streamName: StreamName
 ) {
   def increaseStreamRetention(
       streams: Streams
@@ -48,7 +48,7 @@ object IncreaseStreamRetentionRequest {
       : Decoder[IncreaseStreamRetentionRequest] = { x =>
     for {
       retentionPeriodHours <- x.downField("RetentionPeriod").as[Int]
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
     } yield IncreaseStreamRetentionRequest(retentionPeriodHours, streamName)
   }
   implicit val increaseStreamRetentionRequestEq

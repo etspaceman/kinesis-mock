@@ -15,7 +15,7 @@ final case class GetShardIteratorRequest(
     shardId: String,
     shardIteratorType: ShardIteratorType,
     startingSequenceNumber: Option[SequenceNumber],
-    streamName: String,
+    streamName: StreamName,
     timestamp: Option[Instant]
 ) {
   def getShardIterator(
@@ -193,7 +193,7 @@ object GetShardIteratorRequest {
         startingSequenceNumber <- x
           .downField("StartingSequenceNumber")
           .as[Option[SequenceNumber]]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
         timestamp <- x.downField("Timestamp").as[Option[Instant]]
       } yield GetShardIteratorRequest(
         shardId,

@@ -7,10 +7,10 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.models.Streams
+import kinesis.mock.models._
 
 final case class ListStreamsRequest(
-    exclusiveStartStreamName: Option[String],
+    exclusiveStartStreamName: Option[StreamName],
     limit: Option[Int]
 ) {
   def listStreams(
@@ -53,7 +53,7 @@ object ListStreamsRequest {
       for {
         exclusiveStartStreamName <- x
           .downField("ExclusiveStartStreamName")
-          .as[Option[String]]
+          .as[Option[StreamName]]
         limit <- x.downField("Limit").as[Option[Int]]
       } yield ListStreamsRequest(exclusiveStartStreamName, limit)
 

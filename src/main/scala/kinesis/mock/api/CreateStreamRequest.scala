@@ -9,7 +9,7 @@ import io.circe._
 
 import kinesis.mock.models._
 
-final case class CreateStreamRequest(shardCount: Int, streamName: String) {
+final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   def createStream(
       streams: Streams,
       shardLimit: Int,
@@ -48,7 +48,7 @@ object CreateStreamRequest {
     x =>
       for {
         shardCount <- x.downField("ShardCount").as[Int]
-        streamName <- x.downField("StreamName").as[String]
+        streamName <- x.downField("StreamName").as[StreamName]
       } yield CreateStreamRequest(shardCount, streamName)
   }
 

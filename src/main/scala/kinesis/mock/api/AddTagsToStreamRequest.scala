@@ -13,7 +13,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
 // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
 final case class AddTagsToStreamRequest(
-    streamName: String,
+    streamName: StreamName,
     tags: Map[String, String]
 ) {
   def addTagsToStream(
@@ -67,7 +67,7 @@ object AddTagsToStreamRequest {
   implicit val addTagsToStreamRequestDecoder
       : Decoder[AddTagsToStreamRequest] = { x =>
     for {
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
       tags <- x.downField("Tags").as[Map[String, String]]
     } yield AddTagsToStreamRequest(streamName, tags)
   }

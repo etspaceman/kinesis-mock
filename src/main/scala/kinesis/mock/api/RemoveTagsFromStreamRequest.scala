@@ -10,7 +10,7 @@ import io.circe._
 import kinesis.mock.models._
 
 final case class RemoveTagsFromStreamRequest(
-    streamName: String,
+    streamName: StreamName,
     tagKeys: List[String]
 ) {
   // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RemoveTagsFromStream.html
@@ -45,7 +45,7 @@ object RemoveTagsFromStreamRequest {
   implicit val removeTagsFromStreamRequestDecoder
       : Decoder[RemoveTagsFromStreamRequest] = { x =>
     for {
-      streamName <- x.downField("StreamName").as[String]
+      streamName <- x.downField("StreamName").as[StreamName]
       tagKeys <- x.downField("TagKeys").as[List[String]]
     } yield RemoveTagsFromStreamRequest(streamName, tagKeys)
   }
