@@ -14,7 +14,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
 final case class AddTagsToStreamRequest(
     streamName: StreamName,
-    tags: Map[String, String]
+    tags: Tags
 ) {
   def addTagsToStream(
       streams: Streams
@@ -24,15 +24,15 @@ final case class AddTagsToStreamRequest(
       .andThen(stream =>
         (
           CommonValidations.validateStreamName(streamName),
-          CommonValidations.validateTagKeys(tags.keys), {
-            val valuesTooLong = tags.values.filter(x => x.length() > 255)
+          CommonValidations.validateTagKeys(tags.tags.keys), {
+            val valuesTooLong = tags.tags.values.filter(x => x.length() > 255)
             if (valuesTooLong.nonEmpty)
               InvalidArgumentException(
                 s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
               ).invalidNel
             else Valid(())
           }, {
-            val invalidValues = tags.values.filterNot(x =>
+            val invalidValues = tags.tags.values.filterNot(x =>
               x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
             )
             if (invalidValues.nonEmpty)
@@ -48,7 +48,7 @@ final case class AddTagsToStreamRequest(
               ).invalidNel
             else Valid(())
           }, {
-            val totalTagsAfterAppend = (stream.tags ++ tags).size
+            val totalTagsAfterAppend = (stream.tags |+| tags).size
             if (totalTagsAfterAppend > 50)
               InvalidArgumentException(
                 s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
@@ -56,7 +56,7 @@ final case class AddTagsToStreamRequest(
             else Valid(())
           }
         ).mapN((_, _, _, _, _, _) =>
-          streams.updateStream(stream.copy(tags = stream.tags ++ tags))
+          streams.updateStream(stream.copy(tags = stream.tags |+| tags))
         )
       )
 }
@@ -68,7 +68,7 @@ object AddTagsToStreamRequest {
       : Decoder[AddTagsToStreamRequest] = { x =>
     for {
       streamName <- x.downField("StreamName").as[StreamName]
-      tags <- x.downField("Tags").as[Map[String, String]]
+      tags <- x.downField("Tags").as[Tags]
     } yield AddTagsToStreamRequest(streamName, tags)
   }
   implicit val addTagsToStreamRequestEq: Eq[AddTagsToStreamRequest] =

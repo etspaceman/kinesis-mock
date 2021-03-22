@@ -16,7 +16,7 @@ final case class StreamData(
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus,
-    tags: Map[String, String],
+    tags: Tags,
     shardCountUpdates: List[Instant]
 )
 
@@ -28,7 +28,7 @@ object StreamData {
       shardCount: Int,
       streamName: StreamName,
       awsRegion: AwsRegion,
-      awsAccountId: String
+      awsAccountId: AwsAccountId
   ): (StreamData, List[ShardSemaphoresKey]) = {
 
     val createTime = Instant.now()
@@ -46,7 +46,7 @@ object StreamData {
         Instant.now(),
         streamName,
         StreamStatus.CREATING,
-        Map.empty,
+        Tags.empty,
         List.empty
       ),
       shards.keys.toList.map(shard => ShardSemaphoresKey(streamName, shard))

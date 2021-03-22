@@ -4,7 +4,7 @@ import scala.concurrent.duration._
 
 import ciris._
 
-import kinesis.mock.models.AwsRegion
+import kinesis.mock.models._
 
 final case class CacheConfig(
     createStreamDuration: FiniteDuration,
@@ -17,7 +17,7 @@ final case class CacheConfig(
     splitShardDuration: FiniteDuration,
     updateShardCountDuration: FiniteDuration,
     shardLimit: Int,
-    awsAccountId: String,
+    awsAccountId: AwsAccountId,
     awsRegion: AwsRegion
 )
 
@@ -53,7 +53,9 @@ object CacheConfig {
       .as[FiniteDuration]
       .default(500.millis)
     shardLimit <- env("SHARD_LIMIT").as[Int].default(50)
-    awsAccountId <- env("AWS_ACCOUNT_ID").as[String].default("000000000000")
+    awsAccountId <- env("AWS_ACCOUNT_ID")
+      .as[AwsAccountId]
+      .default(AwsAccountId("000000000000"))
     awsRegion <- env("AWS_REGION")
       .or(env("AWS_DEFAULT_REGION"))
       .as[AwsRegion]

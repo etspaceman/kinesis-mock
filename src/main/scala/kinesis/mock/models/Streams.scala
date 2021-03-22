@@ -18,7 +18,7 @@ final case class Streams(streams: Map[StreamName, StreamData]) {
       shardCount: Int,
       streamName: StreamName,
       awsRegion: AwsRegion,
-      awsAccountId: String
+      awsAccountId: AwsAccountId
   ): (Streams, List[ShardSemaphoresKey]) = {
     val created = StreamData.create(
       shardCount,
@@ -41,7 +41,7 @@ final case class Streams(streams: Map[StreamName, StreamData]) {
             (streamName -> stream.copy(
               shards = SortedMap.empty,
               streamStatus = StreamStatus.DELETING,
-              tags = Map.empty,
+              tags = Tags.empty,
               enhancedMonitoring = List.empty,
               consumers = Map.empty
             ))

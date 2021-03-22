@@ -14,7 +14,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       streams: Streams,
       shardLimit: Int,
       awsRegion: AwsRegion,
-      awsAccountId: String
+      awsAccountId: AwsAccountId
   ): ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])] =
     (
       CommonValidations.validateStreamName(streamName),

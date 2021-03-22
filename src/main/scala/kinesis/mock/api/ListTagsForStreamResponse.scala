@@ -3,9 +3,11 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.models.Tags
+
 final case class ListTagsForStreamResponse(
     hasMoreTags: Boolean,
-    tags: Map[String, String]
+    tags: Tags
 )
 
 object ListTagsForStreamResponse {
@@ -18,7 +20,7 @@ object ListTagsForStreamResponse {
     x =>
       for {
         hasMoreTags <- x.downField("HasMoreTags").as[Boolean]
-        tags <- x.downField("Tags").as[Map[String, String]]
+        tags <- x.downField("Tags").as[Tags]
       } yield ListTagsForStreamResponse(hasMoreTags, tags)
 
   implicit val listTagsForStreamResponseEq: Eq[ListTagsForStreamResponse] =

@@ -1,5 +1,6 @@
 package kinesis.mock.instances
 
+import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
@@ -13,8 +14,13 @@ import kinesis.mock.models._
 
 object arbitrary {
 
+  val awsAccountIdGen: Gen[AwsAccountId] =
+    Gen.stringOfN(12, Gen.numChar).map(AwsAccountId.apply)
+  implicit val awsAccountIdArb: Arbitrary[AwsAccountId] = Arbitrary(
+    awsAccountIdGen
+  )
   def arnPrefixGen(service: String, part: String): Gen[String] = for {
-    accountId <- Gen.stringOfN(12, Gen.numChar)
+    accountId <- awsAccountIdGen
     region <- Arbitrary.arbitrary[AwsRegion].map(_.entryName)
   } yield s"arn:aws:$service:$region:$accountId:$part/"
 
@@ -182,19 +188,22 @@ object arbitrary {
     .choose(1, 128)
     .flatMap(size =>
       Gen
-        .resize(size, RegexpGen.from("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$"))
-        .suchThat(x => !x.startsWith("aws:"))
+        .resize(size, RegexpGen.from("^([a-zA-Z0-9_.:/=+\\-]*)$"))
+        .suchThat(x => !x.startsWith("aws:") && x.nonEmpty)
     )
 
   val tagValueGen: Gen[String] = Gen
     .choose(0, 255)
     .flatMap(size =>
-      Gen.resize(size, RegexpGen.from("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$"))
+      Gen.resize(size, RegexpGen.from("^([a-zA-Z0-9_.:/=+\\-]*)$"))
     )
 
-  val tagsGen: Gen[Map[String, String]] = Gen
+  val tagsGen: Gen[Tags] = Gen
     .choose(0, 10)
     .flatMap(size => Gen.mapOfN(size, Gen.zip(tagKeyGen, tagValueGen)))
+    .map(Tags.apply)
+
+  implicit val tagsArbitrary: Arbitrary[Tags] = Arbitrary(tagsGen)
 
   implicit val addTagsToStreamRequestArbitrary
       : Arbitrary[AddTagsToStreamRequest] = Arbitrary(
@@ -781,5 +790,60 @@ object arbitrary {
         targetShardCount <- Gen.choose(1, 1000)
       } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
     )
+
+  implicit val streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
+    for {
+      consumersSize <- Gen.choose(0, 20)
+      consumers <- Gen.mapOfN(
+        consumersSize,
+        consumerArbitrary.arbitrary.map(x => x.consumerName -> x)
+      )
+      encryptionType <- Arbitrary.arbitrary[EncryptionType]
+      enhancedMonitoring <- Gen
+        .choose(0, 1)
+        .flatMap(size =>
+          Gen.listOfN(size, shardLevelMetricsArbitrary.arbitrary)
+        )
+      keyId <- Gen.option(keyIdGen)
+      retentionPeriod <- retentionPeriodHoursGen.map(_.hours)
+      shardsSize <- Gen.choose(0, 50)
+      shardList <- Gen.listOfN(shardsSize, shardArbitrary.arbitrary)
+      shards <- Gen.sequence[SortedMap[
+        Shard,
+        List[KinesisRecord]
+      ], (Shard, List[KinesisRecord])](
+        shardList.map(shard =>
+          Gen
+            .choose(0, 100)
+            .flatMap(recordsSize =>
+              Gen
+                .listOfN(recordsSize, kinesisRecordArbitrary.arbitrary)
+                .map(records => shard -> records)
+            )
+        )
+      )
+      streamName <- streamNameGen
+      streamArn <- arnGen("kinesis", "stream", streamName.streamName)
+      streamCreationTimestamp <- nowGen
+      streamStatus <- Arbitrary.arbitrary[StreamStatus]
+      tags <- tagsGen
+      shardCountUpdates <- Gen
+        .choose(0, 10)
+        .flatMap(size => Gen.listOfN(size, nowGen))
+    } yield StreamData(
+      consumers,
+      encryptionType,
+      enhancedMonitoring,
+      keyId,
+      retentionPeriod,
+      shards,
+      streamArn,
+      streamCreationTimestamp,
+      streamName,
+      streamStatus,
+      tags,
+      shardCountUpdates
+    )
+  )
 
 }
