@@ -13,7 +13,7 @@ import kinesis.mock.models._
 
 final case class ListStreamConsumersRequest(
     maxResults: Option[Int],
-    nextToken: Option[String],
+    nextToken: Option[ConsumerName],
     streamArn: String,
     streamCreationTimestamp: Option[Instant]
 ) {
@@ -30,8 +30,9 @@ final case class ListStreamConsumersRequest(
             case None     => Valid(())
           },
           nextToken match {
-            case Some(nt) => CommonValidations.validateNextToken(nt)
-            case None     => Valid(())
+            case Some(nt) =>
+              CommonValidations.validateNextToken(nt.consumerName)
+            case None => Valid(())
           }
         ).mapN((_, _, _) =>
           nextToken match {
@@ -78,7 +79,7 @@ object ListStreamConsumersRequest {
       : Decoder[ListStreamConsumersRequest] = x =>
     for {
       maxResults <- x.downField("MaxResults").as[Option[Int]]
-      nextToken <- x.downField("NextToken").as[Option[String]]
+      nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[String]
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")

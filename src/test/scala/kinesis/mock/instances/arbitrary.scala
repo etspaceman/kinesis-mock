@@ -58,9 +58,14 @@ object arbitrary {
     }
   )
 
-  val consumerNameGen: Gen[String] = Gen
+  val consumerNameGen: Gen[ConsumerName] = Gen
     .choose(1, 128)
     .flatMap(size => Gen.resize(size, RegexpGen.from("[a-zA-Z0-9_.-]+")))
+    .map(ConsumerName.apply)
+
+  implicit val consumerNameArb: Arbitrary[ConsumerName] = Arbitrary(
+    consumerNameGen
+  )
 
   val consumerArnGen: Gen[String] = for {
     streamArn <- streamArnGen

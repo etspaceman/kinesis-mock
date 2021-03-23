@@ -4,7 +4,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.models.KinesisRecord
+import kinesis.mock.models._
 
 final case class GetRecordsResponse(
     childShards: List[ChildShard],

@@ -12,7 +12,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DeregisterStreamConsumer.html
 final case class DeregisterStreamConsumerRequest(
     consumerArn: Option[String],
-    consumerName: Option[String],
+    consumerName: Option[ConsumerName],
     streamArn: Option[String]
 ) {
   private def deregister(
@@ -82,7 +82,7 @@ object DeregisterStreamConsumerRequest {
       : Decoder[DeregisterStreamConsumerRequest] = { x =>
     for {
       consumerArn <- x.downField("ConsumerARN").as[Option[String]]
-      consumerName <- x.downField("ConsumerName").as[Option[String]]
+      consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[Option[String]]
     } yield DeregisterStreamConsumerRequest(
       consumerArn,

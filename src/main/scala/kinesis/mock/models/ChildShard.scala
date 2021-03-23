@@ -1,4 +1,4 @@
-package kinesis.mock.api
+package kinesis.mock.models
 
 import cats.kernel.Eq
 import io.circe._

@@ -187,14 +187,17 @@ object CommonValidations {
     ).mapN((_, _) => shardId)
 
   def validateConsumerName(
-      consumerName: String
-  ): ValidatedNel[KinesisMockException, String] = (
-    if (!consumerName.matches("[a-zA-Z0-9_.-]+"))
+      consumerName: ConsumerName
+  ): ValidatedNel[KinesisMockException, ConsumerName] = (
+    if (!consumerName.consumerName.matches("[a-zA-Z0-9_.-]+"))
       InvalidArgumentException(
         s"ConsumerName '$consumerName' contains invalid characters"
       ).invalidNel
     else Valid(()),
-    if (consumerName.isEmpty || consumerName.length() > 128)
+    if (
+      consumerName.consumerName.isEmpty || consumerName.consumerName
+        .length() > 128
+    )
       InvalidArgumentException(
         s"ConsumerName must be between 1 and 128 characters. Invalid ConsumerName: $consumerName"
       ).invalidNel
@@ -202,7 +205,7 @@ object CommonValidations {
   ).mapN((_, _) => consumerName)
 
   def findConsumer(
-      consumerName: String,
+      consumerName: ConsumerName,
       streamData: StreamData
   ): ValidatedNel[KinesisMockException, Consumer] =
     streamData.consumers

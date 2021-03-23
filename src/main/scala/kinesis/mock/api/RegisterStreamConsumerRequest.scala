@@ -11,7 +11,7 @@ import kinesis.mock.models._
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
 final case class RegisterStreamConsumerRequest(
-    consumerName: String,
+    consumerName: ConsumerName,
     streamArn: String
 ) {
   def registerStreamConsumer(
@@ -67,7 +67,7 @@ object RegisterStreamConsumerRequest {
   implicit val registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = { x =>
     for {
-      consumerName <- x.downField("ConsumerName").as[String]
+      consumerName <- x.downField("ConsumerName").as[ConsumerName]
       streamArn <- x.downField("StreamARN").as[String]
     } yield RegisterStreamConsumerRequest(consumerName, streamArn)
   }

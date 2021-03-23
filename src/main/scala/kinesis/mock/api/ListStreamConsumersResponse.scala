@@ -8,7 +8,7 @@ import kinesis.mock.models._
 
 final case class ListStreamConsumersResponse(
     consumers: List[Consumer],
-    nextToken: Option[String]
+    nextToken: Option[ConsumerName]
 )
 
 object ListStreamConsumersResponse {
@@ -23,7 +23,7 @@ object ListStreamConsumersResponse {
     x =>
       for {
         consumers <- x.downField("Consumers").as[List[Consumer]]
-        nextToken <- x.downField("NextToken").as[Option[String]]
+        nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       } yield ListStreamConsumersResponse(consumers, nextToken)
 
   implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =

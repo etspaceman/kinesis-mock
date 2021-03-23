@@ -11,7 +11,7 @@ import kinesis.mock.models._
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamConsumer.html
 final case class DescribeStreamConsumerRequest(
     consumerArn: Option[String],
-    consumerName: Option[String],
+    consumerName: Option[ConsumerName],
     streamArn: Option[String]
 ) {
   def describeStreamConsumer(
@@ -49,7 +49,7 @@ object DescribeStreamConsumerRequest {
       : Decoder[DescribeStreamConsumerRequest] = { x =>
     for {
       consumerArn <- x.downField("ConsumerARN").as[Option[String]]
-      consumerName <- x.downField("ConsumerName").as[Option[String]]
+      consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[Option[String]]
     } yield DescribeStreamConsumerRequest(
       consumerArn,

@@ -8,6 +8,7 @@ import kinesis.mock.instances.arbitrary._
 class ModelsCirceTests extends CirceTests {
   identityLawTest[AwsRegion]
   identityLawTest[Consumer]
+  identityLawTest[ConsumerName]
   identityLawTest[ConsumerStatus]
   identityLawTest[EncryptionType]
   identityLawTest[HashKeyRange]
