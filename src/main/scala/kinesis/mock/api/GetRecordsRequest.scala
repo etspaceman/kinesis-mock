@@ -65,7 +65,7 @@ final case class GetRecordsRequest(
                           val lastIndex =
                             Math.min(
                               firstIndex + maxRecords,
-                              data.length - 1
+                              data.length
                             )
 
                           val records = GetRecordsRequest.getRecords(
@@ -109,11 +109,11 @@ final case class GetRecordsRequest(
 
                             case Some(record) => {
                               val maxRecords = limit.getOrElse(10000)
-                              val firstIndex = data.indexOf(record)
+                              val firstIndex = data.indexOf(record) + 1
                               val lastIndex =
                                 Math.min(
                                   firstIndex + maxRecords,
-                                  data.length - 1
+                                  data.length
                                 )
 
                               val records = GetRecordsRequest.getRecords(

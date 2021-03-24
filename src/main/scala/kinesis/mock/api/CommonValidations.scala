@@ -99,7 +99,7 @@ object CommonValidations {
       streams.streams
         .get(streamName)
         .exists(x =>
-          x.streamStatus != StreamStatus.ACTIVE || x.streamStatus != StreamStatus.UPDATING
+          x.streamStatus != StreamStatus.ACTIVE && x.streamStatus != StreamStatus.UPDATING
         )
     )
       ResourceInUseException(
