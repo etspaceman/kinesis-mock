@@ -39,7 +39,8 @@ object Shard {
             None,
             createTime,
             HashKeyRange(
-              if (index < shardCount - 1) shardHash * BigInt(index + 1)
+              if (index < shardCount - 1)
+                (shardHash * BigInt(index + 1)) - BigInt(1)
               else maxHashKey - BigInt(1),
               shardHash * BigInt(index)
             ),

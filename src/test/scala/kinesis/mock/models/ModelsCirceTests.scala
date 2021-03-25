@@ -25,6 +25,7 @@ class ModelsCirceTests extends CirceTests {
   identityLawTest[SequenceNumberRange]
   identityLawTest[Shard]
   identityLawTest[StreamDescription]
+  identityLawTest[StreamDescriptionSummary]
   identityLawTest[StreamName]
   identityLawTest[StreamStatus]
 }

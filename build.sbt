@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
   Munit.core % Test,
   Munit.catsEffect2 % Test,
   Munit.scalacheck % Test,
+  Munit.scalacheckEffect % Test,
   Refined.scalacheck % Test,
   ScalacheckGenRegexp % Test
 )
@@ -39,7 +40,7 @@ addCompilerPlugin(KindProjector cross CrossVersion.full)
 addCompilerPlugin(BetterMonadicFor)
 testFrameworks += MUnitFramework
 testOptions.in(Test) ++= {
-  List(Tests.Argument(MUnitFramework, "+l")) 
+  List(Tests.Argument(MUnitFramework, "+l"))
 }
 addCommandAlias("cpl", ";+test:compile")
 addCommandAlias(

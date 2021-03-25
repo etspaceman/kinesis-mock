@@ -1,11 +1,9 @@
-package kinesis.mock.api
+package kinesis.mock.models
 
 import java.time.Instant
 
 import cats.kernel.Eq
 import io.circe._
-
-import kinesis.mock.models._
 
 final case class StreamDescriptionSummary(
     consumerCount: Option[Int],

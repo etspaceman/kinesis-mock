@@ -69,7 +69,7 @@ final case class PutRecordRequest(
           shard.createdAtTimestamp,
           shard.shardId.index,
           None,
-          Some(records.length - 1),
+          Some(records.length),
           Some(now)
         )
         // Use a semaphore to ensure synchronous operations on the shard
