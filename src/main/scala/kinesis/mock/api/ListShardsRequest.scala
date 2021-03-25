@@ -53,7 +53,7 @@ final case class ListShardsRequest(
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
               val firstIndex =
                 allShards.indexWhere(_.shardId.shardId == shardId) + 1
-              val lastIndex = Math.min(firstIndex + limit, lastShardIndex) + 1
+              val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
               val shards = allShards.slice(firstIndex, lastIndex)
               val nextToken =
                 if (lastShardIndex + 1 == lastIndex) None
@@ -102,18 +102,28 @@ final case class ListShardsRequest(
                   allShards.filter(x =>
                     x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
                       x.plusSeconds(stream.retentionPeriod.toSeconds)
-                        .getEpochSecond() <= now.getEpochSecond()
+                        .getEpochSecond() >= now.getEpochSecond()
                     )
                   )
                 }
                 case Some(sf) if sf.`type` == ShardFilterType.AT_LATEST =>
                   allShards.filter(_.isOpen)
-                case Some(sf)
-                    if sf.`type` == ShardFilterType.AT_TIMESTAMP || sf.`type` == ShardFilterType.FROM_TIMESTAMP =>
+
+                case Some(sf) if sf.`type` == ShardFilterType.AT_TIMESTAMP =>
+                  allShards.filter(x =>
+                    sf.timestamp.exists(ts =>
+                      x.createdAtTimestamp.getEpochSecond() <= ts
+                        .getEpochSecond() && (x.isOpen || x.closedTimestamp
+                        .exists(cTs =>
+                          cTs.getEpochSecond() >= ts.getEpochSecond()
+                        ))
+                    )
+                  )
+
+                case Some(sf) if sf.`type` == ShardFilterType.FROM_TIMESTAMP =>
                   allShards.filter(x =>
                     x.isOpen || sf.timestamp.exists(ts =>
-                      x.createdAtTimestamp.getEpochSecond() <= ts
-                        .getEpochSecond() && x.closedTimestamp.exists(cTs =>
+                      x.closedTimestamp.exists(cTs =>
                         cTs.getEpochSecond() >= ts.getEpochSecond()
                       )
                     )
@@ -125,7 +135,7 @@ final case class ListShardsRequest(
                       allShards.indexWhere(_.shardId.shardId == eShardId) + 1
                     )
                     .getOrElse(0)
-                  allShards.slice(index, allShards.length - 1)
+                  allShards.slice(index, allShards.length)
                 }
                 case _ => allShards
               }
@@ -136,7 +146,7 @@ final case class ListShardsRequest(
                   filteredShards.indexWhere(_.shardId.shardId == eShardId) + 1
                 )
                 .getOrElse(0)
-              val lastIndex = Math.min(firstIndex + limit, lastShardIndex) + 1
+              val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
               val shards = filteredShards.slice(firstIndex, lastIndex)
               val nextToken =
                 if (lastShardIndex + 1 == lastIndex) None

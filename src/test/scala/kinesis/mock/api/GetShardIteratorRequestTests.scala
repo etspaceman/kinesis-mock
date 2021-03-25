@@ -3,13 +3,14 @@ package api
 
 import scala.collection.SortedMap
 
+import java.time.Instant
+
 import enumeratum.scalacheck._
 import org.scalacheck.Prop._
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
-import java.time.Instant
 
 class GetShardIteratorRequestTests extends munit.ScalaCheckSuite {
   property("It should get a shard iterator for TRIM_HORIZON")(forAll {
