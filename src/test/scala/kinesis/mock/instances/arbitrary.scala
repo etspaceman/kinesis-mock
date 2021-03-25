@@ -11,6 +11,7 @@ import wolfendale.scalacheck.regexp.RegexpGen
 
 import kinesis.mock.api._
 import kinesis.mock.models._
+import java.util.Base64
 
 object arbitrary {
 
@@ -671,7 +672,7 @@ object arbitrary {
 
   implicit val putRecordRequestArb: Arbitrary[PutRecordRequest] = Arbitrary(
     for {
-      data <- dataGen
+      data <- dataGen.map(Base64.getEncoder().encode)
       explicitHashKey <- Gen.option(explicitHashKeyGen)
       partitionKey <- partitionKeyGen
       sequenceNumberForOrdering <- Gen.option(sequenceNumberArbitrary.arbitrary)
@@ -696,7 +697,7 @@ object arbitrary {
   implicit val putRecordsRequestEntryArb: Arbitrary[PutRecordsRequestEntry] =
     Arbitrary(
       for {
-        data <- dataGen
+        data <- dataGen.map(Base64.getEncoder().encode)
         explicitHashKey <- Gen.option(explicitHashKeyGen)
         partitionKey <- partitionKeyGen
       } yield PutRecordsRequestEntry(data, explicitHashKey, partitionKey)
