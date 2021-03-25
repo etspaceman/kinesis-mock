@@ -11,7 +11,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListTagsForStreamRequestTests extends munit.ScalaCheckSuite {
+class ListTagsForStreamTests extends munit.ScalaCheckSuite {
   property("It should list tags")(forAll {
     (
         streamName: StreamName,

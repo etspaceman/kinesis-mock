@@ -7,8 +7,8 @@ import org.scalacheck.Prop._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class EnableEnhancedMonitoringRequestTests extends munit.ScalaCheckSuite {
-  property("It should enable enhanced monitoring")(forAll {
+class DisableEnhancedMonitoringTests extends munit.ScalaCheckSuite {
+  property("It should disable enhanced monitoring")(forAll {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -18,12 +18,30 @@ class EnableEnhancedMonitoringRequestTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
+      val updated = streams.findAndUpdateStream(streamName)(stream =>
+        stream.copy(enhancedMonitoring =
+          List(
+            ShardLevelMetrics(
+              List(
+                ShardLevelMetric.IncomingBytes,
+                ShardLevelMetric.IncomingRecords,
+                ShardLevelMetric.OutgoingBytes,
+                ShardLevelMetric.OutgoingRecords,
+                ShardLevelMetric.WriteProvisionedThroughputExceeded,
+                ShardLevelMetric.ReadProvisionedThroughputExceeded,
+                ShardLevelMetric.IteratorAgeMilliseconds
+              )
+            )
+          )
+        )
+      )
+
       val req =
-        EnableEnhancedMonitoringRequest(
+        DisableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
           streamName
         )
-      val res = req.enableEnhancedMonitoring(streams)
+      val res = req.disableEnhancedMonitoring(updated)
       val updatedMetrics = res.toOption.flatMap { case (s, _) =>
         s.streams
           .get(streamName)

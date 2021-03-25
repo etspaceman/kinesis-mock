@@ -10,7 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class AddTagsToStreamRequestTests extends munit.ScalaCheckSuite {
+class AddTagsToStreamTests extends munit.ScalaCheckSuite {
   property("It should add tags to a stream")(forAll {
     (
         streamName: StreamName,

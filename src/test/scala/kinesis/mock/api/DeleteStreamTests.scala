@@ -6,7 +6,7 @@ import org.scalacheck.Prop._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DeleteStreamdRequestTests extends munit.ScalaCheckSuite {
+class DeleteStreamTests extends munit.ScalaCheckSuite {
   property("It should delete a stream")(forAll {
     (
         streamName: StreamName,

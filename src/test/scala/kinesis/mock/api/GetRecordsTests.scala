@@ -13,7 +13,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class GetRecordsRequestTests extends munit.ScalaCheckSuite {
+class GetRecordsTests extends munit.ScalaCheckSuite {
   property("It should get records")(forAll {
     (
         streamName: StreamName,

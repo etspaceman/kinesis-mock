@@ -12,7 +12,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class GetShardIteratorRequestTests extends munit.ScalaCheckSuite {
+class GetShardIteratorTests extends munit.ScalaCheckSuite {
   property("It should get a shard iterator for TRIM_HORIZON")(forAll {
     (
         streamName: StreamName,

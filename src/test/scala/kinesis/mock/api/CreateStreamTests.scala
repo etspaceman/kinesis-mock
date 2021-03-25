@@ -7,7 +7,7 @@ import org.scalacheck.Prop._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class CreateStreamRequestTests extends munit.ScalaCheckSuite {
+class CreateStreamTests extends munit.ScalaCheckSuite {
   property("It should create a stream")(forAll {
     (
         req: CreateStreamRequest,

@@ -8,7 +8,7 @@ import org.scalacheck.Prop._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class IncreaseStreamRetentionPeriodRequestTests extends munit.ScalaCheckSuite {
+class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
   property("It should increase the stream retention period")(forAll {
     (
         streamName: StreamName,

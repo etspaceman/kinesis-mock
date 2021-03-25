@@ -9,7 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamsRequestTests extends munit.ScalaCheckSuite {
+class ListStreamsTests extends munit.ScalaCheckSuite {
   property("It should list streams")(forAll {
     (
         awsRegion: AwsRegion,

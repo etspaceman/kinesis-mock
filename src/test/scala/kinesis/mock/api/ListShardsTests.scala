@@ -9,7 +9,7 @@ import org.scalacheck.Prop._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class ListShardsRequestTests extends munit.ScalaCheckSuite {
+class ListShardsTests extends munit.ScalaCheckSuite {
   property("It should list shards when provided a streamName")(forAll {
     (
         streamName: StreamName,

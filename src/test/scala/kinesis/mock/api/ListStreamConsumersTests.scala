@@ -9,7 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamConsumersRequestTests extends munit.ScalaCheckSuite {
+class ListStreamConsumersTests extends munit.ScalaCheckSuite {
   property("It should list consumers")(forAll {
     (
         streamName: StreamName,
