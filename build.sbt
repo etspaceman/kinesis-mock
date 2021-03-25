@@ -1,5 +1,7 @@
 import LibraryDependencies._
 
+val MUnitFramework = new TestFramework("munit.Framework")
+
 organization := "io.github.etspaceman"
 name := "kinesis-mock"
 description := "A Mock API for AWS Kinesis"
@@ -35,7 +37,10 @@ scalacOptions in (Compile, console) ~= {
 }
 addCompilerPlugin(KindProjector cross CrossVersion.full)
 addCompilerPlugin(BetterMonadicFor)
-testFrameworks += new TestFramework("munit.Framework")
+testFrameworks += MUnitFramework
+testOptions.in(Test) ++= {
+  List(Tests.Argument(MUnitFramework, "+l")) 
+}
 addCommandAlias("cpl", ";+test:compile")
 addCommandAlias(
   "fixCheck",
