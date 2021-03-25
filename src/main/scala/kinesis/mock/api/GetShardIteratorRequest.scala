@@ -26,7 +26,7 @@ final case class GetShardIteratorRequest(
       .andThen(stream =>
         (
           CommonValidations.validateStreamName(streamName),
-          CommonValidations.isStreamActive(streamName, streams),
+          CommonValidations.isStreamActiveOrUpdating(streamName, streams),
           startingSequenceNumber match {
             case Some(sequenceNumber) =>
               CommonValidations.validateSequenceNumber(sequenceNumber)
@@ -81,7 +81,7 @@ final case class GetShardIteratorRequest(
                     )
                   case (ShardIteratorType.AT_TIMESTAMP, _, Some(ts)) =>
                     val now = Instant.now()
-                    if (ts.toEpochMilli() < now.toEpochMilli())
+                    if (ts.toEpochMilli() > now.toEpochMilli())
                       InvalidArgumentException(
                         s"Timestamp cannot be in the future"
                       ).invalidNel
@@ -143,7 +143,7 @@ final case class GetShardIteratorRequest(
                             ShardIterator.create(
                               streamName,
                               shardId,
-                              data(data.indexOf(record) + 1).sequenceNumber
+                              data(data.indexOf(record)).sequenceNumber
                             )
                           )
                         )
