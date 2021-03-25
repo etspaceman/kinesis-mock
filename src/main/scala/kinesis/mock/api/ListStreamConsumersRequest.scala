@@ -10,6 +10,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 final case class ListStreamConsumersRequest(
     maxResults: Option[Int],
@@ -42,22 +43,22 @@ final case class ListStreamConsumersRequest(
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
               val firstIndex = allConsumers.indexWhere(_.consumerName == nt) + 1
               val lastIndex =
-                Math.min(firstIndex + limit, lastConsumerIndex) + 1
+                Math.min(firstIndex + limit, lastConsumerIndex + 1)
               val consumers = allConsumers.slice(firstIndex, lastIndex)
-              val nextToken =
-                if (lastConsumerIndex + 1 == lastIndex) None
+              val ntUpdated =
+                if (lastConsumerIndex == lastIndex) None
                 else Some(consumers.last.consumerName)
-              ListStreamConsumersResponse(consumers, nextToken)
+              ListStreamConsumersResponse(consumers, ntUpdated)
             }
             case None =>
               val allConsumers = stream.consumers.values.toList
               val lastConsumerIndex = allConsumers.length - 1
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
               val lastIndex =
-                Math.min(limit, lastConsumerIndex) + 1
+                Math.min(limit, lastConsumerIndex + 1)
               val consumers = allConsumers.take(limit)
               val nextToken =
-                if (lastConsumerIndex + 1 == lastIndex) None
+                if (lastConsumerIndex == lastIndex) None
                 else Some(consumers.last.consumerName)
               ListStreamConsumersResponse(consumers, nextToken)
           }

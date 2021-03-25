@@ -3,6 +3,8 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.models.ShardIterator
+
 final case class GetShardIteratorResponse(shardIterator: ShardIterator)
 
 object GetShardIteratorResponse {

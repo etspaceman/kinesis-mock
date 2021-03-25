@@ -3,9 +3,9 @@ package models
 
 import scala.collection.SortedMap
 
-final case class Streams(streams: Map[StreamName, StreamData]) {
+final case class Streams(streams: SortedMap[StreamName, StreamData]) {
   def updateStream(stream: StreamData): Streams =
-    copy(streams = streams + (stream.streamName -> stream))
+    copy(streams = streams ++ List(stream.streamName -> stream))
   def findAndUpdateStream(streamName: StreamName)(f: StreamData => StreamData) =
     copy(
       streams = streams ++
@@ -27,7 +27,7 @@ final case class Streams(streams: Map[StreamName, StreamData]) {
       awsAccountId
     )
 
-    (copy(streams = streams + (streamName -> created._1)), created._2)
+    (copy(streams = streams ++ List(streamName -> created._1)), created._2)
   }
 
   def deleteStream(
@@ -59,9 +59,9 @@ final case class Streams(streams: Map[StreamName, StreamData]) {
     )
 
   def removeStream(streamName: StreamName) =
-    copy(streams = streams - streamName)
+    copy(streams = streams.filterNot { case (sName, _) => sName == streamName })
 }
 
 object Streams {
-  val empty = Streams(Map.empty)
+  val empty = Streams(SortedMap.empty)
 }

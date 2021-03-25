@@ -6,6 +6,7 @@ import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamSummary.html
 final case class DescribeStreamSummaryRequest(

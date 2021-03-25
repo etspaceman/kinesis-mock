@@ -1,5 +1,5 @@
 package kinesis.mock
-package api
+package validations
 
 import scala.util.Try
 

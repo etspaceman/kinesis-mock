@@ -3,6 +3,8 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.models.StreamDescription
+
 final case class DescribeStreamResponse(streamDescription: StreamDescription)
 
 object DescribeStreamResponse {

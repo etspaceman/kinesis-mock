@@ -8,6 +8,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 final case class ListStreamsRequest(
     exclusiveStartStreamName: Option[StreamName],
@@ -33,7 +34,7 @@ final case class ListStreamsRequest(
       val firstIndex = exclusiveStartStreamName
         .map(x => allStreams.indexWhere(_ == x) + 1)
         .getOrElse(0)
-      val lastIndex = Math.min(lim, lastStreamIndex) + 1
+      val lastIndex = Math.min(firstIndex + lim, lastStreamIndex + 1)
       val streamNames = allStreams.slice(firstIndex, lastIndex)
       val hasMoreStreams =
         if (lastStreamIndex + 1 == lastIndex) false

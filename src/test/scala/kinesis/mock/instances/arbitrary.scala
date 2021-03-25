@@ -206,6 +206,7 @@ object arbitrary {
   val tagsGen: Gen[Tags] = Gen
     .choose(0, 10)
     .flatMap(size => Gen.mapOfN(size, Gen.zip(tagKeyGen, tagValueGen)))
+    .map(x => SortedMap.from(x))
     .map(Tags.apply)
 
   implicit val tagsArbitrary: Arbitrary[Tags] = Arbitrary(tagsGen)

@@ -2,7 +2,6 @@ package kinesis.mock.models
 
 import org.scalacheck.Prop._
 
-import kinesis.mock.api.ShardIterator
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 

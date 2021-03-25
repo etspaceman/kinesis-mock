@@ -1,5 +1,5 @@
 package kinesis.mock
-package api
+package models
 
 import scala.util.Try
 
@@ -16,6 +16,7 @@ import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import javax.xml.bind.DatatypeConverter
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
   def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {

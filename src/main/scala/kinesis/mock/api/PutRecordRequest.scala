@@ -15,6 +15,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordRequest(
     data: Array[Byte],

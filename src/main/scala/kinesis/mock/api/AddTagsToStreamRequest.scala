@@ -8,6 +8,7 @@ import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_AddTagsToStream.html
 // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
