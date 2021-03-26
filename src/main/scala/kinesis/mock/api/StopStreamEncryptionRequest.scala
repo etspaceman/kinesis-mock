@@ -29,9 +29,9 @@ final case class StopStreamEncryptionRequest(
         ).mapN((_, _, _, _) =>
           streams.updateStream(
             stream.copy(
-              encryptionType = encryptionType,
+              encryptionType = EncryptionType.NONE,
               streamStatus = StreamStatus.UPDATING,
-              keyId = Some(keyId)
+              keyId = None
             )
           )
         )

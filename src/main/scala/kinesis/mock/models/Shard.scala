@@ -32,7 +32,7 @@ object Shard {
     val shardHash = maxHashKey / BigInt(shardCount)
     SortedMap.from(
       List
-        .range(startingIndex, shardCount, 1)
+        .range(startingIndex, shardCount + startingIndex, 1)
         .map(index =>
           Shard(
             None,

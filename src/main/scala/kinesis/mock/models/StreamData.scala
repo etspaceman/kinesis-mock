@@ -6,7 +6,7 @@ import scala.concurrent.duration._
 import java.time.Instant
 
 final case class StreamData(
-    consumers: Map[ConsumerName, Consumer],
+    consumers: SortedMap[ConsumerName, Consumer],
     encryptionType: EncryptionType,
     enhancedMonitoring: List[ShardLevelMetrics],
     keyId: Option[String],
@@ -36,7 +36,7 @@ object StreamData {
       Shard.newShards(shardCount, createTime, 0)
     (
       StreamData(
-        Map.empty,
+        SortedMap.empty,
         EncryptionType.NONE,
         List(ShardLevelMetrics(List.empty)),
         None,

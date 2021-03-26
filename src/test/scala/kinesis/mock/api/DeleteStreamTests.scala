@@ -1,5 +1,7 @@
 package kinesis.mock.api
 
+import scala.collection.SortedMap
+
 import enumeratum.scalacheck._
 import org.scalacheck.Prop._
 
@@ -69,7 +71,7 @@ class DeleteStreamTests extends munit.ScalaCheckSuite {
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
         x.copy(consumers =
-          Map(consumerName -> Consumer.create(x.streamArn, consumerName))
+          SortedMap(consumerName -> Consumer.create(x.streamArn, consumerName))
         )
       )
 

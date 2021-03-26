@@ -260,7 +260,8 @@ object CommonValidations {
         "Received KeyId ARN is not a properly formatted ARN"
       ).invalidNel
     else if (
-      !keyId.startsWith("alias/") ||
+      !keyId.startsWith("alias/") &&
+      !keyId.startsWith("arn:") &&
       Try(UUID.fromString(keyId.takeRight(36))).isFailure
     ) {
       InvalidArgumentException(

@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
 import org.scalacheck.Prop._
@@ -19,16 +21,17 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val consumers = Gen
-        .listOfN(5, consumerArbitrary.arbitrary)
-        .suchThat(x =>
-          x.groupBy(_.consumerName)
-            .collect { case (_, y) if y.length > 1 => x }
-            .isEmpty
-        )
-        .one
-        .map(c => c.consumerName -> c)
-        .toMap
+      val consumers = SortedMap.from(
+        Gen
+          .listOfN(5, consumerArbitrary.arbitrary)
+          .suchThat(x =>
+            x.groupBy(_.consumerName)
+              .collect { case (_, y) if y.length > 1 => x }
+              .isEmpty
+          )
+          .one
+          .map(c => c.consumerName -> c)
+      )
 
       val withConsumers = streams.findAndUpdateStream(streamName)(s =>
         s.copy(consumers = consumers)
@@ -54,16 +57,17 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val consumers = Gen
-        .listOfN(10, consumerArbitrary.arbitrary)
-        .suchThat(x =>
-          x.groupBy(_.consumerName)
-            .collect { case (_, y) if y.length > 1 => x }
-            .isEmpty
-        )
-        .one
-        .map(c => c.consumerName -> c)
-        .toMap
+      val consumers = SortedMap.from(
+        Gen
+          .listOfN(10, consumerArbitrary.arbitrary)
+          .suchThat(x =>
+            x.groupBy(_.consumerName)
+              .collect { case (_, y) if y.length > 1 => x }
+              .isEmpty
+          )
+          .one
+          .map(c => c.consumerName -> c)
+      )
 
       val withConsumers = streams.findAndUpdateStream(streamName)(s =>
         s.copy(consumers = consumers)

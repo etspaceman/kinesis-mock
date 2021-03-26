@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import enumeratum.scalacheck._
 import org.scalacheck.Prop._
 
@@ -20,7 +22,7 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = Map(
+          consumers = SortedMap(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -56,7 +58,7 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = Map(
+          consumers = SortedMap(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -94,7 +96,7 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = Map(
+          consumers = SortedMap(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
           )
@@ -146,7 +148,7 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = Map(
+          consumers = SortedMap(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -175,7 +177,7 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = Map(
+          consumers = SortedMap(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)

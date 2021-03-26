@@ -801,10 +801,12 @@ object arbitrary {
   implicit val streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
     for {
       consumersSize <- Gen.choose(0, 20)
-      consumers <- Gen.mapOfN(
-        consumersSize,
-        consumerArbitrary.arbitrary.map(x => x.consumerName -> x)
-      )
+      consumers <- Gen
+        .listOfN(
+          consumersSize,
+          consumerArbitrary.arbitrary.map(x => x.consumerName -> x)
+        )
+        .map(x => SortedMap.from(x))
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       enhancedMonitoring <- Gen
         .choose(0, 1)

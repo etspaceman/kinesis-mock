@@ -43,7 +43,7 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
               streamStatus = StreamStatus.DELETING,
               tags = Tags.empty,
               enhancedMonitoring = List.empty,
-              consumers = Map.empty
+              consumers = SortedMap.empty
             ))
           )
           .toMap

@@ -232,8 +232,10 @@ class Cache private (
                       streamsRef.set(
                         updated.updateStream(
                           stream.copy(consumers =
-                            stream.consumers + (response.consumer.consumerName -> response.consumer
-                              .copy(consumerStatus = ConsumerStatus.ACTIVE))
+                            stream.consumers ++ List(
+                              response.consumer.consumerName -> response.consumer
+                                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+                            )
                           )
                         )
                       )
@@ -274,9 +276,10 @@ class Cache private (
                     .traverse(stream =>
                       streamsRef.set(
                         updated.updateStream(
-                          stream.copy(consumers =
-                            stream.consumers - consumer.consumerName
-                          )
+                          stream.copy(consumers = stream.consumers.filterNot {
+                            case (consumerName, _) =>
+                              consumerName == consumer.consumerName
+                          })
                         )
                       )
                     )).start.void
