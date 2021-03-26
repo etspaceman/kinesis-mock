@@ -4,6 +4,7 @@ import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
+import java.util.Base64
 
 import enumeratum.scalacheck._
 import org.scalacheck.{Arbitrary, Gen}
@@ -11,7 +12,6 @@ import wolfendale.scalacheck.regexp.RegexpGen
 
 import kinesis.mock.api._
 import kinesis.mock.models._
-import java.util.Base64
 
 object arbitrary {
 
