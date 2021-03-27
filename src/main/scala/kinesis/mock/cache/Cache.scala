@@ -3,7 +3,7 @@ package cache
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
 import cats.syntax.all._
 
 import kinesis.mock.api._
@@ -14,7 +14,8 @@ class Cache private (
     streamsRef: Ref[IO, Streams],
     shardsSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
     semaphores: CacheSemaphores,
-    config: CacheConfig
+    config: CacheConfig,
+    supervisor: Supervisor[IO]
 ) {
 
   def addTagsToStream(
@@ -82,18 +83,19 @@ class Cache private (
               _ <- shardsSemaphoresRef.update(shardSemaphores =>
                 shardSemaphores ++ newShardSemaphores
               )
-              r <- (IO.sleep(config.createStreamDuration) *>
-                // Update the stream as ACTIVE after a small, configured delay
-                streamsRef
-                  .set(
-                    updated.findAndUpdateStream(req.streamName)(x =>
-                      x.copy(streamStatus = StreamStatus.ACTIVE)
-                    )
-                  )
-                  .start
-                  .void)
+              r <- supervisor
+                .supervise(
+                  IO.sleep(config.createStreamDuration) *>
+                    // Update the stream as ACTIVE after a small, configured delay
+                    streamsRef
+                      .set(
+                        updated.findAndUpdateStream(req.streamName)(x =>
+                          x.copy(streamStatus = StreamStatus.ACTIVE)
+                        )
+                      )
+                )
+                .void
             } yield r
-
           }
       } yield res,
       IO.pure(
@@ -124,11 +126,15 @@ class Cache private (
               _ <- shardsSemaphoresRef.update(shardsSemaphores =>
                 shardsSemaphores -- shardSemaphoreKeys
               )
-              r <- (IO.sleep(config.deleteStreamDuration) *>
-                // Remove the stream after a small, configured delay
-                streamsRef.set(
-                  updated.removeStream(req.streamName)
-                )).start.void
+              r <- supervisor
+                .supervise(
+                  IO.sleep(config.deleteStreamDuration) *>
+                    // Remove the stream after a small, configured delay
+                    streamsRef.set(
+                      updated.removeStream(req.streamName)
+                    )
+                )
+                .void
             } yield r
 
           }
@@ -224,22 +230,28 @@ class Cache private (
             streamsRef
               .set(updated)
               .flatMap { _ =>
-                (IO.sleep(config.registerStreamConsumerDuration) *>
-                  // Update the consumer as ACTIVE after a small, configured delay
-                  updated.streams.values
-                    .find(_.streamArn == req.streamArn)
-                    .traverse(stream =>
-                      streamsRef.set(
-                        updated.updateStream(
-                          stream.copy(consumers =
-                            stream.consumers ++ List(
-                              response.consumer.consumerName -> response.consumer
-                                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+                supervisor
+                  .supervise(
+                    IO.sleep(config.registerStreamConsumerDuration) *>
+                      // Update the consumer as ACTIVE after a small, configured delay
+                      updated.streams.values
+                        .find(_.streamArn == req.streamArn)
+                        .traverse(stream =>
+                          streamsRef.set(
+                            updated.updateStream(
+                              stream.copy(consumers =
+                                stream.consumers ++ List(
+                                  response.consumer.consumerName -> response.consumer
+                                    .copy(consumerStatus =
+                                      ConsumerStatus.ACTIVE
+                                    )
+                                )
+                              )
                             )
                           )
                         )
-                      )
-                    )).start.void
+                  )
+                  .void
               }
               .as(response)
           }
@@ -269,20 +281,26 @@ class Cache private (
             streamsRef
               .set(updated)
               .flatMap { _ =>
-                (IO.sleep(config.deregisterStreamConsumerDuration) *>
-                  // Remove the consumer after a small, configured delay
-                  updated.streams.values
-                    .find(_.streamArn == req.streamArn)
-                    .traverse(stream =>
-                      streamsRef.set(
-                        updated.updateStream(
-                          stream.copy(consumers = stream.consumers.filterNot {
-                            case (consumerName, _) =>
-                              consumerName == consumer.consumerName
-                          })
+                supervisor
+                  .supervise(
+                    IO.sleep(config.deregisterStreamConsumerDuration) *>
+                      // Remove the consumer after a small, configured delay
+                      updated.streams.values
+                        .find(_.streamArn == req.streamArn)
+                        .traverse(stream =>
+                          streamsRef.set(
+                            updated.updateStream(
+                              stream.copy(consumers =
+                                stream.consumers.filterNot {
+                                  case (consumerName, _) =>
+                                    consumerName == consumer.consumerName
+                                }
+                              )
+                            )
+                          )
                         )
-                      )
-                    )).start.void
+                  )
+                  .void
               }
           }
       ),
@@ -406,16 +424,18 @@ class Cache private (
         .leftMap(KinesisMockException.aggregate)
         .traverse(updated =>
           streamsRef.set(updated) *>
-            (IO.sleep(config.startStreamEncryptionDuration) *>
-              // Update the stream as ACTIVE after a small, configured delay
-              streamsRef
-                .set(
-                  updated.findAndUpdateStream(req.streamName)(x =>
-                    x.copy(streamStatus = StreamStatus.ACTIVE)
-                  )
-                )
-                .start
-                .void)
+            supervisor
+              .supervise(
+                IO.sleep(config.startStreamEncryptionDuration) *>
+                  // Update the stream as ACTIVE after a small, configured delay
+                  streamsRef
+                    .set(
+                      updated.findAndUpdateStream(req.streamName)(x =>
+                        x.copy(streamStatus = StreamStatus.ACTIVE)
+                      )
+                    )
+              )
+              .void
         )
     )
 
@@ -432,16 +452,18 @@ class Cache private (
         .leftMap(KinesisMockException.aggregate)
         .traverse(updated =>
           streamsRef.set(updated) *>
-            (IO.sleep(config.stopStreamEncryptionDuration) *>
-              // Update the stream as ACTIVE after a small, configured delay
-              streamsRef
-                .set(
-                  updated.findAndUpdateStream(req.streamName)(x =>
-                    x.copy(streamStatus = StreamStatus.ACTIVE)
-                  )
-                )
-                .start
-                .void)
+            supervisor
+              .supervise(
+                IO.sleep(config.stopStreamEncryptionDuration) *>
+                  // Update the stream as ACTIVE after a small, configured delay
+                  streamsRef
+                    .set(
+                      updated.findAndUpdateStream(req.streamName)(x =>
+                        x.copy(streamStatus = StreamStatus.ACTIVE)
+                      )
+                    )
+              )
+              .void
         )
     )
 
@@ -507,16 +529,18 @@ class Cache private (
                 shardsSemaphore ++ List(newShardsSemaphoreKey -> semaphore)
               )
             )
-          (IO.sleep(config.mergeShardsDuration) *>
-            // Update the stream as ACTIVE after a small, configured delay
-            streamsRef
-              .set(
-                updated.findAndUpdateStream(req.streamName)(x =>
-                  x.copy(streamStatus = StreamStatus.ACTIVE)
-                )
-              )
-              .start
-              .void)
+          supervisor
+            .supervise(
+              IO.sleep(config.mergeShardsDuration) *>
+                // Update the stream as ACTIVE after a small, configured delay
+                streamsRef
+                  .set(
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
+                  )
+            )
+            .void
         }
       } yield res,
       IO.pure(Left(LimitExceededException("Limit Exceeded for MergeShards")))
@@ -544,16 +568,18 @@ class Cache private (
                   shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
                 )
               )
-          (IO.sleep(config.splitShardDuration) *>
-            // Update the stream as ACTIVE after a small, configured delay
-            streamsRef
-              .set(
-                updated.findAndUpdateStream(req.streamName)(x =>
-                  x.copy(streamStatus = StreamStatus.ACTIVE)
-                )
-              )
-              .start
-              .void)
+          supervisor
+            .supervise(
+              IO.sleep(config.splitShardDuration) *>
+                // Update the stream as ACTIVE after a small, configured delay
+                streamsRef
+                  .set(
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
+                  )
+            )
+            .void
         }
       } yield res,
       IO.pure(Left(LimitExceededException("Limit Exceeded for SplitShard")))
@@ -580,27 +606,35 @@ class Cache private (
                 shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
               )
             )
-        (IO.sleep(config.updateShardCountDuration) *>
-          // Update the stream as ACTIVE after a small, configured delay
-          streamsRef
-            .set(
-              updated.findAndUpdateStream(req.streamName)(x =>
-                x.copy(streamStatus = StreamStatus.ACTIVE)
-              )
-            )
-            .start
-            .void)
+        supervisor
+          .supervise(
+            IO.sleep(config.updateShardCountDuration) *>
+              // Update the stream as ACTIVE after a small, configured delay
+              streamsRef
+                .set(
+                  updated.findAndUpdateStream(req.streamName)(x =>
+                    x.copy(streamStatus = StreamStatus.ACTIVE)
+                  )
+                )
+          )
+          .void
       }
     } yield res
 
 }
 
 object Cache {
-  def apply(config: CacheConfig)(implicit C: Concurrent[IO]): IO[Cache] = for {
+  def apply(
+      config: CacheConfig
+  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](Streams.empty)
     shardsSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
       Map.empty
     )
     semaphores <- CacheSemaphores.create
-  } yield new Cache(ref, shardsSemaphoresRef, semaphores, config)
+    supervisorResource = Supervisor[IO]
+    cache <- supervisorResource.use(supervisor =>
+      IO(new Cache(ref, shardsSemaphoresRef, semaphores, config, supervisor))
+    )
+  } yield cache
 }

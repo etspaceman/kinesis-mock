@@ -23,6 +23,13 @@ object LibraryDependencies {
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
   }
 
+  object Cats {
+    val catsVersion = "2.4.2"
+    val catsEffectVersion = "2.4.0"
+    val core = "org.typelevel" %% "cats-core" % catsVersion
+    val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
+  }
+
   object Http4s {
     val http4sVersion = "0.21.16"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion

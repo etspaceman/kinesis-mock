@@ -40,7 +40,7 @@ class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val withUpdatedRetention = streams.findAndUpdateStream(streamName)(s =>
-        s.copy(retentionPeriod = 72.hours)
+        s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
       )
 
       val req = IncreaseStreamRetentionRequest(48, streamName)

@@ -26,12 +26,13 @@ final case class DecreaseStreamRetentionRequest(
         (
           CommonValidations.validateStreamName(streamName),
           CommonValidations.validateRetentionPeriodHours(retentionPeriodHours),
+          CommonValidations.isStreamActive(streamName, streams),
           if (stream.retentionPeriod.toHours < retentionPeriodHours)
             InvalidArgumentException(
               s"Provided RetentionPeriodHours $retentionPeriodHours is greater than the currently defined retention period ${stream.retentionPeriod.toHours}"
             ).invalidNel
           else Valid(())
-        ).mapN((_, _, _) =>
+        ).mapN((_, _, _, _) =>
           streams.updateStream(
             stream.copy(retentionPeriod = retentionPeriodHours.hours)
           )

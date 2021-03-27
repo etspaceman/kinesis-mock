@@ -12,6 +12,8 @@ libraryDependencies ++= Seq(
   Http4s.blazeServer,
   Http4s.circe,
   Http4s.dsl,
+  Cats.core,
+  Cats.effect,
   Circe.core,
   Ciris.core,
   Ciris.enumeratum,
