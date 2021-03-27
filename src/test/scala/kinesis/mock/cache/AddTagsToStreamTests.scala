@@ -25,9 +25,14 @@ class AddTagsToStreamTests
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        res <- cache.addTagsToStream(
-          AddTagsToStreamRequest(streamName, tags)
-        )
-      } yield assert(res.isRight)
+        _ <- cache
+          .addTagsToStream(
+            AddTagsToStreamRequest(streamName, tags)
+          )
+          .rethrow
+        res <- cache
+          .listTagsForStream(ListTagsForStreamRequest(None, None, streamName))
+          .rethrow
+      } yield assert(res.tags == tags)
   })
 }

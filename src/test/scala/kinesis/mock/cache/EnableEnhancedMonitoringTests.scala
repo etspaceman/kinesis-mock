@@ -1,7 +1,5 @@
 package kinesis.mock.cache
 
-import scala.concurrent.duration._
-
 import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
@@ -11,14 +9,14 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamRetentionPeriodTests
+class EnableEnhancedMonitoringTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
   override def scalaCheckTestParameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
-  test("It should decrease the stream retention period")(PropF.forAllF {
+  test("It should add enable enhanced monitoring")(PropF.forAllF {
     (
       streamName: StreamName
     ) =>
@@ -26,20 +24,24 @@ class DescribeStreamRetentionPeriodTests
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
-        _ <- cache
-          .increaseStreamRetention(
-            IncreaseStreamRetentionRequest(48, streamName)
-          )
-          .rethrow
-        _ <- cache
-          .decreaseStreamRetention(
-            DecreaseStreamRetentionRequest(24, streamName)
-          )
-          .rethrow
         res <- cache
+          .enableEnhancedMonitoring(
+            EnableEnhancedMonitoringRequest(
+              List(ShardLevelMetric.IncomingBytes),
+              streamName
+            )
+          )
+          .rethrow
+        streamMonitoring <- cache
           .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
           .rethrow
-      } yield assert(res.streamDescriptionSummary.retentionPeriodHours == 24)
+          .map(
+            _.streamDescriptionSummary.enhancedMonitoring
+              .flatMap(_.shardLevelMetrics)
+          )
+      } yield assert(
+        res.desiredShardLevelMetrics == streamMonitoring && res.desiredShardLevelMetrics
+          .contains(ShardLevelMetric.IncomingBytes)
+      )
   })
 }

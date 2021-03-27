@@ -11,37 +11,45 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DeleteStreamTests
+class DescribeStreamConsumerTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
   override def scalaCheckTestParameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
-  test("It should delete a stream")(PropF.forAllF {
+  test("It should describe a stream consumer")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        consumerName: ConsumerName
     ) =>
       for {
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
-        res <- cache
-          .deleteStream(
-            DeleteStreamRequest(streamName, None)
+        streamArn <- cache
+          .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+          .rethrow
+          .map(_.streamDescriptionSummary.streamArn)
+        registerRes <- cache
+          .registerStreamConsumer(
+            RegisterStreamConsumerRequest(consumerName, streamArn)
           )
           .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
-        checkStream1 <- cache.describeStreamSummary(describeStreamSummaryReq)
-        _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(10.millis))
-        checkStream2 <- cache.describeStreamSummary(describeStreamSummaryReq)
+
+        res <- cache
+          .describeStreamConsumer(
+            DescribeStreamConsumerRequest(
+              None,
+              Some(consumerName),
+              Some(streamArn)
+            )
+          )
+          .rethrow
       } yield assert(
-        checkStream1.exists(
-          _.streamDescriptionSummary.streamStatus == StreamStatus.DELETING
-        ) &&
-          checkStream2.isLeft,
-        s"$res\n$checkStream1\n$checkStream2"
+        res.consumerDescription == registerRes.consumer,
+        s"$registerRes\n$res"
       )
   })
 }

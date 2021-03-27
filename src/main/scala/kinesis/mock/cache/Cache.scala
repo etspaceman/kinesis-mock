@@ -286,7 +286,10 @@ class Cache private (
                     IO.sleep(config.deregisterStreamConsumerDuration) *>
                       // Remove the consumer after a small, configured delay
                       updated.streams.values
-                        .find(_.streamArn == req.streamArn)
+                        .find(s =>
+                          s.consumers.keys.toList
+                            .contains(consumer.consumerName)
+                        )
                         .traverse(stream =>
                           streamsRef.set(
                             updated.updateStream(
@@ -307,7 +310,7 @@ class Cache private (
       IO.pure(
         Left(
           LimitExceededException(
-            "Rate limit exceeded for RegisterStreamConsumer"
+            "Rate limit exceeded for DeregisterStreamConsumer"
           )
         )
       )
