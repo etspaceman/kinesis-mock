@@ -26,7 +26,7 @@ class GetShardIteratorTests
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
         shard <- cache
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName))

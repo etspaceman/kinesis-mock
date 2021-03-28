@@ -26,7 +26,7 @@ class MergeShardsTests
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(5, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
         adjacentParentShardId = ShardId.create(1).shardId
         parentShardId = ShardId.create(0).shardId
         _ <- cache
@@ -42,7 +42,7 @@ class MergeShardsTests
         checkStream1 <- cache
           .describeStreamSummary(describeStreamSummaryReq)
           .rethrow
-        _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(10.millis))
+        _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(50.millis))
         checkStream2 <- cache
           .describeStreamSummary(describeStreamSummaryReq)
           .rethrow

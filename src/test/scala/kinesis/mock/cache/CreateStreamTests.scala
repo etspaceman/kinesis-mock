@@ -28,7 +28,7 @@ class CreateStreamTests
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
         describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
         checkStream1 <- cache.describeStreamSummary(describeStreamSummaryReq)
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
         checkStream2 <- cache.describeStreamSummary(describeStreamSummaryReq)
       } yield assert(
         checkStream1.exists(

@@ -27,7 +27,7 @@ class ListStreamConsumersTests
         cacheConfig <- CacheConfig.read.load[IO]
         cache <- Cache(cacheConfig)
         _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
         streamArn <- cache
           .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
           .rethrow
