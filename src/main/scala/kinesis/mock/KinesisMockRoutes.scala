@@ -1,4 +1,4 @@
-package com.example.kinesismock
+package kinesis.mock
 
 import cats.effect.IO
 import org.http4s.HttpRoutes

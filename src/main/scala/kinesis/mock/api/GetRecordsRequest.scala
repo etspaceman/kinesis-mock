@@ -21,7 +21,7 @@ final case class GetRecordsRequest(
   def getRecords(
       streams: Streams
   ): ValidatedNel[KinesisMockException, GetRecordsResponse] =
-    shardIterator.parse.andThen { case parts =>
+    shardIterator.parse.andThen { parts =>
       CommonValidations
         .isStreamActiveOrUpdating(parts.streamName, streams)
         .andThen(_ =>
@@ -38,13 +38,13 @@ final case class GetRecordsRequest(
                     .andThen { _ =>
                       val allShards = stream.shards.keys.toList
                       val childShards = allShards
-                        .filter(_.parentShardId.contains(shard.shardId))
+                        .filter(_.parentShardId.contains(shard.shardId.shardId))
                         .map(s =>
                           ChildShard.fromShard(
                             s,
                             allShards
                               .filter(
-                                _.parentShardId.contains(s.shardId)
+                                _.parentShardId.contains(s.shardId.shardId)
                               )
                           )
                         )
@@ -69,17 +69,21 @@ final case class GetRecordsRequest(
                               data.length
                             )
 
-                          val records = GetRecordsRequest.getRecords(
-                            data.slice(firstIndex, lastIndex),
-                            maxRecords,
-                            List.empty,
-                            0,
-                            0
-                          )
+                          val records = GetRecordsRequest
+                            .getRecords(
+                              data.slice(firstIndex, lastIndex),
+                              maxRecords,
+                              List.empty,
+                              0,
+                              0
+                            )
+                            .map(r =>
+                              r.copy(data = Base64.getEncoder.encode(r.data))
+                            )
+
                           val millisBehindLatest =
                             data.last.approximateArrivalTimestamp.toEpochMilli -
-                              records.head.approximateArrivalTimestamp
-                                .toEpochMilli()
+                              records.head.approximateArrivalTimestamp.toEpochMilli
 
                           Valid(
                             GetRecordsResponse(
@@ -108,7 +112,7 @@ final case class GetRecordsRequest(
                                 )
                               )
 
-                            case Some(record) => {
+                            case Some(record) =>
                               val maxRecords = limit.getOrElse(10000)
                               val firstIndex = data.indexOf(record) + 1
                               val lastIndex =
@@ -117,17 +121,23 @@ final case class GetRecordsRequest(
                                   data.length
                                 )
 
-                              val records = GetRecordsRequest.getRecords(
-                                data.slice(firstIndex, lastIndex),
-                                maxRecords,
-                                List.empty,
-                                0,
-                                0
-                              )
+                              val records = GetRecordsRequest
+                                .getRecords(
+                                  data.slice(firstIndex, lastIndex),
+                                  maxRecords,
+                                  List.empty,
+                                  0,
+                                  0
+                                )
+                                .map(r =>
+                                  r.copy(data =
+                                    Base64.getEncoder.encode(r.data)
+                                  )
+                                )
+
                               val millisBehindLatest =
                                 data.last.approximateArrivalTimestamp.toEpochMilli -
-                                  record.approximateArrivalTimestamp
-                                    .toEpochMilli()
+                                  record.approximateArrivalTimestamp.toEpochMilli
 
                               Valid(
                                 GetRecordsResponse(
@@ -141,7 +151,7 @@ final case class GetRecordsRequest(
                                   records
                                 )
                               )
-                            }
+
                             case None =>
                               ResourceNotFoundException(
                                 s"Record for provided SequenceNumber not found"
@@ -169,10 +179,10 @@ object GetRecordsRequest {
       totalRecords: Int
   ): List[KinesisRecord] = data match {
     case Nil =>
-      results.map(x => x.copy(data = Base64.getEncoder().encode(x.data)))
+      results
     case head :: _
         if head.size + totalSize > maxReturnSize || totalRecords + 1 > maxRecords =>
-      results.map(x => x.copy(data = Base64.getEncoder().encode(x.data)))
+      results
     case head :: tail =>
       getRecords(
         tail,

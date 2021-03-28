@@ -24,7 +24,7 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .map(s => StreamDescription.fromStreamData(s, None, None))
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamDescription.contains(response.streamDescription)
       }) :| s"req: $req\nres: $res"
   })
@@ -46,7 +46,7 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .map(s => StreamDescription.fromStreamData(s, None, limit))
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamDescription.contains(
           response.streamDescription
         ) && response.streamDescription.shards.size == 1
@@ -75,14 +75,14 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
           StreamDescription.fromStreamData(s, exclusiveStartShardId, None)
         )
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamDescription.contains(
           response.streamDescription
         ) &&
-          response.streamDescription.shards.size == 3 &&
-          response.streamDescription.shards
-            .find(x => exclusiveStartShardId.contains(x.shardId))
-            .isEmpty
+        response.streamDescription.shards.size == 3 &&
+        !response.streamDescription.shards.exists(x =>
+          exclusiveStartShardId.contains(x.shardId)
+        )
       }) :| s"req: $req\nres: $res"
   })
 

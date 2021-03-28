@@ -15,7 +15,7 @@ class DeregisterStreamConsumerTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
-  override def scalaCheckTestParameters =
+  override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
   test("It should deregister a stream consumer")(PropF.forAllF {

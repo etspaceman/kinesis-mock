@@ -1,3 +1,3 @@
-package com.example.kinesismock.kinesis.mock
+package kinesis.mock
 
 class KinesisMockService {}

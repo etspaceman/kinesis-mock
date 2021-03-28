@@ -53,11 +53,9 @@ class SplitShardTests
       } yield assert(
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
-            stream.shards.keys.toList
-              .filter(shard =>
-                shard.parentShardId.contains(shardToSplit.shardId.shardId)
-              )
-              .length == 2 && stream.streamStatus == StreamStatus.UPDATING
+            stream.shards.keys.toList.count(shard =>
+              shard.parentShardId.contains(shardToSplit.shardId.shardId)
+            ) == 2 && stream.streamStatus == StreamStatus.UPDATING
           }
         },
         s"req: $req\n" +
@@ -99,7 +97,7 @@ class SplitShardTests
         res <- req.splitShard(streams, shardSemaphores, 50)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 
@@ -139,7 +137,7 @@ class SplitShardTests
         res <- req.splitShard(active, shardSemaphores, 50)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 
@@ -181,7 +179,7 @@ class SplitShardTests
           res <- req.splitShard(active, shardSemaphores, 5)
         } yield assert(
           res.isInvalid,
-          s"req: $req\nres: ${res}"
+          s"req: $req\nres: $res"
         )
     }
   )

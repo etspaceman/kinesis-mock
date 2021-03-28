@@ -37,7 +37,7 @@ final case class ListStreamConsumersRequest(
           }
         ).mapN((_, _, _) =>
           nextToken match {
-            case Some(nt) => {
+            case Some(nt) =>
               val allConsumers = stream.consumers.values.toList
               val lastConsumerIndex = allConsumers.length - 1
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
@@ -49,7 +49,7 @@ final case class ListStreamConsumersRequest(
                 if (lastConsumerIndex == lastIndex) None
                 else Some(consumers.last.consumerName)
               ListStreamConsumersResponse(consumers, ntUpdated)
-            }
+
             case None =>
               val allConsumers = stream.consumers.values.toList
               val lastConsumerIndex = allConsumers.length - 1

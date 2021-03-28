@@ -23,7 +23,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         ListShardsRequest(None, None, None, None, None, Some(streamName))
       val res = req.listShards(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
           s.shards.keys.toList == response.shards
         }
@@ -48,11 +48,11 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         paginatedReq.listShards(streams)
       }
 
-      (res.isValid && paginatedRes.isValid && res.exists { case response =>
+      (res.isValid && paginatedRes.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
           s.shards.keys.toList.take(50) == response.shards
         }
-      } && paginatedRes.exists { case response =>
+      } && paginatedRes.exists { response =>
         streams.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(50) == response.shards
         }
@@ -84,7 +84,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(89) == response.shards
         }
@@ -104,14 +104,13 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         s.copy(
           shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
             case (shard, recs) =>
-              (
-                shard.copy(sequenceNumberRange =
-                  shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  )
-                ) -> recs
-              )
+              shard.copy(sequenceNumberRange =
+                shard.sequenceNumberRange.copy(
+                  Some(SequenceNumber.shardEnd),
+                  shard.sequenceNumberRange.startingSequenceNumber
+                )
+              ) -> recs
+
           }
         )
       }
@@ -129,7 +128,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(95) == response.shards
         }
@@ -151,14 +150,13 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         s.copy(
           shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
             case (shard, recs) =>
-              (
-                shard.copy(sequenceNumberRange =
-                  shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  )
-                ) -> recs
-              )
+              shard.copy(sequenceNumberRange =
+                shard.sequenceNumberRange.copy(
+                  Some(SequenceNumber.shardEnd),
+                  shard.sequenceNumberRange.startingSequenceNumber
+                )
+              ) -> recs
+
           }
         )
       }
@@ -176,7 +174,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
           s.shards.keys.toList == response.shards
         }
@@ -198,17 +196,16 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         s.copy(
           shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
             case (shard, recs) =>
-              (
-                shard.copy(
-                  sequenceNumberRange = shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  ),
-                  closedTimestamp = Some(
-                    Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
-                  )
-                ) -> recs
-              )
+              shard.copy(
+                sequenceNumberRange = shard.sequenceNumberRange.copy(
+                  Some(SequenceNumber.shardEnd),
+                  shard.sequenceNumberRange.startingSequenceNumber
+                ),
+                closedTimestamp = Some(
+                  Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
+                )
+              ) -> recs
+
           }
         )
       }
@@ -226,7 +223,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(95) == response.shards
         }
@@ -259,7 +256,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(95) == response.shards
         }
@@ -286,29 +283,27 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           streamCreationTimestamp = requestTimestamp.minusSeconds(600),
           shards = s.shards.takeRight(90) ++ s.shards.take(5).map {
             case (shard, recs) =>
-              (
-                shard.copy(
-                  sequenceNumberRange = shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  ),
-                  closedTimestamp = Some(
-                    requestTimestamp.minusSeconds(5)
-                  )
-                ) -> recs
-              )
-          } ++ s.shards.slice(5, 10).map { case (shard, recs) =>
-            (
               shard.copy(
                 sequenceNumberRange = shard.sequenceNumberRange.copy(
                   Some(SequenceNumber.shardEnd),
                   shard.sequenceNumberRange.startingSequenceNumber
                 ),
                 closedTimestamp = Some(
-                  requestTimestamp.plusSeconds(5)
+                  requestTimestamp.minusSeconds(5)
                 )
               ) -> recs
-            )
+
+          } ++ s.shards.slice(5, 10).map { case (shard, recs) =>
+            shard.copy(
+              sequenceNumberRange = shard.sequenceNumberRange.copy(
+                Some(SequenceNumber.shardEnd),
+                shard.sequenceNumberRange.startingSequenceNumber
+              ),
+              closedTimestamp = Some(
+                requestTimestamp.plusSeconds(5)
+              )
+            ) -> recs
+
           }
         )
       }
@@ -330,7 +325,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(95) == response.shards
         }
@@ -355,30 +350,28 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           shards = s.shards.takeRight(90).map { case (shard, data) =>
             shard.copy(createdAtTimestamp = requestTimestamp) -> data
           } ++ s.shards.take(5).map { case (shard, recs) =>
-            (
-              shard.copy(
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                ),
-                closedTimestamp = Some(
-                  requestTimestamp.minusSeconds(5)
-                )
-              ) -> recs
-            )
+            shard.copy(
+              sequenceNumberRange = shard.sequenceNumberRange.copy(
+                Some(SequenceNumber.shardEnd),
+                shard.sequenceNumberRange.startingSequenceNumber
+              ),
+              closedTimestamp = Some(
+                requestTimestamp.minusSeconds(5)
+              )
+            ) -> recs
+
           } ++ s.shards.slice(5, 10).map { case (shard, recs) =>
-            (
-              shard.copy(
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                ),
-                closedTimestamp = Some(
-                  requestTimestamp.plusSeconds(5)
-                ),
-                createdAtTimestamp = requestTimestamp
-              ) -> recs
-            )
+            shard.copy(
+              sequenceNumberRange = shard.sequenceNumberRange.copy(
+                Some(SequenceNumber.shardEnd),
+                shard.sequenceNumberRange.startingSequenceNumber
+              ),
+              closedTimestamp = Some(
+                requestTimestamp.plusSeconds(5)
+              ),
+              createdAtTimestamp = requestTimestamp
+            ) -> recs
+
           }
         )
       }
@@ -400,7 +393,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         )
       val res = req.listShards(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
           s.shards.keys.toList.takeRight(95) == response.shards
         }

@@ -90,8 +90,8 @@ final case class PutRecordsRequest(
 
         grouped
           .parTraverse { case ((shard, currentRecords), recordsToAdd) =>
-            shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire.map(
-              _ =>
+            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
+              IO(
                 (
                   shard,
                   (
@@ -99,6 +99,7 @@ final case class PutRecordsRequest(
                     recordsToAdd.map(_._2)
                   )
                 )
+              )
             )
           }
           .map { newShards =>

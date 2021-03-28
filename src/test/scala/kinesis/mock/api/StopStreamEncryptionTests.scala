@@ -27,7 +27,7 @@ class StopStreamEncryptionTests extends munit.ScalaCheckSuite {
         StopStreamEncryptionRequest(EncryptionType.KMS, keyId, streamName)
       val res = req.stopStreamEncryption(asActive)
 
-      (res.isValid && res.exists { case s =>
+      (res.isValid && res.exists { s =>
         s.streams
           .get(streamName)
           .exists { s =>

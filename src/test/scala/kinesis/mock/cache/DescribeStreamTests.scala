@@ -13,7 +13,7 @@ class DescribeStreamTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
-  override def scalaCheckTestParameters =
+  override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
   test("It should describe a stream")(PropF.forAllF {

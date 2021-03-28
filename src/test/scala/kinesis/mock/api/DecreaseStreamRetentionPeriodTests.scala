@@ -24,7 +24,7 @@ class DecreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
             streamStatus = StreamStatus.ACTIVE
           )
         )
-      val req = DecreaseStreamRetentionRequest(24, streamName)
+      val req = DecreaseStreamRetentionPeriodRequest(24, streamName)
       val res = req.decreaseStreamRetention(withIncreasedRetention)
 
       (res.isValid && res.exists { s =>
@@ -45,7 +45,7 @@ class DecreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val req = DecreaseStreamRetentionRequest(48, streamName)
+      val req = DecreaseStreamRetentionPeriodRequest(48, streamName)
       val res = req.decreaseStreamRetention(streams)
 
       res.isInvalid :| s"req: $req\nres: $res\nstreams: $streams"

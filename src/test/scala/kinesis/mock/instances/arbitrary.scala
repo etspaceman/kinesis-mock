@@ -72,7 +72,7 @@ object arbitrary {
     streamArn <- streamArnGen
     consumerName <- consumerNameGen
     consumerCreationTimestamp <- nowGen
-  } yield s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}"
+  } yield s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}"
 
   implicit val consumerArbitrary: Arbitrary[Consumer] = Arbitrary(
     for {
@@ -80,7 +80,7 @@ object arbitrary {
       consumerCreationTimestamp <- nowGen
       consumerName <- consumerNameGen
       consumerArn =
-        s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}"
+        s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}"
       consumerStatus <- Arbitrary.arbitrary[ConsumerStatus]
     } yield Consumer(
       consumerArn,
@@ -234,11 +234,14 @@ object arbitrary {
   )
 
   implicit val decreaseStreamRetentionRequestArb
-      : Arbitrary[DecreaseStreamRetentionRequest] = Arbitrary(
+      : Arbitrary[DecreaseStreamRetentionPeriodRequest] = Arbitrary(
     for {
       retentionPeriodHours <- retentionPeriodHoursGen
       streamName <- streamNameGen
-    } yield DecreaseStreamRetentionRequest(retentionPeriodHours, streamName)
+    } yield DecreaseStreamRetentionPeriodRequest(
+      retentionPeriodHours,
+      streamName
+    )
   )
 
   implicit val deleteStreamRequestArb: Arbitrary[DeleteStreamRequest] =
@@ -486,7 +489,13 @@ object arbitrary {
       nextShardIterator <- shardIteratorGen
       records <- Gen
         .choose(0, 100)
-        .flatMap(size => Gen.listOfN(size, kinesisRecordArbitrary.arbitrary))
+        .flatMap(size =>
+          Gen.listOfN(
+            size,
+            kinesisRecordArbitrary.arbitrary
+              .map(r => r.copy(data = Base64.getEncoder.encode(r.data)))
+          )
+        )
     } yield GetRecordsResponse(
       childShards,
       millisBehindLatest,
@@ -526,11 +535,14 @@ object arbitrary {
   )
 
   implicit val increaseStreamRetentionRequestArb
-      : Arbitrary[IncreaseStreamRetentionRequest] = Arbitrary(
+      : Arbitrary[IncreaseStreamRetentionPeriodRequest] = Arbitrary(
     for {
       retentionPeriodHours <- retentionPeriodHoursGen
       streamName <- streamNameGen
-    } yield IncreaseStreamRetentionRequest(retentionPeriodHours, streamName)
+    } yield IncreaseStreamRetentionPeriodRequest(
+      retentionPeriodHours,
+      streamName
+    )
   )
 
   def nextTokenGen(exclusiveStartShardIndex: Option[Int]): Gen[String] = for {
@@ -672,7 +684,7 @@ object arbitrary {
 
   implicit val putRecordRequestArb: Arbitrary[PutRecordRequest] = Arbitrary(
     for {
-      data <- dataGen.map(Base64.getEncoder().encode)
+      data <- dataGen.map(Base64.getEncoder.encode)
       explicitHashKey <- Gen.option(explicitHashKeyGen)
       partitionKey <- partitionKeyGen
       sequenceNumberForOrdering <- Gen.option(sequenceNumberArbitrary.arbitrary)
@@ -697,7 +709,7 @@ object arbitrary {
   implicit val putRecordsRequestEntryArb: Arbitrary[PutRecordsRequestEntry] =
     Arbitrary(
       for {
-        data <- dataGen.map(Base64.getEncoder().encode)
+        data <- dataGen.map(Base64.getEncoder.encode)
         explicitHashKey <- Gen.option(explicitHashKeyGen)
         partitionKey <- partitionKeyGen
       } yield PutRecordsRequestEntry(data, explicitHashKey, partitionKey)

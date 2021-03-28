@@ -10,7 +10,7 @@ final case class Tags(tags: SortedMap[String, String]) {
   def --(keys: IterableOnce[String]): Tags = copy(tags = tags.filterNot {
     case (key, _) => keys.iterator.contains(key)
   })
-  override def toString(): String = tags.toString()
+  override def toString: String = tags.toString()
   def toList: List[(String, String)] = tags.toList
 }
 

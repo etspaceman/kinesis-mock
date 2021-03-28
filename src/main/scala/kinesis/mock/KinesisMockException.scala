@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 
 sealed trait KinesisMockException extends Exception {
   def msg: String
-  override def getMessage(): String = msg
+  override def getMessage: String = msg
 }
 
 object KinesisMockException {

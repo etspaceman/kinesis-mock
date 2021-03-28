@@ -12,11 +12,11 @@ final case class KinesisRecord(
     partitionKey: String,
     sequenceNumber: SequenceNumber
 ) {
-  val size = data.length +
+  val size: Int = data.length +
     encryptionType.entryName.getBytes("UTF-8").length +
     partitionKey.getBytes("UTF-8").length +
     sequenceNumber.value.getBytes("UTF-8").length +
-    approximateArrivalTimestamp.toString().getBytes("UTF-8").length
+    approximateArrivalTimestamp.toString.getBytes("UTF-8").length
 }
 
 object KinesisRecord {

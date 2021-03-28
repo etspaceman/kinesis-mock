@@ -149,7 +149,7 @@ class Cache private (
     )
 
   def decreaseStreamRetention(
-      req: DecreaseStreamRetentionRequest
+      req: DecreaseStreamRetentionPeriodRequest
   ): IO[Either[KinesisMockException, Unit]] =
     streamsRef.get.flatMap(streams =>
       req
@@ -160,7 +160,7 @@ class Cache private (
     )
 
   def increaseStreamRetention(
-      req: IncreaseStreamRetentionRequest
+      req: IncreaseStreamRetentionPeriodRequest
   ): IO[Either[KinesisMockException, Unit]] =
     streamsRef.get.flatMap(streams =>
       req

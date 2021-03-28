@@ -3,7 +3,6 @@ package kinesis.mock.models
 import org.scalacheck.Prop._
 
 import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
 
 class ShardIteratorTests extends munit.ScalaCheckSuite {
   property("It should createt and parse correctly")(forAll {
@@ -23,9 +22,9 @@ class ShardIteratorTests extends munit.ScalaCheckSuite {
         parts.sequenceNumber == sequenceNumber &&
         parts.shardId == shardId.shardId &&
         parts.streamName == streamName
-      } :| s"streamName: ${streamName}\n" +
-        s"shardId: ${shardId}\n" +
-        s"sequenceNumber: ${sequenceNumber}\n" +
+      } :| s"streamName: $streamName\n" +
+        s"shardId: $shardId\n" +
+        s"sequenceNumber: $sequenceNumber\n" +
         s"shardIterator: $iterator\n" +
         s"parsed: $parsed"
   })

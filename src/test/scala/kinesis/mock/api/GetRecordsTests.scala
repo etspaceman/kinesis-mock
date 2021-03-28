@@ -57,7 +57,7 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         response.records === records.map(r =>
-          r.copy(data = Base64.getEncoder().encode(r.data))
+          r.copy(data = Base64.getEncoder.encode(r.data))
         )
       }) :| s"req: $req\n" +
         s"resCount: ${res.map(_.records.length)}\n" +
@@ -109,7 +109,7 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
       (res.isValid && res.exists { response =>
         response.records === records
           .take(50)
-          .map(r => r.copy(data = Base64.getEncoder().encode(r.data)))
+          .map(r => r.copy(data = Base64.getEncoder.encode(r.data)))
       }) :| s"req: $req\n" +
         s"resCount: ${res.map(_.records.length)}\n" +
         s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
@@ -165,10 +165,10 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
         res1.records === records
           .take(50)
           .map(r =>
-            r.copy(data = Base64.getEncoder().encode(r.data))
+            r.copy(data = Base64.getEncoder.encode(r.data))
           ) && res2.records === records
           .takeRight(50)
-          .map(r => r.copy(data = Base64.getEncoder().encode(r.data)))
+          .map(r => r.copy(data = Base64.getEncoder.encode(r.data)))
       }) :|
         s"res1Head: ${res.map { case (res1, _) => res1.records.head }.fold(_.toString, _.toString)}\n" +
         s"recHead: ${records.head}\n" +

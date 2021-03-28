@@ -13,7 +13,7 @@ import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DecreaseStreamRetention.html
-final case class DecreaseStreamRetentionRequest(
+final case class DecreaseStreamRetentionPeriodRequest(
     retentionPeriodHours: Int,
     streamName: StreamName
 ) {
@@ -40,19 +40,23 @@ final case class DecreaseStreamRetentionRequest(
       )
 }
 
-object DecreaseStreamRetentionRequest {
+object DecreaseStreamRetentionPeriodRequest {
   implicit val decreaseStreamRetentionRequestEncoder
-      : Encoder[DecreaseStreamRetentionRequest] =
+      : Encoder[DecreaseStreamRetentionPeriodRequest] =
     Encoder.forProduct2("RetentionPeriodHours", "StreamName")(x =>
       (x.retentionPeriodHours, x.streamName)
     )
   implicit val decreaseStreamRetentionRequestDecoder
-      : Decoder[DecreaseStreamRetentionRequest] = { x =>
+      : Decoder[DecreaseStreamRetentionPeriodRequest] = { x =>
     for {
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
-    } yield DecreaseStreamRetentionRequest(retentionPeriodHours, streamName)
+    } yield DecreaseStreamRetentionPeriodRequest(
+      retentionPeriodHours,
+      streamName
+    )
   }
-  implicit val decreaseStreamRetentionEq: Eq[DecreaseStreamRetentionRequest] =
+  implicit val decreaseStreamRetentionEq
+      : Eq[DecreaseStreamRetentionPeriodRequest] =
     Eq.fromUniversalEquals
 }

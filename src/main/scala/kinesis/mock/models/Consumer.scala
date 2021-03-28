@@ -16,7 +16,7 @@ object Consumer {
   def create(streamArn: String, consumerName: ConsumerName): Consumer = {
     val consumerCreationTimestamp = Instant.now()
     Consumer(
-      s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond()}",
+      s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}",
       consumerCreationTimestamp,
       consumerName,
       ConsumerStatus.CREATING

@@ -34,7 +34,7 @@ class PutRecordsTests
       )
 
       val dataCompare =
-        initReq.records.map(r => Base64.getDecoder().decode(r.data))
+        initReq.records.map(r => Base64.getDecoder.decode(r.data))
 
       for {
         shardSemaphores <- shardSemaphoreKeys
@@ -44,9 +44,9 @@ class PutRecordsTests
       } yield assert(
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
-            stream.shards.values.toList.flatten.filter { rec =>
+            stream.shards.values.toList.flatten.count { rec =>
               dataCompare.exists(_.sameElements(rec.data))
-            }.length == initReq.records.length
+            } == initReq.records.length
           }
         },
         s"req: $req\nres: $res"

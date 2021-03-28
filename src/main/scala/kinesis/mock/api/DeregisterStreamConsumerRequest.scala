@@ -47,7 +47,7 @@ final case class DeregisterStreamConsumerRequest(
       case (Some(cArn), _, _) =>
         CommonValidations.findStreamByConsumerArn(cArn, streams).andThen {
           case (consumer, stream)
-              if (consumer.consumerStatus == ConsumerStatus.ACTIVE) =>
+              if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
             deregister(streams, consumer, stream)
           case _ =>
             ResourceInUseException(

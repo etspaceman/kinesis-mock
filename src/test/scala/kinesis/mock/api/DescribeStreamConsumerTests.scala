@@ -39,7 +39,7 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
       val res =
         req.describeStreamConsumer(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         consumer.contains(response.consumerDescription)
       }) :| s"req: $req\nres: $res"
   })
@@ -75,7 +75,7 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
       val res =
         req.describeStreamConsumer(updated)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         consumer.contains(response.consumerDescription)
       }) :| s"req: $req\nres: $res"
   })

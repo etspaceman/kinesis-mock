@@ -24,7 +24,7 @@ class DescribeStreamSummaryTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .map(s => StreamDescriptionSummary.fromStreamData(s))
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamDescriptionSummary.contains(response.streamDescriptionSummary)
       }) :| s"req: $req\nres: $res"
   })

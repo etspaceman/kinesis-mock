@@ -54,10 +54,8 @@ object Shard {
         )
     )
   }
-  implicit val shardOrdering: Ordering[Shard] = new Ordering[Shard] {
-    override def compare(x: Shard, y: Shard): Int =
-      Ordering[ShardId].compare(x.shardId, y.shardId)
-  }
+  implicit val shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
+    Ordering[ShardId].compare(x.shardId, y.shardId)
 
   implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct8(
     "AdjacentParentShardId",

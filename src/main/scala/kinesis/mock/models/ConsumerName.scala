@@ -6,7 +6,7 @@ import cats.Eq
 import io.circe._
 
 final case class ConsumerName(consumerName: String) {
-  override def toString(): String = consumerName
+  override def toString: String = consumerName
 }
 
 object ConsumerName {

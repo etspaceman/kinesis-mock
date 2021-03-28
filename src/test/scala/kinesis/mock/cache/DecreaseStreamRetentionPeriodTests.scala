@@ -11,11 +11,11 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamRetentionPeriodTests
+class DecreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
-  override def scalaCheckTestParameters =
+  override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
   test("It should decrease the stream retention period")(PropF.forAllF {
@@ -29,12 +29,12 @@ class DescribeStreamRetentionPeriodTests
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(10.millis))
         _ <- cache
           .increaseStreamRetention(
-            IncreaseStreamRetentionRequest(48, streamName)
+            IncreaseStreamRetentionPeriodRequest(48, streamName)
           )
           .rethrow
         _ <- cache
           .decreaseStreamRetention(
-            DecreaseStreamRetentionRequest(24, streamName)
+            DecreaseStreamRetentionPeriodRequest(24, streamName)
           )
           .rethrow
         res <- cache

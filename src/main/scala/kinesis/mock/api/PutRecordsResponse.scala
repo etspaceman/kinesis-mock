@@ -12,7 +12,7 @@ final case class PutRecordsResponse(
 )
 
 object PutRecordsResponse {
-  implicit val putRecordsResponseCirceEncdoer: Encoder[PutRecordsResponse] =
+  implicit val putRecordsResponseCirceEncoder: Encoder[PutRecordsResponse] =
     Encoder.forProduct3(
       "EncryptionType",
       "FailedRecordCount",

@@ -43,7 +43,7 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
         ListStreamConsumersRequest(None, None, streamArn, None)
       val res = req.listStreamConsumers(withConsumers)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         consumers.values.toList == response.consumers
       }) :| s"req: $req\nres: $res"
   })
@@ -90,9 +90,9 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
         paginatedReq.listStreamConsumers(withConsumers)
       }
 
-      (res.isValid && paginatedRes.isValid && res.exists { case response =>
+      (res.isValid && paginatedRes.isValid && res.exists { response =>
         consumers.values.take(5) == response.consumers
-      } && paginatedRes.exists { case response =>
+      } && paginatedRes.exists { response =>
         consumers.values.takeRight(5) == response.consumers
       }) :| s"req: $req\n" +
         s"resCount: ${res.map(_.consumers.length)}\n" +

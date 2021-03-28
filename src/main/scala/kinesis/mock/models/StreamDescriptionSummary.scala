@@ -25,7 +25,7 @@ object StreamDescriptionSummary {
       Some(streamData.encryptionType),
       streamData.enhancedMonitoring,
       streamData.keyId,
-      streamData.shards.keys.filter(_.isOpen).size,
+      streamData.shards.keys.count(_.isOpen),
       streamData.retentionPeriod.toHours.toInt,
       streamData.streamArn,
       streamData.streamCreationTimestamp,

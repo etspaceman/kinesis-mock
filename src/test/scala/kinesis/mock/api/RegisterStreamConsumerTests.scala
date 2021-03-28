@@ -31,9 +31,7 @@ class RegisterStreamConsumerTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { case (s, _) =>
         s.streams.get(streamName).exists { stream =>
-          stream.consumers
-            .get(consumerName)
-            .nonEmpty
+          stream.consumers.contains(consumerName)
         }
       }) :| s"req: $req\nres: $res"
   })

@@ -5,8 +5,6 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
-import kinesis.mock.models._
-
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
     enhancedMonitoring: List[ShardLevelMetrics],
@@ -34,12 +32,12 @@ object StreamDescription {
         case None =>
           val s = allShards.take(lim)
           (s, allShards.length > s.length)
-        case Some(shardId) => {
+        case Some(shardId) =>
           val indexOfShard = allShards.indexWhere(_.shardId.shardId == shardId)
           val allShardsAfterStart = allShards.splitAt(indexOfShard + 1)._2
           val s = allShardsAfterStart.take(lim)
           (s, allShardsAfterStart.length > s.length)
-        }
+
       }
 
     StreamDescription(

@@ -9,8 +9,6 @@ import eu.timepit.refined.scalacheck.numeric._
 import eu.timepit.refined.types.numeric.PosInt
 import org.scalacheck.Prop._
 
-import kinesis.mock.models._
-
 class SequenceNumberTests extends munit.ScalaCheckSuite {
   property("It should create and parse correctly")(forAll {
     (
@@ -45,14 +43,14 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            seqTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
             x.shardIndex == shardIndex.value
 
         case _ => false
-      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+      }) :| s"shardCreateTime: $shardCreateTime\n" +
         s"shardIndex: ${shardIndex.value}\n" +
         s"seqIndex: ${seqIndex.value}\n" +
-        s"seqTime: ${seqTime}\n" +
+        s"seqTime: $seqTime\n" +
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
   })
@@ -84,11 +82,11 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            shardCreateTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            shardCreateTime.getEpochSecond == x.seqTime.getEpochSecond &&
             x.shardIndex == shardIndex.value
 
         case _ => false
-      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+      }) :| s"shardCreateTime: $shardCreateTime\n" +
         s"shardIndex: ${shardIndex.value}\n" +
         s"seqIndex: ${seqIndex.value}\n" +
         s"Parsed: $parsed\n" +
@@ -127,13 +125,13 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
         case x: SequenceNumberParts =>
           x.seqIndex == 0 &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            seqTime.getEpochSecond() == x.seqTime.getEpochSecond() &&
+            seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
             x.shardIndex == shardIndex.value
 
         case _ => false
-      }) :| s"shardCreateTime: ${shardCreateTime}\n" +
+      }) :| s"shardCreateTime: $shardCreateTime=\n" +
         s"shardIndex: ${shardIndex.value}\n" +
-        s"seqTime: ${seqTime}\n" +
+        s"seqTime: $seqTime\n" +
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
   })

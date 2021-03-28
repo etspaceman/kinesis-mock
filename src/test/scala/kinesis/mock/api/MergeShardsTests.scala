@@ -45,13 +45,11 @@ class MergeShardsTests
       } yield assert(
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
-            stream.shards.keys.toList
-              .filter(shard =>
-                shard.adjacentParentShardId
-                  .contains(adjacentShardToMerge.shardId.shardId) &&
-                  shard.parentShardId.contains(shardToMerge.shardId.shardId)
-              )
-              .nonEmpty && stream.streamStatus == StreamStatus.UPDATING
+            stream.shards.keys.toList.exists(shard =>
+              shard.adjacentParentShardId
+                .contains(adjacentShardToMerge.shardId.shardId) &&
+                shard.parentShardId.contains(shardToMerge.shardId.shardId)
+            ) && stream.streamStatus == StreamStatus.UPDATING
           }
         },
         s"req: $req\n" +
@@ -89,7 +87,7 @@ class MergeShardsTests
         res <- req.mergeShards(streams, shardSemaphores)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 
@@ -131,7 +129,7 @@ class MergeShardsTests
         res <- req.mergeShards(active, shardSemaphores)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 
@@ -173,7 +171,7 @@ class MergeShardsTests
         res <- req.mergeShards(active, shardSemaphores)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 
@@ -207,7 +205,7 @@ class MergeShardsTests
         res <- req.mergeShards(active, shardSemaphores)
       } yield assert(
         res.isInvalid,
-        s"req: $req\nres: ${res}"
+        s"req: $req\nres: $res"
       )
   })
 }

@@ -22,7 +22,7 @@ class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
         _.copy(streamStatus = StreamStatus.ACTIVE)
       )
 
-      val req = IncreaseStreamRetentionRequest(48, streamName)
+      val req = IncreaseStreamRetentionPeriodRequest(48, streamName)
       val res = req.increaseStreamRetention(active)
 
       (res.isValid && res.exists { s =>
@@ -47,7 +47,7 @@ class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
         s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
       )
 
-      val req = IncreaseStreamRetentionRequest(48, streamName)
+      val req = IncreaseStreamRetentionPeriodRequest(48, streamName)
       val res = req.increaseStreamRetention(withUpdatedRetention)
 
       res.isInvalid :| s"req: $req\nres: $res\nstreams: $streams"

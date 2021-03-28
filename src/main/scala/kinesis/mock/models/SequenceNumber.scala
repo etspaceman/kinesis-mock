@@ -26,7 +26,7 @@ final case class SequenceNumber(value: String) {
     value match {
       case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
         Valid(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))
-      case x => {
+      case x =>
         val seqNum =
           if (BigInt(x) < BigInt(2).pow(124))
             BigInt(x) + BigInt(2).pow(124)
@@ -55,7 +55,7 @@ final case class SequenceNumber(value: String) {
                 _
               )
               if seqIndexHex.headOption
-                .map(x => BigInt(x.toString(), 16))
+                .map(x => BigInt(x.toString, 16))
                 .exists(_ > 7) =>
             InvalidArgumentException("Sequence index too high").invalidNel
           case (
@@ -88,7 +88,6 @@ final case class SequenceNumber(value: String) {
             ).invalidNel
         }
 
-      }
     }
   }
 }
@@ -108,7 +107,7 @@ final case class SequenceNumberConstantResult(constant: SequenceNumberConstant)
 
 object SequenceNumber {
   val shardEndNumber = BigInt("7fffffffffffffff", 16)
-  val shardEnd = SequenceNumber(shardEndNumber.toString)
+  val shardEnd: SequenceNumber = SequenceNumber(shardEndNumber.toString)
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L177-L186
   def create(
       shardCreateTime: Instant,
@@ -120,14 +119,14 @@ object SequenceNumber {
     SequenceNumber(
       BigInt(
         "2" +
-          ("00000000" + BigInt(shardCreateTime.getEpochSecond()).toString(16))
+          ("00000000" + BigInt(shardCreateTime.getEpochSecond).toString(16))
             .takeRight(9) +
           BigInt(shardIndex).toString(16).takeRight(1) +
           ("0000000000000000" + BigInt(seqIndex.getOrElse(0)).toString(16))
             .takeRight(16) +
           byte1.getOrElse("00") +
           ("00000000" + BigInt(
-            seqTime.getOrElse(shardCreateTime).getEpochSecond()
+            seqTime.getOrElse(shardCreateTime).getEpochSecond
           )
             .toString(16))
             .takeRight(9) +

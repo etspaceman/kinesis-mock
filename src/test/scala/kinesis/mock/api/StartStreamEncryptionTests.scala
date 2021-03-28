@@ -27,7 +27,7 @@ class StartStreamEncryptionTests extends munit.ScalaCheckSuite {
         StartStreamEncryptionRequest(EncryptionType.KMS, keyId, streamName)
       val res = req.startStreamEncryption(asActive)
 
-      (res.isValid && res.exists { case s =>
+      (res.isValid && res.exists { s =>
         s.streams
           .get(streamName)
           .exists { s =>

@@ -34,14 +34,13 @@ final case class RegisterStreamConsumerRequest(
           else Valid(()),
           if (
             stream.consumers.values
-              .filter(_.consumerStatus == ConsumerStatus.CREATING)
-              .size >= 5
+              .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
           )
             LimitExceededException(
               s"Only 5 consumers can be created at the same time"
             ).invalidNel
           else Valid(()),
-          if (stream.consumers.get(consumerName).nonEmpty)
+          if (stream.consumers.contains(consumerName))
             ResourceInUseException(
               s"Consumer $consumerName exists"
             ).invalidNel

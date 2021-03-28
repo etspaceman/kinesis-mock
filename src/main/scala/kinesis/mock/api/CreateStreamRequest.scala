@@ -19,16 +19,16 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   ): ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])] =
     (
       CommonValidations.validateStreamName(streamName),
-      if (streams.streams.get(streamName).nonEmpty)
+      if (streams.streams.contains(streamName))
         ResourceInUseException(
           s"Stream $streamName already exists"
         ).invalidNel
       else Valid(()),
       CommonValidations.validateShardCount(shardCount),
       if (
-        streams.streams.filter { case (_, stream) =>
+        streams.streams.count { case (_, stream) =>
           stream.streamStatus == StreamStatus.CREATING
-        }.size >= 5
+        } >= 5
       )
         LimitExceededException(
           "Limit for streams being created concurrently exceeded"

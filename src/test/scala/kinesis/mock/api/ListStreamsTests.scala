@@ -33,7 +33,7 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
       val req = ListStreamsRequest(None, None)
       val res = req.listStreams(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamNames == response.streamNames
       }) :| s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
   })
@@ -63,7 +63,7 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
       val req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
       val res = req.listStreams(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamNames.takeRight(6) == response.streamNames
       }) :| s"diff: ${res.map(r => streamNames.diff(r.streamNames))}"
   })
@@ -91,9 +91,9 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
       val req = ListStreamsRequest(None, Some(5))
       val res = req.listStreams(streams)
 
-      (res.isValid && res.exists { case response =>
+      (res.isValid && res.exists { response =>
         streamNames.take(5) == response.streamNames &&
-          response.hasMoreStreams
+        response.hasMoreStreams
       }) :| s"diff: ${res.map(r => streamNames.diff(r.streamNames))}"
   })
 }

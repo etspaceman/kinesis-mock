@@ -107,17 +107,19 @@ final case class SplitShardRequest(
         )
       ) -> shardData
 
-      shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire.map(_ =>
-        (
-          streams.updateStream(
-            stream.copy(
-              shards = stream.shards ++ (newShards :+ oldShard),
-              streamStatus = StreamStatus.UPDATING
+      shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
+        IO(
+          (
+            streams.updateStream(
+              stream.copy(
+                shards = stream.shards ++ (newShards :+ oldShard),
+                streamStatus = StreamStatus.UPDATING
+              )
+            ),
+            List(
+              ShardSemaphoresKey(streamName, newShard1._1),
+              ShardSemaphoresKey(streamName, newShard2._1)
             )
-          ),
-          List(
-            ShardSemaphoresKey(streamName, newShard1._1),
-            ShardSemaphoresKey(streamName, newShard2._1)
           )
         )
       )

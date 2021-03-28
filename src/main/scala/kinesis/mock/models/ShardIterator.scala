@@ -15,13 +15,12 @@ import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import javax.xml.bind.DatatypeConverter
 
-import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
   def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-    val decoded = Base64.getDecoder().decode(value)
+    val decoded = Base64.getDecoder.decode(value)
 
     val now = Instant.now()
     cipher.init(
@@ -50,13 +49,13 @@ final case class ShardIterator(value: String) {
         else Valid(()),
         if (
           Try(iteratorTimeMillis.toLong)
-            .exists(x => x <= 0 || x > now.toEpochMilli())
+            .exists(x => x <= 0 || x > now.toEpochMilli)
         )
           InvalidArgumentException(
             "Invalid ShardIterator, the the time argument must be between 0 and now"
           ).invalidNel
         else Valid(()),
-        if (now.toEpochMilli() - iteratorTimeMillis.toLong > 300000)
+        if (now.toEpochMilli - iteratorTimeMillis.toLong > 300000)
           InvalidArgumentException(
             "The shard iterator has expired. Shard iterators are only avlid for 300 seconds"
           ).invalidNel
@@ -93,7 +92,7 @@ object ShardIterator {
       sequenceNumber: SequenceNumber
   ): ShardIterator = {
     val encryptString =
-      (List.fill(14)("0").mkString + Instant.now().toEpochMilli())
+      (List.fill(14)("0").mkString + Instant.now().toEpochMilli)
         .takeRight(14) +
         s"/$streamName" +
         s"/$shardId" +
@@ -105,7 +104,7 @@ object ShardIterator {
 
     val encryptedBytes = Array[Byte](0, 0, 0, 0, 0, 0, 0, 1) ++
       cipher.doFinal(encryptString.getBytes("UTF-8"))
-    ShardIterator(Base64.getEncoder().encodeToString(encryptedBytes))
+    ShardIterator(Base64.getEncoder.encodeToString(encryptedBytes))
   }
 
   implicit val shardIteratorCirceEncoder: Encoder[ShardIterator] =

@@ -73,25 +73,27 @@ final case class PutRecordRequest(
           Some(now)
         )
         // Use a semaphore to ensure synchronous operations on the shard
-        shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire.map(_ =>
-          (
-            streams.updateStream(
-              stream.copy(
-                shards = stream.shards ++ SortedMap(
-                  shard -> (records :+ KinesisRecord(
-                    now,
-                    Base64.getDecoder().decode(data),
-                    stream.encryptionType,
-                    partitionKey,
-                    seqNo
-                  ))
+        shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
+          IO(
+            (
+              streams.updateStream {
+                stream.copy(
+                  shards = stream.shards ++ SortedMap(
+                    shard -> (records :+ KinesisRecord(
+                      now,
+                      Base64.getDecoder().decode(data),
+                      stream.encryptionType,
+                      partitionKey,
+                      seqNo
+                    ))
+                  )
                 )
+              },
+              PutRecordResponse(
+                stream.encryptionType,
+                seqNo,
+                shard.shardId.shardId
               )
-            ),
-            PutRecordResponse(
-              stream.encryptionType,
-              seqNo,
-              shard.shardId.shardId
             )
           )
         )

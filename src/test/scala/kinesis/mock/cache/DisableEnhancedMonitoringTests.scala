@@ -13,7 +13,7 @@ class DisableEnhancedMonitoringTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
-  override def scalaCheckTestParameters =
+  override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
 
   test("It should add disable enhanced monitoring")(PropF.forAllF {
@@ -48,9 +48,8 @@ class DisableEnhancedMonitoringTests
               .flatMap(_.shardLevelMetrics)
           )
       } yield assert(
-        res.desiredShardLevelMetrics == streamMonitoring && res.desiredShardLevelMetrics
-          .find(_ == ShardLevelMetric.IncomingBytes)
-          .isEmpty
+        res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
+          .exists(_ == ShardLevelMetric.IncomingBytes)
       )
   })
 }

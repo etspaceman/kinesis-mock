@@ -52,7 +52,7 @@ object CommonValidations {
     streams.streams
       .get(streamName)
       .toValidNel(
-        ResourceNotFoundException(s"Stream name ${streamName} not found")
+        ResourceNotFoundException(s"Stream name $streamName not found")
       )
 
   def findStreamByArn(
@@ -60,7 +60,7 @@ object CommonValidations {
       streams: Streams
   ): ValidatedNel[KinesisMockException, StreamData] = streams.streams.values
     .find(_.streamArn == streamArn)
-    .toValidNel(ResourceNotFoundException(s"StreamARN ${streamArn} not found"))
+    .toValidNel(ResourceNotFoundException(s"StreamARN $streamArn not found"))
 
   def findStreamByConsumerArn(
       consumerArn: String,
@@ -74,7 +74,7 @@ object CommonValidations {
           .map(consumer => (consumer, stream))
       )
       .toValidNel(
-        ResourceNotFoundException(s"ConsumerARN ${consumerArn} not found")
+        ResourceNotFoundException(s"ConsumerARN $consumerArn not found")
       )
 
   def isStreamActive(
@@ -87,7 +87,7 @@ object CommonValidations {
         .exists(_.streamStatus != StreamStatus.ACTIVE)
     )
       ResourceInUseException(
-        s"Stream ${streamName} is not currently ACTIVE."
+        s"Stream $streamName is not currently ACTIVE."
       ).invalidNel
     else streamName.valid
 
@@ -103,7 +103,7 @@ object CommonValidations {
         )
     )
       ResourceInUseException(
-        s"Stream ${streamName} is not currently ACTIVE or UPDATING."
+        s"Stream $streamName is not currently ACTIVE or UPDATING."
       ).invalidNel
     else streamName.valid
 
@@ -113,7 +113,7 @@ object CommonValidations {
       shardLimit: Int
   ): ValidatedNel[KinesisMockException, Int] =
     if (
-      streams.streams.values.map(_.shards.keys.filter(_.isOpen).size).sum +
+      streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum +
         shardCountToAdd > shardLimit
     )
       LimitExceededException(
@@ -142,7 +142,7 @@ object CommonValidations {
           ).invalidNel
         else Valid(())
       }, {
-        val keysTooLong = keys.filter(x => x.isEmpty() || x.length > 128)
+        val keysTooLong = keys.filter(x => x.isEmpty || x.length > 128)
         if (keysTooLong.nonEmpty)
           InvalidArgumentException(
             s"Tags must be between 1 and 128 characters. Invalid keys: ${keysTooLong.mkString(", ")}"
@@ -219,7 +219,7 @@ object CommonValidations {
   def validateNextToken(
       nextToken: String
   ): ValidatedNel[KinesisMockException, String] =
-    if (nextToken.isEmpty() || nextToken.length() > 1048576)
+    if (nextToken.isEmpty || nextToken.length() > 1048576)
       InvalidArgumentException(
         s"NextToken length must be between 1 and 1048576"
       ).invalidNel
@@ -267,7 +267,7 @@ object CommonValidations {
       InvalidArgumentException(
         "Received KeyId is not a properly formatted Alias or GUID"
       ).invalidNel
-    } else if (keyId.isEmpty() || keyId.length() > 2048)
+    } else if (keyId.isEmpty || keyId.length() > 2048)
       InvalidArgumentException(
         "KeyId must be between 1 and 2048 characters"
       ).invalidNel
@@ -326,7 +326,7 @@ object CommonValidations {
       .leftMap(e =>
         NonEmptyList.one(
           InvalidArgumentException(
-            s"Could not compute MD5 hash, ${e.getMessage()}"
+            s"Could not compute MD5 hash, ${e.getMessage}"
           )
         )
       )
@@ -360,7 +360,7 @@ object CommonValidations {
   def validatePartitionKey(
       partitionKey: String
   ): ValidatedNel[KinesisMockException, String] =
-    if (partitionKey.isEmpty() || partitionKey.length > 256)
+    if (partitionKey.isEmpty || partitionKey.length > 256)
       InvalidArgumentException(
         "Partition key must be between 1 and 256 in length"
       ).invalidNel

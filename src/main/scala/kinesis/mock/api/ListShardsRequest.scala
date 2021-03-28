@@ -88,56 +88,49 @@ final case class ListShardsRequest(
                     if sf.`type` == ShardFilterType.AT_TRIM_HORIZON ||
                       (sf.`type` == ShardFilterType.AT_TIMESTAMP && sf.timestamp
                         .exists(x =>
-                          x.getEpochSecond() < stream.streamCreationTimestamp
-                            .getEpochSecond()
+                          x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
                         )) ||
                       (sf.`type` == ShardFilterType.FROM_TIMESTAMP && sf.timestamp
                         .exists(x =>
-                          x.getEpochSecond() < stream.streamCreationTimestamp
-                            .getEpochSecond()
+                          x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
                         )) =>
                   allShards
                 case Some(sf)
-                    if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON => {
+                    if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON =>
                   val now = Instant.now()
                   allShards.filter(x =>
                     x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
                       x.plusSeconds(stream.retentionPeriod.toSeconds)
-                        .getEpochSecond() >= now.getEpochSecond()
+                        .getEpochSecond >= now.getEpochSecond
                     )
                   )
-                }
+
                 case Some(sf) if sf.`type` == ShardFilterType.AT_LATEST =>
                   allShards.filter(_.isOpen)
 
                 case Some(sf) if sf.`type` == ShardFilterType.AT_TIMESTAMP =>
                   allShards.filter(x =>
                     sf.timestamp.exists(ts =>
-                      x.createdAtTimestamp.getEpochSecond() <= ts
-                        .getEpochSecond() && (x.isOpen || x.closedTimestamp
-                        .exists(cTs =>
-                          cTs.getEpochSecond() >= ts.getEpochSecond()
-                        ))
+                      x.createdAtTimestamp.getEpochSecond <= ts.getEpochSecond && (x.isOpen || x.closedTimestamp
+                        .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond))
                     )
                   )
 
                 case Some(sf) if sf.`type` == ShardFilterType.FROM_TIMESTAMP =>
                   allShards.filter(x =>
                     x.isOpen || sf.timestamp.exists(ts =>
-                      x.closedTimestamp.exists(cTs =>
-                        cTs.getEpochSecond() >= ts.getEpochSecond()
-                      )
+                      x.closedTimestamp
+                        .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond)
                     )
                   )
-                case Some(sf)
-                    if sf.`type` == ShardFilterType.AFTER_SHARD_ID => {
+                case Some(sf) if sf.`type` == ShardFilterType.AFTER_SHARD_ID =>
                   val index = sf.shardId
                     .map(eShardId =>
                       allShards.indexWhere(_.shardId.shardId == eShardId) + 1
                     )
                     .getOrElse(0)
                   allShards.slice(index, allShards.length)
-                }
+
                 case _ => allShards
               }
               val lastShardIndex = filteredShards.length - 1

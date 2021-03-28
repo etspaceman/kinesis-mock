@@ -6,7 +6,9 @@ import scala.collection.SortedMap
 final case class Streams(streams: SortedMap[StreamName, StreamData]) {
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams ++ List(stream.streamName -> stream))
-  def findAndUpdateStream(streamName: StreamName)(f: StreamData => StreamData) =
+  def findAndUpdateStream(
+      streamName: StreamName
+  )(f: StreamData => StreamData): Streams =
     copy(
       streams = streams ++
         streams
@@ -38,13 +40,13 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
         streams ++ streams
           .get(streamName)
           .map(stream =>
-            (streamName -> stream.copy(
+            streamName -> stream.copy(
               shards = SortedMap.empty,
               streamStatus = StreamStatus.DELETING,
               tags = Tags.empty,
               enhancedMonitoring = List.empty,
               consumers = SortedMap.empty
-            ))
+            )
           )
           .toMap
       ),
@@ -58,10 +60,10 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
         )
     )
 
-  def removeStream(streamName: StreamName) =
+  def removeStream(streamName: StreamName): Streams =
     copy(streams = streams.filterNot { case (sName, _) => sName == streamName })
 }
 
 object Streams {
-  val empty = Streams(SortedMap.empty)
+  val empty: Streams = Streams(SortedMap.empty)
 }

@@ -21,8 +21,8 @@ final case class StreamData(
 )
 
 object StreamData {
-  val minRetentionPeriod = 24.hours
-  val maxRetentionPeriod = 365.days
+  val minRetentionPeriod: FiniteDuration = 24.hours
+  val maxRetentionPeriod: FiniteDuration = 365.days
 
   def create(
       shardCount: Int,

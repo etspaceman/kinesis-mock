@@ -1,14 +1,12 @@
 package kinesis.mock
 package api
 
-import enumeratum.scalacheck._
-
 import kinesis.mock.instances.arbitrary._
 
 class ApiCirceTests extends CirceTests {
   identityLawTest[AddTagsToStreamRequest]
   identityLawTest[CreateStreamRequest]
-  identityLawTest[DecreaseStreamRetentionRequest]
+  identityLawTest[DecreaseStreamRetentionPeriodRequest]
   identityLawTest[DeleteStreamRequest]
   identityLawTest[DeregisterStreamConsumerRequest]
   identityLawTest[DescribeLimitsResponse]

@@ -75,8 +75,8 @@ final case class UpdateShardCountRequest(
 
         shards.toList
           .traverse { case (shard, data) =>
-            shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire
-              .map { _ =>
+            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit {
+              IO(
                 (
                   shard.copy(
                     closedTimestamp = Some(now),
@@ -87,7 +87,8 @@ final case class UpdateShardCountRequest(
                   ),
                   data
                 )
-              }
+              )
+            }
           }
           .map { oldShards =>
             val newShards = Shard.newShards(

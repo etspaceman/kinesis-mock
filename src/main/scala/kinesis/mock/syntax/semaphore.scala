@@ -15,7 +15,7 @@ trait SemaphoreSyntax {
 object SemaphoreSyntax {
   final class SemaphoreOps(private val semaphore: Semaphore[IO])
       extends AnyVal {
-    def tryAcquireRelease[A](successIO: IO[A], failureIO: IO[A]) =
+    def tryAcquireRelease[A](successIO: IO[A], failureIO: IO[A]): IO[A] =
       semaphore.tryAcquire.bracket {
         case true  => successIO
         case false => failureIO

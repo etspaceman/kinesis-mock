@@ -107,19 +107,23 @@ final case class MergeShardsRequest(
             ) -> shardData
           )
 
-          for {
-            _ <- shardSemaphores(
-              ShardSemaphoresKey(streamName, adjacentShard)
-            ).acquire
-            _ <- shardSemaphores(ShardSemaphoresKey(streamName, shard)).acquire
-          } yield (
-            streams.updateStream(
-              stream.copy(
-                shards = stream.shards ++ (oldShards :+ newShard),
-                streamStatus = StreamStatus.UPDATING
+          shardSemaphores(
+            ShardSemaphoresKey(streamName, adjacentShard)
+          ).withPermit(
+            shardSemaphores(ShardSemaphoresKey(streamName, shard))
+              .withPermit(
+                IO(
+                  (
+                    streams.updateStream(
+                      stream.copy(
+                        shards = stream.shards ++ (oldShards :+ newShard),
+                        streamStatus = StreamStatus.UPDATING
+                      )
+                    ),
+                    ShardSemaphoresKey(streamName, newShard._1)
+                  )
+                )
               )
-            ),
-            ShardSemaphoresKey(streamName, newShard._1)
           )
         }
       }

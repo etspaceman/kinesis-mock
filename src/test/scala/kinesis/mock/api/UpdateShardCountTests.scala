@@ -42,9 +42,7 @@ class UpdateShardCountTests
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
             val shards = stream.shards.keys.toList
-            shards
-              .filter(_.isOpen)
-              .length == 10 &&
+            shards.count(_.isOpen) == 10 &&
             shards.filterNot(_.isOpen).map(_.shardId) == active
               .streams(streamName)
               .shards
@@ -94,9 +92,7 @@ class UpdateShardCountTests
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
             val shards = stream.shards.keys.toList
-            shards
-              .filter(_.isOpen)
-              .length == 5 &&
+            shards.count(_.isOpen) == 5 &&
             shards.filterNot(_.isOpen).map(_.shardId) == active
               .streams(streamName)
               .shards
