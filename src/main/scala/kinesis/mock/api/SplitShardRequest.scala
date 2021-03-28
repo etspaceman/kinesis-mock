@@ -112,7 +112,9 @@ final case class SplitShardRequest(
           (
             streams.updateStream(
               stream.copy(
-                shards = stream.shards ++ (newShards :+ oldShard),
+                shards = stream.shards.filterNot { case (shard, _) =>
+                  shard.shardId == oldShard._1.shardId
+                } ++ (newShards :+ oldShard),
                 streamStatus = StreamStatus.UPDATING
               )
             ),

@@ -570,19 +570,19 @@ class Cache private (
                 shardsSemaphoresRef.update(shardsSemaphore =>
                   shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
                 )
-              )
-          supervisor
-            .supervise(
-              IO.sleep(config.splitShardDuration) *>
-                // Update the stream as ACTIVE after a small, configured delay
-                streamsRef
-                  .set(
-                    updated.findAndUpdateStream(req.streamName)(x =>
-                      x.copy(streamStatus = StreamStatus.ACTIVE)
+              ) *>
+            supervisor
+              .supervise(
+                IO.sleep(config.splitShardDuration) *>
+                  // Update the stream as ACTIVE after a small, configured delay
+                  streamsRef
+                    .set(
+                      updated.findAndUpdateStream(req.streamName)(x =>
+                        x.copy(streamStatus = StreamStatus.ACTIVE)
+                      )
                     )
-                  )
-            )
-            .void
+              )
+              .void
         }
       } yield res,
       IO.pure(Left(LimitExceededException("Limit Exceeded for SplitShard")))
@@ -608,19 +608,19 @@ class Cache private (
               shardsSemaphoresRef.update(shardsSemaphore =>
                 shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
               )
-            )
-        supervisor
-          .supervise(
-            IO.sleep(config.updateShardCountDuration) *>
-              // Update the stream as ACTIVE after a small, configured delay
-              streamsRef
-                .set(
-                  updated.findAndUpdateStream(req.streamName)(x =>
-                    x.copy(streamStatus = StreamStatus.ACTIVE)
+            ) *>
+          supervisor
+            .supervise(
+              IO.sleep(config.updateShardCountDuration) *>
+                // Update the stream as ACTIVE after a small, configured delay
+                streamsRef
+                  .set(
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
                   )
-                )
-          )
-          .void
+            )
+            .void
       }
     } yield res
 
