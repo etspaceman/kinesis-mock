@@ -114,12 +114,16 @@ final case class MergeShardsRequest(
               .withPermit(
                 IO(
                   (
-                    streams.updateStream(
-                      stream.copy(
-                        shards = stream.shards ++ (oldShards :+ newShard),
-                        streamStatus = StreamStatus.UPDATING
-                      )
-                    ),
+                    streams
+                      .updateStream(
+                        stream.copy(
+                          shards = stream.shards.filterNot { case (s, _) =>
+                            s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
+                          }
+                            ++ (oldShards :+ newShard),
+                          streamStatus = StreamStatus.UPDATING
+                        )
+                      ),
                     ShardSemaphoresKey(streamName, newShard._1)
                   )
                 )
