@@ -8,6 +8,13 @@ object LibraryDependencies {
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp = "wolfendale" %% "scalacheck-gen-regexp" % "0.1.2"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.5.0"
+
+  object Borer {
+    val borerVersion = "1.6.3"
+    val core = "io.bullet" %% "borer-core" % borerVersion
+    val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
+  }
 
   object Munit {
     val munitVersion = "0.7.22"
@@ -31,7 +38,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.21.16"
+    val http4sVersion = "0.21.20"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
@@ -41,6 +48,7 @@ object LibraryDependencies {
     val circeVersion = "0.13.0"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
+    val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
   }
 
   object Ciris {

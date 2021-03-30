@@ -1,6 +1,8 @@
 package kinesis.mock
 
+import cats.syntax.all._
 import enumeratum._
+import org.http4s.{ParseFailure, QueryParamDecoder}
 
 sealed trait KinesisAction extends EnumEntry
 
@@ -9,7 +11,7 @@ object KinesisAction extends Enum[KinesisAction] {
 
   case object AddTagsToStream extends KinesisAction
   case object CreateStream extends KinesisAction
-  case object DecreaseStreamRetentionPolicy extends KinesisAction
+  case object DecreaseStreamRetentionPeriod extends KinesisAction
   case object DeleteStream extends KinesisAction
   case object DeregisterStreamConsumer extends KinesisAction
   case object DescribeLimits extends KinesisAction
@@ -35,4 +37,9 @@ object KinesisAction extends Enum[KinesisAction] {
   case object StopStreamEncryption extends KinesisAction
   case object SubscribeToShard extends KinesisAction
   case object UpdateShardCount extends KinesisAction
+
+  implicit val kinesisActionQueryParamDecoder
+      : QueryParamDecoder[KinesisAction] = QueryParamDecoder[String].emap(x =>
+    KinesisAction.withNameEither(x).leftMap(e => ParseFailure(e.getMessage, ""))
+  )
 }
