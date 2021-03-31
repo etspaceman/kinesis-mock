@@ -44,7 +44,11 @@ RUN native-image \
     --allow-incomplete-classpath \
     --install-exit-handlers \
     -jar kinesis-mock.jar \
-    kinesis-mock
+    kinesis-mock-native
+
+RUN microdnf install xz && \
+    curl -sL -o - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar xJ && \
+    ./upx-3.96-amd64_linux/upx -o kinesis-mock kinesis-mock-native
 
 FROM scratch
 COPY --from=build kinesis-mock /opt/kinesis-mock
