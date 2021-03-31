@@ -4,3 +4,5 @@
 **/target/
 .bsp/
 .idea/
+.DS_STORE
+docker/image/lib/
