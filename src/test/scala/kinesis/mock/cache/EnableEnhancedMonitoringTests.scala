@@ -1,6 +1,6 @@
 package kinesis.mock.cache
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -20,28 +20,30 @@ class EnableEnhancedMonitoringTests
     (
       streamName: StreamName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        res <- cache
-          .enableEnhancedMonitoring(
-            EnableEnhancedMonitoringRequest(
-              List(ShardLevelMetric.IncomingBytes),
-              streamName
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          res <- cache
+            .enableEnhancedMonitoring(
+              EnableEnhancedMonitoringRequest(
+                List(ShardLevelMetric.IncomingBytes),
+                streamName
+              )
             )
-          )
-          .rethrow
-        streamMonitoring <- cache
-          .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
-          .rethrow
-          .map(
-            _.streamDescriptionSummary.enhancedMonitoring
-              .flatMap(_.shardLevelMetrics)
-          )
-      } yield assert(
-        res.desiredShardLevelMetrics == streamMonitoring && res.desiredShardLevelMetrics
-          .contains(ShardLevelMetric.IncomingBytes)
+            .rethrow
+          streamMonitoring <- cache
+            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+            .rethrow
+            .map(
+              _.streamDescriptionSummary.enhancedMonitoring
+                .flatMap(_.shardLevelMetrics)
+            )
+        } yield assert(
+          res.desiredShardLevelMetrics == streamMonitoring && res.desiredShardLevelMetrics
+            .contains(ShardLevelMetric.IncomingBytes)
+        )
       )
   })
 }

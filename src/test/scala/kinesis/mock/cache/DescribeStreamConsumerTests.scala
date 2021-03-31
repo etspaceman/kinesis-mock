@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -23,33 +23,35 @@ class DescribeStreamConsumerTests
         streamName: StreamName,
         consumerName: ConsumerName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
-        streamArn <- cache
-          .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
-          .rethrow
-          .map(_.streamDescriptionSummary.streamArn)
-        registerRes <- cache
-          .registerStreamConsumer(
-            RegisterStreamConsumerRequest(consumerName, streamArn)
-          )
-          .rethrow
-
-        res <- cache
-          .describeStreamConsumer(
-            DescribeStreamConsumerRequest(
-              None,
-              Some(consumerName),
-              Some(streamArn)
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          streamArn <- cache
+            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+            .rethrow
+            .map(_.streamDescriptionSummary.streamArn)
+          registerRes <- cache
+            .registerStreamConsumer(
+              RegisterStreamConsumerRequest(consumerName, streamArn)
             )
-          )
-          .rethrow
-      } yield assert(
-        res.consumerDescription == registerRes.consumer,
-        s"$registerRes\n$res"
+            .rethrow
+
+          res <- cache
+            .describeStreamConsumer(
+              DescribeStreamConsumerRequest(
+                None,
+                Some(consumerName),
+                Some(streamArn)
+              )
+            )
+            .rethrow
+        } yield assert(
+          res.consumerDescription == registerRes.consumer,
+          s"$registerRes\n$res"
+        )
       )
   })
 }

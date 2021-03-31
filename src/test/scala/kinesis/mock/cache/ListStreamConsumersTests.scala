@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -23,37 +23,39 @@ class ListStreamConsumersTests
     (
       streamName: StreamName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
-        streamArn <- cache
-          .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
-          .rethrow
-          .map(_.streamDescriptionSummary.streamArn)
-        consumerNames <- IO(consumerNameArb.arbitrary.take(3))
-        registerResults <- consumerNames.toList.traverse(consumerName =>
-          cache
-            .registerStreamConsumer(
-              RegisterStreamConsumerRequest(consumerName, streamArn)
-            )
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          streamArn <- cache
+            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
             .rethrow
-        )
-        res <- consumerNames.toList.traverse(consumerName =>
-          cache
-            .describeStreamConsumer(
-              DescribeStreamConsumerRequest(
-                None,
-                Some(consumerName),
-                Some(streamArn)
+            .map(_.streamDescriptionSummary.streamArn)
+          consumerNames <- IO(consumerNameArb.arbitrary.take(3))
+          registerResults <- consumerNames.toList.traverse(consumerName =>
+            cache
+              .registerStreamConsumer(
+                RegisterStreamConsumerRequest(consumerName, streamArn)
               )
-            )
-            .rethrow
+              .rethrow
+          )
+          res <- consumerNames.toList.traverse(consumerName =>
+            cache
+              .describeStreamConsumer(
+                DescribeStreamConsumerRequest(
+                  None,
+                  Some(consumerName),
+                  Some(streamArn)
+                )
+              )
+              .rethrow
+          )
+        } yield assert(
+          res.map(_.consumerDescription) == registerResults.map(_.consumer),
+          s"$registerResults\n$res"
         )
-      } yield assert(
-        res.map(_.consumerDescription) == registerResults.map(_.consumer),
-        s"$registerResults\n$res"
       )
   })
 }

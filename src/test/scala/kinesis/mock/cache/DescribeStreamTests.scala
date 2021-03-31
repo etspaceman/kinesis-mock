@@ -1,6 +1,6 @@
 package kinesis.mock.cache
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -20,34 +20,36 @@ class DescribeStreamTests
     (
       streamName: StreamName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        res <- cache
-          .describeStream(DescribeStreamRequest(None, None, streamName))
-          .rethrow
-        shardSummary <- cache
-          .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName))
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          res <- cache
+            .describeStream(DescribeStreamRequest(None, None, streamName))
+            .rethrow
+          shardSummary <- cache
+            .listShards(
+              ListShardsRequest(None, None, None, None, None, Some(streamName))
+            )
+            .rethrow
+            .map(x => x.shards.map(ShardSummary.fromShard))
+          expected = StreamDescription(
+            Some(EncryptionType.NONE),
+            List(ShardLevelMetrics(List.empty)),
+            false,
+            None,
+            24,
+            shardSummary,
+            s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/${streamName}",
+            res.streamDescription.streamCreationTimestamp,
+            streamName,
+            StreamStatus.CREATING
           )
-          .rethrow
-          .map(x => x.shards.map(ShardSummary.fromShard))
-        expected = StreamDescription(
-          Some(EncryptionType.NONE),
-          List(ShardLevelMetrics(List.empty)),
-          false,
-          None,
-          24,
-          shardSummary,
-          s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/${streamName}",
-          res.streamDescription.streamCreationTimestamp,
-          streamName,
-          StreamStatus.CREATING
+        } yield assert(
+          res.streamDescription == expected,
+          s"$res\n$expected"
         )
-      } yield assert(
-        res.streamDescription == expected,
-        s"$res\n$expected"
       )
   })
 }

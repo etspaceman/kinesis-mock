@@ -37,7 +37,9 @@ RUN native-image \
     --enable-url-protocols=http,https \
     --initialize-at-build-time \
     -H:ReflectionConfigurationFiles=graal/reflect-config.json \
+    -H:ResourceConfigurationFiles=graal/resource-config.json \
     -H:+ReportExceptionStackTraces \
+    -H:+AddAllCharsets \
     --report-unsupported-elements-at-runtime \
     --allow-incomplete-classpath \
     --install-exit-handlers \
@@ -46,4 +48,5 @@ RUN native-image \
 
 FROM scratch
 COPY --from=build kinesis-mock /opt/kinesis-mock
+EXPOSE 4567
 CMD ["/opt/kinesis-mock"]

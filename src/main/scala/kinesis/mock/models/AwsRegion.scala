@@ -7,7 +7,6 @@ sealed abstract class AwsRegion(override val entryName: String)
 
 object AwsRegion
     extends Enum[AwsRegion]
-    with CirisEnum[AwsRegion]
     with CirceEnum[AwsRegion]
     with CatsEnum[AwsRegion] {
   override val values = findValues

@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -22,21 +22,23 @@ class CreateStreamTests
     (
       streamName: StreamName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
-        checkStream1 <- cache.describeStreamSummary(describeStreamSummaryReq)
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
-        checkStream2 <- cache.describeStreamSummary(describeStreamSummaryReq)
-      } yield assert(
-        checkStream1.exists(
-          _.streamDescriptionSummary.streamStatus == StreamStatus.CREATING
-        ) &&
-          checkStream2.exists(
-            _.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
-          )
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
+          checkStream1 <- cache.describeStreamSummary(describeStreamSummaryReq)
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          checkStream2 <- cache.describeStreamSummary(describeStreamSummaryReq)
+        } yield assert(
+          checkStream1.exists(
+            _.streamDescriptionSummary.streamStatus == StreamStatus.CREATING
+          ) &&
+            checkStream2.exists(
+              _.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
+            )
+        )
       )
   })
 }
