@@ -52,10 +52,13 @@ object LibraryDependencies {
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
   }
 
-  object Ciris {
-    private val cirisVersion = "1.2.1"
-    val core = "is.cir" %% "ciris" % cirisVersion
-    val enumeratum = "is.cir" %% "ciris-enumeratum" % cirisVersion
+  object PureConfig {
+    private val pureConfigVersion = "0.14.1"
+    val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
+    val enumeratum =
+      "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
+    val catsEffect =
+      "com.github.pureconfig" %% "pureconfig-cats-effect" % pureConfigVersion
   }
 
   object Enumeratum {

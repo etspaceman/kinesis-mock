@@ -1,7 +1,9 @@
 package kinesis.mock
 
-import cats.syntax.all._
-import ciris._
+import cats.effect.{Blocker, ContextShift, IO}
+import pureconfig.generic.semiauto._
+import pureconfig.module.catseffect.syntax._
+import pureconfig.{ConfigReader, ConfigSource}
 
 final case class KinesisMockServiceConfig(
     port: Int,
@@ -10,20 +12,12 @@ final case class KinesisMockServiceConfig(
 )
 
 object KinesisMockServiceConfig {
-  def read: ConfigValue[KinesisMockServiceConfig] =
-    (
-      env("KINESIS_MOCK_PORT").as[Int].default(4567),
-      env("KINESIS_MOCK_KEYSTORE_PASSWORD").secret.default(
-        Secret("kinesisMock")
-      ),
-      env("KINESIS_MOCK_KEYMANAGER_PASSWORD").secret.default(
-        Secret("kinesisMock")
-      )
-    ).mapN((port, keystorePassword, keymanagerPassword) =>
-      KinesisMockServiceConfig(
-        port,
-        keystorePassword.value,
-        keymanagerPassword.value
-      )
-    )
+  implicit val kinesisMockServiceConfigReader
+      : ConfigReader[KinesisMockServiceConfig] = deriveReader
+  def read(
+      blocker: Blocker
+  )(implicit CS: ContextShift[IO]): IO[KinesisMockServiceConfig] =
+    ConfigSource
+      .resources("service.conf")
+      .loadF[IO, KinesisMockServiceConfig](blocker)
 }

@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -22,32 +22,34 @@ class GetShardIteratorTests
     (
       streamName: StreamName
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
-        shard <- cache
-          .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName))
-          )
-          .rethrow
-          .map(_.shards.head)
-        res <- cache
-          .getShardIterator(
-            GetShardIteratorRequest(
-              shard.shardId.shardId,
-              ShardIteratorType.TRIM_HORIZON,
-              None,
-              streamName,
-              None
+      Blocker[IO].use(blocker =>
+        for {
+          cacheConfig <- CacheConfig.read(blocker)
+          cache <- Cache(cacheConfig)
+          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          shard <- cache
+            .listShards(
+              ListShardsRequest(None, None, None, None, None, Some(streamName))
             )
-          )
-          .rethrow
-          .map(_.shardIterator)
-      } yield assert(
-        res.parse.isValid,
-        s"$res"
+            .rethrow
+            .map(_.shards.head)
+          res <- cache
+            .getShardIterator(
+              GetShardIteratorRequest(
+                shard.shardId.shardId,
+                ShardIteratorType.TRIM_HORIZON,
+                None,
+                streamName,
+                None
+              )
+            )
+            .rethrow
+            .map(_.shardIterator)
+        } yield assert(
+          res.parse.isValid,
+          s"$res"
+        )
       )
   })
 }
