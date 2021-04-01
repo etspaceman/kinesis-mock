@@ -50,7 +50,8 @@ RUN microdnf install xz && \
     curl -sL -o - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar xJ && \
     ./upx-3.96-amd64_linux/upx -o kinesis-mock kinesis-mock-native
 
-FROM busybox
+FROM alpine:3
+RUN apk --no-cache add curl
 COPY --from=build kinesis-mock /opt/kinesis-mock
 EXPOSE 4567
 CMD ["/opt/kinesis-mock"]

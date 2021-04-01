@@ -1,9 +1,7 @@
 {
     "resources": {
       "includes": [
-        {"pattern": "server.crt"},
         {"pattern": "server.jks"},
-        {"pattern": "server.key"},
         {"pattern": "logback.xml"},
         {"pattern": "service.conf"},
         {"pattern": "cache.conf"}
