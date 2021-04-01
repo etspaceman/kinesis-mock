@@ -4,7 +4,7 @@ val MUnitFramework = new TestFramework("munit.Framework")
 
 lazy val kinesisMock = project
   .in(file("."))
-  .enablePlugins(DockerImagePlugin)
+  .enablePlugins(DockerImagePlugin, DockerComposePlugin)
   .settings(
     name := "kinesis-mock",
     organization := "io.github.etspaceman",
@@ -60,6 +60,7 @@ lazy val kinesisMock = project
     test in assembly := {}
   )
   .settings(DockerImagePlugin.settings)
+  .settings(DockerComposePlugin.settings(FunctionalTest))
   .settings(
     Seq(
       addCommandAlias("cpl", ";+test:compile"),

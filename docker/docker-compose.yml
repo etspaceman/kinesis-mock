@@ -1,0 +1,28 @@
+version: '2.2'
+services:
+  localstack:
+    image: "localstack/localstack:0.12.9"
+    environment:
+      - "SERVICES=cloudwatch,dynamodb"
+      - "USE_SSL=true"
+    healthcheck:
+      test: "awslocal dynamodb list-tables"
+      interval: 5s
+      timeout: 10s
+      start_period: 10s
+  kinesis-mock:
+    image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
+    environment:
+      - "LOG_LEVEL=trace"
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider https://localhost:4567/healthcheck || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 3
+  ready:
+    image: "library/hello-world"
+    depends_on:
+      localstack:
+        condition: service_healthy
+      kinesis-mock:
+        condition: service_healthy
