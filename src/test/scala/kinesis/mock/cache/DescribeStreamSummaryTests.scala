@@ -5,6 +5,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -24,9 +25,15 @@ class DescribeStreamSummaryTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           res <- cache
-            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+            .describeStreamSummary(
+              DescribeStreamSummaryRequest(streamName),
+              context
+            )
             .rethrow
           expected = StreamDescriptionSummary(
             Some(0),

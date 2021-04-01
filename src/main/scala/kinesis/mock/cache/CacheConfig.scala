@@ -3,11 +3,14 @@ package kinesis.mock.cache
 import scala.concurrent.duration._
 
 import cats.effect.{Blocker, ContextShift, IO}
+import io.circe.Encoder
+import io.circe.derivation._
 import pureconfig._
 import pureconfig.generic.semiauto._
 import pureconfig.module.catseffect.syntax._
 import pureconfig.module.enumeratum._
 
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 
 final case class CacheConfig(
@@ -27,6 +30,7 @@ final case class CacheConfig(
 
 object CacheConfig {
   implicit val cacheConfigReader: ConfigReader[CacheConfig] = deriveReader
+  implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] = deriveEncoder
   def read(blocker: Blocker)(implicit CS: ContextShift[IO]): IO[CacheConfig] =
     ConfigSource.resources("cache.conf").loadF[IO, CacheConfig](blocker)
 }

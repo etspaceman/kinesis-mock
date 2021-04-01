@@ -29,6 +29,7 @@ lazy val kinesisMock = project
       Http4s.dsl,
       JaxbApi,
       Logback,
+      Log4Cats.slf4j,
       GraalSvm % "compile-internal",
       PureConfig.catsEffect,
       PureConfig.core,

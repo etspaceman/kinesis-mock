@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -27,7 +28,10 @@ class StartStreamEncryptionTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
           keyId <- IO(keyIdGen.one)
           _ <- cache
@@ -36,18 +40,19 @@ class StartStreamEncryptionTests
                 EncryptionType.KMS,
                 keyId,
                 streamName
-              )
+              ),
+              context
             )
             .rethrow
           describeReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeReq)
+            .describeStreamSummary(describeReq, context)
             .rethrow
           _ <- IO.sleep(
             cacheConfig.startStreamEncryptionDuration.plus(50.millis)
           )
           checkStream2 <- cache
-            .describeStreamSummary(describeReq)
+            .describeStreamSummary(describeReq, context)
             .rethrow
         } yield assert(
           checkStream1.streamDescriptionSummary.encryptionType.contains(

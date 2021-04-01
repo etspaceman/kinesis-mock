@@ -11,8 +11,9 @@ import com.github.f4b6a3.uuid.UuidCreator
 import io.circe.Encoder
 import org.http4s._
 import org.http4s.dsl.io._
-import org.http4s.headers.{Origin, _}
+import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
 import kinesis.mock.cache.Cache
@@ -22,6 +23,8 @@ class KinesisMockRoutes(cache: Cache)(implicit
     T: Timer[IO],
     CS: ContextShift[IO]
 ) {
+  val logger = Slf4jLogger.create[IO].unsafeRunSync()
+
   import KinesisMockHeaders._
   import KinesisMockRoutes._
   import KinesisMockMediaTypes._
@@ -37,195 +40,290 @@ class KinesisMockRoutes(cache: Cache)(implicit
         AmazonAuthSignedHeaders(queryAuthSignedHeaders) :?
         AmazonDate(queryAmazonDate) :?
         Action(queryAction) =>
-      val requestIdHeader = Header(
-        amazonRequestId,
-        UuidCreator.toString(UuidCreator.getTimeBased)
-      )
+      val initLc: LoggingContext = LoggingContext.create
 
-      val amazonId2Header = request.headers
-        .get(Origin)
-        .fold {
-          val bytes = new Array[Byte](72)
-          new SecureRandom().nextBytes(bytes)
-          List(
-            Header(
-              amazonId2,
-              new String(Base64.getEncoder.encode(bytes), "UTF-8")
-            )
-          )
-        }(_ => List.empty)
+      logger.debug(initLc.context)("Received POST request") *> {
 
-      val accessControlHeaders = request.headers
-        .get(Origin)
-        .fold(List.empty[Header])(_ =>
-          List(
-            Header(accessControlAllowOrigin, "*"),
-            Header(
-              accessControlExposeHeaders,
-              "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-            )
-          )
+        val requestIdHeader = Header(
+          amazonRequestId,
+          UuidCreator.toString(UuidCreator.getTimeBased)
         )
 
-      val responseHeaders =
-        amazonId2Header ++ accessControlHeaders :+ requestIdHeader
-
-      val authorizationHeader = request.headers.get(Authorization)
-
-      val action: Option[KinesisAction] = queryAction.orElse {
-        request.headers.get(CaseInsensitiveString(amazonTarget)).flatMap { h =>
-          val split = Try(h.value.split(".").toList).toOption.toList.flatten
-          (split.headOption, split.get(1L)) match {
-            case (Some(service), Some(act)) if service == "Kinesis_20131202" =>
-              KinesisAction.withNameOption(act)
-            case _ => None
-          }
-        }
-      }
-
-      (request.contentType, authorizationHeader, queryAuthAlgorith) match {
-        case (None, _, _) =>
-          NotFound(
-            errorMessage("UnknownOperationException", None),
-            responseHeaders: _*
-          )
-        case (Some(contentType), _, _)
-            if !validContentTypes.contains(contentType.mediaType) =>
-          NotFound(
-            errorMessage("UnknownOperationException", None),
-            responseHeaders: _*
-          )
-        case (Some(contentType), Some(_), Some(_)) =>
-          implicit def entityEncoder[A: Encoder] =
-            kinesisMockEntityEncoder(contentType.mediaType)
-          BadRequest(
-            ErrorResponse(
-              "InvalidSignatureException",
-              "Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header."
-            ),
-            responseHeaders: _*
-          )
-        case (Some(contentType), None, None) =>
-          implicit def entityEncoder[A: Encoder] =
-            kinesisMockEntityEncoder(contentType.mediaType)
-          BadRequest(
-            ErrorResponse(
-              "MissingAuthenticationTokenException",
-              "Missing Authentication Token"
-            ),
-            responseHeaders: _*
-          )
-        case (Some(contentType), Some(authHeader), _) =>
-          implicit def entityEncoder[A: Encoder] =
-            kinesisMockEntityEncoder(contentType.mediaType)
-          val authParsed = authHeader.value
-            .split("/")
-            .toList
-            .map(_.replace(",", ""))
-            .filter(_.nonEmpty)
-            .map { x =>
-              val keyVal = x.trim().split("=").toList
-              keyVal.headOption -> keyVal.get(1L)
-            }
-            .flatMap {
-              case (Some(k), Some(v)) => List(k -> v)
-              case _                  => List.empty
-            }
-            .toMap
-          val expectedAuthKeys =
-            List("Credential", "Signature", "SignedHeaders")
-
-          val missingKeysMsg: Option[String] = expectedAuthKeys
-            .diff(
-              authParsed.keys.toList.filter(expectedAuthKeys.contains)
-            )
-            .foldLeft(none[String]) { case (msg, k) =>
-              val newMsg = s"Authorization header requires \\$k\\ parameter."
-              msg.fold(Some(newMsg))(str => Some(s"$str $newMsg"))
-            }
-
-          val missingDateMsg =
-            if (
-              request.headers
-                .get(CaseInsensitiveString(amazonDate))
-                .isEmpty && request.headers.get(Date).isEmpty
-            )
-              Some(
-                "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
+        val amazonId2Header = request.headers
+          .get(Origin)
+          .fold {
+            val bytes = new Array[Byte](72)
+            new SecureRandom().nextBytes(bytes)
+            List(
+              Header(
+                amazonId2,
+                new String(Base64.getEncoder.encode(bytes), "UTF-8")
               )
-            else None
+            )
+          }(_ => List.empty)
 
-          val authErrMsg = (missingKeysMsg, missingDateMsg) match {
-            case (Some(x), Some(y)) => Some(s"$x $y")
-            case (Some(x), _)       => Some(x)
-            case (_, Some(y))       => Some(y)
-            case _                  => None
-          }
-
-          authErrMsg match {
-            case Some(e) =>
-              BadRequest(
-                ErrorResponse("IncompleteSignatureException", e),
-                responseHeaders: _*
+        val accessControlHeaders = request.headers
+          .get(Origin)
+          .fold(List.empty[Header])(_ =>
+            List(
+              Header(accessControlAllowOrigin, "*"),
+              Header(
+                accessControlExposeHeaders,
+                "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
               )
-            case None =>
-              action match {
-                case Some(ac) =>
-                  processAction(request, ac, cache, responseHeaders)
-                case None =>
-                  BadRequest(
-                    ErrorResponse(
-                      "AccessDeniedException",
-                      "Unable to determine service/operation name to be authorized"
-                    ),
-                    responseHeaders: _*
-                  )
+            )
+          )
+
+        val responseHeaders =
+          amazonId2Header ++ accessControlHeaders :+ requestIdHeader
+
+        val authorizationHeader = request.headers.get(Authorization)
+
+        val action: Option[KinesisAction] = queryAction.orElse {
+          request.headers.get(CaseInsensitiveString(amazonTarget)).flatMap {
+            h =>
+              val split = Try(h.value.split(".").toList).toOption.toList.flatten
+              (split.headOption, split.get(1L)) match {
+                case (Some(service), Some(act))
+                    if service == "Kinesis_20131202" =>
+                  KinesisAction.withNameOption(act)
+                case _ => None
               }
           }
-        case (Some(contentType), _, Some(_)) =>
-          implicit def entityEncoder[A: Encoder] =
-            kinesisMockEntityEncoder(contentType.mediaType)
+        }
 
-          val missing = List(
-            queryAuthSignature.as(
-              s"AWS query-string parameters must include \\${amazonAuthSignature}\\."
-            ),
-            queryAuthCredential.as(
-              s"AWS query-string parameters must include \\${amazonAuthCredential}\\."
-            ),
-            queryAuthSignedHeaders.as(
-              s"AWS query-string parameters must include \\${amazonAuthSignedHeaders}\\."
-            ),
-            queryAmazonDate.as(
-              s"AWS query-string parameters must include \\${amazonDate}\\."
-            )
-          ).flatMap {
-            case Some(msg) => List(msg)
-            case None      => List.empty
-          }
+        val lcWithHeaders =
+          initLc ++ responseHeaders.map(h => h.name.value -> h.value) ++ action
+            .map(x => "action" -> x.entryName)
+            .toList
 
-          if (missing.nonEmpty) {
-            BadRequest(
-              ErrorResponse(
-                "IncompleteSignatureException",
-                s"${missing.mkString(" ")} Re-examine the query-string parameters."
-              ),
-              responseHeaders: _*
-            )
-          } else {
-            action match {
-              case Some(ac) =>
-                processAction(request, ac, cache, responseHeaders)
-              case None =>
+        logger.debug(lcWithHeaders.context)("Assembled headers") *> {
+
+          (request.contentType, authorizationHeader, queryAuthAlgorith) match {
+            case (None, _, _) =>
+              logger.warn(lcWithHeaders.context)(
+                "No contentType was provided"
+              ) *>
+                NotFound(
+                  errorMessage("UnknownOperationException", None),
+                  responseHeaders: _*
+                )
+            case (Some(contentType), _, _)
+                if !validContentTypes.contains(contentType.mediaType) =>
+              logger.warn(
+                lcWithHeaders.context + ("contentType" -> contentType.value)
+              )(
+                s"Content type '${contentType.value}' is invalid for this request"
+              ) *>
+                NotFound(
+                  errorMessage("UnknownOperationException", None),
+                  responseHeaders: _*
+                )
+            case (Some(contentType), Some(_), Some(_)) =>
+              implicit def entityEncoder[A: Encoder] =
+                kinesisMockEntityEncoder(contentType.mediaType)
+              logger.warn(
+                lcWithHeaders.context + ("contentType" -> contentType.value)
+              )(
+                s"Both authorization header and query-strings were provided with the request"
+              ) *>
                 BadRequest(
                   ErrorResponse(
-                    "AccessDeniedException",
-                    "Unable to determine service/operation name to be authorized"
+                    "InvalidSignatureException",
+                    "Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header."
                   ),
                   responseHeaders: _*
                 )
-            }
+            case (Some(contentType), None, None) =>
+              implicit def entityEncoder[A: Encoder] =
+                kinesisMockEntityEncoder(contentType.mediaType)
+              logger.warn(
+                lcWithHeaders.context + ("contentType" -> contentType.value)
+              )(
+                s"Neither authorization header nor authorization query-strings were provided with the request"
+              )
+              BadRequest(
+                ErrorResponse(
+                  "MissingAuthenticationTokenException",
+                  "Missing Authentication Token"
+                ),
+                responseHeaders: _*
+              )
+            case (Some(contentType), Some(authHeader), _) =>
+              implicit def entityEncoder[A: Encoder] =
+                kinesisMockEntityEncoder(contentType.mediaType)
+              val lcWithContentType =
+                lcWithHeaders + ("contentType" -> contentType.value)
+              logger.debug(lcWithContentType.context)(
+                "Parsing auth header"
+              ) *> {
+                val authParsed = authHeader.value
+                  .split("/")
+                  .toList
+                  .map(_.replace(",", ""))
+                  .filter(_.nonEmpty)
+                  .map { x =>
+                    val keyVal = x.trim().split("=").toList
+                    keyVal.headOption -> keyVal.get(1L)
+                  }
+                  .flatMap {
+                    case (Some(k), Some(v)) => List(k -> v)
+                    case _                  => List.empty
+                  }
+                  .toMap
+                val expectedAuthKeys =
+                  List("Credential", "Signature", "SignedHeaders")
+
+                val missingKeys = expectedAuthKeys
+                  .diff(
+                    authParsed.keys.toList.filter(expectedAuthKeys.contains)
+                  )
+                val missingKeysMsg: Option[String] =
+                  missingKeys.foldLeft(none[String]) { case (msg, k) =>
+                    val newMsg =
+                      s"Authorization header requires \\$k\\ parameter."
+                    msg.fold(Some(newMsg))(str => Some(s"$str $newMsg"))
+                  }
+
+                val missingDateMsg =
+                  if (
+                    request.headers
+                      .get(CaseInsensitiveString(amazonDate))
+                      .isEmpty && request.headers.get(Date).isEmpty
+                  )
+                    Some(
+                      "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
+                    )
+                  else None
+
+                val authErrMsg = (missingKeysMsg, missingDateMsg) match {
+                  case (Some(x), Some(y)) => Some(s"$x $y")
+                  case (Some(x), _)       => Some(x)
+                  case (_, Some(y))       => Some(y)
+                  case _                  => None
+                }
+
+                authErrMsg match {
+                  case Some(e) =>
+                    val missingAuthContext: (String, String) = (
+                      "missingAuthKeys",
+                      (missingKeys ++ missingDateMsg
+                        .fold(List.empty[String])(_ =>
+                          List(amazonDate, Date.name.value)
+                        )).mkString(", ")
+                    )
+
+                    logger.warn(
+                      (lcWithContentType + missingAuthContext).context
+                    )(
+                      "Some required information was not provied with the authorization header"
+                    ) *>
+                      BadRequest(
+                        ErrorResponse("IncompleteSignatureException", e),
+                        responseHeaders: _*
+                      )
+                  case None =>
+                    action match {
+                      case Some(ac) =>
+                        processAction(
+                          request,
+                          ac,
+                          cache,
+                          responseHeaders,
+                          lcWithContentType
+                        )
+                      case None =>
+                        logger.warn(lcWithContentType.context)(
+                          "No Action could be parsed from the request"
+                        ) *>
+                          BadRequest(
+                            ErrorResponse(
+                              "AccessDeniedException",
+                              "Unable to determine service/operation name to be authorized"
+                            ),
+                            responseHeaders: _*
+                          )
+                    }
+                }
+              }
+            case (Some(contentType), _, Some(_)) =>
+              implicit def entityEncoder[A: Encoder] =
+                kinesisMockEntityEncoder(contentType.mediaType)
+
+              val lcWithContentType =
+                lcWithHeaders + ("contentType" -> contentType.value)
+              logger
+                .debug(lcWithContentType.context)(
+                  "Parsing auth query parameters"
+                ) *> {
+
+                val missing = List(
+                  queryAuthSignature.as(
+                    s"AWS query-string parameters must include \\${amazonAuthSignature}\\."
+                  ),
+                  queryAuthCredential.as(
+                    s"AWS query-string parameters must include \\${amazonAuthCredential}\\."
+                  ),
+                  queryAuthSignedHeaders.as(
+                    s"AWS query-string parameters must include \\${amazonAuthSignedHeaders}\\."
+                  ),
+                  queryAmazonDate.as(
+                    s"AWS query-string parameters must include \\${amazonDate}\\."
+                  )
+                ).flatMap {
+                  case Some(msg) => List(msg)
+                  case None      => List.empty
+                }
+
+                if (missing.nonEmpty) {
+                  val missingAuthContext: (String, String) =
+                    (
+                      "missingAuthKeys",
+                      List(
+                        queryAuthSignature.as(amazonAuthSignature),
+                        queryAuthCredential.as(amazonAuthCredential),
+                        queryAuthSignature.as(amazonAuthSignature),
+                        queryAmazonDate.as(amazonDateQuery)
+                      ).flatMap(_.toList).mkString(", ")
+                    )
+                  logger
+                    .warn(
+                      (lcWithContentType + missingAuthContext).context
+                    )(
+                      "Some required information was not provied with the authorization query parameters"
+                    ) *> BadRequest(
+                    ErrorResponse(
+                      "IncompleteSignatureException",
+                      s"${missing.mkString(" ")} Re-examine the query-string parameters."
+                    ),
+                    responseHeaders: _*
+                  )
+                } else {
+                  action match {
+                    case Some(ac) =>
+                      processAction(
+                        request,
+                        ac,
+                        cache,
+                        responseHeaders,
+                        lcWithContentType
+                      )
+                    case None =>
+                      logger.warn(lcWithContentType.context)(
+                        "No Action could be parsed from the request"
+                      ) *>
+                        BadRequest(
+                          ErrorResponse(
+                            "AccessDeniedException",
+                            "Unable to determine service/operation name to be authorized"
+                          ),
+                          responseHeaders: _*
+                        )
+                  }
+                }
+              }
           }
+        }
 
       }
 
@@ -234,38 +332,51 @@ class KinesisMockRoutes(cache: Cache)(implicit
         amazonRequestId,
         UuidCreator.toString(UuidCreator.getTimeBased)
       )
-      if (request.headers.get(Origin).isEmpty)
-        BadRequest(
-          errorMessage(
-            "AccessDeniedException",
-            Some(
-              "Unable to determine service/authorization name to be authorized"
+      val initContext =
+        LoggingContext.create + ("requestId" -> requestIdHeader.value)
+      logger.debug(initContext.context)("Received OPTIONS request") *> {
+        if (request.headers.get(Origin).isEmpty)
+          logger.warn(initContext.context)(
+            "Missing required origin header for OPTIONS call"
+          ) *>
+            BadRequest(
+              errorMessage(
+                "AccessDeniedException",
+                Some(
+                  "Unable to determine service/authorization name to be authorized"
+                )
+              ),
+              requestIdHeader
             )
-          ),
-          requestIdHeader
-        )
-      else {
-        val responseHeaders: List[Header] =
-          request.headers
-            .get(Origin)
-            .fold(List.empty[Header])(_ =>
-              List(
-                Header(accessControlAllowOrigin, "*"),
-                Header(
-                  accessControlExposeHeaders,
-                  "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-                ),
-                Header(accessControlMaxAge, "172800")
-              ) ++ request.headers
-                .get(CaseInsensitiveString(accessControlRequestHeaders))
-                .map(h => Header(accessControlAllowHeaders, h.value))
-                .toList ++ request.headers
-                .get(CaseInsensitiveString(accessControlRequestMethod))
-                .map(h => Header(accessControlAllowMethods, h.value))
-                .toList
-            ) :+ requestIdHeader
+        else {
+          val responseHeaders: List[Header] =
+            request.headers
+              .get(Origin)
+              .fold(List.empty[Header])(_ =>
+                List(
+                  Header(accessControlAllowOrigin, "*"),
+                  Header(
+                    accessControlExposeHeaders,
+                    "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
+                  ),
+                  Header(accessControlMaxAge, "172800")
+                ) ++ request.headers
+                  .get(CaseInsensitiveString(accessControlRequestHeaders))
+                  .map(h => Header(accessControlAllowHeaders, h.value))
+                  .toList ++ request.headers
+                  .get(CaseInsensitiveString(accessControlRequestMethod))
+                  .map(h => Header(accessControlAllowMethods, h.value))
+                  .toList
+              ) :+ requestIdHeader
 
-        Ok("", responseHeaders: _*)
+          logger.debug(
+            (initContext ++ responseHeaders.map(h =>
+              h.name.value -> h.value
+            )).context
+          )("Successfully processed OPTIONS call")
+
+          Ok("", responseHeaders: _*)
+        }
       }
   }
 }
@@ -300,7 +411,8 @@ object KinesisMockRoutes {
       request: Request[IO],
       action: KinesisAction,
       cache: Cache,
-      responseHeaders: List[Header]
+      responseHeaders: List[Header],
+      loggingContext: LoggingContext
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO],
@@ -329,7 +441,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .addTagsToStream(req)
+                .addTagsToStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -344,7 +456,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .createStream(req)
+                .createStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -359,7 +471,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .decreaseStreamRetention(req)
+                .decreaseStreamRetention(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -374,7 +486,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .deleteStream(req)
+                .deleteStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -389,7 +501,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .deregisterStreamConsumer(req)
+                .deregisterStreamConsumer(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -398,12 +510,14 @@ object KinesisMockRoutes {
                 )
           )
       case KinesisAction.DescribeLimits =>
-        cache.describeLimits.flatMap(
-          _.fold(
-            err => handleKinesisMockError(err, responseHeaders),
-            res => Ok(res, responseHeaders: _*)
+        cache
+          .describeLimits(loggingContext)
+          .flatMap(
+            _.fold(
+              err => handleKinesisMockError(err, responseHeaders),
+              res => Ok(res, responseHeaders: _*)
+            )
           )
-        )
       case KinesisAction.DescribeStream =>
         request
           .attemptAs[DescribeStreamRequest]
@@ -411,7 +525,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStream(req)
+                .describeStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -426,7 +540,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStreamConsumer(req)
+                .describeStreamConsumer(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -441,7 +555,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStreamSummary(req)
+                .describeStreamSummary(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -456,7 +570,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .disableEnhancedMonitoring(req)
+                .disableEnhancedMonitoring(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -471,7 +585,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .enableEnhancedMonitoring(req)
+                .enableEnhancedMonitoring(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -486,7 +600,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .getRecords(req)
+                .getRecords(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -501,7 +615,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .getShardIterator(req)
+                .getShardIterator(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -516,7 +630,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .increaseStreamRetention(req)
+                .increaseStreamRetention(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -531,7 +645,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listShards(req)
+                .listShards(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -546,7 +660,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listStreamConsumers(req)
+                .listStreamConsumers(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -561,7 +675,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listStreams(req)
+                .listStreams(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -576,7 +690,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listTagsForStream(req)
+                .listTagsForStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -591,7 +705,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .mergeShards(req)
+                .mergeShards(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -606,7 +720,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .putRecord(req)
+                .putRecord(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -621,7 +735,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .putRecords(req)
+                .putRecords(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -636,7 +750,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .registerStreamConsumer(req)
+                .registerStreamConsumer(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -651,7 +765,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .removeTagsFromStream(req)
+                .removeTagsFromStream(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -666,7 +780,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .splitShard(req)
+                .splitShard(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -681,7 +795,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .startStreamEncryption(req)
+                .startStreamEncryption(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -696,7 +810,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .stopStreamEncryption(req)
+                .stopStreamEncryption(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -719,7 +833,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .updateShardCount(req)
+                .updateShardCount(req, loggingContext)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),

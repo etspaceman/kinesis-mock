@@ -5,6 +5,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -24,13 +25,17 @@ class DisableEnhancedMonitoringTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           _ <- cache
             .enableEnhancedMonitoring(
               EnableEnhancedMonitoringRequest(
                 List(ShardLevelMetric.ALL),
                 streamName
-              )
+              ),
+              context
             )
             .rethrow
           res <- cache
@@ -38,11 +43,15 @@ class DisableEnhancedMonitoringTests
               DisableEnhancedMonitoringRequest(
                 List(ShardLevelMetric.IncomingBytes),
                 streamName
-              )
+              ),
+              context
             )
             .rethrow
           streamMonitoring <- cache
-            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+            .describeStreamSummary(
+              DescribeStreamSummaryRequest(streamName),
+              context
+            )
             .rethrow
             .map(
               _.streamDescriptionSummary.enhancedMonitoring

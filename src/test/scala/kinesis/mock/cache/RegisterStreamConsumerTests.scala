@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -27,15 +28,22 @@ class RegisterStreamConsumerTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
           streamArn <- cache
-            .describeStreamSummary(DescribeStreamSummaryRequest(streamName))
+            .describeStreamSummary(
+              DescribeStreamSummaryRequest(streamName),
+              context
+            )
             .rethrow
             .map(_.streamDescriptionSummary.streamArn)
           _ <- cache
             .registerStreamConsumer(
-              RegisterStreamConsumerRequest(consumerName, streamArn)
+              RegisterStreamConsumerRequest(consumerName, streamArn),
+              context
             )
             .rethrow
           describeStreamConsumerReq = DescribeStreamConsumerRequest(
@@ -45,7 +53,8 @@ class RegisterStreamConsumerTests
           )
           checkStream1 <- cache
             .describeStreamConsumer(
-              describeStreamConsumerReq
+              describeStreamConsumerReq,
+              context
             )
             .rethrow
           _ <- IO.sleep(
@@ -53,7 +62,8 @@ class RegisterStreamConsumerTests
           )
           checkStream2 <- cache
             .describeStreamConsumer(
-              describeStreamConsumerReq
+              describeStreamConsumerReq,
+              context
             )
             .rethrow
         } yield assert(

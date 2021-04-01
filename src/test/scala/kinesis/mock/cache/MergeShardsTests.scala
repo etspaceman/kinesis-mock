@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -26,7 +27,10 @@ class MergeShardsTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(5, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(5, streamName), context)
+            .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
           adjacentParentShardId = ShardId.create(1).shardId
           parentShardId = ShardId.create(0).shardId
@@ -36,16 +40,17 @@ class MergeShardsTests
                 adjacentParentShardId,
                 parentShardId,
                 streamName
-              )
+              ),
+              context
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeStreamSummaryReq)
+            .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
           _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(50.millis))
           checkStream2 <- cache
-            .describeStreamSummary(describeStreamSummaryReq)
+            .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
           checkShards <- cache
             .listShards(
@@ -56,7 +61,8 @@ class MergeShardsTests
                 None,
                 None,
                 Some(streamName)
-              )
+              ),
+              context
             )
             .rethrow
         } yield assert(

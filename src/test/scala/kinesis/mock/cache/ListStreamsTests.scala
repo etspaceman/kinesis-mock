@@ -4,6 +4,7 @@ import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Gen
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.scalacheck._
@@ -14,6 +15,7 @@ class ListStreamsTests extends munit.CatsEffectSuite {
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
+        context = LoggingContext.create
         streamNames <- IO(
           Gen
             .listOfN(5, streamNameArbitrary.arbitrary)
@@ -26,11 +28,14 @@ class ListStreamsTests extends munit.CatsEffectSuite {
             .one
         )
         _ <- streamNames.traverse(streamName =>
-          cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
         )
         res <- cache
           .listStreams(
-            ListStreamsRequest(None, None)
+            ListStreamsRequest(None, None),
+            context
           )
           .rethrow
       } yield assert(

@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -26,7 +27,10 @@ class SplitShardTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(5, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(5, streamName), context)
+            .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
           listShardsReq = ListShardsRequest(
             None,
@@ -37,7 +41,7 @@ class SplitShardTests
             Some(streamName)
           )
           shardToSplit <- cache
-            .listShards(listShardsReq)
+            .listShards(listShardsReq, context)
             .rethrow
             .map(_.shards.head)
           _ <- cache
@@ -46,18 +50,19 @@ class SplitShardTests
                 (shardToSplit.hashKeyRange.endingHashKey / BigInt(2)).toString,
                 shardToSplit.shardId.shardId,
                 streamName
-              )
+              ),
+              context
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeStreamSummaryReq)
+            .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
           _ <- IO.sleep(cacheConfig.splitShardDuration.plus(50.millis))
           checkStream2 <- cache
-            .describeStreamSummary(describeStreamSummaryReq)
+            .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
-          checkShards <- cache.listShards(listShardsReq).rethrow
+          checkShards <- cache.listShards(listShardsReq, context).rethrow
         } yield assert(
           checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
             checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&

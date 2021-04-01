@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -26,11 +27,20 @@ class CreateStreamTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
-          checkStream1 <- cache.describeStreamSummary(describeStreamSummaryReq)
+          checkStream1 <- cache.describeStreamSummary(
+            describeStreamSummaryReq,
+            context
+          )
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
-          checkStream2 <- cache.describeStreamSummary(describeStreamSummaryReq)
+          checkStream2 <- cache.describeStreamSummary(
+            describeStreamSummaryReq,
+            context
+          )
         } yield assert(
           checkStream1.exists(
             _.streamDescriptionSummary.streamStatus == StreamStatus.CREATING

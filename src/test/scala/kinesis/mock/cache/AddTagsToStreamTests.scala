@@ -5,6 +5,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -25,14 +26,21 @@ class AddTagsToStreamTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           _ <- cache
             .addTagsToStream(
-              AddTagsToStreamRequest(streamName, tags)
+              AddTagsToStreamRequest(streamName, tags),
+              context
             )
             .rethrow
           res <- cache
-            .listTagsForStream(ListTagsForStreamRequest(None, None, streamName))
+            .listTagsForStream(
+              ListTagsForStreamRequest(None, None, streamName),
+              context
+            )
             .rethrow
         } yield assert(res.tags == tags)
       )

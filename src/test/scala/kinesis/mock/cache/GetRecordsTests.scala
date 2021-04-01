@@ -7,6 +7,7 @@ import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -27,7 +28,10 @@ class GetRecordsTests
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
-          _ <- cache.createStream(CreateStreamRequest(1, streamName)).rethrow
+          context = LoggingContext.create
+          _ <- cache
+            .createStream(CreateStreamRequest(1, streamName), context)
+            .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
           recordRequests <- IO(
             putRecordRequestArb.arbitrary
@@ -35,10 +39,13 @@ class GetRecordsTests
               .toList
               .map(_.copy(streamName = streamName))
           )
-          _ <- recordRequests.traverse(req => cache.putRecord(req).rethrow)
+          _ <- recordRequests.traverse(req =>
+            cache.putRecord(req, context).rethrow
+          )
           shard <- cache
             .listShards(
-              ListShardsRequest(None, None, None, None, None, Some(streamName))
+              ListShardsRequest(None, None, None, None, None, Some(streamName)),
+              context
             )
             .rethrow
             .map(_.shards.head)
@@ -50,12 +57,13 @@ class GetRecordsTests
                 None,
                 streamName,
                 None
-              )
+              ),
+              context
             )
             .rethrow
             .map(_.shardIterator)
           res <- cache
-            .getRecords(GetRecordsRequest(None, shardIterator))
+            .getRecords(GetRecordsRequest(None, shardIterator), context)
             .rethrow
         } yield assert(
           res.records.length == 5 && res.records.forall(rec =>

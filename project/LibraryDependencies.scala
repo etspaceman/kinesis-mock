@@ -17,6 +17,11 @@ object LibraryDependencies {
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
 
+  object Log4Cats {
+    val log4CatsVersion = "1.2.1"
+    val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
+  }
+
   object Munit {
     val munitVersion = "0.7.22"
     val core = "org.scalameta" %% "munit" % munitVersion
