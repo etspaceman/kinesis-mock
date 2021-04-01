@@ -23,7 +23,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
     T: Timer[IO],
     CS: ContextShift[IO]
 ) {
-  val logger = Slf4jLogger.create[IO].unsafeRunSync()
+  val logger = Slf4jLogger.getLogger[IO]
 
   import KinesisMockHeaders._
   import KinesisMockRoutes._
@@ -33,6 +33,11 @@ class KinesisMockRoutes(cache: Cache)(implicit
   // create a sharded stream cache
   // create service that has methods for each action
   def routes = HttpRoutes.of[IO] {
+    case GET -> Root / "healthcheck" =>
+      logger.debug(LoggingContext.create.context)(
+        "Received healthcheck"
+      ) *> Ok()
+
     case request @ POST -> Root :?
         AmazonAuthAlgorithm(queryAuthAlgorith) :?
         AmazonAuthCredential(queryAuthCredential) :?
@@ -378,9 +383,6 @@ class KinesisMockRoutes(cache: Cache)(implicit
           Ok("", responseHeaders: _*)
         }
       }
-
-    case GET -> Root / "healthcheck" =>
-      logger.debug("Received healthcheck") *> Ok()
   }
 }
 

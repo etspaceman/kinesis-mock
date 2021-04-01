@@ -20,7 +20,7 @@ class Cache private (
     supervisor: Supervisor[IO]
 ) {
 
-  val logger = Slf4jLogger.create[IO].unsafeRunSync()
+  val logger = Slf4jLogger.getLogger[IO]
 
   def addTagsToStream(
       req: AddTagsToStreamRequest,

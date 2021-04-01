@@ -16,7 +16,10 @@ object KinesisMockService extends IOApp {
       for {
         logger <- Slf4jLogger.create[IO]
         cacheConfig <- CacheConfig.read(blocker)
-        _ <- logger.info(Map("cacheConfig" -> cacheConfig.asJson.noSpaces))(
+        context = LoggingContext.create
+        _ <- logger.info(
+          context.addJson("cacheConfig", cacheConfig.asJson).context
+        )(
           "Logging Cache Config"
         )
         cache <- Cache(cacheConfig)
@@ -27,18 +30,18 @@ object KinesisMockService extends IOApp {
           serviceConfig.keyManagerPassword
         )
         http2Server = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http2Port)
+          .bindHttp(serviceConfig.http2Port, "0.0.0.0")
           .withHttpApp(app)
           .withSslContext(context)
           .enableHttp2(true)
           .resource
         http1SslServer = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http1SslPort)
+          .bindHttp(serviceConfig.http1SslPort, "0.0.0.0")
           .withHttpApp(app)
           .withSslContext(context)
           .resource
         http1PlainServer = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http1PlainPort)
+          .bindHttp(serviceConfig.http1PlainPort, "0.0.0.0")
           .withHttpApp(app)
           .resource
         _ <- logger.info(

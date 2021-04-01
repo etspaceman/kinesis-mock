@@ -1,24 +1,39 @@
 version: '2.2'
 services:
+  dynamodb:
+    command: "-jar DynamoDBLocal.jar -inMemory"
+    image: "amazon/dynamodb-local:latest"
+    working_dir: /home/dynamodblocal
+    ports:
+      - "8000:8000"
   localstack:
-    image: "localstack/localstack:0.12.9"
+    image: "localstack/localstack:latest"
     environment:
-      - "SERVICES=cloudwatch,dynamodb"
+      - "SERVICES=cloudwatch"
       - "USE_SSL=true"
     healthcheck:
-      test: "awslocal dynamodb list-tables"
+      test: "awslocal cloudwatch list-metrics"
       interval: 5s
       timeout: 10s
       start_period: 10s
+    ports:
+      - "4566:4566"
+    depends_on:
+      - dynamodb
   kinesis-mock:
     image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
     environment:
       - "LOG_LEVEL=TRACE"
+      - "CREATE_STREAM_DURATION=1s"
     healthcheck:
       test: "curl --fail http://localhost:4569/healthcheck || exit 1"
       interval: 5s
       timeout: 5s
       retries: 5
+    ports:
+      - "4567:4567"
+      - "4568:4568"
+      - "4569:4569"
   ready:
     image: "library/hello-world"
     depends_on:
@@ -26,3 +41,7 @@ services:
         condition: service_healthy
       kinesis-mock:
         condition: service_healthy
+networks:
+  default:
+    external:
+      name: ${DOCKER_NET_NAME}

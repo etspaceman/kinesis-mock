@@ -35,7 +35,7 @@ RUN native-image \
     --verbose \
     --enable-all-security-services \
     --enable-url-protocols=http,https \
-    --initialize-at-build-time \
+    --initialize-at-build-time=scala \
     -H:ReflectionConfigurationFiles=graal/reflect-config.json \
     -H:ResourceConfigurationFiles=graal/resource-config.json \
     -H:+ReportExceptionStackTraces \
@@ -53,5 +53,5 @@ RUN microdnf install xz && \
 FROM alpine:3
 RUN apk --no-cache add curl
 COPY --from=build kinesis-mock /opt/kinesis-mock
-EXPOSE 4567
-CMD ["/opt/kinesis-mock"]
+EXPOSE 4567 4568 4569
+CMD ["/opt/kinesis-mock", "--gc=G1"]
