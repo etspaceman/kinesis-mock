@@ -378,6 +378,9 @@ class KinesisMockRoutes(cache: Cache)(implicit
           Ok("", responseHeaders: _*)
         }
       }
+
+    case GET -> Root / "healthcheck" =>
+      logger.debug("Received healthcheck") *> Ok()
   }
 }
 

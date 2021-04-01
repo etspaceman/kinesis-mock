@@ -4,7 +4,8 @@
       <pattern>[%thread] %highlight(%-5level) %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
     </encoder>
   </appender>
-  <root level="${LOG_LEVEL:-INFO}">
+  <logger name="kinesis.mock" level="${LOG_LEVEL:-INFO}"/>
+  <root level="${ROOT_LOG_LEVEL:-ERROR}">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
