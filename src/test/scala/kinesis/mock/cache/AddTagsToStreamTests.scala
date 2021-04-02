@@ -42,7 +42,7 @@ class AddTagsToStreamTests
               context
             )
             .rethrow
-        } yield assert(res.tags == tags)
+        } yield assert(Tags.fromTagList(res.tags) == tags)
       )
   })
 }

@@ -28,4 +28,7 @@ class ModelsCirceTests extends CirceTests {
   identityLawTest[StreamDescriptionSummary]
   identityLawTest[StreamName]
   identityLawTest[StreamStatus]
+  identityLawTest[TagList]
+  identityLawTest[TagListEntry]
+  identityLawTest[Tags]
 }

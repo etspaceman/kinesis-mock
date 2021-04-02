@@ -16,7 +16,6 @@ import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models.StreamName
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
@@ -34,12 +33,6 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
     NettyNioAsyncHttpClient
       .builder()
       .buildWithDefaults(trustAllCertificates)
-
-  case class KinesisFunctionalTestResources(
-      kinesisClient: KinesisAsyncClient,
-      cacheConfig: CacheConfig,
-      streamName: StreamName
-  )
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
     ResourceFixture(
@@ -75,14 +68,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           _ <- IO.sleep(
             resources.cacheConfig.createStreamDuration.plus(20.millis)
           )
-          streamSummary <- resources.kinesisClient
-            .describeStreamSummary(
-              DescribeStreamSummaryRequest
-                .builder()
-                .streamName(resources.streamName.streamName)
-                .build()
-            )
-            .toIO
+          streamSummary <- describeStreamSummary(resources)
           res <- IO.raiseWhen(
             streamSummary
               .streamDescriptionSummary()
@@ -104,15 +90,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           _ <- IO.sleep(
             resources.cacheConfig.deleteStreamDuration.plus(20.millis)
           )
-          streamSummary <- resources.kinesisClient
-            .describeStreamSummary(
-              DescribeStreamSummaryRequest
-                .builder()
-                .streamName(resources.streamName.streamName)
-                .build()
-            )
-            .toIO
-            .attempt
+          streamSummary <- describeStreamSummary(resources).attempt
           res <- IO.raiseWhen(
             streamSummary.isRight
           )(
@@ -122,4 +100,28 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           )
         } yield res
     )
+
+  def describeStreamSummary(
+      resources: KinesisFunctionalTestResources
+  ): IO[DescribeStreamSummaryResponse] =
+    resources.kinesisClient
+      .describeStreamSummary(
+        DescribeStreamSummaryRequest
+          .builder()
+          .streamName(resources.streamName.streamName)
+          .build
+      )
+      .toIO
+
+  def listTagsForStream(
+      resources: KinesisFunctionalTestResources
+  ): IO[ListTagsForStreamResponse] =
+    resources.kinesisClient
+      .listTagsForStream(
+        ListTagsForStreamRequest
+          .builder()
+          .streamName(resources.streamName.streamName)
+          .build
+      )
+      .toIO
 }

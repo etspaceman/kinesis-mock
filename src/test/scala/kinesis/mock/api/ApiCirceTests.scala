@@ -23,6 +23,7 @@ class ApiCirceTests extends CirceTests {
   identityLawTest[GetRecordsResponse]
   identityLawTest[GetShardIteratorRequest]
   identityLawTest[GetShardIteratorResponse]
+  identityLawTest[IncreaseStreamRetentionPeriodRequest]
   identityLawTest[ListShardsRequest]
   identityLawTest[ListShardsResponse]
   identityLawTest[ListStreamConsumersRequest]

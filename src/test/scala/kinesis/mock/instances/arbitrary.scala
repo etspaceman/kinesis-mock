@@ -210,6 +210,17 @@ object arbitrary {
     .map(x => SortedMap.from(x))
     .map(Tags.apply)
 
+  implicit val tagListArb: Arbitrary[TagList] = Arbitrary(
+    tagsGen.map(TagList.fromTags)
+  )
+
+  implicit val tagListEntryArb: Arbitrary[TagListEntry] = Arbitrary(
+    for {
+      key <- tagKeyGen
+      value <- tagValueGen
+    } yield TagListEntry(key, value)
+  )
+
   implicit val tagsArbitrary: Arbitrary[Tags] = Arbitrary(tagsGen)
 
   implicit val addTagsToStreamRequestArbitrary
@@ -660,7 +671,7 @@ object arbitrary {
       : Arbitrary[ListTagsForStreamResponse] = Arbitrary(
     for {
       hasMoreTags <- Arbitrary.arbitrary[Boolean]
-      tags <- tagsGen
+      tags <- tagListArb.arbitrary
     } yield ListTagsForStreamResponse(hasMoreTags, tags)
   )
 

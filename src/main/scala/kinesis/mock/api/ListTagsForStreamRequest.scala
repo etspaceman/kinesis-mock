@@ -46,7 +46,7 @@ final case class ListTagsForStreamRequest(
           val hasMoreTags =
             if (lastTagIndex + 1 == lastIndex) false
             else true
-          ListTagsForStreamResponse(hasMoreTags, Tags(tags))
+          ListTagsForStreamResponse(hasMoreTags, TagList.fromTags(Tags(tags)))
         })
       )
 }

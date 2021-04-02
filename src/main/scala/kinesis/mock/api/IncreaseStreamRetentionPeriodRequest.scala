@@ -49,7 +49,7 @@ object IncreaseStreamRetentionPeriodRequest {
   implicit val increaseStreamRetentionRequestDecoder
       : Decoder[IncreaseStreamRetentionPeriodRequest] = { x =>
     for {
-      retentionPeriodHours <- x.downField("RetentionPeriod").as[Int]
+      retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
     } yield IncreaseStreamRetentionPeriodRequest(
       retentionPeriodHours,

@@ -30,7 +30,7 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val res = req.listTagsForStream(withTags)
 
       (res.isValid && res.exists { response =>
-        tags == response.tags
+        tags == Tags.fromTagList(response.tags)
       }) :| s"req: $req\nres: $res"
   })
 
@@ -59,7 +59,9 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val res = req.listTagsForStream(withTags)
 
       (res.isValid && res.exists { response =>
-        tags.copy(tags = tags.tags.slice(4, 10)) == response.tags
+        tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
+          response.tags
+        )
       }) :| s"req: $req\nres: $res"
   })
 
@@ -86,9 +88,9 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val res = req.listTagsForStream(withTags)
 
       (res.isValid && res.exists { response =>
-        tags.copy(tags =
-          tags.tags.take(5)
-        ) == response.tags && response.hasMoreTags
+        tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
+          response.tags
+        ) && response.hasMoreTags
       }) :| s"req: $req\nres: $res"
   })
 }

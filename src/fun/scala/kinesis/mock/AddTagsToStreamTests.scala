@@ -1,5 +1,6 @@
 package kinesis.mock
 
+import scala.collection.SortedMap
 import scala.jdk.CollectionConverters._
 
 import cats.effect.IO
@@ -18,7 +19,7 @@ class AddTagsToStreamTests
   fixture.test("It should add tags to a stream") { case resources =>
     for {
       tags <- IO(tagsGen.one)
-      res <- resources.kinesisClient
+      _ <- resources.kinesisClient
         .addTagsToStream(
           AddTagsToStreamRequest
             .builder()
@@ -27,7 +28,12 @@ class AddTagsToStreamTests
             .build()
         )
         .toIO
-        .attempt
-    } yield assert(res.isRight, res)
+      res <- listTagsForStream(resources)
+    } yield assert(
+      SortedMap.from(
+        res.tags().asScala.map(tag => tag.key() -> tag.value())
+      ) == tags.tags,
+      res
+    )
   }
 }

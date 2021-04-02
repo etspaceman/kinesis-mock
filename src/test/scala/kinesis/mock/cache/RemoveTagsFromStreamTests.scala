@@ -46,7 +46,7 @@ class RemoveTagsFromStreamTests
               context
             )
             .rethrow
-        } yield assert(res.tags.isEmpty)
+        } yield assert(res.tags.tags.isEmpty)
       )
   })
 }

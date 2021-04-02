@@ -16,6 +16,9 @@ final case class Tags(tags: SortedMap[String, String]) {
 
 object Tags {
   def empty: Tags = Tags(SortedMap.empty)
+  def fromTagList(tagList: TagList): Tags = Tags(
+    SortedMap.from(tagList.tags.map(x => (x.key, x.value)))
+  )
   implicit val tagsCirceEncoder: Encoder[Tags] =
     Encoder[SortedMap[String, String]].contramap(_.tags)
   implicit val tagsCirceDecoder: Decoder[Tags] =
