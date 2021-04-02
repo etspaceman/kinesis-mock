@@ -24,7 +24,6 @@ services:
     image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
     environment:
       - "LOG_LEVEL=TRACE"
-      - "CREATE_STREAM_DURATION=1s"
     healthcheck:
       test: "curl --fail http://localhost:4569/healthcheck || exit 1"
       interval: 5s

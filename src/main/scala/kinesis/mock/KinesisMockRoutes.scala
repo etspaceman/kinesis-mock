@@ -33,10 +33,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
   // create a sharded stream cache
   // create service that has methods for each action
   def routes = HttpRoutes.of[IO] {
-    case GET -> Root / "healthcheck" =>
-      logger.debug(LoggingContext.create.context)(
-        "Received healthcheck"
-      ) *> Ok()
+    case GET -> Root / "healthcheck" => Ok()
 
     case request @ POST -> Root :?
         AmazonAuthAlgorithm(queryAuthAlgorith) :?
@@ -47,187 +44,279 @@ class KinesisMockRoutes(cache: Cache)(implicit
         Action(queryAction) =>
       val initLc: LoggingContext = LoggingContext.create
 
-      logger.debug(initLc.context)("Received POST request") *> {
+      logger.debug(initLc.context)("Received POST request") *>
+        logger.trace((initLc ++ request.headers.toList.map { h =>
+          h.name.value -> h.value
+        }).context)(
+          "Logging input headers"
+        ) *> {
 
-        val requestIdHeader = Header(
-          amazonRequestId,
-          UuidCreator.toString(UuidCreator.getTimeBased)
-        )
-
-        val amazonId2Header = request.headers
-          .get(Origin)
-          .fold {
-            val bytes = new Array[Byte](72)
-            new SecureRandom().nextBytes(bytes)
-            List(
-              Header(
-                amazonId2,
-                new String(Base64.getEncoder.encode(bytes), "UTF-8")
-              )
-            )
-          }(_ => List.empty)
-
-        val accessControlHeaders = request.headers
-          .get(Origin)
-          .fold(List.empty[Header])(_ =>
-            List(
-              Header(accessControlAllowOrigin, "*"),
-              Header(
-                accessControlExposeHeaders,
-                "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-              )
-            )
+          val requestIdHeader = Header(
+            amazonRequestId,
+            UuidCreator.toString(UuidCreator.getTimeBased)
           )
 
-        val responseHeaders =
-          amazonId2Header ++ accessControlHeaders :+ requestIdHeader
-
-        val authorizationHeader = request.headers.get(Authorization)
-
-        val action: Option[KinesisAction] = queryAction.orElse {
-          request.headers.get(CaseInsensitiveString(amazonTarget)).flatMap {
-            h =>
-              val split = Try(h.value.split(".").toList).toOption.toList.flatten
-              (split.headOption, split.get(1L)) match {
-                case (Some(service), Some(act))
-                    if service == "Kinesis_20131202" =>
-                  KinesisAction.withNameOption(act)
-                case _ => None
-              }
-          }
-        }
-
-        val lcWithHeaders =
-          initLc ++ responseHeaders.map(h => h.name.value -> h.value) ++ action
-            .map(x => "action" -> x.entryName)
-            .toList
-
-        logger.debug(lcWithHeaders.context)("Assembled headers") *> {
-
-          (request.contentType, authorizationHeader, queryAuthAlgorith) match {
-            case (None, _, _) =>
-              logger.warn(lcWithHeaders.context)(
-                "No contentType was provided"
-              ) *>
-                NotFound(
-                  errorMessage("UnknownOperationException", None),
-                  responseHeaders: _*
+          val amazonId2Header = request.headers
+            .get(Origin)
+            .fold {
+              val bytes = new Array[Byte](72)
+              new SecureRandom().nextBytes(bytes)
+              List(
+                Header(
+                  amazonId2,
+                  new String(Base64.getEncoder.encode(bytes), "UTF-8")
                 )
-            case (Some(contentType), _, _)
-                if !validContentTypes.contains(contentType.mediaType) =>
-              logger.warn(
-                lcWithHeaders.context + ("contentType" -> contentType.value)
-              )(
-                s"Content type '${contentType.value}' is invalid for this request"
-              ) *>
-                NotFound(
-                  errorMessage("UnknownOperationException", None),
-                  responseHeaders: _*
-                )
-            case (Some(contentType), Some(_), Some(_)) =>
-              implicit def entityEncoder[A: Encoder] =
-                kinesisMockEntityEncoder(contentType.mediaType)
-              logger.warn(
-                lcWithHeaders.context + ("contentType" -> contentType.value)
-              )(
-                s"Both authorization header and query-strings were provided with the request"
-              ) *>
-                BadRequest(
-                  ErrorResponse(
-                    "InvalidSignatureException",
-                    "Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header."
-                  ),
-                  responseHeaders: _*
-                )
-            case (Some(contentType), None, None) =>
-              implicit def entityEncoder[A: Encoder] =
-                kinesisMockEntityEncoder(contentType.mediaType)
-              logger.warn(
-                lcWithHeaders.context + ("contentType" -> contentType.value)
-              )(
-                s"Neither authorization header nor authorization query-strings were provided with the request"
               )
-              BadRequest(
-                ErrorResponse(
-                  "MissingAuthenticationTokenException",
-                  "Missing Authentication Token"
-                ),
-                responseHeaders: _*
+            }(_ => List.empty)
+
+          val accessControlHeaders = request.headers
+            .get(Origin)
+            .fold(List.empty[Header])(_ =>
+              List(
+                Header(accessControlAllowOrigin, "*"),
+                Header(
+                  accessControlExposeHeaders,
+                  "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
+                )
               )
-            case (Some(contentType), Some(authHeader), _) =>
-              implicit def entityEncoder[A: Encoder] =
-                kinesisMockEntityEncoder(contentType.mediaType)
-              val lcWithContentType =
-                lcWithHeaders + ("contentType" -> contentType.value)
-              logger.debug(lcWithContentType.context)(
-                "Parsing auth header"
-              ) *> {
-                val authParsed = authHeader.value
-                  .split("/")
-                  .toList
-                  .map(_.replace(",", ""))
-                  .filter(_.nonEmpty)
-                  .map { x =>
-                    val keyVal = x.trim().split("=").toList
-                    keyVal.headOption -> keyVal.get(1L)
-                  }
-                  .flatMap {
-                    case (Some(k), Some(v)) => List(k -> v)
-                    case _                  => List.empty
-                  }
-                  .toMap
-                val expectedAuthKeys =
-                  List("Credential", "Signature", "SignedHeaders")
+            )
 
-                val missingKeys = expectedAuthKeys
-                  .diff(
-                    authParsed.keys.toList.filter(expectedAuthKeys.contains)
-                  )
-                val missingKeysMsg: Option[String] =
-                  missingKeys.foldLeft(none[String]) { case (msg, k) =>
-                    val newMsg =
-                      s"Authorization header requires \\$k\\ parameter."
-                    msg.fold(Some(newMsg))(str => Some(s"$str $newMsg"))
-                  }
+          val responseHeaders =
+            amazonId2Header ++ accessControlHeaders :+ requestIdHeader
 
-                val missingDateMsg =
-                  if (
-                    request.headers
-                      .get(CaseInsensitiveString(amazonDate))
-                      .isEmpty && request.headers.get(Date).isEmpty
-                  )
-                    Some(
-                      "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
-                    )
-                  else None
+          val authorizationHeader =
+            request.headers.get(CaseInsensitiveString("authorization"))
 
-                val authErrMsg = (missingKeysMsg, missingDateMsg) match {
-                  case (Some(x), Some(y)) => Some(s"$x $y")
-                  case (Some(x), _)       => Some(x)
-                  case (_, Some(y))       => Some(y)
-                  case _                  => None
+          val action: Option[KinesisAction] = queryAction.orElse {
+            request.headers.get(CaseInsensitiveString(amazonTarget)).flatMap {
+              h =>
+                val split =
+                  Try(h.value.split("\\.").toList).toOption.toList.flatten
+                (split.headOption, split.get(1L)) match {
+                  case (Some(service), Some(act))
+                      if service == "Kinesis_20131202" =>
+                    KinesisAction.withNameOption(act)
+                  case _ => None
                 }
+            }
+          }
 
-                authErrMsg match {
-                  case Some(e) =>
-                    val missingAuthContext: (String, String) = (
-                      "missingAuthKeys",
-                      (missingKeys ++ missingDateMsg
-                        .fold(List.empty[String])(_ =>
-                          List(amazonDate, Date.name.value)
-                        )).mkString(", ")
+          val lcWithHeaders =
+            initLc ++ responseHeaders.map(h =>
+              h.name.value -> h.value
+            ) ++ action
+              .map(x => "action" -> x.entryName)
+              .toList
+
+          logger.debug(lcWithHeaders.context)("Assembled headers") *> {
+
+            (
+              request.contentType,
+              authorizationHeader,
+              queryAuthAlgorith
+            ) match {
+              case (None, _, _) =>
+                logger.warn(lcWithHeaders.context)(
+                  "No contentType was provided"
+                ) *>
+                  NotFound(
+                    errorMessage("UnknownOperationException", None),
+                    responseHeaders: _*
+                  )
+              case (Some(contentType), _, _)
+                  if !validContentTypes.contains(contentType.mediaType) =>
+                logger.warn(
+                  lcWithHeaders.context + ("contentType" -> contentType.value)
+                )(
+                  s"Content type '${contentType.value}' is invalid for this request"
+                ) *>
+                  NotFound(
+                    errorMessage("UnknownOperationException", None),
+                    responseHeaders: _*
+                  )
+              case (Some(contentType), Some(_), Some(_)) =>
+                implicit def entityEncoder[A: Encoder] =
+                  kinesisMockEntityEncoder(contentType.mediaType)
+                logger.warn(
+                  lcWithHeaders.context + ("contentType" -> contentType.value)
+                )(
+                  s"Both authorization header and query-strings were provided with the request"
+                ) *>
+                  BadRequest(
+                    ErrorResponse(
+                      "InvalidSignatureException",
+                      "Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header."
+                    ),
+                    responseHeaders: _*
+                  )
+              case (Some(contentType), None, None) =>
+                implicit def entityEncoder[A: Encoder] =
+                  kinesisMockEntityEncoder(contentType.mediaType)
+                logger.warn(
+                  lcWithHeaders.context + ("contentType" -> contentType.value)
+                )(
+                  s"Neither authorization header nor authorization query-strings were provided with the request"
+                ) *>
+                  BadRequest(
+                    ErrorResponse(
+                      "MissingAuthenticationTokenException",
+                      "Missing Authentication Token"
+                    ),
+                    responseHeaders: _*
+                  )
+              case (Some(contentType), Some(authHeader), _) =>
+                implicit def entityEncoder[A: Encoder] =
+                  kinesisMockEntityEncoder(contentType.mediaType)
+                val lcWithContentType =
+                  lcWithHeaders + ("contentType" -> contentType.value)
+                logger.debug(lcWithContentType.context)(
+                  "Parsing auth header"
+                ) *> {
+                  /*
+                  Authorization=AWS4-HMAC-SHA256 Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6
+                   */
+                  val authParsed = authHeader.value
+                    .split(" ")
+                    .toList
+                    .map(_.replace(",", ""))
+                    .filter(_.nonEmpty)
+                    .map { x =>
+                      val keyVal = x.trim().split("=").toList
+                      keyVal.headOption -> keyVal.get(1L)
+                    }
+                    .flatMap {
+                      case (Some(k), Some(v)) => List(k -> v)
+                      case _                  => List.empty
+                    }
+                    .toMap
+                  val expectedAuthKeys =
+                    List("Credential", "Signature", "SignedHeaders")
+
+                  val missingKeys = expectedAuthKeys
+                    .diff(
+                      authParsed.keys.toList.filter(expectedAuthKeys.contains)
                     )
+                  val missingKeysMsg: Option[String] =
+                    missingKeys.foldLeft(none[String]) { case (msg, k) =>
+                      val newMsg =
+                        s"Authorization header requires \\$k\\ parameter."
+                      msg.fold(Some(newMsg))(str => Some(s"$str $newMsg"))
+                    }
 
-                    logger.warn(
-                      (lcWithContentType + missingAuthContext).context
-                    )(
-                      "Some required information was not provied with the authorization header"
-                    ) *>
-                      BadRequest(
-                        ErrorResponse("IncompleteSignatureException", e),
-                        responseHeaders: _*
+                  val missingDateMsg =
+                    if (
+                      request.headers
+                        .get(CaseInsensitiveString(amazonDate))
+                        .isEmpty && request.headers.get(Date).isEmpty
+                    )
+                      Some(
+                        "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
                       )
-                  case None =>
+                    else None
+
+                  val authErrMsg = (missingKeysMsg, missingDateMsg) match {
+                    case (Some(x), Some(y)) => Some(s"$x $y")
+                    case (Some(x), _)       => Some(x)
+                    case (_, Some(y))       => Some(y)
+                    case _                  => None
+                  }
+
+                  authErrMsg match {
+                    case Some(e) =>
+                      val missingAuthContext: (String, String) = (
+                        "missingAuthKeys",
+                        (missingKeys ++ missingDateMsg
+                          .fold(List.empty[String])(_ =>
+                            List(amazonDate, Date.name.value)
+                          )).mkString(", ")
+                      )
+
+                      logger.warn(
+                        (lcWithContentType + missingAuthContext).context
+                      )(
+                        "Some required information was not provied with the authorization header"
+                      ) *>
+                        BadRequest(
+                          ErrorResponse("IncompleteSignatureException", e),
+                          responseHeaders: _*
+                        )
+                    case None =>
+                      action match {
+                        case Some(ac) =>
+                          processAction(
+                            request,
+                            ac,
+                            cache,
+                            responseHeaders,
+                            lcWithContentType
+                          )
+                        case None =>
+                          logger.warn(lcWithContentType.context)(
+                            "No Action could be parsed from the request"
+                          ) *>
+                            BadRequest(
+                              ErrorResponse(
+                                "AccessDeniedException",
+                                "Unable to determine service/operation name to be authorized"
+                              ),
+                              responseHeaders: _*
+                            )
+                      }
+                  }
+                }
+              case (Some(contentType), _, Some(_)) =>
+                implicit def entityEncoder[A: Encoder] =
+                  kinesisMockEntityEncoder(contentType.mediaType)
+
+                val lcWithContentType =
+                  lcWithHeaders + ("contentType" -> contentType.value)
+                logger
+                  .debug(lcWithContentType.context)(
+                    "Parsing auth query parameters"
+                  ) *> {
+
+                  val missing = List(
+                    queryAuthSignature.as(
+                      s"AWS query-string parameters must include \\${amazonAuthSignature}\\."
+                    ),
+                    queryAuthCredential.as(
+                      s"AWS query-string parameters must include \\${amazonAuthCredential}\\."
+                    ),
+                    queryAuthSignedHeaders.as(
+                      s"AWS query-string parameters must include \\${amazonAuthSignedHeaders}\\."
+                    ),
+                    queryAmazonDate.as(
+                      s"AWS query-string parameters must include \\${amazonDate}\\."
+                    )
+                  ).flatMap {
+                    case Some(msg) => List(msg)
+                    case None      => List.empty
+                  }
+
+                  if (missing.nonEmpty) {
+                    val missingAuthContext: (String, String) =
+                      (
+                        "missingAuthKeys",
+                        List(
+                          queryAuthSignature.as(amazonAuthSignature),
+                          queryAuthCredential.as(amazonAuthCredential),
+                          queryAuthSignature.as(amazonAuthSignature),
+                          queryAmazonDate.as(amazonDateQuery)
+                        ).flatMap(_.toList).mkString(", ")
+                      )
+                    logger
+                      .warn(
+                        (lcWithContentType + missingAuthContext).context
+                      )(
+                        "Some required information was not provied with the authorization query parameters"
+                      ) *> BadRequest(
+                      ErrorResponse(
+                        "IncompleteSignatureException",
+                        s"${missing.mkString(" ")} Re-examine the query-string parameters."
+                      ),
+                      responseHeaders: _*
+                    )
+                  } else {
                     action match {
                       case Some(ac) =>
                         processAction(
@@ -249,88 +338,12 @@ class KinesisMockRoutes(cache: Cache)(implicit
                             responseHeaders: _*
                           )
                     }
-                }
-              }
-            case (Some(contentType), _, Some(_)) =>
-              implicit def entityEncoder[A: Encoder] =
-                kinesisMockEntityEncoder(contentType.mediaType)
-
-              val lcWithContentType =
-                lcWithHeaders + ("contentType" -> contentType.value)
-              logger
-                .debug(lcWithContentType.context)(
-                  "Parsing auth query parameters"
-                ) *> {
-
-                val missing = List(
-                  queryAuthSignature.as(
-                    s"AWS query-string parameters must include \\${amazonAuthSignature}\\."
-                  ),
-                  queryAuthCredential.as(
-                    s"AWS query-string parameters must include \\${amazonAuthCredential}\\."
-                  ),
-                  queryAuthSignedHeaders.as(
-                    s"AWS query-string parameters must include \\${amazonAuthSignedHeaders}\\."
-                  ),
-                  queryAmazonDate.as(
-                    s"AWS query-string parameters must include \\${amazonDate}\\."
-                  )
-                ).flatMap {
-                  case Some(msg) => List(msg)
-                  case None      => List.empty
-                }
-
-                if (missing.nonEmpty) {
-                  val missingAuthContext: (String, String) =
-                    (
-                      "missingAuthKeys",
-                      List(
-                        queryAuthSignature.as(amazonAuthSignature),
-                        queryAuthCredential.as(amazonAuthCredential),
-                        queryAuthSignature.as(amazonAuthSignature),
-                        queryAmazonDate.as(amazonDateQuery)
-                      ).flatMap(_.toList).mkString(", ")
-                    )
-                  logger
-                    .warn(
-                      (lcWithContentType + missingAuthContext).context
-                    )(
-                      "Some required information was not provied with the authorization query parameters"
-                    ) *> BadRequest(
-                    ErrorResponse(
-                      "IncompleteSignatureException",
-                      s"${missing.mkString(" ")} Re-examine the query-string parameters."
-                    ),
-                    responseHeaders: _*
-                  )
-                } else {
-                  action match {
-                    case Some(ac) =>
-                      processAction(
-                        request,
-                        ac,
-                        cache,
-                        responseHeaders,
-                        lcWithContentType
-                      )
-                    case None =>
-                      logger.warn(lcWithContentType.context)(
-                        "No Action could be parsed from the request"
-                      ) *>
-                        BadRequest(
-                          ErrorResponse(
-                            "AccessDeniedException",
-                            "Unable to determine service/operation name to be authorized"
-                          ),
-                          responseHeaders: _*
-                        )
                   }
                 }
-              }
+            }
           }
-        }
 
-      }
+        }
 
     case request @ OPTIONS -> Root =>
       val requestIdHeader = Header(

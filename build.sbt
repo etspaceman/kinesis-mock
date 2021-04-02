@@ -42,11 +42,13 @@ lazy val kinesisMock = project
       Munit.scalacheck % Test,
       Munit.scalacheckEffect % Test,
       Refined.scalacheck % Test,
-      ScalacheckGenRegexp % Test
+      ScalacheckGenRegexp % Test,
+      Aws.kinesis % FunctionalTest
     ),
     semanticdbEnabled := true,
     semanticdbVersion := "4.4.10",
     ThisBuild / scalafixDependencies += OrganizeImports,
+    javacOptions += "-XDignore.symbol.file",
     scalacOptions ++= ScalacSettings.settings,
     scalacOptions in (Compile, console) ~= {
       _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
@@ -59,23 +61,34 @@ lazy val kinesisMock = project
     },
     test in assembly := {}
   )
+  .configs(FunctionalTest)
+  .settings(
+    inConfig(FunctionalTest)(
+      ScalafmtPlugin.scalafmtConfigSettings ++
+        scalafixConfigSettings(FunctionalTest) ++
+        BloopSettings.default ++
+        DockerImagePlugin.settings ++
+        DockerComposePlugin.settings(FunctionalTest) ++
+        Defaults.testSettings
+    )
+  )
   .settings(DockerImagePlugin.settings)
   .settings(DockerComposePlugin.settings(FunctionalTest))
   .settings(
     Seq(
-      addCommandAlias("cpl", ";+test:compile"),
+      addCommandAlias("cpl", ";test:compile;fun:compile"),
       addCommandAlias(
         "fixCheck",
-        ";compile:scalafix --check ;test:scalafix --check"
+        ";compile:scalafix --check;test:scalafix --check;fun:scalafix --check"
       ),
-      addCommandAlias("fix", ";compile:scalafix ;test:scalafix"),
+      addCommandAlias("fix", ";compile:scalafix;test:scalafix;fun:scalafix"),
       addCommandAlias(
         "fmt",
-        ";scalafmtAll;scalafmtSbt"
+        ";compile:scalafmt;fun:scalafmt;scalafmtSbt"
       ),
       addCommandAlias(
         "fmtCheck",
-        ";scalafmtCheckAll;scalafmtSbtCheck"
+        ";compile:scalafmtCheck;fun:scalafmtCheck;scalafmtSbtCheck"
       ),
       addCommandAlias(
         "pretty",
