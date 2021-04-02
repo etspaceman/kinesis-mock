@@ -5,6 +5,8 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class ShardFilter(
     shardId: Option[String],
     timestamp: Option[Instant],
@@ -24,5 +26,10 @@ object ShardFilter {
       `type` <- x.downField("Type").as[ShardFilterType]
     } yield ShardFilter(shardId, timestamp, `type`)
 
-  implicit val shardFilterEq: Eq[ShardFilter] = Eq.fromUniversalEquals
+  implicit val shardFilterEq: Eq[ShardFilter] = (x, y) =>
+    x.shardId == y.shardId &&
+      x.timestamp.map(_.getEpochSecond()) == y.timestamp.map(
+        _.getEpochSecond()
+      ) &&
+      x.`type` == y.`type`
 }

@@ -5,6 +5,8 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class StreamDescriptionSummary(
     consumerCount: Option[Int],
     encryptionType: Option[EncryptionType],
@@ -91,5 +93,16 @@ object StreamDescriptionSummary {
     )
 
   implicit val streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.consumerCount == y.consumerCount &&
+        x.encryptionType == y.encryptionType &&
+        x.enhancedMonitoring == y.enhancedMonitoring &&
+        x.keyId == y.keyId &&
+        x.openShardCount == y.openShardCount &&
+        x.retentionPeriodHours == y.retentionPeriodHours &&
+        x.streamArn == y.streamArn &&
+        x.streamCreationTimestamp.getEpochSecond() == y.streamCreationTimestamp
+          .getEpochSecond() &&
+        x.streamName == y.streamName &&
+        x.streamStatus == y.streamStatus
 }

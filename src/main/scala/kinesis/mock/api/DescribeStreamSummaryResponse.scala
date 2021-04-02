@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models.StreamDescriptionSummary
@@ -21,5 +22,6 @@ object DescribeStreamSummaryResponse {
       .map(DescribeStreamSummaryResponse.apply)
   }
   implicit val describeStreamSummaryResponseEq
-      : Eq[DescribeStreamSummaryResponse] = Eq.fromUniversalEquals
+      : Eq[DescribeStreamSummaryResponse] = (x, y) =>
+    x.streamDescriptionSummary === y.streamDescriptionSummary
 }

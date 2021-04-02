@@ -43,7 +43,8 @@ lazy val kinesisMock = project
       Munit.scalacheckEffect % Test,
       Refined.scalacheck % Test,
       ScalacheckGenRegexp % Test,
-      Aws.kinesis % FunctionalTest
+      Aws.kinesis % FunctionalTest,
+      CatsRetry % FunctionalTest
     ),
     semanticdbEnabled := true,
     semanticdbVersion := "4.4.10",

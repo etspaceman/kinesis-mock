@@ -9,6 +9,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -205,7 +206,15 @@ object ListShardsRequest {
   }
 
   implicit val listShardsRequestEq: Eq[ListShardsRequest] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.exclusiveStartShardId == y.exclusiveStartShardId &&
+        x.maxResults == y.maxResults &&
+        x.nextToken == y.nextToken &&
+        x.shardFilter === y.shardFilter &&
+        x.streamCreationTimestamp.map(
+          _.getEpochSecond()
+        ) == y.streamCreationTimestamp.map(_.getEpochSecond()) &&
+        x.streamName == y.streamName
 
   def createNextToken(streamName: StreamName, shardId: String): String =
     s"$streamName::$shardId"

@@ -9,6 +9,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -203,5 +204,12 @@ object GetShardIteratorRequest {
       )
 
   implicit val getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.shardId == y.shardId &&
+        x.shardIteratorType == y.shardIteratorType &&
+        x.startingSequenceNumber == y.startingSequenceNumber &&
+        x.streamName == y.streamName &&
+        x.timestamp.map(_.getEpochSecond()) == y.timestamp.map(
+          _.getEpochSecond()
+        )
 }

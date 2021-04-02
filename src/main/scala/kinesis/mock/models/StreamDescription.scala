@@ -3,7 +3,10 @@ package kinesis.mock.models
 import java.time.Instant
 
 import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe._
+
+import kinesis.mock.instances.circe._
 
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
@@ -115,5 +118,16 @@ object StreamDescription {
   }
 
   implicit val streamDescriptionEq: Eq[StreamDescription] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.encryptionType == y.encryptionType &&
+        x.enhancedMonitoring == y.enhancedMonitoring &&
+        x.hasMoreShards == y.hasMoreShards &&
+        x.keyId == y.keyId &&
+        x.retentionPeriodHours == y.retentionPeriodHours &&
+        x.shards === y.shards &&
+        x.streamArn == y.streamArn &&
+        x.streamCreationTimestamp.getEpochSecond() == y.streamCreationTimestamp
+          .getEpochSecond() &&
+        x.streamName == y.streamName &&
+        x.streamStatus == y.streamStatus
 }

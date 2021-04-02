@@ -2,6 +2,7 @@ package kinesis.mock
 package api
 
 import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -27,5 +28,5 @@ object ListStreamConsumersResponse {
       } yield ListStreamConsumersResponse(consumers, nextToken)
 
   implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
-    Eq.fromUniversalEquals
+    (x, y) => x.consumers === y.consumers && x.nextToken == y.nextToken
 }

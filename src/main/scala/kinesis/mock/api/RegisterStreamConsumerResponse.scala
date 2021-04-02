@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -16,5 +17,5 @@ object RegisterStreamConsumerResponse {
     .as[Consumer]
     .map(RegisterStreamConsumerResponse.apply)
   implicit val registerStreamConsumerResponseEq
-      : Eq[RegisterStreamConsumerResponse] = Eq.fromUniversalEquals
+      : Eq[RegisterStreamConsumerResponse] = (x, y) => x.consumer === y.consumer
 }

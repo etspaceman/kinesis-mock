@@ -5,6 +5,8 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class KinesisRecord(
     approximateArrivalTimestamp: Instant,
     data: Array[Byte],
@@ -56,7 +58,7 @@ object KinesisRecord {
       )
 
   implicit val kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
-    x.approximateArrivalTimestamp == y.approximateArrivalTimestamp &&
+    x.approximateArrivalTimestamp.getEpochSecond == y.approximateArrivalTimestamp.getEpochSecond &&
       x.data.sameElements(y.data) &&
       x.encryptionType == y.encryptionType &&
       x.partitionKey == y.partitionKey &&

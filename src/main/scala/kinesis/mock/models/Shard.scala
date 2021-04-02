@@ -7,6 +7,8 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class Shard(
     adjacentParentShardId: Option[String],
     closedTimestamp: Option[Instant],
@@ -104,5 +106,15 @@ object Shard {
     )
   }
 
-  implicit val shardEq: Eq[Shard] = Eq.fromUniversalEquals
+  implicit val shardEq: Eq[Shard] = (x, y) =>
+    x.adjacentParentShardId == y.adjacentParentShardId &&
+      x.closedTimestamp.map(_.getEpochSecond()) == y.closedTimestamp.map(
+        _.getEpochSecond()
+      ) &&
+      x.createdAtTimestamp.getEpochSecond() == y.createdAtTimestamp
+        .getEpochSecond() &&
+      x.hashKeyRange == y.hashKeyRange &&
+      x.parentShardId == y.parentShardId &&
+      x.sequenceNumberRange == y.sequenceNumberRange &&
+      x.shardId == y.shardId
 }

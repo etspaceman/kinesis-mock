@@ -1,6 +1,7 @@
 package kinesis.mock.api
 
 import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
@@ -20,5 +21,5 @@ object ListShardsResponse {
         shards <- x.downField("Shards").as[List[Shard]]
       } yield ListShardsResponse(nextToken, shards)
   implicit val listShardsResponseEq: Eq[ListShardsResponse] =
-    Eq.fromUniversalEquals
+    (x, y) => x.nextToken == y.nextToken && x.shards === y.shards
 }

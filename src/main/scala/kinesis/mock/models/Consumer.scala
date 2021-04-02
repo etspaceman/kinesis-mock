@@ -5,6 +5,8 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class Consumer(
     consumerArn: String,
     consumerCreationTimestamp: Instant,
@@ -52,5 +54,10 @@ object Consumer {
     )
   }
 
-  implicit val consumerEq: Eq[Consumer] = Eq.fromUniversalEquals
+  implicit val consumerEq: Eq[Consumer] = (x, y) =>
+    x.consumerArn == y.consumerArn &&
+      x.consumerCreationTimestamp
+        .getEpochSecond() == y.consumerCreationTimestamp.getEpochSecond() &&
+      x.consumerName == y.consumerName &&
+      x.consumerStatus == y.consumerStatus
 }
