@@ -2,7 +2,6 @@ package kinesis.mock
 package api
 
 import java.time.Instant
-import java.util.Base64
 
 import cats.Parallel
 import cats.data.Validated._
@@ -72,7 +71,7 @@ final case class PutRecordsRequest(
                 (
                   KinesisRecord(
                     now,
-                    Base64.getDecoder().decode(entry.data),
+                    entry.data,
                     stream.encryptionType,
                     entry.partitionKey,
                     seqNo

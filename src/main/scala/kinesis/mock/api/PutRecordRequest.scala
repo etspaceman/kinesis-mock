@@ -4,7 +4,6 @@ package api
 import scala.collection.SortedMap
 
 import java.time.Instant
-import java.util.Base64
 
 import cats.data.Validated._
 import cats.data._
@@ -14,6 +13,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -81,7 +81,7 @@ final case class PutRecordRequest(
                   shards = stream.shards ++ SortedMap(
                     shard -> (records :+ KinesisRecord(
                       now,
-                      Base64.getDecoder().decode(data),
+                      data,
                       stream.encryptionType,
                       partitionKey,
                       seqNo

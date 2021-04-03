@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import java.util.Base64
-
 import cats.effect._
 import cats.effect.concurrent.Semaphore
 import cats.syntax.all._
@@ -42,7 +40,7 @@ class PutRecordTests
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
             stream.shards.values.toList.flatten.exists { rec =>
-              rec.data.sameElements(Base64.getDecoder.decode(initReq.data))
+              rec.data.sameElements(initReq.data)
             }
           }
         },

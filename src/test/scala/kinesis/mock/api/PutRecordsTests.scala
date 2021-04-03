@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import java.util.Base64
-
 import cats.effect._
 import cats.effect.concurrent.Semaphore
 import cats.syntax.all._
@@ -33,9 +31,6 @@ class PutRecordsTests
         streamName = streamName
       )
 
-      val dataCompare =
-        initReq.records.map(r => Base64.getDecoder.decode(r.data))
-
       for {
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
@@ -45,7 +40,7 @@ class PutRecordsTests
         res.isValid && res.exists { case (resultStreams, _) =>
           resultStreams.streams.get(streamName).exists { stream =>
             stream.shards.values.toList.flatten.count { rec =>
-              dataCompare.exists(_.sameElements(rec.data))
+              req.records.map(_.data).exists(_.sameElements(rec.data))
             } == initReq.records.length
           }
         },

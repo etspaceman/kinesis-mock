@@ -3,6 +3,8 @@ package kinesis.mock.api
 import cats.kernel.Eq
 import io.circe._
 
+import kinesis.mock.instances.circe._
+
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
     explicitHashKey: Option[String],

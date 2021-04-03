@@ -3,8 +3,6 @@ package api
 
 import scala.annotation.tailrec
 
-import java.util.Base64
-
 import cats.data.Validated._
 import cats.data._
 import cats.kernel.Eq
@@ -77,9 +75,6 @@ final case class GetRecordsRequest(
                               0,
                               0
                             )
-                            .map(r =>
-                              r.copy(data = Base64.getEncoder.encode(r.data))
-                            )
 
                           val millisBehindLatest =
                             data.last.approximateArrivalTimestamp.toEpochMilli -
@@ -128,11 +123,6 @@ final case class GetRecordsRequest(
                                   List.empty,
                                   0,
                                   0
-                                )
-                                .map(r =>
-                                  r.copy(data =
-                                    Base64.getEncoder.encode(r.data)
-                                  )
                                 )
 
                               val millisBehindLatest =

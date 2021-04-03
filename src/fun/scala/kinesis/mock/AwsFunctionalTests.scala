@@ -66,7 +66,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             )
             .toIO
           _ <- IO.sleep(
-            resources.cacheConfig.createStreamDuration.plus(20.millis)
+            resources.cacheConfig.createStreamDuration.plus(50.millis)
           )
           streamSummary <- describeStreamSummary(resources)
           res <- IO.raiseWhen(
@@ -88,7 +88,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             )
             .toIO
           _ <- IO.sleep(
-            resources.cacheConfig.deleteStreamDuration.plus(20.millis)
+            resources.cacheConfig.deleteStreamDuration.plus(50.millis)
           )
           streamSummary <- describeStreamSummary(resources).attempt
           res <- IO.raiseWhen(
@@ -124,4 +124,20 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           .build
       )
       .toIO
+
+  def describeStreamConsumer(
+      resources: KinesisFunctionalTestResources,
+      consumerName: String,
+      streamArn: String
+  ): IO[DescribeStreamConsumerResponse] =
+    resources.kinesisClient
+      .describeStreamConsumer(
+        DescribeStreamConsumerRequest
+          .builder()
+          .consumerName(consumerName)
+          .streamARN(streamArn)
+          .build()
+      )
+      .toIO
+
 }

@@ -2,15 +2,11 @@ package kinesis.mock
 
 import software.amazon.awssdk.services.kinesis.model._
 
-import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
 
 class DecreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
-
-  val streamName = streamNameGen.one.streamName
 
   fixture.test("It should decrease the stream retention period") {
     case resources =>

@@ -4,7 +4,6 @@ import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
-import java.util.Base64
 
 import enumeratum.scalacheck._
 import org.scalacheck.{Arbitrary, Gen}
@@ -504,7 +503,6 @@ object arbitrary {
           Gen.listOfN(
             size,
             kinesisRecordArbitrary.arbitrary
-              .map(r => r.copy(data = Base64.getEncoder.encode(r.data)))
           )
         )
     } yield GetRecordsResponse(
@@ -695,7 +693,7 @@ object arbitrary {
 
   implicit val putRecordRequestArb: Arbitrary[PutRecordRequest] = Arbitrary(
     for {
-      data <- dataGen.map(Base64.getEncoder.encode)
+      data <- dataGen
       explicitHashKey <- Gen.option(explicitHashKeyGen)
       partitionKey <- partitionKeyGen
       sequenceNumberForOrdering <- Gen.option(sequenceNumberArbitrary.arbitrary)
@@ -720,7 +718,7 @@ object arbitrary {
   implicit val putRecordsRequestEntryArb: Arbitrary[PutRecordsRequestEntry] =
     Arbitrary(
       for {
-        data <- dataGen.map(Base64.getEncoder.encode)
+        data <- dataGen
         explicitHashKey <- Gen.option(explicitHashKeyGen)
         partitionKey <- partitionKeyGen
       } yield PutRecordsRequestEntry(data, explicitHashKey, partitionKey)
