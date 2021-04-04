@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        scala: [2.13.5]
+        cbor_enabled: [true, false]
+        service_port: [4567, 4568]
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.8
@@ -19,6 +20,8 @@ jobs:
       with:
         java-version: 1.8
     - name: Validate build
-      run: sbt ++${{ matrix.scala }} validate
+      run: sbt validate
       env:
         JAVA_OPTS: -Duser.country=US -Duser.language=en
+        CBOR_ENABLED: ${{ matrix.cbor_enabled }}
+        SERVICE_PORT: ${{ matrix.service_port }}

@@ -6,9 +6,9 @@ import java.net.URI
 
 import cats.effect.{Blocker, IO, Resource, SyncIO}
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
-import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.http.{Protocol, SdkHttpConfigurationOption}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
 import software.amazon.awssdk.services.kinesis.model._
@@ -29,31 +29,42 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .build()
 
-  private def nettyClient: SdkAsyncHttpClient =
+  private def nettyClient(port: Int): SdkAsyncHttpClient = {
+    val protocol = if (port == 4567) Protocol.HTTP2 else Protocol.HTTP1_1
     NettyNioAsyncHttpClient
       .builder()
+      .protocol(protocol)
       .buildWithDefaults(trustAllCertificates)
+  }
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
     ResourceFixture(
-      Resource
-        .fromAutoCloseable(
-          IO(
-            KinesisAsyncClient
-              .builder()
-              .httpClient(nettyClient)
-              .region(Region.US_EAST_1)
-              .credentialsProvider(AwsCreds.LocalCreds)
-              .endpointOverride(URI.create(s"https://localhost:4568"))
-              .build()
+      Blocker[IO].flatMap(blocker =>
+        Resource
+          .fromAutoCloseable(
+            FunctionalTestConfig
+              .read(blocker)
+              .map { config =>
+                val protocol =
+                  if (config.servicePort == 4568) "http" else "https"
+                KinesisAsyncClient
+                  .builder()
+                  .httpClient(nettyClient(config.servicePort))
+                  .region(Region.US_EAST_1)
+                  .credentialsProvider(AwsCreds.LocalCreds)
+                  .endpointOverride(
+                    URI.create(s"$protocol://localhost:${config.servicePort}")
+                  )
+                  .build()
+              }
           )
-        )
-        .parZip(Blocker[IO].evalMap(CacheConfig.read))
-        .evalMap { case (client, config) =>
-          IO(streamNameGen.one).map(streamName =>
-            KinesisFunctionalTestResources(client, config, streamName)
-          )
-        },
+          .parZip(Blocker[IO].evalMap(CacheConfig.read))
+          .evalMap { case (client, config) =>
+            IO(streamNameGen.one).map(streamName =>
+              KinesisFunctionalTestResources(client, config, streamName)
+            )
+          }
+      ),
       (_, resources) =>
         for {
           _ <- resources.kinesisClient
