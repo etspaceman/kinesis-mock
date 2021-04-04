@@ -70,7 +70,9 @@ lazy val kinesisMock = project
         BloopSettings.default ++
         DockerImagePlugin.settings ++
         DockerComposePlugin.settings(FunctionalTest) ++
-        Defaults.testSettings
+        Defaults.testSettings ++ Seq(
+          parallelExecution := false
+        )
     )
   )
   .settings(DockerImagePlugin.settings)
@@ -101,7 +103,7 @@ lazy val kinesisMock = project
       ),
       addCommandAlias(
         "validate",
-        ";cpl;prettyCheck;test"
+        ";cpl;prettyCheck;test;fun:dockerComposeTestQuick"
       )
     ).flatten
   )
