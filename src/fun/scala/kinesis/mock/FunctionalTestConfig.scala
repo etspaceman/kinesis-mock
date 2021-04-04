@@ -4,9 +4,8 @@ import cats.effect.{Blocker, ContextShift, IO}
 import pureconfig.generic.semiauto._
 import pureconfig.module.catseffect.syntax._
 import pureconfig.{ConfigReader, ConfigSource}
-import software.amazon.awssdk.http.Protocol
 
-final case class FunctionalTestConfig(servicePort: Int, protocol: Protocol)
+final case class FunctionalTestConfig(servicePort: Int)
 
 object FunctionalTestConfig {
   implicit val functionalTestConfigReader: ConfigReader[FunctionalTestConfig] =
