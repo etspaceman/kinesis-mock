@@ -16,6 +16,7 @@ import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
+import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
@@ -30,10 +31,10 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       .build()
 
   private def nettyClient(port: Int): SdkAsyncHttpClient = {
-    val protocol = if (port == 4567) Protocol.HTTP2 else Protocol.HTTP1_1
+    val protocol = if (port == 4568) Some(Protocol.HTTP1_1) else None
     NettyNioAsyncHttpClient
       .builder()
-      .protocol(protocol)
+      .maybeTransform(protocol)(_.protocol(_))
       .buildWithDefaults(trustAllCertificates)
   }
 
