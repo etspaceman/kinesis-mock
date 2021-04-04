@@ -7,7 +7,6 @@ import pureconfig.{ConfigReader, ConfigSource}
 
 final case class KinesisMockServiceConfig(
     http2Port: Int,
-    http1SslPort: Int,
     http1PlainPort: Int,
     keyStorePassword: String,
     keyManagerPassword: String

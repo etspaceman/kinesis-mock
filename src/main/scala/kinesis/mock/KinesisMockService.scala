@@ -35,11 +35,6 @@ object KinesisMockService extends IOApp {
           .withSslContext(context)
           .enableHttp2(true)
           .resource
-        http1SslServer = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http1SslPort, "0.0.0.0")
-          .withHttpApp(app)
-          .withSslContext(context)
-          .resource
         http1PlainServer = BlazeServerBuilder[IO](ExecutionContext.global)
           .bindHttp(serviceConfig.http1PlainPort, "0.0.0.0")
           .withHttpApp(app)
@@ -48,13 +43,9 @@ object KinesisMockService extends IOApp {
           s"Starting Kinesis Http2 Mock Service on port ${serviceConfig.http2Port}"
         )
         _ <- logger.info(
-          s"Starting Kinesis Http1 SSL Mock Service on port ${serviceConfig.http1SslPort}"
-        )
-        _ <- logger.info(
           s"Starting Kinesis Http1 Plain Mock Service on port ${serviceConfig.http1PlainPort}"
         )
         res <- http2Server
-          .parZip(http1SslServer)
           .parZip(http1PlainServer)
           .use(_ => IO.never)
           .as(ExitCode.Success)

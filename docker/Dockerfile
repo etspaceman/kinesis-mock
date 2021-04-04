@@ -53,5 +53,5 @@ RUN microdnf install xz && \
 FROM alpine:3
 RUN apk --no-cache add curl
 COPY --from=build kinesis-mock /opt/kinesis-mock
-EXPOSE 4567 4568 4569
+EXPOSE 4567 4568
 CMD ["/opt/kinesis-mock", "--gc=G1"]
