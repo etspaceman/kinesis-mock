@@ -49,21 +49,18 @@ class ListStreamConsumersTests
               )
               .rethrow
           )
-          res <- consumerNames.toList.traverse(consumerName =>
-            cache
-              .describeStreamConsumer(
-                DescribeStreamConsumerRequest(
-                  None,
-                  Some(consumerName),
-                  Some(streamArn)
-                ),
-                context
-              )
-              .rethrow
-          )
+          res <- cache
+            .listStreamConsumers(
+              ListStreamConsumersRequest(None, None, streamArn, None),
+              context
+            )
+            .rethrow
         } yield assert(
-          res.map(_.consumerDescription) == registerResults.map(_.consumer),
-          s"$registerResults\n$res"
+          res.consumers.sortBy(_.consumerName) == registerResults
+            .map(_.consumer)
+            .sortBy(_.consumerName),
+          s"${registerResults.map(_.consumer).sortBy(_.consumerName)}\n" +
+            s"${res.consumers.sortBy(_.consumerName)}"
         )
       )
   })

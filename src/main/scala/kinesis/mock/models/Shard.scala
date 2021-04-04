@@ -35,25 +35,26 @@ object Shard {
     SortedMap.from(
       List
         .range(startingIndex, shardCount + startingIndex, 1)
-        .map(index =>
+        .zipWithIndex
+        .map { case (shardIndex, listIndex) =>
           Shard(
             None,
             None,
             createTime,
             HashKeyRange(
-              if (index < shardCount - 1)
-                (shardHash * BigInt(index + 1)) - BigInt(1)
+              if (listIndex < shardCount - 1)
+                (shardHash * BigInt(listIndex + 1)) - BigInt(1)
               else maxHashKey - BigInt(1),
-              shardHash * BigInt(index)
+              shardHash * BigInt(listIndex)
             ),
             None,
             SequenceNumberRange(
               None,
-              SequenceNumber.create(createTime, index, None, None, None)
+              SequenceNumber.create(createTime, shardIndex, None, None, None)
             ),
-            ShardId.create(index)
+            ShardId.create(shardIndex)
           ) -> List.empty
-        )
+        }
     )
   }
   implicit val shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>

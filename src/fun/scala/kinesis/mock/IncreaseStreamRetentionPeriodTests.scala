@@ -4,11 +4,11 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class DecreaseStreamRetentionPeriodTests
+class IncreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should decrease the stream retention period") {
+  fixture.test("It should increase the stream retention period") {
     case resources =>
       for {
         _ <- resources.kinesisClient
@@ -20,18 +20,9 @@ class DecreaseStreamRetentionPeriodTests
               .build()
           )
           .toIO
-        _ <- resources.kinesisClient
-          .decreaseStreamRetentionPeriod(
-            DecreaseStreamRetentionPeriodRequest
-              .builder()
-              .streamName(resources.streamName.streamName)
-              .retentionPeriodHours(24)
-              .build()
-          )
-          .toIO
         res <- describeStreamSummary(resources)
       } yield assert(
-        res.streamDescriptionSummary().retentionPeriodHours().intValue == 24,
+        res.streamDescriptionSummary().retentionPeriodHours().intValue == 48,
         res
       )
   }
