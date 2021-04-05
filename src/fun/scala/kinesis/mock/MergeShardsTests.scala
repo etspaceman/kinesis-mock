@@ -49,7 +49,7 @@ class MergeShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
             .build()
         )
         .toIO
-      _ <- IO.sleep(resources.cacheConfig.mergeShardsDuration.plus(10.millis))
+      _ <- IO.sleep(resources.cacheConfig.mergeShardsDuration.plus(100.millis))
       openShards2 <- resources.kinesisClient
         .listShards(
           ListShardsRequest
