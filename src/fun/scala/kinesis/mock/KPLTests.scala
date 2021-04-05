@@ -27,13 +27,13 @@ class KPLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
                 .setCredentialsProvider(AwsCreds.LocalCreds)
                 .setRegion(Regions.US_EAST_1.getName())
                 .setKinesisEndpoint("localhost")
-                .setKinesisPort(resources.testConfig.servicePort.toLong)
+                .setKinesisPort(4567L) // KPL only supports TLS
                 .setCloudwatchEndpoint("localhost")
                 .setCloudwatchPort(4566L)
                 .setVerifyCertificate(false)
             )
           )
-        )(x => IO(x.destroy()))
+        )(x => IO(x.flushSync()) *> IO(x.destroy()))
         .map(kpl => KPLResources(resources, kpl))
     },
     (_, resources: KPLResources) => setup(resources.functionalTestResources),
