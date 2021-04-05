@@ -70,10 +70,9 @@ lazy val kinesisMock = project
         scalafixConfigSettings(FunctionalTest) ++
         BloopSettings.default ++
         DockerImagePlugin.settings ++
-        DockerComposePlugin.settings(FunctionalTest) ++
-        Defaults.testSettings ++ Seq(
-          parallelExecution := false
-        )
+        DockerComposePlugin.setstings(FunctionalTest) ++
+        Defaults.testSettings ++
+        Seq(parallelExecution := false)
     )
   )
   .settings(DockerImagePlugin.settings)

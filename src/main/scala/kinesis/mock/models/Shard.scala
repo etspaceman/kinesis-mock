@@ -44,7 +44,7 @@ object Shard {
             HashKeyRange(
               if (listIndex < shardCount - 1)
                 (shardHash * BigInt(listIndex + 1)) - BigInt(1)
-              else maxHashKey - BigInt(1),
+              else maxHashKey,
               shardHash * BigInt(listIndex)
             ),
             None,
