@@ -13,6 +13,7 @@ import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
+import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
@@ -23,7 +24,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
     T: Timer[IO],
     CS: ContextShift[IO]
 ) {
-  val logger = Slf4jLogger.getLogger[IO]
+  val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
   import KinesisMockHeaders._
   import KinesisMockRoutes._
@@ -32,7 +33,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
   // check headers / query params (see what kinesalite does)
   // create a sharded stream cache
   // create service that has methods for each action
-  def routes = HttpRoutes.of[IO] {
+  def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "healthcheck" => Ok()
 
     case request @ POST -> Root :?
@@ -135,7 +136,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
                     responseHeaders: _*
                   )
               case (Some(contentType), Some(_), Some(_)) =>
-                implicit def entityEncoder[A: Encoder] =
+                implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
                   kinesisMockEntityEncoder(contentType.mediaType)
                 logger.warn(
                   lcWithHeaders.context + ("contentType" -> contentType.value)
@@ -150,7 +151,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
                     responseHeaders: _*
                   )
               case (Some(contentType), None, None) =>
-                implicit def entityEncoder[A: Encoder] =
+                implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
                   kinesisMockEntityEncoder(contentType.mediaType)
                 logger.warn(
                   lcWithHeaders.context + ("contentType" -> contentType.value)
@@ -165,7 +166,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
                     responseHeaders: _*
                   )
               case (Some(contentType), Some(authHeader), _) =>
-                implicit def entityEncoder[A: Encoder] =
+                implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
                   kinesisMockEntityEncoder(contentType.mediaType)
                 val lcWithContentType =
                   lcWithHeaders + ("contentType" -> contentType.value)
@@ -265,7 +266,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
                   }
                 }
               case (Some(contentType), _, Some(_)) =>
-                implicit def entityEncoder[A: Encoder] =
+                implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
                   kinesisMockEntityEncoder(contentType.mediaType)
 
                 val lcWithContentType =
@@ -277,16 +278,16 @@ class KinesisMockRoutes(cache: Cache)(implicit
 
                   val missing = List(
                     queryAuthSignature.as(
-                      s"AWS query-string parameters must include \\${amazonAuthSignature}\\."
+                      s"AWS query-string parameters must include \\$amazonAuthSignature\\."
                     ),
                     queryAuthCredential.as(
-                      s"AWS query-string parameters must include \\${amazonAuthCredential}\\."
+                      s"AWS query-string parameters must include \\$amazonAuthCredential\\."
                     ),
                     queryAuthSignedHeaders.as(
-                      s"AWS query-string parameters must include \\${amazonAuthSignedHeaders}\\."
+                      s"AWS query-string parameters must include \\$amazonAuthSignedHeaders\\."
                     ),
                     queryAmazonDate.as(
-                      s"AWS query-string parameters must include \\${amazonDate}\\."
+                      s"AWS query-string parameters must include \\$amazonDate\\."
                     )
                   ).flatMap {
                     case Some(msg) => List(msg)
@@ -408,7 +409,7 @@ object KinesisMockRoutes {
 
   def handleDecodeError(err: DecodeFailure, responseHeaders: List[Header])(
       implicit entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ) =
+  ): IO[Response[IO]] =
     BadRequest(
       ErrorResponse("SerializationException", err.getMessage),
       responseHeaders: _*
@@ -419,7 +420,7 @@ object KinesisMockRoutes {
       responseHeaders: List[Header]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ) =
+  ): IO[Response[IO]] =
     BadRequest(
       ErrorResponse(err.getClass.getName, err.getMessage),
       responseHeaders: _*

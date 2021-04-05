@@ -14,7 +14,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class GetRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should get records") { case resources =>
+  fixture.test("It should get records") { resources =>
     for {
       recordRequests <- IO(
         putRecordRequestArb.arbitrary
@@ -69,7 +69,7 @@ class GetRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
             && req.partitionKey == rec.partitionKey
         )
       ),
-      s"${res.records}\n${recordRequests}"
+      s"${res.records}\n$recordRequests"
     )
   }
 }

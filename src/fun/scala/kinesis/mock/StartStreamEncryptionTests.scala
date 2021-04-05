@@ -13,7 +13,7 @@ class StartStreamEncryptionTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should start stream encryption") { case resources =>
+  fixture.test("It should start stream encryption") { resources =>
     for {
       keyId <- IO(keyIdGen.one)
       _ <- resources.kinesisClient

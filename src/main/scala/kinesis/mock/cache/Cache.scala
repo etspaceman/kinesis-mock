@@ -6,6 +6,7 @@ import cats.effect._
 import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
 import cats.syntax.all._
 import io.circe.syntax._
+import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
@@ -20,7 +21,7 @@ class Cache private (
     supervisor: Supervisor[IO]
 ) {
 
-  val logger = Slf4jLogger.getLogger[IO]
+  val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
   def addTagsToStream(
       req: AddTagsToStreamRequest,

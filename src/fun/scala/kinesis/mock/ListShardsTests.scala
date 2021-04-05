@@ -9,7 +9,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should list shards") { case resources =>
+  fixture.test("It should list shards") { resources =>
     for {
       _ <- resources.kinesisClient
         .updateShardCount(

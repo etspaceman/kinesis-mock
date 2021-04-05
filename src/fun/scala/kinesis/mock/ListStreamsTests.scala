@@ -4,7 +4,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class ListStreamsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should list streams") { case resources =>
+  fixture.test("It should list streams") { resources =>
     for {
       res <- resources.kinesisClient.listStreams().toIO
     } yield assert(

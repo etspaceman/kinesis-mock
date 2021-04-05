@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class SplitShardTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should split a shard") { case resources =>
+  fixture.test("It should split a shard") { resources =>
     for {
       shard <- resources.kinesisClient
         .listShards(

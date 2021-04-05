@@ -65,7 +65,7 @@ final case class PutRecordsRequest(
                   shard.createdAtTimestamp,
                   shard.shardId.index,
                   None,
-                  Some((records.length) + index),
+                  Some(records.length + index),
                   Some(now)
                 )
                 (
@@ -94,7 +94,7 @@ final case class PutRecordsRequest(
                 (
                   shard,
                   (
-                    (currentRecords ++ recordsToAdd.map(_._1)),
+                    currentRecords ++ recordsToAdd.map(_._1),
                     recordsToAdd.map(_._2)
                   )
                 )

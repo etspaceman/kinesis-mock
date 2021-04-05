@@ -8,31 +8,30 @@ class DecreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should decrease the stream retention period") {
-    case resources =>
-      for {
-        _ <- resources.kinesisClient
-          .increaseStreamRetentionPeriod(
-            IncreaseStreamRetentionPeriodRequest
-              .builder()
-              .streamName(resources.streamName.streamName)
-              .retentionPeriodHours(48)
-              .build()
-          )
-          .toIO
-        _ <- resources.kinesisClient
-          .decreaseStreamRetentionPeriod(
-            DecreaseStreamRetentionPeriodRequest
-              .builder()
-              .streamName(resources.streamName.streamName)
-              .retentionPeriodHours(24)
-              .build()
-          )
-          .toIO
-        res <- describeStreamSummary(resources)
-      } yield assert(
-        res.streamDescriptionSummary().retentionPeriodHours().intValue == 24,
-        res
-      )
+  fixture.test("It should decrease the stream retention period") { resources =>
+    for {
+      _ <- resources.kinesisClient
+        .increaseStreamRetentionPeriod(
+          IncreaseStreamRetentionPeriodRequest
+            .builder()
+            .streamName(resources.streamName.streamName)
+            .retentionPeriodHours(48)
+            .build()
+        )
+        .toIO
+      _ <- resources.kinesisClient
+        .decreaseStreamRetentionPeriod(
+          DecreaseStreamRetentionPeriodRequest
+            .builder()
+            .streamName(resources.streamName.streamName)
+            .retentionPeriodHours(24)
+            .build()
+        )
+        .toIO
+      res <- describeStreamSummary(resources)
+    } yield assert(
+      res.streamDescriptionSummary().retentionPeriodHours().intValue == 24,
+      res
+    )
   }
 }

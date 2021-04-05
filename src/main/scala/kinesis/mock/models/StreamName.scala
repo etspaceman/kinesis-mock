@@ -14,8 +14,6 @@ object StreamName {
     Decoder[String].map(StreamName.apply)
   implicit val streamNameEq: Eq[StreamName] = Eq.fromUniversalEquals
   implicit val streamNameOrdering: Ordering[StreamName] =
-    new Ordering[StreamName] {
-      override def compare(x: StreamName, y: StreamName): Int =
-        Ordering[String].compare(x.streamName, y.streamName)
-    }
+    (x: StreamName, y: StreamName) =>
+      Ordering[String].compare(x.streamName, y.streamName)
 }

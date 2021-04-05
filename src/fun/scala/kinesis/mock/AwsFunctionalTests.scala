@@ -34,7 +34,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       .builder()
       .buildWithDefaults(trustAllCertificates)
 
-  val resource = for {
+  val resource: Resource[IO, KinesisFunctionalTestResources] = for {
     blocker <- Blocker[IO]
     testConfig <- Resource.eval(FunctionalTestConfig.read(blocker))
     kinesisClient <- Resource

@@ -13,7 +13,7 @@ class StopStreamEncryptionTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should stop stream encryption") { case resources =>
+  fixture.test("It should stop stream encryption") { resources =>
     for {
       keyId <- IO(keyIdGen.one)
       _ <- resources.kinesisClient

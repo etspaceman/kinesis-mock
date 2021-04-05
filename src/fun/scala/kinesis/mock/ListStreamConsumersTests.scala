@@ -14,7 +14,7 @@ class ListStreamConsumersTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should list stream consumers") { case resources =>
+  fixture.test("It should list stream consumers") { resources =>
     for {
       consumerNames <- IO(consumerNameGen.take(3).toList.map(_.consumerName))
       streamSummary <- describeStreamSummary(resources)

@@ -158,7 +158,7 @@ final case class GetRecordsRequest(
 }
 
 object GetRecordsRequest {
-  val maxReturnSize = 10 * 1024 * 1024 // 10 MB
+  val maxReturnSize: Int = 10 * 1024 * 1024 // 10 MB
 
   @tailrec
   def getRecords(

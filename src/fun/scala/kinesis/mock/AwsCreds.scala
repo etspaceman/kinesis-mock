@@ -14,13 +14,13 @@ final case class AwsCreds(accessKey: String, secretKey: String)
   override def accessKeyId(): String = accessKey
   override def secretAccessKey(): String = secretKey
   override def resolveCredentials(): AwsCredentials = this
-  override def getAWSAccessKeyId(): String = accessKey
-  override def getAWSSecretKey(): String = secretKey
-  override def getCredentials(): AWSCredentials = this
+  override def getAWSAccessKeyId: String = accessKey
+  override def getAWSSecretKey: String = secretKey
+  override def getCredentials: AWSCredentials = this
   override def refresh(): Unit = ()
 }
 
 object AwsCreds {
-  val LocalCreds =
+  val LocalCreds: AwsCreds =
     AwsCreds("mock-kinesis-access-key", "mock-kinesis-secret-key")
 }

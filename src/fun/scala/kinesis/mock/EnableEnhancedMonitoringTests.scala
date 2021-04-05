@@ -8,24 +8,15 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class DisableEnhancedMonitoringTests
+class EnableEnhancedMonitoringTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should disable enhanced monitoring") { case resources =>
+  fixture.test("It should enable enhanced monitoring") { resources =>
     for {
-      _ <- resources.kinesisClient
+      res <- resources.kinesisClient
         .enableEnhancedMonitoring(
           EnableEnhancedMonitoringRequest
-            .builder()
-            .shardLevelMetrics(MetricsName.ALL)
-            .streamName(resources.streamName.streamName)
-            .build()
-        )
-        .toIO
-      res <- resources.kinesisClient
-        .disableEnhancedMonitoring(
-          DisableEnhancedMonitoringRequest
             .builder()
             .shardLevelMetrics(MetricsName.INCOMING_BYTES)
             .streamName(resources.streamName.streamName)
@@ -37,13 +28,13 @@ class DisableEnhancedMonitoringTests
           .enhancedMonitoring()
           .stream()
           .flatMap(x => x.shardLevelMetrics().stream())
-          .collect(Collectors.toList())
+          .collect(Collectors.toList[MetricsName])
       )
     } yield assert(
-      res.desiredShardLevelMetrics == streamMonitoring && !res
+      res.desiredShardLevelMetrics == streamMonitoring && res
         .desiredShardLevelMetrics()
         .asScala
-        .exists(_ == MetricsName.INCOMING_BYTES),
+        .contains(MetricsName.INCOMING_BYTES),
       s"$res\n$streamMonitoring"
     )
   }

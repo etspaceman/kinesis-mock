@@ -9,7 +9,7 @@ object AwsRegion
     extends Enum[AwsRegion]
     with CirceEnum[AwsRegion]
     with CatsEnum[AwsRegion] {
-  override val values = findValues
+  override val values: IndexedSeq[AwsRegion] = findValues
   case object US_GOV_EAST_1 extends AwsRegion("us-gov-west-1")
   case object US_EAST_1 extends AwsRegion("us-east-1")
   case object US_EAST_2 extends AwsRegion("us-east-2")

@@ -8,7 +8,7 @@ object PutRecordsErrorCode
     extends Enum[PutRecordsErrorCode]
     with CirceEnum[PutRecordsErrorCode]
     with CatsEnum[PutRecordsErrorCode] {
-  override val values = findValues
+  override val values: IndexedSeq[PutRecordsErrorCode] = findValues
 
   case object InternalFailure extends PutRecordsErrorCode
   case object ProvisionedThroughputExceededException extends PutRecordsErrorCode

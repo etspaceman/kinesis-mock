@@ -155,7 +155,7 @@ final case class GetShardIteratorRequest(
 
                   case _ =>
                     InvalidArgumentException(
-                      s"Request for GetShardIterator invalid. ShardIteratorType: ${shardIteratorType}, StartingSequenceNumber: $startingSequenceNumber, Timestamp: ${timestamp}"
+                      s"Request for GetShardIterator invalid. ShardIteratorType: $shardIteratorType, StartingSequenceNumber: $startingSequenceNumber, Timestamp: $timestamp"
                     ).invalidNel
                 }
           }

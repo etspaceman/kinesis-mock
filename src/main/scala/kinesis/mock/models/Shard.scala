@@ -112,8 +112,7 @@ object Shard {
       x.closedTimestamp.map(_.getEpochSecond()) == y.closedTimestamp.map(
         _.getEpochSecond()
       ) &&
-      x.createdAtTimestamp.getEpochSecond() == y.createdAtTimestamp
-        .getEpochSecond() &&
+      x.createdAtTimestamp.getEpochSecond == y.createdAtTimestamp.getEpochSecond &&
       x.hashKeyRange == y.hashKeyRange &&
       x.parentShardId == y.parentShardId &&
       x.sequenceNumberRange == y.sequenceNumberRange &&

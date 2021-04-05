@@ -72,7 +72,7 @@ class PutRecordsTests
                 && req.partitionKey == rec.partitionKey
             )
           ),
-          s"${res.records}\n${req}"
+          s"${res.records}\n$req"
         )
       )
   })

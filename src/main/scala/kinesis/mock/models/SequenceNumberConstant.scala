@@ -8,7 +8,7 @@ object SequenceNumberConstant
     extends Enum[SequenceNumberConstant]
     with CirceEnum[SequenceNumberConstant]
     with CatsEnum[SequenceNumberConstant] {
-  override val values = findValues
+  override val values: IndexedSeq[SequenceNumberConstant] = findValues
 
   case object AT_TIMESTAMP extends SequenceNumberConstant
   case object LATEST extends SequenceNumberConstant

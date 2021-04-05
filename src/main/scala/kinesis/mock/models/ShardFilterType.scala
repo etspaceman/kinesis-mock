@@ -8,7 +8,7 @@ object ShardFilterType
     extends Enum[ShardFilterType]
     with CirceEnum[ShardFilterType]
     with CatsEnum[ShardFilterType] {
-  override val values = findValues
+  override val values: IndexedSeq[ShardFilterType] = findValues
 
   case object AFTER_SHARD_ID extends ShardFilterType
   case object AT_TRIM_HORIZON extends ShardFilterType

@@ -32,7 +32,7 @@ trait ExternalSettings {
 }
 
 object BloopSettings extends ExternalSettings {
-  val default = loadIfExists(
+  val default: Seq[Def.Setting[_]] = loadIfExists(
     "bloop.integrations.sbt.BloopDefaults.configSettings",
     Some(Nil),
     Seq.empty[Def.Setting[_]]

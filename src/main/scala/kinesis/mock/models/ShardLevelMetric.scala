@@ -8,7 +8,7 @@ object ShardLevelMetric
     extends Enum[ShardLevelMetric]
     with CirceEnum[ShardLevelMetric]
     with CatsEnum[ShardLevelMetric] {
-  override val values = findValues
+  override val values: IndexedSeq[ShardLevelMetric] = findValues
 
   case object IncomingBytes extends ShardLevelMetric
   case object IncomingRecords extends ShardLevelMetric

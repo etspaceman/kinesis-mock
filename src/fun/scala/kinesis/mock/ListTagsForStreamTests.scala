@@ -14,7 +14,7 @@ class ListTagsForStreamTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should list tags for a stream") { case resources =>
+  fixture.test("It should list tags for a stream") { resources =>
     for {
       tags <- IO(tagsGen.one)
       _ <- resources.kinesisClient

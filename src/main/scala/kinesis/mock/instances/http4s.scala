@@ -20,7 +20,8 @@ object http4s {
     ) { msg =>
       msg.contentType match {
         case Some(ct)
-            if ct.mediaType == KinesisMockMediaTypes.amazonJson || ct.value == MediaType.application.json =>
+            if ct.mediaType == KinesisMockMediaTypes.amazonJson || ct.value
+              .startsWith("application/json") =>
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
             MediaType.application.json

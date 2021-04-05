@@ -13,7 +13,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should put records") { case resources =>
+  fixture.test("It should put records") { resources =>
     for {
       req <- IO(
         PutRecordsRequest

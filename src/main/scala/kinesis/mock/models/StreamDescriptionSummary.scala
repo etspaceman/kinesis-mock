@@ -101,8 +101,7 @@ object StreamDescriptionSummary {
         x.openShardCount == y.openShardCount &&
         x.retentionPeriodHours == y.retentionPeriodHours &&
         x.streamArn == y.streamArn &&
-        x.streamCreationTimestamp.getEpochSecond() == y.streamCreationTimestamp
-          .getEpochSecond() &&
+        x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
         x.streamStatus == y.streamStatus
 }

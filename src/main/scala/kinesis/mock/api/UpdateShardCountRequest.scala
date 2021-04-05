@@ -58,11 +58,9 @@ final case class UpdateShardCountRequest(
             ).invalidNel
           else Valid(targetShardCount),
           if (
-            stream.shardCountUpdates
-              .filter(ts =>
-                ts.toEpochMilli > now.minusMillis(1.day.toMillis).toEpochMilli
-              )
-              .length >= 10
+            stream.shardCountUpdates.count(ts =>
+              ts.toEpochMilli > now.minusMillis(1.day.toMillis).toEpochMilli
+            ) >= 10
           )
             LimitExceededException(
               "Cannot run UpdateShardCount more than 10 times in a 24 hour period"

@@ -5,9 +5,9 @@ import sbt._
 
 object DockerComposePlugin extends AutoPlugin {
   override def trigger = noTrigger
-  override def requires = DockerImagePlugin
+  override def requires: Plugins = DockerImagePlugin
 
-  val autoImport = DockerComposePluginKeys
+  val autoImport: DockerComposePluginKeys.type = DockerComposePluginKeys
   import autoImport._
 
   val createNetworkTask: Def.Initialize[Task[Unit]] = Def.task {

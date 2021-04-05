@@ -10,7 +10,7 @@ class GetShardIteratorTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should get a shard iterator") { case resources =>
+  fixture.test("It should get a shard iterator") { resources =>
     for {
       shard <- resources.kinesisClient
         .listShards(

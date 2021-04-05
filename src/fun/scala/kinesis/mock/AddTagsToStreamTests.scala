@@ -14,7 +14,7 @@ class AddTagsToStreamTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should add tags to a stream") { case resources =>
+  fixture.test("It should add tags to a stream") { resources =>
     for {
       tags <- IO(tagsGen.one)
       _ <- resources.kinesisClient

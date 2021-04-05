@@ -42,7 +42,7 @@ class DescribeStreamSummaryTests
             None,
             1,
             24,
-            s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/${streamName}",
+            s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/$streamName",
             res.streamDescriptionSummary.streamCreationTimestamp,
             streamName,
             StreamStatus.CREATING

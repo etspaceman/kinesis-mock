@@ -8,6 +8,6 @@ object ScalingType
     extends Enum[ScalingType]
     with CirceEnum[ScalingType]
     with CatsEnum[ScalingType] {
-  override val values = findValues
+  override val values: IndexedSeq[ScalingType] = findValues
   case object UNIFORM_SCALING extends ScalingType
 }

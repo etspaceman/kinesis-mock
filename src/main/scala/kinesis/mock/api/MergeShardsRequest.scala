@@ -65,7 +65,7 @@ final case class MergeShardsRequest(
         }
       }
       .traverse {
-        case (stream, (adjacentShard, adjacentData), (shard, shardData)) => {
+        case (stream, (adjacentShard, adjacentData), (shard, shardData)) =>
           val now = Instant.now()
           val newShardIndex = stream.shards.keys.map(_.shardId.index).max + 1
           val newShard: (Shard, List[KinesisRecord]) = Shard(
@@ -129,7 +129,6 @@ final case class MergeShardsRequest(
                 )
               )
           )
-        }
       }
 }
 

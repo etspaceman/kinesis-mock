@@ -126,8 +126,7 @@ object StreamDescription {
         x.retentionPeriodHours == y.retentionPeriodHours &&
         x.shards === y.shards &&
         x.streamArn == y.streamArn &&
-        x.streamCreationTimestamp.getEpochSecond() == y.streamCreationTimestamp
-          .getEpochSecond() &&
+        x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
         x.streamStatus == y.streamStatus
 }

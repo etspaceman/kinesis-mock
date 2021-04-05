@@ -8,7 +8,7 @@ class DescribeStreamTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should describe a stream") { case resources =>
+  fixture.test("It should describe a stream") { resources =>
     for {
       res <- describeStreamSummary(resources)
       expected = StreamDescriptionSummary

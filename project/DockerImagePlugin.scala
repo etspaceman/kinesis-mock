@@ -8,7 +8,7 @@ import sbtassembly.MergeStrategy
 object DockerImagePlugin extends AutoPlugin {
   override def trigger = noTrigger
 
-  val autoImport = DockerImagePluginKeys
+  val autoImport: DockerImagePluginKeys.type = DockerImagePluginKeys
   import autoImport._
 
   val dockerTagTask: Def.Initialize[Task[String]] = Def.task {

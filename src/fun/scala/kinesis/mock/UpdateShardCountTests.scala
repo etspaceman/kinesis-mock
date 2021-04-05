@@ -12,7 +12,7 @@ class UpdateShardCountTests
     extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
-  fixture.test("It should update the shard count") { case resources =>
+  fixture.test("It should update the shard count") { resources =>
     for {
       _ <- resources.kinesisClient
         .updateShardCount(

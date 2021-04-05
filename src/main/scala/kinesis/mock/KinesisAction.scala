@@ -7,7 +7,7 @@ import org.http4s.{ParseFailure, QueryParamDecoder}
 sealed trait KinesisAction extends EnumEntry
 
 object KinesisAction extends Enum[KinesisAction] {
-  override val values = findValues
+  override val values: IndexedSeq[KinesisAction] = findValues
 
   case object AddTagsToStream extends KinesisAction
   case object CreateStream extends KinesisAction

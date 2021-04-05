@@ -8,7 +8,7 @@ object ConsumerStatus
     extends Enum[ConsumerStatus]
     with CirceEnum[ConsumerStatus]
     with CatsEnum[ConsumerStatus] {
-  override val values = findValues
+  override val values: IndexedSeq[ConsumerStatus] = findValues
 
   case object CREATING extends ConsumerStatus
   case object DELETING extends ConsumerStatus

@@ -4,7 +4,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class DescribeLimitsTest extends munit.CatsEffectSuite with AwsFunctionalTests {
 
-  fixture.test("It should describe limits") { case resources =>
+  fixture.test("It should describe limits") { resources =>
     for {
       res <- resources.kinesisClient
         .describeLimits()

@@ -8,7 +8,7 @@ object EncryptionType
     extends Enum[EncryptionType]
     with CirceEnum[EncryptionType]
     with CatsEnum[EncryptionType] {
-  override val values = findValues
+  override val values: IndexedSeq[EncryptionType] = findValues
   case object NONE extends EncryptionType
   case object KMS extends EncryptionType
 }

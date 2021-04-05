@@ -56,8 +56,7 @@ object Consumer {
 
   implicit val consumerEq: Eq[Consumer] = (x, y) =>
     x.consumerArn == y.consumerArn &&
-      x.consumerCreationTimestamp
-        .getEpochSecond() == y.consumerCreationTimestamp.getEpochSecond() &&
+      x.consumerCreationTimestamp.getEpochSecond == y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName == y.consumerName &&
       x.consumerStatus == y.consumerStatus
 }
