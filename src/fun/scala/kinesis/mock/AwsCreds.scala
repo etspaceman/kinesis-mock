@@ -1,11 +1,10 @@
 package kinesis.mock
 
+import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider}
 import software.amazon.awssdk.auth.credentials.{
   AwsCredentials,
   AwsCredentialsProvider
 }
-import com.amazonaws.auth.AWSCredentials
-import com.amazonaws.auth.AWSCredentialsProvider
 
 final case class AwsCreds(accessKey: String, secretKey: String)
     extends AwsCredentials

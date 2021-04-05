@@ -1,16 +1,16 @@
 package kinesis.mock.syntax
 
+import scala.concurrent.{Future, Promise}
 import scala.jdk.FutureConverters._
 
-import java.util.concurrent.CompletionStage
+import java.util.concurrent.{CompletionStage, Executor}
 
 import cats.effect.{ContextShift, IO}
-import com.google.common.util.concurrent.ListenableFuture
-import scala.concurrent.Future
-import scala.concurrent.Promise
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.FutureCallback
-import java.util.concurrent.Executor
+import com.google.common.util.concurrent.{
+  FutureCallback,
+  Futures,
+  ListenableFuture
+}
 
 object javaFuture extends JavaFutureSyntax
 

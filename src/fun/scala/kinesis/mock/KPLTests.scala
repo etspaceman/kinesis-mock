@@ -1,18 +1,18 @@
 package kinesis.mock
 
-import cats.effect.Resource
-import com.amazonaws.services.kinesis.producer._
-import cats.effect.IO
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+
+import java.nio.ByteBuffer
+
+import cats.effect.{IO, Resource}
 import cats.syntax.all._
 import com.amazonaws.regions.Regions
+import com.amazonaws.services.kinesis.producer._
 import com.github.f4b6a3.uuid.UuidCreator
 
 import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.scalacheck._
 import kinesis.mock.syntax.javaFuture._
-import java.nio.ByteBuffer
-import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.ExecutionContext
+import kinesis.mock.syntax.scalacheck._
 
 class KPLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
   implicit val E: ExecutionContextExecutor = ExecutionContext.global
