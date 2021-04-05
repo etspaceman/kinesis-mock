@@ -27,7 +27,7 @@ class StopStreamEncryptionTests
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.startStreamEncryptionDuration.plus(50.millis)
+        resources.cacheConfig.startStreamEncryptionDuration.plus(100.millis)
       )
       _ <- resources.kinesisClient
         .stopStreamEncryption(
@@ -40,7 +40,7 @@ class StopStreamEncryptionTests
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.stopStreamEncryptionDuration.plus(50.millis)
+        resources.cacheConfig.stopStreamEncryptionDuration.plus(100.millis)
       )
       res <- describeStreamSummary(resources)
     } yield assert(

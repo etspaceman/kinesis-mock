@@ -32,7 +32,7 @@ class DeregisterStreamConsumerTests
           _ <- cache
             .createStream(CreateStreamRequest(1, streamName), context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
           streamArn <- cache
             .describeStreamSummary(
               DescribeStreamSummaryRequest(streamName),
@@ -47,7 +47,7 @@ class DeregisterStreamConsumerTests
             )
             .rethrow
           _ <- IO.sleep(
-            cacheConfig.registerStreamConsumerDuration.plus(50.millis)
+            cacheConfig.registerStreamConsumerDuration.plus(100.millis)
           )
           _ <- cache
             .deregisterStreamConsumer(
@@ -71,7 +71,7 @@ class DeregisterStreamConsumerTests
             )
             .rethrow
           _ <- IO.sleep(
-            cacheConfig.deregisterStreamConsumerDuration.plus(50.millis)
+            cacheConfig.deregisterStreamConsumerDuration.plus(100.millis)
           )
           checkStream2 <- cache.describeStreamConsumer(
             describeStreamConsumerReq,

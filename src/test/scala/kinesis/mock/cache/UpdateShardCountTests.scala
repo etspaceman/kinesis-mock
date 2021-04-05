@@ -31,7 +31,7 @@ class UpdateShardCountTests
           _ <- cache
             .createStream(CreateStreamRequest(5, streamName), context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
           _ <- cache
             .updateShardCount(
               UpdateShardCountRequest(
@@ -46,7 +46,7 @@ class UpdateShardCountTests
           checkStream1 <- cache
             .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(50.millis))
+          _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(100.millis))
           checkStream2 <- cache
             .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow

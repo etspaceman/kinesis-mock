@@ -33,7 +33,9 @@ object KinesisMockService extends IOApp {
           .bindHttp(serviceConfig.http2Port, "0.0.0.0")
           .withHttpApp(app)
           .withSslContext(context)
-          .enableHttp2(true)
+          .enableHttp2(
+            true
+          ) // This is bugged and HTTP2 unfortunately does not work correctly right now
           .resource
         http1PlainServer = BlazeServerBuilder[IO](ExecutionContext.global)
           .bindHttp(serviceConfig.http1PlainPort, "0.0.0.0")

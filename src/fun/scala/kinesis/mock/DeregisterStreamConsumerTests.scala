@@ -28,7 +28,7 @@ class DeregisterStreamConsumerTests
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.registerStreamConsumerDuration.plus(50.millis)
+        resources.cacheConfig.registerStreamConsumerDuration.plus(100.millis)
       )
       _ <- resources.kinesisClient
         .deregisterStreamConsumer(
@@ -41,7 +41,7 @@ class DeregisterStreamConsumerTests
         .toIO
       check1 <- describeStreamConsumer(resources, consumerName, streamArn)
       _ <- IO.sleep(
-        resources.cacheConfig.deregisterStreamConsumerDuration.plus(50.millis)
+        resources.cacheConfig.deregisterStreamConsumerDuration.plus(100.millis)
       )
       check2 <- describeStreamConsumer(
         resources,

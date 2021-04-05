@@ -31,7 +31,7 @@ class SplitShardTests
           _ <- cache
             .createStream(CreateStreamRequest(5, streamName), context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(50.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
           listShardsReq = ListShardsRequest(
             None,
             None,
@@ -58,7 +58,7 @@ class SplitShardTests
           checkStream1 <- cache
             .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.splitShardDuration.plus(50.millis))
+          _ <- IO.sleep(cacheConfig.splitShardDuration.plus(100.millis))
           checkStream2 <- cache
             .describeStreamSummary(describeStreamSummaryReq, context)
             .rethrow

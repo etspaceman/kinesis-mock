@@ -6,9 +6,9 @@ import java.net.URI
 
 import cats.effect.{Blocker, IO, Resource, SyncIO}
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
+import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
-import software.amazon.awssdk.http.{Protocol, SdkHttpConfigurationOption}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
 import software.amazon.awssdk.services.kinesis.model._
@@ -16,12 +16,11 @@ import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
-  private def trustAllCertificates =
+  private val trustAllCertificates =
     AttributeMap
       .builder()
       .put(
@@ -30,13 +29,10 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .build()
 
-  private def nettyClient(port: Int): SdkAsyncHttpClient = {
-    val protocol = if (port == 4568) Some(Protocol.HTTP1_1) else None
+  private def nettyClient: SdkAsyncHttpClient =
     NettyNioAsyncHttpClient
       .builder()
-      .maybeTransform(protocol)(_.protocol(_))
       .buildWithDefaults(trustAllCertificates)
-  }
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
     ResourceFixture(
@@ -50,7 +46,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
                   if (config.servicePort == 4568) "http" else "https"
                 KinesisAsyncClient
                   .builder()
-                  .httpClient(nettyClient(config.servicePort))
+                  .httpClient(nettyClient)
                   .region(Region.US_EAST_1)
                   .credentialsProvider(AwsCreds.LocalCreds)
                   .endpointOverride(
@@ -78,7 +74,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             )
             .toIO
           _ <- IO.sleep(
-            resources.cacheConfig.createStreamDuration.plus(50.millis)
+            resources.cacheConfig.createStreamDuration.plus(100.millis)
           )
           streamSummary <- describeStreamSummary(resources)
           res <- IO.raiseWhen(
@@ -100,7 +96,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             )
             .toIO
           _ <- IO.sleep(
-            resources.cacheConfig.deleteStreamDuration.plus(50.millis)
+            resources.cacheConfig.deleteStreamDuration.plus(100.millis)
           )
           streamSummary <- describeStreamSummary(resources).attempt
           res <- IO.raiseWhen(
