@@ -27,7 +27,7 @@ class StartStreamEncryptionTests
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.startStreamEncryptionDuration.plus(100.millis)
+        resources.cacheConfig.startStreamEncryptionDuration.plus(200.millis)
       )
       res <- describeStreamSummary(resources)
     } yield assert(

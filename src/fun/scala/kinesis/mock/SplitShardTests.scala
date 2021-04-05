@@ -34,7 +34,7 @@ class SplitShardTests extends munit.CatsEffectSuite with AwsFunctionalTests {
             .build()
         )
         .toIO
-      _ <- IO.sleep(resources.cacheConfig.splitShardDuration.plus(100.millis))
+      _ <- IO.sleep(resources.cacheConfig.splitShardDuration.plus(200.millis))
       openShards <- resources.kinesisClient
         .listShards(
           ListShardsRequest

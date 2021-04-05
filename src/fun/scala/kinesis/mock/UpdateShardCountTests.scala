@@ -25,7 +25,7 @@ class UpdateShardCountTests
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.updateShardCountDuration.plus(100.millis)
+        resources.cacheConfig.updateShardCountDuration.plus(200.millis)
       )
       openShards <- resources.kinesisClient
         .listShards(

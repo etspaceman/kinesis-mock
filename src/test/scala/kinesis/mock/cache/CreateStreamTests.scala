@@ -36,7 +36,7 @@ class CreateStreamTests
             describeStreamSummaryReq,
             context
           )
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           checkStream2 <- cache.describeStreamSummary(
             describeStreamSummaryReq,
             context

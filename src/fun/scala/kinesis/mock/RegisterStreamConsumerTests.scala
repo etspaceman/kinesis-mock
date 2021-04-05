@@ -29,7 +29,7 @@ class RegisterStreamConsumerTests
         .toIO
       check1 <- describeStreamConsumer(resources, consumerName, streamArn)
       _ <- IO.sleep(
-        resources.cacheConfig.registerStreamConsumerDuration.plus(100.millis)
+        resources.cacheConfig.registerStreamConsumerDuration.plus(200.millis)
       )
       check2 <- describeStreamConsumer(
         resources,

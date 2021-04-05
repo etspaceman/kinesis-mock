@@ -77,7 +77,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .toIO
     _ <- IO.sleep(
-      resources.cacheConfig.createStreamDuration.plus(100.millis)
+      resources.cacheConfig.createStreamDuration.plus(200.millis)
     )
     streamSummary <- describeStreamSummary(resources)
     res <- IO.raiseWhen(
@@ -99,7 +99,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .toIO
     _ <- IO.sleep(
-      resources.cacheConfig.deleteStreamDuration.plus(100.millis)
+      resources.cacheConfig.deleteStreamDuration.plus(200.millis)
     )
     streamSummary <- describeStreamSummary(resources).attempt
     res <- IO.raiseWhen(

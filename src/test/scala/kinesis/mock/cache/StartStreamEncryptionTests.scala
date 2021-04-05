@@ -32,7 +32,7 @@ class StartStreamEncryptionTests
           _ <- cache
             .createStream(CreateStreamRequest(1, streamName), context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           keyId <- IO(keyIdGen.one)
           _ <- cache
             .startStreamEncryption(
@@ -49,7 +49,7 @@ class StartStreamEncryptionTests
             .describeStreamSummary(describeReq, context)
             .rethrow
           _ <- IO.sleep(
-            cacheConfig.startStreamEncryptionDuration.plus(100.millis)
+            cacheConfig.startStreamEncryptionDuration.plus(200.millis)
           )
           checkStream2 <- cache
             .describeStreamSummary(describeReq, context)

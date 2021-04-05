@@ -31,7 +31,7 @@ class DeleteStreamTests
           _ <- cache
             .createStream(CreateStreamRequest(1, streamName), context)
             .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(100.millis))
+          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           res <- cache
             .deleteStream(
               DeleteStreamRequest(streamName, None),
@@ -43,7 +43,7 @@ class DeleteStreamTests
             describeStreamSummaryReq,
             context
           )
-          _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(100.millis))
+          _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
           checkStream2 <- cache.describeStreamSummary(
             describeStreamSummaryReq,
             context
