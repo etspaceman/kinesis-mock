@@ -33,7 +33,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
   override val munitTimeout = 1.minute
-  
+
   val kclFixture = ResourceFixture(
     resource.flatMap { resources =>
       for {
