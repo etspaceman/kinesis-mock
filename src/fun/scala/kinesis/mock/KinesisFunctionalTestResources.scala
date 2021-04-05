@@ -8,5 +8,6 @@ import kinesis.mock.models.StreamName
 case class KinesisFunctionalTestResources(
     kinesisClient: KinesisAsyncClient,
     cacheConfig: CacheConfig,
-    streamName: StreamName
+    streamName: StreamName,
+    testConfig: FunctionalTestConfig
 )

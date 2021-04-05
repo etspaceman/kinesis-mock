@@ -44,6 +44,7 @@ lazy val kinesisMock = project
       Refined.scalacheck % Test,
       ScalacheckGenRegexp % Test,
       Aws.kinesis % FunctionalTest,
+      Aws.kpl % FunctionalTest,
       CatsRetry % FunctionalTest
     ),
     semanticdbEnabled := true,

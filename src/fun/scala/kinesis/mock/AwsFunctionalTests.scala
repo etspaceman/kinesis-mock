@@ -34,79 +34,88 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       .builder()
       .buildWithDefaults(trustAllCertificates)
 
+  val resource = for {
+    blocker <- Blocker[IO]
+    testConfig <- Resource.eval(FunctionalTestConfig.read(blocker))
+    kinesisClient <- Resource
+      .fromAutoCloseable {
+        val protocol =
+          if (testConfig.servicePort == 4568) "http" else "https"
+        IO(
+          KinesisAsyncClient
+            .builder()
+            .httpClient(nettyClient)
+            .region(Region.US_EAST_1)
+            .credentialsProvider(AwsCreds.LocalCreds)
+            .endpointOverride(
+              URI.create(s"$protocol://localhost:${testConfig.servicePort}")
+            )
+            .build()
+        )
+      }
+    cacheConfig <- Resource.eval(CacheConfig.read(blocker))
+    res <- Resource.eval(
+      IO(streamNameGen.one).map(streamName =>
+        KinesisFunctionalTestResources(
+          kinesisClient,
+          cacheConfig,
+          streamName,
+          testConfig
+        )
+      )
+    )
+  } yield res
+
+  def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- resources.kinesisClient
+      .createStream(
+        CreateStreamRequest
+          .builder()
+          .streamName(resources.streamName.streamName)
+          .shardCount(1)
+          .build()
+      )
+      .toIO
+    _ <- IO.sleep(
+      resources.cacheConfig.createStreamDuration.plus(100.millis)
+    )
+    streamSummary <- describeStreamSummary(resources)
+    res <- IO.raiseWhen(
+      streamSummary
+        .streamDescriptionSummary()
+        .streamStatus() != StreamStatus.ACTIVE
+    )(
+      new RuntimeException(s"StreamStatus was not active: $streamSummary")
+    )
+  } yield res
+
+  def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- resources.kinesisClient
+      .deleteStream(
+        DeleteStreamRequest
+          .builder()
+          .streamName(resources.streamName.streamName)
+          .build()
+      )
+      .toIO
+    _ <- IO.sleep(
+      resources.cacheConfig.deleteStreamDuration.plus(100.millis)
+    )
+    streamSummary <- describeStreamSummary(resources).attempt
+    res <- IO.raiseWhen(
+      streamSummary.isRight
+    )(
+      new RuntimeException(
+        s"StreamSummary unexpectedly succeeded: $streamSummary"
+      )
+    )
+  } yield res
+
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
     ResourceFixture(
-      Blocker[IO].flatMap(blocker =>
-        Resource
-          .fromAutoCloseable(
-            FunctionalTestConfig
-              .read(blocker)
-              .map { config =>
-                val protocol =
-                  if (config.servicePort == 4568) "http" else "https"
-                KinesisAsyncClient
-                  .builder()
-                  .httpClient(nettyClient)
-                  .region(Region.US_EAST_1)
-                  .credentialsProvider(AwsCreds.LocalCreds)
-                  .endpointOverride(
-                    URI.create(s"$protocol://localhost:${config.servicePort}")
-                  )
-                  .build()
-              }
-          )
-          .parZip(Blocker[IO].evalMap(CacheConfig.read))
-          .evalMap { case (client, config) =>
-            IO(streamNameGen.one).map(streamName =>
-              KinesisFunctionalTestResources(client, config, streamName)
-            )
-          }
-      ),
-      (_, resources) =>
-        for {
-          _ <- resources.kinesisClient
-            .createStream(
-              CreateStreamRequest
-                .builder()
-                .streamName(resources.streamName.streamName)
-                .shardCount(1)
-                .build()
-            )
-            .toIO
-          _ <- IO.sleep(
-            resources.cacheConfig.createStreamDuration.plus(100.millis)
-          )
-          streamSummary <- describeStreamSummary(resources)
-          res <- IO.raiseWhen(
-            streamSummary
-              .streamDescriptionSummary()
-              .streamStatus() != StreamStatus.ACTIVE
-          )(
-            new RuntimeException(s"StreamStatus was not active: $streamSummary")
-          )
-        } yield res,
-      resources =>
-        for {
-          _ <- resources.kinesisClient
-            .deleteStream(
-              DeleteStreamRequest
-                .builder()
-                .streamName(resources.streamName.streamName)
-                .build()
-            )
-            .toIO
-          _ <- IO.sleep(
-            resources.cacheConfig.deleteStreamDuration.plus(100.millis)
-          )
-          streamSummary <- describeStreamSummary(resources).attempt
-          res <- IO.raiseWhen(
-            streamSummary.isRight
-          )(
-            new RuntimeException(
-              s"StreamSummary unexpectedly succeeded: $streamSummary"
-            )
-          )
-        } yield res
+      resource,
+      (_, resources) => setup(resources),
+      teardown
     )
 
   def describeStreamSummary(

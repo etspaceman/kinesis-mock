@@ -36,9 +36,29 @@ class ListStreamConsumersTests
         )
         .toIO
     } yield assert(
-      res.consumers().asScala.toList.sortBy(_.consumerName()) == registerRes
+      res
+        .consumers()
+        .asScala
+        .toList
+        .sortBy(_.consumerName())
+        .map(x =>
+          models.Consumer(
+            x.consumerARN(),
+            x.consumerCreationTimestamp(),
+            models.ConsumerName(x.consumerName()),
+            models.ConsumerStatus.withName(x.consumerStatusAsString())
+          )
+        ) === registerRes
         .map(_.consumer())
-        .sortBy(_.consumerName()),
+        .sortBy(_.consumerName())
+        .map(x =>
+          models.Consumer(
+            x.consumerARN(),
+            x.consumerCreationTimestamp(),
+            models.ConsumerName(x.consumerName()),
+            models.ConsumerStatus.withName(x.consumerStatusAsString())
+          )
+        ),
       s"$res\n$registerRes"
     )
   }
