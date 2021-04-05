@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 import java.net.URI
 
 import cats.effect.{Blocker, IO, Resource, SyncIO}
+import cats.syntax.all._
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
@@ -29,7 +30,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .build()
 
-  private def nettyClient: SdkAsyncHttpClient =
+  def nettyClient: SdkAsyncHttpClient =
     NettyNioAsyncHttpClient
       .builder()
       .buildWithDefaults(trustAllCertificates)
@@ -37,10 +38,9 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
     blocker <- Blocker[IO]
     testConfig <- Resource.eval(FunctionalTestConfig.read(blocker))
+    protocol = if (testConfig.servicePort == 4568) "http" else "https"
     kinesisClient <- Resource
       .fromAutoCloseable {
-        val protocol =
-          if (testConfig.servicePort == 4568) "http" else "https"
         IO(
           KinesisAsyncClient
             .builder()
@@ -54,16 +54,19 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
         )
       }
     cacheConfig <- Resource.eval(CacheConfig.read(blocker))
-    res <- Resource.eval(
-      IO(streamNameGen.one).map(streamName =>
-        KinesisFunctionalTestResources(
-          kinesisClient,
-          cacheConfig,
-          streamName,
-          testConfig
+    res <- Resource.make(
+      IO(streamNameGen.one)
+        .map(streamName =>
+          KinesisFunctionalTestResources(
+            kinesisClient,
+            cacheConfig,
+            streamName,
+            testConfig,
+            protocol
+          )
         )
-      )
-    )
+        .flatTap(setup)
+    )(teardown)
   } yield res
 
   def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
@@ -112,11 +115,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   } yield res
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
-    ResourceFixture(
-      resource,
-      (_, resources) => setup(resources),
-      teardown
-    )
+    ResourceFixture(resource)
 
   def describeStreamSummary(
       resources: KinesisFunctionalTestResources

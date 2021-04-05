@@ -45,6 +45,7 @@ lazy val kinesisMock = project
       ScalacheckGenRegexp % Test,
       Aws.kinesis % FunctionalTest,
       Aws.kpl % FunctionalTest,
+      Aws.kcl % FunctionalTest,
       CatsRetry % FunctionalTest
     ),
     semanticdbEnabled := true,
@@ -52,16 +53,16 @@ lazy val kinesisMock = project
     ThisBuild / scalafixDependencies += OrganizeImports,
     javacOptions += "-XDignore.symbol.file",
     scalacOptions ++= ScalacSettings.settings,
-    scalacOptions in (Compile, console) ~= {
+    Compile / console / scalacOptions ~= {
       _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
     },
     addCompilerPlugin(KindProjector cross CrossVersion.full),
     addCompilerPlugin(BetterMonadicFor),
     testFrameworks += MUnitFramework,
-    testOptions.in(Test) ++= {
+    Test / testOptions ++= {
       List(Tests.Argument(MUnitFramework, "+l"))
     },
-    test in assembly := {}
+    assembly / test := {}
   )
   .configs(FunctionalTest)
   .settings(
@@ -79,19 +80,22 @@ lazy val kinesisMock = project
   .settings(DockerComposePlugin.settings(FunctionalTest))
   .settings(
     Seq(
-      addCommandAlias("cpl", ";test:compile;fun:compile"),
+      addCommandAlias("cpl", ";Test / compile;Fun / compile"),
       addCommandAlias(
         "fixCheck",
-        ";compile:scalafix --check;test:scalafix --check;fun:scalafix --check"
+        ";Compile / scalafix --check;Test / scalafix --check;Fun / scalafix --check"
       ),
-      addCommandAlias("fix", ";compile:scalafix;test:scalafix;fun:scalafix"),
+      addCommandAlias(
+        "fix",
+        ";Compile / scalafix;Test / scalafix;Fun / scalafix"
+      ),
       addCommandAlias(
         "fmt",
-        ";compile:scalafmt;fun:scalafmt;scalafmtSbt"
+        ";Compile / scalafmt;Test / scalafmt;Fun / scalafmt;scalafmtSbt"
       ),
       addCommandAlias(
         "fmtCheck",
-        ";compile:scalafmtCheck;fun:scalafmtCheck;scalafmtSbtCheck"
+        ";Compile / scalafmtCheck;Test / scalafmtCheck;Fun / scalafmtCheck;scalafmtSbtCheck"
       ),
       addCommandAlias(
         "pretty",

@@ -9,5 +9,6 @@ case class KinesisFunctionalTestResources(
     kinesisClient: KinesisAsyncClient,
     cacheConfig: CacheConfig,
     streamName: StreamName,
-    testConfig: FunctionalTestConfig
+    testConfig: FunctionalTestConfig,
+    httpProtocol: String
 )

@@ -35,9 +35,7 @@ class KPLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           )
         )(x => IO(x.flushSync()) *> IO(x.destroy()))
         .map(kpl => KPLResources(resources, kpl))
-    },
-    (_, resources: KPLResources) => setup(resources.functionalTestResources),
-    (resources: KPLResources) => teardown(resources.functionalTestResources)
+    }
   )
 
   kplFixture.test("it should produce records") { resources =>

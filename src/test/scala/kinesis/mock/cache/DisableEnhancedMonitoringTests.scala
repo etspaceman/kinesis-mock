@@ -58,7 +58,8 @@ class DisableEnhancedMonitoringTests
                 .flatMap(_.shardLevelMetrics)
             )
         } yield assert(
-          res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics.contains(ShardLevelMetric.IncomingBytes)
+          res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
+            .contains(ShardLevelMetric.IncomingBytes)
         )
       )
   })
