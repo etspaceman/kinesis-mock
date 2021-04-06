@@ -8,7 +8,7 @@ object KinesisMockQueryParams {
   val amazonAuthSignature = "X-Amz-Signature"
   val amazonAuthSignedHeaders = "X-Amz-SignedHeaders"
   val amazonDateQuery = "X-Amz-Date"
-  val action = "Action"
+  val amazonAction = "Action"
 
   object AmazonAuthAlgorithm
       extends OptionalQueryParamDecoderMatcher[String](amazonAuthAlgorithm)
@@ -25,5 +25,6 @@ object KinesisMockQueryParams {
   object AmazonDate
       extends OptionalQueryParamDecoderMatcher[String](amazonDateQuery)
 
-  object Action extends OptionalQueryParamDecoderMatcher[KinesisAction](action)
+  object Action
+      extends OptionalQueryParamDecoderMatcher[KinesisAction](amazonAction)
 }

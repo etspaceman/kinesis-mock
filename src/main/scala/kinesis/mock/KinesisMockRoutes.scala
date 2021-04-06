@@ -50,6 +50,19 @@ class KinesisMockRoutes(cache: Cache)(implicit
           h.name.value -> h.value
         }).context)(
           "Logging input headers"
+        ) *>
+        logger.trace(
+          (initLc ++
+            queryAuthAlgorith.map(x => amazonAuthAlgorithm -> x).toList ++
+            queryAuthCredential.map(x => amazonAuthCredential -> x).toList ++
+            queryAuthSignature.map(x => amazonAuthSignature -> x).toList ++
+            queryAuthSignedHeaders
+              .map(x => amazonAuthSignedHeaders -> x)
+              .toList ++
+            queryAmazonDate.map(x => amazonDateQuery -> x).toList ++
+            queryAction.map(x => amazonAction -> x.entryName).toList).context
+        )(
+          "Logging input query params"
         ) *> {
 
           val requestIdHeader = Header(
@@ -277,18 +290,26 @@ class KinesisMockRoutes(cache: Cache)(implicit
                   ) *> {
 
                   val missing = List(
-                    queryAuthSignature.as(
-                      s"AWS query-string parameters must include \\$amazonAuthSignature\\."
-                    ),
-                    queryAuthCredential.as(
-                      s"AWS query-string parameters must include \\$amazonAuthCredential\\."
-                    ),
-                    queryAuthSignedHeaders.as(
-                      s"AWS query-string parameters must include \\$amazonAuthSignedHeaders\\."
-                    ),
-                    queryAmazonDate.as(
-                      s"AWS query-string parameters must include \\$amazonDate\\."
-                    )
+                    queryAuthSignature.fold[Option[String]](
+                      Some(
+                        s"AWS query-string parameters must include \\$amazonAuthSignature\\."
+                      )
+                    )(_ => None),
+                    queryAuthCredential.fold[Option[String]](
+                      Some(
+                        s"AWS query-string parameters must include \\$amazonAuthCredential\\."
+                      )
+                    )(_ => None),
+                    queryAuthSignedHeaders.fold[Option[String]](
+                      Some(
+                        s"AWS query-string parameters must include \\$amazonAuthSignedHeaders\\."
+                      )
+                    )(_ => None),
+                    queryAmazonDate.fold[Option[String]](
+                      Some(
+                        s"AWS query-string parameters must include \\$amazonDate\\."
+                      )
+                    )(_ => None)
                   ).flatMap {
                     case Some(msg) => List(msg)
                     case None      => List.empty
