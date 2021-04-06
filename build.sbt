@@ -107,7 +107,7 @@ lazy val kinesisMock = project
       ),
       addCommandAlias(
         "cov",
-        ";clean;coverage;test;coverageReport"
+        ";clean;coverage;test;coverageReport;coverageOff"
       ),
       addCommandAlias(
         "validate",
