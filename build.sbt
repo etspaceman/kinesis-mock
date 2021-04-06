@@ -106,8 +106,12 @@ lazy val kinesisMock = project
         ";fixCheck;fmtCheck"
       ),
       addCommandAlias(
+        "cov",
+        ";clean;coverage;test;coverageReport;coverageOff"
+      ),
+      addCommandAlias(
         "validate",
-        ";cpl;prettyCheck;test;fun:dockerComposeTestQuick"
+        ";cov;Fun / dockerComposeTestQuick;prettyCheck"
       )
     ).flatten
   )

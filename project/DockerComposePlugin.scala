@@ -40,7 +40,7 @@ object DockerComposePlugin extends AutoPlugin {
       val res = Process(
         cmd,
         None,
-        "DOCKER_TAG_VERSION" -> (version in ThisBuild).value,
+        "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
         "DOCKER_NET_NAME" -> networkName.value,
         "COMPOSE_PROJECT_NAME" -> composeProjectName.value
       ).!
@@ -64,7 +64,7 @@ object DockerComposePlugin extends AutoPlugin {
     val res = Process(
       cmd,
       None,
-      "DOCKER_TAG_VERSION" -> (version in ThisBuild).value,
+      "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
       "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
@@ -79,7 +79,7 @@ object DockerComposePlugin extends AutoPlugin {
     val res = Process(
       cmd,
       None,
-      "DOCKER_TAG_VERSION" -> (version in ThisBuild).value,
+      "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
       "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
@@ -102,7 +102,7 @@ object DockerComposePlugin extends AutoPlugin {
     val res = Process(
       cmd,
       None,
-      "DOCKER_TAG_VERSION" -> (version in ThisBuild).value,
+      "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
       "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
@@ -115,7 +115,7 @@ object DockerComposePlugin extends AutoPlugin {
   ): Def.Initialize[Task[Unit]] =
     Def.sequential(
       dockerComposeUp,
-      test in configuration,
+      configuration / test,
       dockerComposeDown
     )
 
