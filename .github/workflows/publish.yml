@@ -1,0 +1,35 @@
+name: Publish Artifacts and Docker Image
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Push Docker image to Container Registry
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Set up JDK 1.11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.11
+    - name: Build docker image
+      run: sbt packageAndBuildDockerImage
+    - name: Login to registry
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+    - name: Push to registry
+      run: ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}
+    - name: Upload JAR To Release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./docker/image/lib/kinesis-mock.jar
+        asset_name: kinesis-mock.jar
+        asset_content_type: application/java-archive
