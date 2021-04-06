@@ -41,7 +41,7 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.4.2"
+    val catsVersion = "2.5.0"
     val catsEffectVersion = "2.4.0"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
