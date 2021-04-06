@@ -1,11 +1,14 @@
 # Kinesis Mock
 
+- [Kinesis Mock](#kinesis-mock)
 - [Overview](#overview)
 - [Starting the service](#starting-the-service)
+- [Service Configuration](#service-configuration)
 - [Usage](#usage)
   * [Configuring AWS SDK Kinesis Client](#configuring-aws-sdk-kinesis-client)
   * [Configuring the KPL](#configuring-the-kpl)
   * [Configuring the KCL](#configuring-the-kcl)
+- [Known issues](#known-issues)
 
 # Overview
 
@@ -25,6 +28,28 @@ You can also leverage the `kinesis-mock.jar` executable in the release assets:
 ```shell
 java -jar ./kinesis-mock.jar
 ```
+
+# Service Configuration
+
+Below is the available configuration for the service. Note that it is not recommended to edit the ports in the docker environment (rather you can map
+these ports to a local one).
+
+| Variable | Data Type | Default Value | Notes |
+| -------- | --------- | ------------- | ----- |
+| KINESIS_MOCK_HTTP2_PORT | Int | 4567 | Https Only |
+| KINESIS_MOCK_HTTP1_PLAIN_PORT | Int | 4568 | Http Only |
+| CREATE_STREAM_DURATION | Duration | 500ms | |
+| DELETE_STREAM_DURATION | Duration | 500ms | |
+| REGISTER_STREAM_CONSUMER_DURATION | Duration | 500ms | |
+| START_STREAM_ENCRYPTION_DURATION | Duration | 500ms | |
+| STOP_STREAM_ENCRYPTION_DURATION | Duration | 500ms | |
+| DEREGISTER_STREAM_CONSUMER_DURATION | Duration | 500ms | |
+| MERGE_SHARDS_DURATION | Duration | 500ms | |
+| SPLIT_SHARD_DURATION | Duration | 500ms | |
+| UPDATE_SHARD_COUNT_DURATION | Duration | 500ms | |
+| SHARD_LIMIT | Int | 50 | |
+| AWS_ACCOUNT_ID | String | "000000000000" | |
+| AWS_REGION | String | "us-east-1" | |
 
 # Usage
 
@@ -253,5 +278,6 @@ object MyApp {
 }
 ```
 
-
-
+# Known issues
+- Does not currently support Http2 requests (https://github.com/http4s/http4s/issues/4707)
+- Does not currently support SubscribeToShard due to lack of push-promise support (https://github.com/http4s/http4s/issues/4624)
