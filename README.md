@@ -4,7 +4,7 @@
 - [Starting the service](#starting-the-service)
 - [Usage](#usage)
   * [Configuring AWS SDK Kinesis Client](#configuring-aws-sdk-kinesis-client)
-  * [Configuring the KPL:](#configuring-the-kpl-)
+  * [Configuring the KPL](#configuring-the-kpl)
   * [Configuring the KCL](#configuring-the-kcl)
 
 # Overview
