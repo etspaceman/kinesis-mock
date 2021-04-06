@@ -89,7 +89,7 @@ object MyApp {
 }
 ```
 
-## Configuring the KPL:
+## Configuring the KPL
 ```scala
 import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider}
 
