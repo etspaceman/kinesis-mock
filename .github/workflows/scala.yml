@@ -24,3 +24,5 @@ jobs:
       env:
         CBOR_ENABLED: ${{ matrix.cbor_enabled }}
         SERVICE_PORT: ${{ matrix.service_port }}
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1
