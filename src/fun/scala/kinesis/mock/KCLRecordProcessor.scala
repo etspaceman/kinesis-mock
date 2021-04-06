@@ -6,17 +6,8 @@ import cats.effect.IO
 import cats.syntax.all._
 import fs2.concurrent.InspectableQueue
 import software.amazon.kinesis.common.StreamIdentifier
-import software.amazon.kinesis.lifecycle.events.{
-  InitializationInput,
-  LeaseLostInput,
-  ProcessRecordsInput,
-  ShardEndedInput,
-  ShutdownRequestedInput
-}
-import software.amazon.kinesis.processor.{
-  ShardRecordProcessor,
-  ShardRecordProcessorFactory
-}
+import software.amazon.kinesis.lifecycle.events._
+import software.amazon.kinesis.processor._
 import software.amazon.kinesis.retrieval.KinesisClientRecord
 
 case class KCLRecordProcessor(
