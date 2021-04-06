@@ -32,7 +32,7 @@ object DockerImagePlugin extends AutoPlugin {
 
   val packageAndBuildDockerImageTask: Def.Initialize[Task[Unit]] =
     buildDockerImageTask
-      .dependsOn(assembly in Compile)
+      .dependsOn(Compile / assembly)
 
   val pushDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
@@ -49,13 +49,13 @@ object DockerImagePlugin extends AutoPlugin {
       buildDockerImage := buildDockerImageTask.value,
       packageAndBuildDockerImage := packageAndBuildDockerImageTask.value,
       pushDockerImage := pushDockerImageTask.value,
-      imageTag := (version in ThisBuild).value,
+      imageTag := (ThisBuild / version).value,
       dockerRepository := "ghcr.io",
       dockerNamespace := "etspaceman",
       jarLocation := "docker/image/lib/",
       dockerfileLocation := "docker/",
       dockerfile := "Dockerfile",
-      assemblyOutputPath in assembly := file(
+      assembly / assemblyOutputPath := file(
         s"${jarLocation.value + name.value}.jar"
       )
     )
