@@ -13,21 +13,21 @@ object LibraryDependencies {
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.0"
 
   object Borer {
-    val borerVersion = "1.6.3"
+    val borerVersion = "1.7.0"
     val core = "io.bullet" %% "borer-core" % borerVersion
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
 
   object Log4Cats {
-    val log4CatsVersion = "1.2.1"
+    val log4CatsVersion = "1.2.2"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
   object Munit {
-    val munitVersion = "0.7.22"
+    val munitVersion = "0.7.23"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "0.13.0"
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.1"
     val scalacheckEffect =
       "org.typelevel" %% "scalacheck-effect-munit" % "0.7.1"
   }
@@ -41,14 +41,14 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.4.2"
+    val catsVersion = "2.5.0"
     val catsEffectVersion = "2.4.1"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "0.21.21"
+    val http4sVersion = "0.21.22"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
@@ -87,7 +87,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.21"
+    val refinedVersion = "0.9.23"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
