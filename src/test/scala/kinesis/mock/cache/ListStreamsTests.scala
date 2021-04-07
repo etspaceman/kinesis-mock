@@ -1,6 +1,6 @@
 package kinesis.mock.cache
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Gen
 
@@ -8,10 +8,11 @@ import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.scalacheck._
+import cats.effect.Resource
 
 class ListStreamsTests extends munit.CatsEffectSuite {
   test("It should list streams")(
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
