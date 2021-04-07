@@ -4,6 +4,7 @@ import cats.effect.{Blocker, IO}
 import org.http4s._
 import org.http4s.headers._
 import org.http4s.syntax.kleisli._
+import org.http4s.util.CaseInsensitiveString
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.api.CreateStreamRequest
@@ -11,7 +12,6 @@ import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.StreamName
-import org.http4s.util.CaseInsensitiveString
 
 class KinesisMockServiceTests
     extends munit.CatsEffectSuite
@@ -704,8 +704,8 @@ class KinesisMockServiceTests
             )
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
-              KinesisMockMediaTypes.amazonCbor
-            ).toEntity(CreateStreamRequest(1, StreamName(""))).body
+            KinesisMockMediaTypes.amazonCbor
+          ).toEntity(CreateStreamRequest(1, StreamName(""))).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)

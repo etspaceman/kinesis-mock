@@ -446,7 +446,7 @@ object KinesisMockRoutes {
       ErrorResponse(err.getClass.getName, err.getMessage),
       responseHeaders: _*
     )
-  
+
   // We turn coverage off here because we have functional tests for all of these
   // API calls (which aren't included in the coverage report)
   // $COVERAGE-OFF$
@@ -885,5 +885,5 @@ object KinesisMockRoutes {
                 )
           )
     }
-    // $COVERAGE-ON$
+  // $COVERAGE-ON$
 }
