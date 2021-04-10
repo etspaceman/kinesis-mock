@@ -4,7 +4,7 @@ import scala.concurrent.duration._
 
 import java.net.URI
 
-import cats.effect.{Blocker, IO, Resource, SyncIO}
+import cats.effect.{IO, Resource, SyncIO}
 import cats.syntax.all._
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
@@ -36,7 +36,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       .buildWithDefaults(trustAllCertificates)
 
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
-    blocker <- Blocker[IO]
+    blocker <- Resource.unit[IO]
     testConfig <- Resource.eval(FunctionalTestConfig.read(blocker))
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
     kinesisClient <- Resource

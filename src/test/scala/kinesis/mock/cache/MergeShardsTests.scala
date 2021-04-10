@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -11,6 +11,7 @@ import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
+import cats.effect.Resource
 
 class MergeShardsTests
     extends munit.CatsEffectSuite
@@ -23,7 +24,7 @@ class MergeShardsTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
