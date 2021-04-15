@@ -48,7 +48,7 @@ class DescribeStreamTests
               context
             )
             .rethrow
-            .map(x => x.shards.map(ShardSummary.fromShard))
+            .map(x => x.shards)
           expected = StreamDescription(
             Some(EncryptionType.NONE),
             List(ShardLevelMetrics(List.empty)),

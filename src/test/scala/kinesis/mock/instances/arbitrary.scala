@@ -181,6 +181,9 @@ object arbitrary {
     shard
   )
 
+  def shardSummaryGen(shardIndex: Int): Gen[ShardSummary] =
+    shardGen(shardIndex).map(ShardSummary.fromShard)
+
   implicit val shardArbitrary: Arbitrary[Shard] = Arbitrary(
     Gen.choose(100, 1000).flatMap(index => shardGen(index))
   )
@@ -610,8 +613,8 @@ object arbitrary {
   implicit val listShardsResponseArb: Arbitrary[ListShardsResponse] = Arbitrary(
     for {
       nextToken <- Gen.option(nextTokenGen(None))
-      shards <- Gen.sequence[List[Shard], Shard](
-        List.range(0, 100).map(x => shardGen(x))
+      shards <- Gen.sequence[List[ShardSummary], ShardSummary](
+        List.range(0, 100).map(x => shardSummaryGen(x))
       )
     } yield ListShardsResponse(nextToken, shards)
   )
