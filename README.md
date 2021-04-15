@@ -230,7 +230,7 @@ object MyApp {
       .httpClient(nettyClient)
       .region(Region.US_EAST_1)
       .credentialsProvider(AwsCreds.LocalCreds)
-      .endpointOverride(URI.create(s"https://localhost:8000")) // dynamodb-local port
+      .endpointOverride(URI.create(s"http://localhost:8000")) // dynamodb-local port
       .build()
     
   object KCLRecordProcessor extends ShardRecordProcessor {
