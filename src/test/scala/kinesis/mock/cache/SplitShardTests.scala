@@ -48,7 +48,7 @@ class SplitShardTests
             .splitShard(
               SplitShardRequest(
                 (shardToSplit.hashKeyRange.endingHashKey / BigInt(2)).toString,
-                shardToSplit.shardId.shardId,
+                shardToSplit.shardId,
                 streamName
               ),
               context
@@ -68,7 +68,7 @@ class SplitShardTests
             checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
             checkShards.shards.count(!_.isOpen) == 1 &&
             checkShards.shards.count(shard =>
-              shard.parentShardId.contains(shardToSplit.shardId.shardId)
+              shard.parentShardId.contains(shardToSplit.shardId)
             ) == 2 && checkShards.shards.length == 7,
           s"${checkShards.shards.mkString("\n\t")}\n" +
             s"$checkStream1\n" +

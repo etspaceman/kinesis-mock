@@ -64,7 +64,7 @@ final case class ListShardsRequest(
                     ListShardsRequest
                       .createNextToken(streamName, shards.last.shardId.shardId)
                   )
-              ListShardsResponse(nextToken, shards)
+              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           }
       case (_, None, _, _, Some(sName)) =>
@@ -150,7 +150,7 @@ final case class ListShardsRequest(
                     ListShardsRequest
                       .createNextToken(sName, shards.last.shardId.shardId)
                   )
-              ListShardsResponse(nextToken, shards)
+              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           )
       case (_, None, _, _, None) =>
