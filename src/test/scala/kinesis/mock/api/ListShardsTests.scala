@@ -25,7 +25,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList == response.shards
+          s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\nres: $res"
   })
@@ -50,11 +50,15 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && paginatedRes.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.take(50) == response.shards
+          s.shards.keys.toList
+            .take(50)
+            .map(ShardSummary.fromShard) == response.shards
         }
       } && paginatedRes.exists { response =>
         streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(50) == response.shards
+          s.shards.keys.toList
+            .takeRight(50)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"resCount: ${res.map(_.shards.length)}\n" +
@@ -86,7 +90,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(89) == response.shards
+          s.shards.keys.toList
+            .takeRight(89)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\nres: $res"
   })
@@ -130,7 +136,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
+          s.shards.keys.toList
+            .takeRight(95)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"res: ${res.map(_.shards.length)}\n" +
@@ -176,7 +184,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList == response.shards
+          s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"res: ${res.map(_.shards.length)}\n" +
@@ -225,7 +233,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
+          s.shards.keys.toList
+            .takeRight(95)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"res: ${res.map(_.shards.length)}\n" +
@@ -258,7 +268,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
+          s.shards.keys.toList
+            .takeRight(95)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"resLen: ${res.map(_.shards.length)}\n" +
@@ -327,7 +339,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
+          s.shards.keys.toList
+            .takeRight(95)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"res: ${res.map(_.shards.length)}\n" +
@@ -395,7 +409,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       (res.isValid && res.exists { response =>
         updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
+          s.shards.keys.toList
+            .takeRight(95)
+            .map(ShardSummary.fromShard) == response.shards
         }
       }) :| s"req: $req\n" +
         s"res: ${res.map(_.shards.length)}\n" +
