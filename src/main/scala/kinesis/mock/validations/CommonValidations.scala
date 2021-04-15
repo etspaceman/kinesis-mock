@@ -316,36 +316,40 @@ object CommonValidations {
       explicitHashKey: Option[String],
       stream: StreamData
   ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] = {
-    Try(
-      Md5Utils.computeMD5Hash(
-        explicitHashKey
-          .getOrElse(partitionKey)
-          .getBytes(StandardCharsets.US_ASCII)
-      )
-    ).toValidated
-      .leftMap(e =>
-        NonEmptyList.one(
-          InvalidArgumentException(
-            s"Could not compute MD5 hash, ${e.getMessage}"
-          )
-        )
-      )
-      .andThen { hashBytes =>
-        val hashInt = BigInt.apply(1, hashBytes)
-
-        stream.shards
-          .collectFirst {
-            case (shard, data)
-                if hashInt >= shard.hashKeyRange.startingHashKey && hashInt <= shard.hashKeyRange.endingHashKey =>
-              (shard, data)
-          } match {
-          case None =>
-            InvalidArgumentException(
-              "Could not find shard for partitionKey"
-            ).invalidNel
-          case Some(x) => Valid(x)
+    (explicitHashKey match {
+      case Some(ehk) =>
+        val hash = BigInt(ehk)
+        if (hash < Shard.minHashKey || hash > Shard.maxHashKey) {
+          InvalidArgumentException("ExplicitHashKey is not valid").invalidNel
+        } else {
+          hash.validNel
         }
+      case None =>
+        Try(
+          Md5Utils.computeMD5Hash(partitionKey.getBytes(StandardCharsets.UTF_8))
+        ).toValidated.bimap(
+          e =>
+            NonEmptyList.one(
+              InvalidArgumentException(
+                s"Could not compute MD5 hash, ${e.getMessage}"
+              )
+            ),
+          x => BigInt(1, x)
+        )
+    }).andThen { hashInt =>
+      stream.shards
+        .collectFirst {
+          case (shard, data)
+              if shard.isOpen && hashInt >= shard.hashKeyRange.startingHashKey && hashInt <= shard.hashKeyRange.endingHashKey =>
+            (shard, data)
+        } match {
+        case None =>
+          InvalidArgumentException(
+            "Could not find shard for partitionKey"
+          ).invalidNel
+        case Some(x) => Valid(x)
       }
+    }
   }
 
   def validateExplicitHashKey(

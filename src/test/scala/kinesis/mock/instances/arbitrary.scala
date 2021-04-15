@@ -690,7 +690,8 @@ object arbitrary {
     )
   )
 
-  val explicitHashKeyGen: Gen[String] = RegexpGen.from("0|([1-9]\\d{0,38})")
+  val explicitHashKeyGen: Gen[String] =
+    Gen.choose(Shard.minHashKey, Shard.maxHashKey).map(_.toString)
   val partitionKeyGen: Gen[String] =
     Gen.choose(1, 256).flatMap(size => Gen.stringOfN(size, Gen.alphaNumChar))
 
