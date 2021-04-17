@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -18,25 +19,32 @@ final case class RemoveTagsFromStreamRequest(
   // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
   // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
   def removeTagsFromStream(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, Streams] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap(streams =>
     CommonValidations
-      .findStream(streamName, streams)
-      .andThen(stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          CommonValidations.validateTagKeys(tagKeys), {
-            val numberOfTags = tagKeys.length
-            if (numberOfTags > 10)
-              InvalidArgumentException(
-                s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
-              ).invalidNel
-            else Valid(())
-          }
-        ).mapN((_, _, _) =>
-          streams.updateStream(stream.copy(tags = stream.tags -- tagKeys))
+      .validateStreamName(streamName)
+      .andThen(_ =>
+        CommonValidations
+          .findStream(streamName, streams)
+          .andThen(stream =>
+            (
+              CommonValidations.validateTagKeys(tagKeys), {
+                val numberOfTags = tagKeys.length
+                if (numberOfTags > 10)
+                  InvalidArgumentException(
+                    s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
+                  ).invalidNel
+                else Valid(())
+              }
+            ).mapN((_, _) => stream)
+          )
+      )
+      .traverse(stream =>
+        streamsRef.update(x =>
+          x.updateStream(stream.copy(tags = stream.tags -- tagKeys))
         )
       )
+  )
 }
 
 object RemoveTagsFromStreamRequest {

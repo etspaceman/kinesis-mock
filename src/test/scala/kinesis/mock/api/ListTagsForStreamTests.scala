@@ -3,16 +3,20 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListTagsForStreamTests extends munit.ScalaCheckSuite {
-  property("It should list tags")(forAll {
+class ListTagsForStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should list tags")(PropF.forAllF {
     (
         streamName: StreamName,
         tags: Tags,
@@ -25,16 +29,19 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val withTags =
         streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
 
-      val req =
-        ListTagsForStreamRequest(None, None, streamName)
-      val res = req.listTagsForStream(withTags)
-
-      (res.isValid && res.exists { response =>
-        tags == Tags.fromTagList(response.tags)
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withTags)
+        req = ListTagsForStreamRequest(None, None, streamName)
+        res <- req.listTagsForStream(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          tags == Tags.fromTagList(response.tags)
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should fliter the listing by exclusiveStartTagKey")(forAll {
+  test("It should fliter the listing by exclusiveStartTagKey")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -54,18 +61,25 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val withTags =
         streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
 
-      val req =
-        ListTagsForStreamRequest(Some(exclusiveStartTagKey), None, streamName)
-      val res = req.listTagsForStream(withTags)
-
-      (res.isValid && res.exists { response =>
-        tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
-          response.tags
+      for {
+        streamsRef <- Ref.of[IO, Streams](withTags)
+        req = ListTagsForStreamRequest(
+          Some(exclusiveStartTagKey),
+          None,
+          streamName
         )
-      }) :| s"req: $req\nres: $res"
+        res <- req.listTagsForStream(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
+            response.tags
+          )
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should limit the listing")(forAll {
+  test("It should limit the listing")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -83,14 +97,17 @@ class ListTagsForStreamTests extends munit.ScalaCheckSuite {
       val withTags =
         streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
 
-      val req =
-        ListTagsForStreamRequest(None, Some(5), streamName)
-      val res = req.listTagsForStream(withTags)
-
-      (res.isValid && res.exists { response =>
-        tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
-          response.tags
-        ) && response.hasMoreTags
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withTags)
+        req = ListTagsForStreamRequest(None, Some(5), streamName)
+        res <- req.listTagsForStream(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
+            response.tags
+          ) && response.hasMoreTags
+        },
+        s"req: $req\nres: $res"
+      )
   })
 }

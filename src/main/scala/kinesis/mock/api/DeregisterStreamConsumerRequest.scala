@@ -1,8 +1,8 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -17,58 +17,66 @@ final case class DeregisterStreamConsumerRequest(
     streamArn: Option[String]
 ) {
   private def deregister(
-      streams: Streams,
+      streamsRef: Ref[IO, Streams],
       consumer: Consumer,
       stream: StreamData
-  ): ValidatedNel[
-    KinesisMockException,
-    (Streams, Consumer)
-  ] = {
+  ): IO[Consumer] = {
     val newConsumer = consumer.copy(consumerStatus = ConsumerStatus.DELETING)
-    Valid(
-      (
-        streams.updateStream(
+
+    streamsRef
+      .update(x =>
+        x.updateStream(
           stream.copy(consumers =
             stream.consumers ++ List(consumer.consumerName -> newConsumer)
           )
-        ),
-        newConsumer
+        )
       )
-    )
+      .as(newConsumer)
   }
 
   def deregisterStreamConsumer(
-      streams: Streams
-  ): ValidatedNel[
-    KinesisMockException,
-    (Streams, Consumer)
-  ] = {
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[Consumer]] = streamsRef.get.flatMap { streams =>
     (consumerArn, consumerName, streamArn) match {
       case (Some(cArn), _, _) =>
-        CommonValidations.findStreamByConsumerArn(cArn, streams).andThen {
-          case (consumer, stream)
-              if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
-            deregister(streams, consumer, stream)
-          case _ =>
-            ResourceInUseException(
-              s"Consumer $consumerName is not in an ACTIVE state"
-            ).invalidNel
-        }
-      case (None, Some(cName), Some(sArn)) =>
-        CommonValidations.findStreamByArn(sArn, streams).andThen { stream =>
-          CommonValidations.findConsumer(cName, stream).andThen {
-            case consumer if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
-              deregister(streams, consumer, stream)
+        CommonValidations
+          .findStreamByConsumerArn(cArn, streams)
+          .andThen {
+            case (consumer, stream)
+                if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
+              (consumer, stream).validNel
             case _ =>
               ResourceInUseException(
                 s"Consumer $consumerName is not in an ACTIVE state"
               ).invalidNel
           }
-        }
+          .traverse { case (consumer, stream) =>
+            deregister(streamsRef, consumer, stream)
+          }
+      case (None, Some(cName), Some(sArn)) =>
+        CommonValidations
+          .findStreamByArn(sArn, streams)
+          .andThen { stream =>
+            CommonValidations.findConsumer(cName, stream).andThen {
+              case consumer
+                  if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
+                (consumer, stream).validNel
+              case _ =>
+                ResourceInUseException(
+                  s"Consumer $consumerName is not in an ACTIVE state"
+                ).invalidNel
+
+            }
+          }
+          .traverse { case (consumer, stream) =>
+            deregister(streamsRef, consumer, stream)
+          }
       case _ =>
-        InvalidArgumentException(
-          "ConsumerArn or both ConsumerName and StreamARN are required for this request."
-        ).invalidNel
+        IO(
+          InvalidArgumentException(
+            "ConsumerArn or both ConsumerName and StreamARN are required for this request."
+          ).invalidNel
+        )
     }
   }
 }

@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -17,28 +18,34 @@ final case class DescribeStreamRequest(
     streamName: StreamName
 ) {
   def describeStream(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, DescribeStreamResponse] =
-    CommonValidations
-      .findStream(streamName, streams)
-      .andThen(stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          exclusiveStartShardId match {
-            case Some(shardId) => CommonValidations.validateShardId(shardId)
-            case None          => Valid(())
-          },
-          limit match {
-            case Some(l) => CommonValidations.validateLimit(l)
-            case _       => Valid(())
-          }
-        ).mapN((_, _, _) =>
-          DescribeStreamResponse(
-            StreamDescription
-              .fromStreamData(stream, exclusiveStartShardId, limit)
-          )
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[DescribeStreamResponse]] =
+    streamsRef.get.map(streams =>
+      CommonValidations
+        .validateStreamName(streamName)
+        .andThen(_ =>
+          CommonValidations
+            .findStream(streamName, streams)
+            .andThen(stream =>
+              (
+                exclusiveStartShardId match {
+                  case Some(shardId) =>
+                    CommonValidations.validateShardId(shardId)
+                  case None => Valid(())
+                },
+                limit match {
+                  case Some(l) => CommonValidations.validateLimit(l)
+                  case _       => Valid(())
+                }
+              ).mapN((_, _) =>
+                DescribeStreamResponse(
+                  StreamDescription
+                    .fromStreamData(stream, exclusiveStartShardId, limit)
+                )
+              )
+            )
         )
-      )
+    )
 }
 
 object DescribeStreamRequest {

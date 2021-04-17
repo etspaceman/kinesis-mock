@@ -2,7 +2,7 @@ package kinesis.mock
 package api
 
 import cats.effect._
-import cats.effect.concurrent.Semaphore
+import cats.effect.concurrent.{Ref, Semaphore}
 import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
@@ -32,16 +32,20 @@ class PutRecordTests
       )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.putRecord(active, shardSemaphores)
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.putRecord(streamsRef, shardSemaphoresRef)
+        s <- streamsRef.get
       } yield assert(
-        res.isValid && res.exists { case (resultStreams, _) =>
-          resultStreams.streams.get(streamName).exists { stream =>
-            stream.shards.values.toList.flatten.exists { rec =>
-              rec.data.sameElements(initReq.data)
-            }
+        res.isValid && s.streams.get(streamName).exists { stream =>
+          stream.shards.values.toList.flatten.exists { rec =>
+            rec.data.sameElements(initReq.data)
           }
         },
         s"req: $req\nres: $res"
@@ -64,14 +68,16 @@ class PutRecordTests
         )
 
         for {
+          streamsRef <- Ref.of[IO, Streams](streams)
           shardSemaphores <- shardSemaphoreKeys
             .traverse(k => Semaphore[IO](1).map(s => k -> s))
             .map(_.toMap)
-          res <- req.putRecord(streams, shardSemaphores)
-        } yield assert(
-          res.isInvalid,
-          s"req: $req\nres: $res"
-        )
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+              shardSemaphores
+            )
+          res <- req.putRecord(streamsRef, shardSemaphoresRef)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
     }
   )
 
@@ -101,14 +107,16 @@ class PutRecordTests
         )
 
         for {
+          streamsRef <- Ref.of[IO, Streams](updated)
           shardSemaphores <- shardSemaphoreKeys
             .traverse(k => Semaphore[IO](1).map(s => k -> s))
             .map(_.toMap)
-          res <- req.putRecord(updated, shardSemaphores)
-        } yield assert(
-          res.isInvalid,
-          s"req: $req\nres: $res"
-        )
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+              shardSemaphores
+            )
+          res <- req.putRecord(streamsRef, shardSemaphoresRef)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
     }
   )
 }

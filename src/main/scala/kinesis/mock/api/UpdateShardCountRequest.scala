@@ -5,10 +5,10 @@ import scala.concurrent.duration._
 
 import java.time.Instant
 
+import cats.Parallel
 import cats.data.Validated._
-import cats.data._
-import cats.effect.IO
-import cats.effect.concurrent.Semaphore
+import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -23,58 +23,70 @@ final case class UpdateShardCountRequest(
     targetShardCount: Int
 ) {
   def updateShardCount(
-      streams: Streams,
-      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]],
+      streamsRef: Ref[IO, Streams],
+      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  ): IO[
-    ValidatedNel[KinesisMockException, (Streams, List[ShardSemaphoresKey])]
-  ] = {
-    val now = Instant.now()
-    CommonValidations
-      .findStream(streamName, streams)
-      .andThen { stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          CommonValidations.isStreamActive(streamName, streams),
-          if (targetShardCount > stream.shards.size * 2)
-            InvalidArgumentException(
-              "Cannot update shard count beyond 2x current shard count"
-            ).invalidNel
-          else if (targetShardCount < stream.shards.size / 2)
-            InvalidArgumentException(
-              "Cannot update shard count below 50% of the current shard count"
-            ).invalidNel
-          else if (targetShardCount > 10000)
-            InvalidArgumentException(
-              "Cannot scale a stream beyond 10000 shards"
-            ).invalidNel
-          else if (
-            streams.streams.values
-              .map(_.shards.size)
-              .sum + (targetShardCount - stream.shards.size) > shardLimit
-          )
-            LimitExceededException(
-              "Operation would result more shards than the configured shard limit for this account"
-            ).invalidNel
-          else Valid(targetShardCount),
-          if (
-            stream.shardCountUpdates.count(ts =>
-              ts.toEpochMilli > now.minusMillis(1.day.toMillis).toEpochMilli
-            ) >= 10
-          )
-            LimitExceededException(
-              "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
-            ).invalidNel
-          else Valid(())
-        ).mapN((_, _, _, _) => stream)
-      }
-      .traverse { stream =>
-        val shards = stream.shards
+  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[ValidatedResponse[Unit]] =
+    streamsRef.get.flatMap { streams =>
+      val now = Instant.now()
+      CommonValidations
+        .validateStreamName(streamName)
+        .andThen(_ =>
+          CommonValidations
+            .findStream(streamName, streams)
+            .andThen { stream =>
+              (
+                CommonValidations.isStreamActive(streamName, streams),
+                if (targetShardCount > stream.shards.size * 2)
+                  InvalidArgumentException(
+                    "Cannot update shard count beyond 2x current shard count"
+                  ).invalidNel
+                else if (targetShardCount < stream.shards.size / 2)
+                  InvalidArgumentException(
+                    "Cannot update shard count below 50% of the current shard count"
+                  ).invalidNel
+                else if (targetShardCount > 10000)
+                  InvalidArgumentException(
+                    "Cannot scale a stream beyond 10000 shards"
+                  ).invalidNel
+                else if (
+                  streams.streams.values
+                    .map(_.shards.size)
+                    .sum + (targetShardCount - stream.shards.size) > shardLimit
+                )
+                  LimitExceededException(
+                    "Operation would result more shards than the configured shard limit for this account"
+                  ).invalidNel
+                else Valid(targetShardCount),
+                if (
+                  stream.shardCountUpdates.count(ts =>
+                    ts.toEpochMilli > now
+                      .minusMillis(1.day.toMillis)
+                      .toEpochMilli
+                  ) >= 10
+                )
+                  LimitExceededException(
+                    "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
+                  ).invalidNel
+                else Valid(())
+              ).mapN((_, _, _) => stream)
+            }
+        )
+        .traverse { stream =>
+          shardSemaphoresRef.get.flatMap { shardSemaphores =>
+            val shards = stream.shards.toList
+            val semaphoreKeys = shards.map { case (shard, _) =>
+              ShardSemaphoresKey(streamName, shard)
+            }
+            val semaphores = shardSemaphores.toList.filter { case (key, _) =>
+              semaphoreKeys.contains(key)
+            }
 
-        shards.toList
-          .traverse { case (shard, data) =>
-            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit {
-              IO(
+            for {
+              _ <- semaphores.parTraverse { case (_, semaphore) =>
+                semaphore.acquire
+              }
+              oldShards = shards.map { case (shard, data) =>
                 (
                   shard.copy(
                     closedTimestamp = Some(now),
@@ -85,29 +97,33 @@ final case class UpdateShardCountRequest(
                   ),
                   data
                 )
+              }
+              newShards = Shard.newShards(
+                targetShardCount,
+                now,
+                oldShards.map(_._1.shardId.index).max + 1
               )
-            }
-          }
-          .map { oldShards =>
-            val newShards = Shard.newShards(
-              targetShardCount,
-              now,
-              oldShards.map(_._1.shardId.index).max + 1
-            )
-
-            (
-              streams.updateStream(
-                stream.copy(
-                  shards = newShards ++ oldShards,
-                  streamStatus = StreamStatus.UPDATING
+              _ <- streamsRef.update(x =>
+                x.updateStream(
+                  stream.copy(
+                    shards = newShards ++ oldShards,
+                    streamStatus = StreamStatus.UPDATING
+                  )
                 )
-              ),
-              newShards.keys.toList
-                .map(shard => ShardSemaphoresKey(streamName, shard))
-            )
+              )
+              newShardSemaphores <- newShards.keys.toList.traverse(shard =>
+                Semaphore[IO](1).map(semaphore =>
+                  ShardSemaphoresKey(streamName, shard) -> semaphore
+                )
+              )
+              _ <- shardSemaphoresRef.update(x => x ++ newShardSemaphores)
+              res <- semaphores.parTraverse_ { case (_, semaphore) =>
+                semaphore.release
+              }
+            } yield res
           }
-      }
-  }
+        }
+    }
 }
 
 object UpdateShardCountRequest {

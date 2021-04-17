@@ -6,7 +6,6 @@ import scala.util.{Success, Try}
 import java.time.Instant
 
 import cats.data.Validated._
-import cats.data._
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -22,7 +21,7 @@ final case class SequenceNumber(value: String) {
         SequenceNumber.shardEndNumber
     }
 
-  def parse: ValidatedNel[KinesisMockException, SequenceNumberParseResult] = {
+  def parse: ValidatedResponse[SequenceNumberParseResult] = {
     value match {
       case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
         Valid(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))

@@ -1,16 +1,20 @@
 package kinesis.mock
 package api
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 import org.scalacheck.{Arbitrary, Gen}
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamsTests extends munit.ScalaCheckSuite {
-  property("It should list streams")(forAll {
+class ListStreamsTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should list streams")(PropF.forAllF {
     (
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
@@ -30,15 +34,19 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
           streams.addStream(1, streamName, awsRegion, awsAccountId)._1
       }
 
-      val req = ListStreamsRequest(None, None)
-      val res = req.listStreams(streams)
-
-      (res.isValid && res.exists { response =>
-        streamNames == response.streamNames
-      }) :| s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListStreamsRequest(None, None)
+        res <- req.listStreams(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamNames == response.streamNames
+        },
+        s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
+      )
   })
 
-  property("It should filter by exclusiveStartStreamName")(forAll {
+  test("It should filter by exclusiveStartStreamName")(PropF.forAllF {
     (
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
@@ -60,15 +68,19 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
 
       val exclusiveStartStreamName = streamNames(3)
 
-      val req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
-      val res = req.listStreams(streams)
-
-      (res.isValid && res.exists { response =>
-        streamNames.takeRight(6) == response.streamNames
-      }) :| s"diff: ${res.map(r => streamNames.diff(r.streamNames))}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
+        res <- req.listStreams(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamNames.takeRight(6) == response.streamNames
+        },
+        s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
+      )
   })
 
-  property("It should limit properly")(forAll {
+  test("It should limit properly")(PropF.forAllF {
     (
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
@@ -88,12 +100,16 @@ class ListStreamsTests extends munit.ScalaCheckSuite {
           streams.addStream(1, streamName, awsRegion, awsAccountId)._1
       }
 
-      val req = ListStreamsRequest(None, Some(5))
-      val res = req.listStreams(streams)
-
-      (res.isValid && res.exists { response =>
-        streamNames.take(5) == response.streamNames &&
-        response.hasMoreStreams
-      }) :| s"diff: ${res.map(r => streamNames.diff(r.streamNames))}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListStreamsRequest(None, Some(5))
+        res <- req.listStreams(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamNames.take(5) == response.streamNames &&
+          response.hasMoreStreams
+        },
+        s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
+      )
   })
 }

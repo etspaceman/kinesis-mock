@@ -1,14 +1,18 @@
 package kinesis.mock
 package api
 
+import cats.effect.IO
+import cats.effect.concurrent.{Ref, Semaphore}
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class CreateStreamTests extends munit.ScalaCheckSuite {
-  property("It should create a stream")(forAll {
+class CreateStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should create a stream")(PropF.forAllF {
     (
         req: CreateStreamRequest,
         awsRegion: AwsRegion,
@@ -16,27 +20,48 @@ class CreateStreamTests extends munit.ScalaCheckSuite {
     ) =>
       val streams = Streams.empty
 
-      val res =
-        req.createStream(streams, req.shardCount, awsRegion, awsAccountId)
-
-      (res.isValid && res.exists { case (s, _) =>
-        s.streams.get(req.streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](Map.empty)
+        res <- req.createStream(
+          streamsRef,
+          shardSemaphoresRef,
+          req.shardCount,
+          awsRegion,
+          awsAccountId
+        )
+        s <- streamsRef.get
+        shardSemaphores <- shardSemaphoresRef.get
+      } yield assert(
+        res.isValid && s.streams.get(req.streamName).exists { stream =>
           stream.shards.size == req.shardCount
-        }
-      }) :| s"req: $req\nres: $res"
+        } && shardSemaphores.size == req.shardCount,
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if the shardCount exceeds the shardLimit")(forAll {
-    (
-        req: CreateStreamRequest,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
-    ) =>
-      val streams = Streams.empty
+  test("It should reject if the shardCount exceeds the shardLimit")(
+    PropF.forAllF {
+      (
+          req: CreateStreamRequest,
+          awsRegion: AwsRegion,
+          awsAccountId: AwsAccountId
+      ) =>
+        val streams = Streams.empty
 
-      val res =
-        req.createStream(streams, req.shardCount - 1, awsRegion, awsAccountId)
-
-      res.isInvalid :| s"req: $req\nres: $res"
-  })
+        for {
+          streamsRef <- Ref.of[IO, Streams](streams)
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](Map.empty)
+          res <- req.createStream(
+            streamsRef,
+            shardSemaphoresRef,
+            req.shardCount - 1,
+            awsRegion,
+            awsAccountId
+          )
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+    }
+  )
 }

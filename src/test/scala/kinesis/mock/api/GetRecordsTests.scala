@@ -3,16 +3,20 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class GetRecordsTests extends munit.ScalaCheckSuite {
-  property("It should get records")(forAll {
+class GetRecordsTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should get records")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -50,18 +54,22 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
         shard.sequenceNumberRange.startingSequenceNumber
       )
 
-      val req = GetRecordsRequest(None, shardIterator)
-      val res = req.getRecords(withRecords)
-
-      (res.isValid && res.exists { response =>
-        response.records === records
-      }) :| s"req: $req\n" +
-        s"resCount: ${res.map(_.records.length)}\n" +
-        s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
-        s"recHead: ${records.head}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        req = GetRecordsRequest(None, shardIterator)
+        res <- req.getRecords(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          response.records === records
+        },
+        s"req: $req\n" +
+          s"resCount: ${res.map(_.records.length)}\n" +
+          s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
+          s"recHead: ${records.head}"
+      )
   })
 
-  property("It should get records with a limit")(forAll {
+  test("It should get records with a limit")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -99,19 +107,22 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
         shard.sequenceNumberRange.startingSequenceNumber
       )
 
-      val req = GetRecordsRequest(Some(50), shardIterator)
-      val res = req.getRecords(withRecords)
-
-      (res.isValid && res.exists { response =>
-        response.records === records
-          .take(50)
-      }) :| s"req: $req\n" +
-        s"resCount: ${res.map(_.records.length)}\n" +
-        s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
-        s"recHead: ${records.head}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        req = GetRecordsRequest(Some(50), shardIterator)
+        res <- req.getRecords(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          response.records === records.take(50)
+        },
+        s"req: $req\n" +
+          s"resCount: ${res.map(_.records.length)}\n" +
+          s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
+          s"recHead: ${records.head}"
+      )
   })
 
-  property("It should get records using the new shard-iterator")(forAll {
+  test("It should get records using the new shard-iterator")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -149,32 +160,38 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
         shard.sequenceNumberRange.startingSequenceNumber
       )
 
-      val req1 = GetRecordsRequest(Some(50), shardIterator)
-      val res = req1.getRecords(withRecords).andThen { res1 =>
-        GetRecordsRequest(Some(50), res1.nextShardIterator)
-          .getRecords(withRecords)
-          .map(res2 => (res1, res2))
-      }
-
-      (res.isValid && res.exists { case (res1, res2) =>
-        res1.records === records
-          .take(50) && res2.records === records
-          .takeRight(50)
-      }) :|
-        s"res1Head: ${res.map { case (res1, _) => res1.records.head }.fold(_.toString, _.toString)}\n" +
-        s"recHead: ${records.head}\n" +
-        s"res2Head: ${res.map { case (_, res2) => res2.records.head }.fold(_.toString, _.toString)}\n" +
-        s"rec51: ${records(50)}\n" +
-        s"res2HeadInex: ${res
-          .map { case (_, res2) =>
-            records.indexWhere(_.partitionKey == res2.records.head.partitionKey)
-          }
-          .fold(_.toString, _.toString)}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        req1 = GetRecordsRequest(Some(50), shardIterator)
+        res1 <- req1.getRecords(streamsRef)
+        res2 <- res1
+          .traverse(r =>
+            GetRecordsRequest(Some(50), r.nextShardIterator)
+              .getRecords(streamsRef)
+          )
+          .map(_.andThen(identity))
+        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+      } yield assert(
+        res.isValid && res.exists { case (r1, r2) =>
+          r1.records === records
+            .take(50) && r2.records === records
+            .takeRight(50)
+        },
+        s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +
+          s"recHead: ${records.head}\n" +
+          s"res2Head: ${res.map { case (_, r2) => r2.records.head }.fold(_.toString, _.toString)}\n" +
+          s"rec51: ${records(50)}\n" +
+          s"res2HeadInex: ${res
+            .map { case (_, r2) =>
+              records.indexWhere(_.partitionKey == r2.records.head.partitionKey)
+            }
+            .fold(_.toString, _.toString)}"
+      )
   })
 
-  property(
+  test(
     "It should return an empty list using the new shard-iterator if the stream is exhausted"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -212,18 +229,24 @@ class GetRecordsTests extends munit.ScalaCheckSuite {
         shard.sequenceNumberRange.startingSequenceNumber
       )
 
-      val req1 = GetRecordsRequest(Some(50), shardIterator)
-      val res = req1.getRecords(withRecords).andThen { res1 =>
-        GetRecordsRequest(Some(50), res1.nextShardIterator)
-          .getRecords(withRecords)
-          .map(res2 => (res1, res2))
-      }
-
-      (res.isValid && res.exists { case (res1, res2) =>
-        res1.records === records
-          .take(50) && res2.records.isEmpty
-      }) :|
-        s"res1Head: ${res.map { case (res1, _) => res1.records.head }.fold(_.toString, _.toString)}\n" +
-        s"recHead: ${records.head}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        req1 = GetRecordsRequest(Some(50), shardIterator)
+        res1 <- req1.getRecords(streamsRef)
+        res2 <- res1
+          .traverse(r =>
+            GetRecordsRequest(Some(50), r.nextShardIterator)
+              .getRecords(streamsRef)
+          )
+          .map(_.andThen(identity))
+        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+      } yield assert(
+        res.isValid && res.exists { case (r1, r2) =>
+          r1.records === records
+            .take(50) && r2.records.isEmpty
+        },
+        s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +
+          s"recHead: ${records.head}"
+      )
   })
 }

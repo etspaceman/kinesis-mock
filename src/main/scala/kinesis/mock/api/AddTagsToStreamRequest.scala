@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -18,48 +19,56 @@ final case class AddTagsToStreamRequest(
     tags: Tags
 ) {
   def addTagsToStream(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, Streams] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap { streams =>
     CommonValidations
-      .findStream(streamName, streams)
-      .andThen(stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          CommonValidations.validateTagKeys(tags.tags.keys), {
-            val valuesTooLong = tags.tags.values.filter(x => x.length() > 255)
-            if (valuesTooLong.nonEmpty)
-              InvalidArgumentException(
-                s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
-              ).invalidNel
-            else Valid(())
-          }, {
-            val invalidValues = tags.tags.values.filterNot(x =>
-              x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
-            )
-            if (invalidValues.nonEmpty)
-              InvalidArgumentException(
-                s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
-              ).invalidNel
-            else Valid(())
-          }, {
-            val numberOfTags = tags.size
-            if (numberOfTags > 10)
-              InvalidArgumentException(
-                s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
-              ).invalidNel
-            else Valid(())
-          }, {
-            val totalTagsAfterAppend = (stream.tags |+| tags).size
-            if (totalTagsAfterAppend > 50)
-              InvalidArgumentException(
-                s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
-              ).invalidNel
-            else Valid(())
-          }
-        ).mapN((_, _, _, _, _, _) =>
-          streams.updateStream(stream.copy(tags = stream.tags |+| tags))
+      .validateStreamName(streamName)
+      .andThen(_ =>
+        CommonValidations
+          .findStream(streamName, streams)
+          .andThen(stream =>
+            (
+              CommonValidations.validateTagKeys(tags.tags.keys), {
+                val valuesTooLong =
+                  tags.tags.values.filter(x => x.length() > 255)
+                if (valuesTooLong.nonEmpty)
+                  InvalidArgumentException(
+                    s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+                  ).invalidNel
+                else Valid(())
+              }, {
+                val invalidValues = tags.tags.values.filterNot(x =>
+                  x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
+                )
+                if (invalidValues.nonEmpty)
+                  InvalidArgumentException(
+                    s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
+                  ).invalidNel
+                else Valid(())
+              }, {
+                val numberOfTags = tags.size
+                if (numberOfTags > 10)
+                  InvalidArgumentException(
+                    s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
+                  ).invalidNel
+                else Valid(())
+              }, {
+                val totalTagsAfterAppend = (stream.tags |+| tags).size
+                if (totalTagsAfterAppend > 50)
+                  InvalidArgumentException(
+                    s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
+                  ).invalidNel
+                else Valid(())
+              }
+            ).mapN((_, _, _, _, _) => stream)
+          )
+      )
+      .traverse(stream =>
+        streamsRef.update(x =>
+          x.updateStream(stream.copy(tags = stream.tags |+| tags))
         )
       )
+  }
 }
 
 object AddTagsToStreamRequest {
