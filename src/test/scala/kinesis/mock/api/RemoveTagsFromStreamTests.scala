@@ -3,16 +3,20 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class RemoveTagsFromStreamTests extends munit.ScalaCheckSuite {
-  property("It should remove tags to a stream")(forAll {
+class RemoveTagsFromStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should remove tags to a stream")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -32,16 +36,18 @@ class RemoveTagsFromStreamTests extends munit.ScalaCheckSuite {
 
       val removedTags = tags.tags.keys.take(3).toList
 
-      val req = RemoveTagsFromStreamRequest(streamName, removedTags)
-
-      val res = req.removeTagsFromStream(withTags)
-
-      (res.isValid && res.exists { s =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](withTags)
+        req = RemoveTagsFromStreamRequest(streamName, removedTags)
+        res <- req.removeTagsFromStream(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.tags == tags.copy(tags = tags.tags.filterNot { case (k, _) =>
             removedTags.contains(k)
           })
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 }

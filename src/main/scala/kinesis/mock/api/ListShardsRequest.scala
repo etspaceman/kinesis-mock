@@ -4,7 +4,8 @@ package api
 import java.time.Instant
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -23,8 +24,8 @@ final case class ListShardsRequest(
     streamName: Option[StreamName]
 ) {
   def listShards(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, ListShardsResponse] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[ListShardsResponse]] = streamsRef.get.map { streams =>
     (
       exclusiveStartShardId,
       nextToken,
@@ -64,7 +65,7 @@ final case class ListShardsRequest(
                     ListShardsRequest
                       .createNextToken(streamName, shards.last.shardId.shardId)
                   )
-              ListShardsResponse(nextToken, shards)
+              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           }
       case (_, None, _, _, Some(sName)) =>
@@ -150,7 +151,7 @@ final case class ListShardsRequest(
                     ListShardsRequest
                       .createNextToken(sName, shards.last.shardId.shardId)
                   )
-              ListShardsResponse(nextToken, shards)
+              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           )
       case (_, None, _, _, None) =>
@@ -162,6 +163,7 @@ final case class ListShardsRequest(
           "Cannot define ExclusiveStartShardId, StreamCreationTimestamp or StreamName if NextToken is defined"
         ).invalidNel
     }
+  }
 }
 
 object ListShardsRequest {
@@ -220,7 +222,7 @@ object ListShardsRequest {
     s"$streamName::$shardId"
   def parseNextToken(
       nextToken: String
-  ): ValidatedNel[KinesisMockException, (StreamName, String)] = {
+  ): ValidatedResponse[(StreamName, String)] = {
     val split = nextToken.split("::")
     if (split.length != 2)
       InvalidArgumentException(s"NextToken is improperly formatted").invalidNel
@@ -228,7 +230,7 @@ object ListShardsRequest {
   }
   def validateShardFilter(
       shardFilter: ShardFilter
-  ): ValidatedNel[KinesisMockException, ShardFilter] =
+  ): ValidatedResponse[ShardFilter] =
     shardFilter.`type` match {
       case ShardFilterType.AFTER_SHARD_ID if shardFilter.shardId.isEmpty =>
         InvalidArgumentException(

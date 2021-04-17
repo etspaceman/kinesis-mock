@@ -3,14 +3,18 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
-  property("It should describe stream consumers by consumerName")(forAll {
+class DescribeStreamConsumerTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should describe stream consumers by consumerName")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -34,17 +38,19 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
         .flatMap(s => s.consumers.get(consumerName))
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
 
-      val req =
-        DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
-      val res =
-        req.describeStreamConsumer(updated)
-
-      (res.isValid && res.exists { response =>
-        consumer.contains(response.consumerDescription)
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
+        res <- req.describeStreamConsumer(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          consumer.contains(response.consumerDescription)
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should describe stream consumers by consumerArn")(forAll {
+  test("It should describe stream consumers by consumerArn")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -71,16 +77,19 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val consumerArn = consumer.map(_.consumerArn)
 
-      val req = DescribeStreamConsumerRequest(consumerArn, None, None)
-      val res =
-        req.describeStreamConsumer(updated)
-
-      (res.isValid && res.exists { response =>
-        consumer.contains(response.consumerDescription)
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DescribeStreamConsumerRequest(consumerArn, None, None)
+        res <- req.describeStreamConsumer(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          consumer.contains(response.consumerDescription)
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if consumer does not exist")(forAll {
+  test("It should reject if consumer does not exist")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -92,17 +101,16 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
 
-      val req =
-        DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
-      val res =
-        req.describeStreamConsumer(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
+        res <- req.describeStreamConsumer(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
-  property(
+  test(
     "It should reject if a consumerName is provided without a streamArn"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -122,16 +130,16 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
         )
       }
 
-      val req = DescribeStreamConsumerRequest(None, Some(consumerName), None)
-      val res =
-        req.describeStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DescribeStreamConsumerRequest(None, Some(consumerName), None)
+        res <- req.describeStreamConsumer(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
-  property(
+  test(
     "It should reject if a streamArn is provided without a consumerName"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -153,10 +161,10 @@ class DescribeStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = updated.streams.get(streamName).map(_.streamArn)
 
-      val req = DescribeStreamConsumerRequest(None, None, streamArn)
-      val res =
-        req.describeStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DescribeStreamConsumerRequest(None, None, streamArn)
+        res <- req.describeStreamConsumer(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 }

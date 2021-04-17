@@ -2,6 +2,7 @@ package kinesis.mock
 package api
 
 import cats.effect._
+import cats.effect.concurrent.{Ref, Semaphore}
 import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
@@ -46,20 +47,24 @@ class SplitShardTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.splitShard(active, shardSemaphores, 50)
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
+        s <- streamsRef.get
       } yield assert(
-        res.isValid && res.exists { case (resultStreams, _) =>
-          resultStreams.streams.get(streamName).exists { stream =>
-            stream.shards.keys.toList.count(shard =>
-              shard.parentShardId.contains(shardToSplit.shardId.shardId)
-            ) == 2 && stream.streamStatus == StreamStatus.UPDATING
-          }
+        res.isValid && s.streams.get(streamName).exists { stream =>
+          stream.shards.keys.toList.count(shard =>
+            shard.parentShardId.contains(shardToSplit.shardId.shardId)
+          ) == 2 && stream.streamStatus == StreamStatus.UPDATING
         },
         s"req: $req\n" +
-          s"resShards: ${res.map(_._1.streams(streamName).shards.keys.map(_.shardId))}"
+          s"resShards: ${s.streams(streamName).shards.keys.map(_.shardId)}"
       )
   })
 
@@ -91,14 +96,16 @@ class SplitShardTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](streams)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.splitShard(streams, shardSemaphores, 50)
-      } yield assert(
-        res.isInvalid,
-        s"req: $req\nres: $res"
-      )
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
   test("It should reject if the shard is not found")(PropF.forAllF {
@@ -131,14 +138,16 @@ class SplitShardTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.splitShard(active, shardSemaphores, 50)
-      } yield assert(
-        res.isInvalid,
-        s"req: $req\nres: $res"
-      )
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
   test("It should reject if the operation would exceed the shard limit")(
@@ -173,14 +182,16 @@ class SplitShardTests
           )
 
         for {
+          streamsRef <- Ref.of[IO, Streams](active)
           shardSemaphores <- shardSemaphoreKeys
             .traverse(k => Semaphore[IO](1).map(s => k -> s))
             .map(_.toMap)
-          res <- req.splitShard(active, shardSemaphores, 5)
-        } yield assert(
-          res.isInvalid,
-          s"req: $req\nres: $res"
-        )
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+              shardSemaphores
+            )
+          res <- req.splitShard(streamsRef, shardSemaphoresRef, 5)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
     }
   )
 }

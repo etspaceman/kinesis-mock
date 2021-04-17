@@ -6,8 +6,8 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.data.Validated._
-import cats.data._
 import cats.effect.IO
+import cats.effect.concurrent.{Ref, Semaphore}
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -25,79 +25,88 @@ final case class PutRecordRequest(
     streamName: StreamName
 ) {
   def putRecord(
-      streams: Streams,
-      shardSemaphores: Map[ShardSemaphoresKey, Semaphore[IO]]
-  ): IO[ValidatedNel[KinesisMockException, (Streams, PutRecordResponse)]] = {
-    val now = Instant.now()
-    CommonValidations
-      .findStream(streamName, streams)
-      .andThen { stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          CommonValidations.isStreamActiveOrUpdating(streamName, streams),
-          CommonValidations.validateData(data),
-          sequenceNumberForOrdering match {
-            case None => Valid(())
-            case Some(seqNo) =>
-              seqNo.parse.andThen {
-                case parts: SequenceNumberParts
-                    if parts.seqTime.toEpochMilli > now.toEpochMilli =>
-                  InvalidArgumentException(
-                    s"Sequence time in the future"
-                  ).invalidNel
-                case x => Valid(x)
-              }
-          },
-          CommonValidations.validatePartitionKey(partitionKey),
-          explicitHashKey match {
-            case Some(explHashKeh) =>
-              CommonValidations.validateExplicitHashKey(explHashKeh)
-            case None => Valid(())
-          },
+      streamsRef: Ref[IO, Streams],
+      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
+  ): IO[ValidatedResponse[PutRecordResponse]] = streamsRef.get.flatMap {
+    streams =>
+      val now = Instant.now()
+      CommonValidations
+        .validateStreamName(streamName)
+        .andThen(_ =>
           CommonValidations
-            .computeShard(partitionKey, explicitHashKey, stream)
-            .andThen { case (shard, records) =>
-              CommonValidations.isShardOpen(shard).map(_ => (shard, records))
+            .findStream(streamName, streams)
+            .andThen { stream =>
+              (
+                CommonValidations.isStreamActiveOrUpdating(streamName, streams),
+                CommonValidations.validateData(data),
+                sequenceNumberForOrdering match {
+                  case None => Valid(())
+                  case Some(seqNo) =>
+                    seqNo.parse.andThen {
+                      case parts: SequenceNumberParts
+                          if parts.seqTime.toEpochMilli > now.toEpochMilli =>
+                        InvalidArgumentException(
+                          s"Sequence time in the future"
+                        ).invalidNel
+                      case x => Valid(x)
+                    }
+                },
+                CommonValidations.validatePartitionKey(partitionKey),
+                explicitHashKey match {
+                  case Some(explHashKeh) =>
+                    CommonValidations.validateExplicitHashKey(explHashKeh)
+                  case None => Valid(())
+                },
+                CommonValidations
+                  .computeShard(partitionKey, explicitHashKey, stream)
+                  .andThen { case (shard, records) =>
+                    CommonValidations
+                      .isShardOpen(shard)
+                      .map(_ => (shard, records))
 
+                  }
+              ).mapN { case (_, _, _, _, _, (shard, records)) =>
+                (stream, shard, records)
+              }
             }
-        ).mapN { case (_, _, _, _, _, _, (shard, records)) =>
-          (stream, shard, records)
-        }
-      }
-      .traverse { case (stream, shard, records) =>
-        val seqNo = SequenceNumber.create(
-          shard.createdAtTimestamp,
-          shard.shardId.index,
-          None,
-          Some(records.length),
-          Some(now)
         )
-        // Use a semaphore to ensure synchronous operations on the shard
-        shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
-          IO(
-            (
-              streams.updateStream {
-                stream.copy(
-                  shards = stream.shards ++ SortedMap(
-                    shard -> (records :+ KinesisRecord(
-                      now,
-                      data,
-                      stream.encryptionType,
-                      partitionKey,
-                      seqNo
-                    ))
+        .traverse { case (stream, shard, records) =>
+          val seqNo = SequenceNumber.create(
+            shard.createdAtTimestamp,
+            shard.shardId.index,
+            None,
+            Some(records.length),
+            Some(now)
+          )
+          // Use a semaphore to ensure synchronous operations on the shard
+          shardSemaphoresRef.get.flatMap(shardSemaphores =>
+            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
+              streamsRef
+                .update(x =>
+                  x.updateStream {
+                    stream.copy(
+                      shards = stream.shards ++ SortedMap(
+                        shard -> (records :+ KinesisRecord(
+                          now,
+                          data,
+                          stream.encryptionType,
+                          partitionKey,
+                          seqNo
+                        ))
+                      )
+                    )
+                  }
+                )
+                .as(
+                  PutRecordResponse(
+                    stream.encryptionType,
+                    seqNo,
+                    shard.shardId.shardId
                   )
                 )
-              },
-              PutRecordResponse(
-                stream.encryptionType,
-                seqNo,
-                shard.shardId.shardId
-              )
             )
           )
-        )
-      }
+        }
   }
 }
 

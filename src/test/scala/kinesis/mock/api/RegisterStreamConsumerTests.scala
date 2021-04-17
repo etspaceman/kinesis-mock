@@ -3,16 +3,20 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class RegisterStreamConsumerTests extends munit.ScalaCheckSuite {
-  property("It should register stream consumers")(forAll {
+class RegisterStreamConsumerTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should register stream consumers")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -24,19 +28,20 @@ class RegisterStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = streams.streams(streamName).streamArn
 
-      val req =
-        RegisterStreamConsumerRequest(consumerName, streamArn)
-      val res =
-        req.registerStreamConsumer(streams)
-
-      (res.isValid && res.exists { case (s, _) =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = RegisterStreamConsumerRequest(consumerName, streamArn)
+        res <- req.registerStreamConsumer(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.consumers.contains(consumerName)
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject when there are 20 consumers")(forAll {
+  test("It should reject when there are 20 consumers")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -64,48 +69,48 @@ class RegisterStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = updated.streams(streamName).streamArn
 
-      val req =
-        RegisterStreamConsumerRequest(consumerName, streamArn)
-      val res =
-        req.registerStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = RegisterStreamConsumerRequest(consumerName, streamArn)
+        res <- req.registerStreamConsumer(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
-  property("It should reject when there are 5 consumers being created")(forAll {
-    (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
-    ) =>
-      val (streams, _) =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+  test("It should reject when there are 5 consumers being created")(
+    PropF.forAllF {
+      (
+          streamName: StreamName,
+          awsRegion: AwsRegion,
+          awsAccountId: AwsAccountId,
+          consumerName: ConsumerName
+      ) =>
+        val (streams, _) =
+          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val consumers = SortedMap.from(
-        Gen
-          .listOfN(5, consumerArbitrary.arbitrary)
-          .suchThat(x =>
-            x.groupBy(_.consumerName)
-              .collect { case (_, y) if y.length > 1 => x }
-              .isEmpty
-          )
-          .map(_.map(c => c.copy(consumerStatus = ConsumerStatus.CREATING)))
-          .one
-          .map(c => c.consumerName -> c)
-      )
+        val consumers = SortedMap.from(
+          Gen
+            .listOfN(5, consumerArbitrary.arbitrary)
+            .suchThat(x =>
+              x.groupBy(_.consumerName)
+                .collect { case (_, y) if y.length > 1 => x }
+                .isEmpty
+            )
+            .map(_.map(c => c.copy(consumerStatus = ConsumerStatus.CREATING)))
+            .one
+            .map(c => c.consumerName -> c)
+        )
 
-      val updated = streams.findAndUpdateStream(streamName)(s =>
-        s.copy(consumers = consumers)
-      )
+        val updated = streams.findAndUpdateStream(streamName)(s =>
+          s.copy(consumers = consumers)
+        )
 
-      val streamArn = updated.streams(streamName).streamArn
+        val streamArn = updated.streams(streamName).streamArn
 
-      val req =
-        RegisterStreamConsumerRequest(consumerName, streamArn)
-      val res =
-        req.registerStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
-  })
+        for {
+          streamsRef <- Ref.of[IO, Streams](updated)
+          req = RegisterStreamConsumerRequest(consumerName, streamArn)
+          res <- req.registerStreamConsumer(streamsRef)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+    }
+  )
 }

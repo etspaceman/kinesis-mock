@@ -2,6 +2,7 @@ package kinesis.mock
 package api
 
 import cats.effect._
+import cats.effect.concurrent.{Ref, Semaphore}
 import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
@@ -34,31 +35,31 @@ class UpdateShardCountTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.updateShardCount(active, shardSemaphores, 50)
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
+        s <- streamsRef.get
       } yield assert(
-        res.isValid && res.exists { case (resultStreams, _) =>
-          resultStreams.streams.get(streamName).exists { stream =>
-            val shards = stream.shards.keys.toList
-            shards.count(_.isOpen) == 10 &&
-            shards.filterNot(_.isOpen).map(_.shardId) == active
-              .streams(streamName)
-              .shards
-              .keys
-              .toList
-              .map(_.shardId) &&
-            stream.streamStatus == StreamStatus.UPDATING
-          }
+        res.isValid && s.streams.get(streamName).exists { stream =>
+          val shards = stream.shards.keys.toList
+          shards.count(_.isOpen) == 10 &&
+          shards.filterNot(_.isOpen).map(_.shardId) == active
+            .streams(streamName)
+            .shards
+            .keys
+            .toList
+            .map(_.shardId) &&
+          stream.streamStatus == StreamStatus.UPDATING
         },
         s"req: $req\n" +
-          s"resOpenShards: ${res.map { case (resultStreams, _) =>
-            resultStreams.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)
-          }}\n" +
-          s"resClosedShards: ${res.map { case (resultStreams, _) =>
-            resultStreams.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)
-          }}\n" +
+          s"resOpenShards: ${s.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)}\n" +
           s"inputShards: ${active.streams(streamName).shards.keys.toList.map(_.shardId)}"
       )
   })
@@ -84,31 +85,31 @@ class UpdateShardCountTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.updateShardCount(active, shardSemaphores, 50)
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
+        s <- streamsRef.get
       } yield assert(
-        res.isValid && res.exists { case (resultStreams, _) =>
-          resultStreams.streams.get(streamName).exists { stream =>
-            val shards = stream.shards.keys.toList
-            shards.count(_.isOpen) == 5 &&
-            shards.filterNot(_.isOpen).map(_.shardId) == active
-              .streams(streamName)
-              .shards
-              .keys
-              .toList
-              .map(_.shardId) &&
-            stream.streamStatus == StreamStatus.UPDATING
-          }
+        res.isValid && s.streams.get(streamName).exists { stream =>
+          val shards = stream.shards.keys.toList
+          shards.count(_.isOpen) == 5 &&
+          shards.filterNot(_.isOpen).map(_.shardId) == active
+            .streams(streamName)
+            .shards
+            .keys
+            .toList
+            .map(_.shardId) &&
+          stream.streamStatus == StreamStatus.UPDATING
         },
         s"req: $req\n" +
-          s"resOpenShards: ${res.map { case (resultStreams, _) =>
-            resultStreams.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)
-          }}\n" +
-          s"resClosedShards: ${res.map { case (resultStreams, _) =>
-            resultStreams.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)
-          }}\n" +
+          s"resOpenShards: ${s.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)}\n" +
           s"inputShards: ${active.streams(streamName).shards.keys.toList.map(_.shardId)}"
       )
   })
@@ -135,14 +136,16 @@ class UpdateShardCountTests
           )
 
         for {
+          streamsRef <- Ref.of[IO, Streams](active)
           shardSemaphores <- shardSemaphoreKeys
             .traverse(k => Semaphore[IO](1).map(s => k -> s))
             .map(_.toMap)
-          res <- req.updateShardCount(active, shardSemaphores, 50)
-        } yield assert(
-          res.isInvalid,
-          s"req: $req\nres: $res"
-        )
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+              shardSemaphores
+            )
+          res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
     }
   )
 
@@ -168,14 +171,16 @@ class UpdateShardCountTests
           )
 
         for {
+          streamsRef <- Ref.of[IO, Streams](active)
           shardSemaphores <- shardSemaphoreKeys
             .traverse(k => Semaphore[IO](1).map(s => k -> s))
             .map(_.toMap)
-          res <- req.updateShardCount(active, shardSemaphores, 50)
-        } yield assert(
-          res.isInvalid,
-          s"req: $req\nres: $res"
-        )
+          shardSemaphoresRef <- Ref
+            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+              shardSemaphores
+            )
+          res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
+        } yield assert(res.isInvalid, s"req: $req\nres: $res")
     }
   )
 
@@ -200,14 +205,16 @@ class UpdateShardCountTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](active)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.updateShardCount(active, shardSemaphores, 9)
-      } yield assert(
-        res.isInvalid,
-        s"req: $req\nres: $res"
-      )
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 9)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
   test("It should reject if the stream is not active")(PropF.forAllF {
@@ -227,13 +234,15 @@ class UpdateShardCountTests
         )
 
       for {
+        streamsRef <- Ref.of[IO, Streams](streams)
         shardSemaphores <- shardSemaphoreKeys
           .traverse(k => Semaphore[IO](1).map(s => k -> s))
           .map(_.toMap)
-        res <- req.updateShardCount(streams, shardSemaphores, 50)
-      } yield assert(
-        res.isInvalid,
-        s"req: $req\nres: $res"
-      )
+        shardSemaphoresRef <- Ref
+          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+            shardSemaphores
+          )
+        res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 }

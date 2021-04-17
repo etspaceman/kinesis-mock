@@ -3,14 +3,18 @@ package api
 
 import java.time.Instant
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class ListShardsTests extends munit.ScalaCheckSuite {
-  property("It should list shards when provided a streamName")(forAll {
+class ListShardsTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should list shards when provided a streamName")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -19,18 +23,21 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val req =
-        ListShardsRequest(None, None, None, None, None, Some(streamName))
-      val res = req.listShards(streams)
-
-      (res.isValid && res.exists { response =>
-        streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList == response.shards
-        }
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(None, None, None, None, None, Some(streamName))
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streams.streams.get(streamName).exists { s =>
+            s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should paginate properly")(forAll {
+  test("It should paginate properly")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -39,31 +46,53 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val req =
-        ListShardsRequest(None, Some(50), None, None, None, Some(streamName))
-      val res = req.listShards(streams)
-      val paginatedRes = res.andThen { result =>
-        val paginatedReq =
-          ListShardsRequest(None, Some(50), result.nextToken, None, None, None)
-        paginatedReq.listShards(streams)
-      }
-
-      (res.isValid && paginatedRes.isValid && res.exists { response =>
-        streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.take(50) == response.shards
-        }
-      } && paginatedRes.exists { response =>
-        streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(50) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"resCount: ${res.map(_.shards.length)}\n" +
-        s"paginatedResCount: ${paginatedRes.map(_.shards.length)}}"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
+          None,
+          Some(50),
+          None,
+          None,
+          None,
+          Some(streamName)
+        )
+        res <- req.listShards(streamsRef)
+        paginatedRes <- res
+          .traverse(result =>
+            ListShardsRequest(
+              None,
+              Some(50),
+              result.nextToken,
+              None,
+              None,
+              None
+            )
+              .listShards(streamsRef)
+          )
+          .map(_.andThen(identity))
+      } yield assert(
+        res.isValid && paginatedRes.isValid && res.exists { response =>
+          streams.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .take(50)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        } && paginatedRes.exists { response =>
+          streams.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(50)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\n" +
+          s"resCount: ${res.map(_.shards.length)}\n" +
+          s"paginatedResCount: ${paginatedRes.map(_.shards.length)}}"
+      )
   })
 
-  property(
+  test(
     "It should list shards when provided a streamName and exclusiveStartShardId"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -73,8 +102,10 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val exclusiveStartShardId = ShardId.create(10)
-      val req =
-        ListShardsRequest(
+
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
           Some(exclusiveStartShardId.shardId),
           None,
           None,
@@ -82,16 +113,20 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(streams)
-
-      (res.isValid && res.exists { response =>
-        streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(89) == response.shards
-        }
-      }) :| s"req: $req\nres: $res"
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streams.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(89)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should list shards when filtered by AT_LATEST")(forAll {
+  test("It should list shards when filtered by AT_LATEST")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -117,8 +152,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       val filter = ShardFilter(None, None, ShardFilterType.AT_LATEST)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -126,18 +162,22 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(updated)
-
-      (res.isValid && res.exists { response =>
-        updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"res: ${res.map(_.shards.length)}\n" +
-        s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          updated.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(95)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\n" +
+          s"res: ${res.map(_.shards.length)}\n" +
+          s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+      )
   })
 
-  property("It should list shards when filtered by AT_TRIM_HORIZON")(forAll {
+  test("It should list shards when filtered by AT_TRIM_HORIZON")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -163,8 +203,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
 
       val filter = ShardFilter(None, None, ShardFilterType.AT_TRIM_HORIZON)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -172,67 +213,76 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(updated)
-
-      (res.isValid && res.exists { response =>
-        updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"res: ${res.map(_.shards.length)}\n" +
-        s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
-  })
-
-  property("It should list shards when filtered by FROM_TRIM_HORIZON")(forAll {
-    (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
-    ) =>
-      val (streams, _) =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
-
-      val updated = streams.findAndUpdateStream(streamName) { s =>
-        s.copy(
-          shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
-            case (shard, recs) =>
-              shard.copy(
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                ),
-                closedTimestamp = Some(
-                  Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
-                )
-              ) -> recs
-
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          updated.streams.get(streamName).exists { s =>
+            s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
           }
-        )
-      }
-
-      val filter = ShardFilter(None, None, ShardFilterType.FROM_TRIM_HORIZON)
-
-      val req =
-        ListShardsRequest(
-          None,
-          None,
-          None,
-          Some(filter),
-          None,
-          Some(streamName)
-        )
-      val res = req.listShards(updated)
-
-      (res.isValid && res.exists { response =>
-        updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"res: ${res.map(_.shards.length)}\n" +
-        s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+        },
+        s"req: $req\n" +
+          s"res: ${res.map(_.shards.length)}\n" +
+          s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+      )
   })
 
-  property("It should list shards when filtered by AFTER_SHARD_ID")(forAll {
+  test("It should list shards when filtered by FROM_TRIM_HORIZON")(
+    PropF.forAllF {
+      (
+          streamName: StreamName,
+          awsRegion: AwsRegion,
+          awsAccountId: AwsAccountId
+      ) =>
+        val (streams, _) =
+          Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+
+        val updated = streams.findAndUpdateStream(streamName) { s =>
+          s.copy(
+            shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
+              case (shard, recs) =>
+                shard.copy(
+                  sequenceNumberRange = shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  ),
+                  closedTimestamp = Some(
+                    Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
+                  )
+                ) -> recs
+
+            }
+          )
+        }
+
+        val filter = ShardFilter(None, None, ShardFilterType.FROM_TRIM_HORIZON)
+
+        for {
+          streamsRef <- Ref.of[IO, Streams](updated)
+          req = ListShardsRequest(
+            None,
+            None,
+            None,
+            Some(filter),
+            None,
+            Some(streamName)
+          )
+          res <- req.listShards(streamsRef)
+        } yield assert(
+          res.isValid && res.exists { response =>
+            updated.streams.get(streamName).exists { s =>
+              s.shards.keys.toList
+                .takeRight(95)
+                .map(ShardSummary.fromShard) == response.shards
+            }
+          },
+          s"req: $req\n" +
+            s"res: ${res.map(_.shards.length)}\n" +
+            s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+        )
+    }
+  )
+
+  test("It should list shards when filtered by AFTER_SHARD_ID")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -245,8 +295,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val filter =
         ShardFilter(Some(shardId.shardId), None, ShardFilterType.AFTER_SHARD_ID)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -254,21 +305,25 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(streams)
-
-      (res.isValid && res.exists { response =>
-        streams.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"resLen: ${res.map(_.shards.length)}\n" +
-        s"resultingHead: ${res.map(_.shards.head).fold(_.toString, _.toString)}\n" +
-        s"expectResHead: ${streams.streams.get(streamName).map(_.shards.keys.toList(45)).get}\n" +
-        s"resultingLast: ${res.map(_.shards.last).fold(_.toString, _.toString)}\n" +
-        s"expectResLast: ${streams.streams.get(streamName).map(_.shards.keys.toList.last).get}"
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streams.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(95)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\n" +
+          s"resLen: ${res.map(_.shards.length)}\n" +
+          s"resultingHead: ${res.map(_.shards.head).fold(_.toString, _.toString)}\n" +
+          s"expectResHead: ${streams.streams.get(streamName).map(_.shards.keys.toList(45)).get}\n" +
+          s"resultingLast: ${res.map(_.shards.last).fold(_.toString, _.toString)}\n" +
+          s"expectResLast: ${streams.streams.get(streamName).map(_.shards.keys.toList.last).get}"
+      )
   })
 
-  property("It should list shards when filtered by FROM_TIMESTAMP")(forAll {
+  test("It should list shards when filtered by FROM_TIMESTAMP")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -314,8 +369,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         ShardFilterType.FROM_TIMESTAMP
       )
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -323,18 +379,22 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(updated)
-
-      (res.isValid && res.exists { response =>
-        updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"res: ${res.map(_.shards.length)}\n" +
-        s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          updated.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(95)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\n" +
+          s"res: ${res.map(_.shards.length)}\n" +
+          s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+      )
   })
 
-  property("It should list shards when filtered by AT_TIMESTAMP")(forAll {
+  test("It should list shards when filtered by AT_TIMESTAMP")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -382,8 +442,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
         ShardFilterType.AT_TIMESTAMP
       )
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -391,20 +452,24 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(updated)
-
-      (res.isValid && res.exists { response =>
-        updated.streams.get(streamName).exists { s =>
-          s.shards.keys.toList.takeRight(95) == response.shards
-        }
-      }) :| s"req: $req\n" +
-        s"res: ${res.map(_.shards.length)}\n" +
-        s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+        res <- req.listShards(streamsRef)
+      } yield assert(
+        res.isValid && res.exists { response =>
+          updated.streams.get(streamName).exists { s =>
+            s.shards.keys.toList
+              .takeRight(95)
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\n" +
+          s"res: ${res.map(_.shards.length)}\n" +
+          s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
+      )
   })
 
-  property(
+  test(
     "It should reject when given a shard-filter of type AT_TIMESTAMP without a timestamp"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -413,8 +478,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -422,14 +488,13 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+        res <- req.listShards(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
-  property(
+  test(
     "It should reject when given a shard-filter of type FROM_TIMESTAMP without a timestamp"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -438,8 +503,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -447,14 +513,13 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+        res <- req.listShards(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 
-  property(
+  test(
     "It should reject when given a shard-filter of type AFTER_SHARD_ID without a shard-id"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -463,8 +528,9 @@ class ListShardsTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val req =
-        ListShardsRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
           None,
           None,
           None,
@@ -472,8 +538,7 @@ class ListShardsTests extends munit.ScalaCheckSuite {
           None,
           Some(streamName)
         )
-      val res = req.listShards(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+        res <- req.listShards(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 }

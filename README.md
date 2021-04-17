@@ -24,8 +24,8 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.0.2
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.2
+docker pull ghcr.io/etspaceman/kinesis-mock:0.0.4
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.4
 ```
 
 You can also leverage the `kinesis-mock.jar` executable in the release assets:
@@ -230,7 +230,7 @@ object MyApp {
       .httpClient(nettyClient)
       .region(Region.US_EAST_1)
       .credentialsProvider(AwsCreds.LocalCreds)
-      .endpointOverride(URI.create(s"https://localhost:8000")) // dynamodb-local port
+      .endpointOverride(URI.create(s"http://localhost:8000")) // dynamodb-local port
       .build()
     
   object KCLRecordProcessor extends ShardRecordProcessor {

@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -16,18 +17,24 @@ final case class StopStreamEncryptionRequest(
     streamName: StreamName
 ) {
   def stopStreamEncryption(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, Streams] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap(streams =>
     CommonValidations
-      .findStream(streamName, streams)
-      .andThen(stream =>
-        (
-          CommonValidations.validateStreamName(streamName),
-          CommonValidations.validateKeyId(keyId),
-          CommonValidations.isKmsEncryptionType(encryptionType),
-          CommonValidations.isStreamActive(streamName, streams)
-        ).mapN((_, _, _, _) =>
-          streams.updateStream(
+      .validateStreamName(streamName)
+      .andThen(_ =>
+        CommonValidations
+          .findStream(streamName, streams)
+          .andThen(stream =>
+            (
+              CommonValidations.validateKeyId(keyId),
+              CommonValidations.isKmsEncryptionType(encryptionType),
+              CommonValidations.isStreamActive(streamName, streams)
+            ).mapN((_, _, _) => stream)
+          )
+      )
+      .traverse(stream =>
+        streamsRef.update(x =>
+          x.updateStream(
             stream.copy(
               encryptionType = EncryptionType.NONE,
               streamStatus = StreamStatus.UPDATING,
@@ -36,6 +43,7 @@ final case class StopStreamEncryptionRequest(
           )
         )
       )
+  )
 }
 
 object StopStreamEncryptionRequest {

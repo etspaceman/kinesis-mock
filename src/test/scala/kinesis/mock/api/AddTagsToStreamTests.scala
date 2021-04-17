@@ -3,15 +3,19 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class AddTagsToStreamTests extends munit.ScalaCheckSuite {
-  property("It should add tags to a stream")(forAll {
+class AddTagsToStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should add tags to a stream")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -20,18 +24,21 @@ class AddTagsToStreamTests extends munit.ScalaCheckSuite {
     ) =>
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val req = AddTagsToStreamRequest(streamName, tags)
 
-      val res = req.addTagsToStream(streams)
-
-      (res.isValid && res.exists { s =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = AddTagsToStreamRequest(streamName, tags)
+        res <- req.addTagsToStream(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should overwrite tags to a stream")(forAll {
+  test("It should overwrite tags to a stream")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -48,14 +55,17 @@ class AddTagsToStreamTests extends munit.ScalaCheckSuite {
       val streamsWithTag = streams.findAndUpdateStream(streamName)(stream =>
         stream.copy(tags = initialTags)
       )
-      val req = AddTagsToStreamRequest(streamName, tags)
 
-      val res = req.addTagsToStream(streamsWithTag)
-
-      (res.isValid && res.exists { s =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](streamsWithTag)
+        req = AddTagsToStreamRequest(streamName, tags)
+        res <- req.addTagsToStream(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 }

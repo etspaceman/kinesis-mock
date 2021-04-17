@@ -3,16 +3,20 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamConsumersTests extends munit.ScalaCheckSuite {
-  property("It should list consumers")(forAll {
+class ListStreamConsumersTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should list consumers")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -39,16 +43,20 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
 
       val streamArn = withConsumers.streams(streamName).streamArn
 
-      val req =
-        ListStreamConsumersRequest(None, None, streamArn, None)
-      val res = req.listStreamConsumers(withConsumers)
+      for {
+        streamsRef <- Ref.of[IO, Streams](withConsumers)
+        req = ListStreamConsumersRequest(None, None, streamArn, None)
+        res <- req.listStreamConsumers(streamsRef)
 
-      (res.isValid && res.exists { response =>
-        consumers.values.toList == response.consumers
-      }) :| s"req: $req\nres: $res"
+      } yield assert(
+        res.isValid && res.exists { response =>
+          consumers.values.toList == response.consumers
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should paginate properly")(forAll {
+  test("It should paginate properly")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -75,28 +83,31 @@ class ListStreamConsumersTests extends munit.ScalaCheckSuite {
 
       val streamArn = withConsumers.streams(streamName).streamArn
 
-      val req =
-        ListStreamConsumersRequest(Some(5), None, streamArn, None)
-
-      val res = req.listStreamConsumers(withConsumers)
-      val paginatedRes = res.andThen { result =>
-        val paginatedReq =
-          ListStreamConsumersRequest(
-            Some(5),
-            result.nextToken,
-            streamArn,
-            None
+      for {
+        streamsRef <- Ref.of[IO, Streams](withConsumers)
+        req = ListStreamConsumersRequest(Some(5), None, streamArn, None)
+        res <- req.listStreamConsumers(streamsRef)
+        paginatedRes <- res
+          .traverse(result =>
+            ListStreamConsumersRequest(
+              Some(5),
+              result.nextToken,
+              streamArn,
+              None
+            ).listStreamConsumers(streamsRef)
           )
-        paginatedReq.listStreamConsumers(withConsumers)
-      }
+          .map(_.andThen(identity))
 
-      (res.isValid && paginatedRes.isValid && res.exists { response =>
-        consumers.values.take(5) == response.consumers
-      } && paginatedRes.exists { response =>
-        consumers.values.takeRight(5) == response.consumers
-      }) :| s"req: $req\n" +
-        s"resCount: ${res.map(_.consumers.length)}\n" +
-        s"paginatedResCount: ${paginatedRes.map(_.consumers.length)}}"
+      } yield assert(
+        res.isValid && paginatedRes.isValid && res.exists { response =>
+          consumers.values.take(5) == response.consumers
+        } && paginatedRes.exists { response =>
+          consumers.values.takeRight(5) == response.consumers
+        },
+        s"req: $req\n" +
+          s"resCount: ${res.map(_.consumers.length)}\n" +
+          s"paginatedResCount: ${paginatedRes.map(_.consumers.length)}}"
+      )
   })
 
 }

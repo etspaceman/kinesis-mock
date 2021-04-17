@@ -11,6 +11,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
 import kinesis.mock.models._
+import kinesis.mock.syntax.io._
 import kinesis.mock.syntax.semaphore._
 import cats.effect.{ Ref, Temporal }
 import cats.effect.implicits._
@@ -18,7 +19,7 @@ import cats.effect.std.Semaphore
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
-    shardsSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
+    shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
     semaphores: CacheSemaphores,
     config: CacheConfig,
     supervisor: Supervisor[IO]
@@ -29,31 +30,28 @@ class Cache private (
   def addTagsToStream(
       req: AddTagsToStreamRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, Unit]] = {
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing AddTagsToStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
       semaphores.addTagsToStream.tryAcquireRelease(
-        streamsRef.get.flatMap(streams =>
-          req
-            .addTagsToStream(streams)
-            .traverse(streamsRef.set)
-            .map(_.toEither.leftMap(KinesisMockException.aggregate))
-            .flatTap(
-              _.fold(
-                e =>
-                  logger.warn(ctx.context, e)(
-                    "Adding tags to stream was unuccessful"
-                  ),
-                _ =>
-                  logger.debug(ctx.context)(
-                    "Successfully added tags to the stream"
-                  )
-              )
+        req
+          .addTagsToStream(streamsRef)
+          .aggregateErrors
+          .flatTap(
+            _.fold(
+              e =>
+                logger.warn(ctx.context, e)(
+                  "Adding tags to stream was unuccessful"
+                ),
+              _ =>
+                logger.debug(ctx.context)(
+                  "Successfully added tags to the stream"
+                )
             )
-        ),
+          ),
         logger
           .warn(ctx.context)("Rate limit exceeded for AddTagsToStream")
           .as(
@@ -68,32 +66,28 @@ class Cache private (
   def removeTagsFromStream(
       req: RemoveTagsFromStreamRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, Unit]] = {
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing RemoveTagsFromStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
       semaphores.removeTagsFromStream.tryAcquireRelease(
-        streamsRef.get.flatMap(streams =>
-          req
-            .removeTagsFromStream(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-            .traverse(streamsRef.set)
-            .flatTap(
-              _.fold(
-                e =>
-                  logger.warn(ctx.context, e)(
-                    "Removing tags from stream was unuccessful"
-                  ),
-                _ =>
-                  logger.debug(ctx.context)(
-                    "Successfully removed tags from the stream"
-                  )
-              )
+        req
+          .removeTagsFromStream(streamsRef)
+          .aggregateErrors
+          .flatTap(
+            _.fold(
+              e =>
+                logger.warn(ctx.context, e)(
+                  "Removing tags from stream was unuccessful"
+                ),
+              _ =>
+                logger.debug(ctx.context)(
+                  "Successfully removed tags from the stream"
+                )
             )
-        ),
+          ),
         logger
           .warn(ctx.context)("Rate limit exceeded for RemoveTagsFromStream")
           .as(
@@ -110,7 +104,9 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext
   )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
@@ -118,16 +114,15 @@ class Cache private (
       ) *>
       semaphores.createStream.tryAcquireRelease(
         for {
-          streams <- streamsRef.get
-          createStreamsRes = req
+          createStreamsRes <- req
             .createStream(
-              streams,
+              streamsRef,
+              shardSemaphoresRef,
               config.shardLimit,
               config.awsRegion,
               config.awsAccountId
             )
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
+            .aggregateErrors
           _ <- createStreamsRes.fold(
             e =>
               logger.warn(ctx.context, e)(
@@ -138,35 +133,24 @@ class Cache private (
                 "Successfully created stream"
               )
           )
-          res <- createStreamsRes
-            .traverse { case (updated, shardSemaphoreKeys) =>
-              for {
-                _ <- streamsRef.set(updated)
-                newShardSemaphores <- shardSemaphoreKeys
-                  .traverse(key => Semaphore[IO](1).map(s => key -> s))
-                _ <- shardsSemaphoresRef.update(shardSemaphores =>
-                  shardSemaphores ++ newShardSemaphores
-                )
-                r <- supervisor
-                  .supervise(
-                    logger.debug(ctx.context)(
-                      s"Delaying setting stream to active for ${config.createStreamDuration.toString}"
-                    ) *>
-                      IO.sleep(config.createStreamDuration) *>
-                      logger.debug(ctx.context)(
-                        s"Setting stream to active"
-                      ) *>
-                      streamsRef
-                        .set(
-                          updated.findAndUpdateStream(req.streamName)(x =>
-                            x.copy(streamStatus = StreamStatus.ACTIVE)
-                          )
-                        )
+          _ <- supervisor
+            .supervise(
+              logger.debug(ctx.context)(
+                s"Delaying setting stream to active for ${config.createStreamDuration.toString}"
+              ) *>
+                IO.sleep(config.createStreamDuration) *>
+                logger.debug(ctx.context)(
+                  s"Setting stream to active"
+                ) *>
+                streamsRef
+                  .update(streams =>
+                    streams.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
                   )
-                  .void
-              } yield r
-            }
-        } yield res,
+            )
+            .void
+        } yield createStreamsRes,
         logger
           .warn(ctx.context)("Rate limit exceeded for CreateStream")
           .as(
@@ -182,8 +166,7 @@ class Cache private (
   def deleteStream(
       req: DeleteStreamRequest,
       context: LoggingContext
-  )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
@@ -191,12 +174,10 @@ class Cache private (
       ) *>
       semaphores.deleteStream.tryAcquireRelease(
         for {
-          streams <- streamsRef.get
-          deleteStreamrRes = req
-            .deleteStream(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-          _ <- deleteStreamrRes.fold(
+          deleteStreamRes <- req
+            .deleteStream(streamsRef, shardSemaphoresRef)
+            .aggregateErrors
+          _ <- deleteStreamRes.fold(
             e =>
               logger.warn(ctx.context, e)(
                 "Deleting stream was unuccessful"
@@ -206,31 +187,19 @@ class Cache private (
                 "Successfully deleted stream"
               )
           )
-          res <-
-            deleteStreamrRes.traverse { case (updated, shardSemaphoreKeys) =>
-              for {
-                _ <- streamsRef.set(updated)
-                _ <- shardsSemaphoresRef.update(shardsSemaphores =>
-                  shardsSemaphores -- shardSemaphoreKeys
-                )
-                r <- supervisor
-                  .supervise(
-                    logger.debug(ctx.context)(
-                      s"Delaying removing the stream for ${config.deleteStreamDuration.toString}"
-                    ) *>
-                      IO.sleep(config.deleteStreamDuration) *>
-                      logger.debug(ctx.context)(
-                        s"Removing stream"
-                      ) *>
-                      streamsRef.set(
-                        updated.removeStream(req.streamName)
-                      )
-                  )
-                  .void
-              } yield r
-
-            }
-        } yield res,
+          _ <- supervisor
+            .supervise(
+              logger.debug(ctx.context)(
+                s"Delaying removing the stream for ${config.deleteStreamDuration.toString}"
+              ) *>
+                IO.sleep(config.deleteStreamDuration) *>
+                logger.debug(ctx.context)(
+                  s"Removing stream"
+                ) *>
+                streamsRef.update(x => x.removeStream(req.streamName))
+            )
+            .void
+        } yield deleteStreamRes,
         logger
           .warn(ctx.context)("Rate limit exceeded for DeleteStream")
           .as(
@@ -246,7 +215,7 @@ class Cache private (
   def decreaseStreamRetention(
       req: DecreaseStreamRetentionPeriodRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, Unit]] = {
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DecreaseStreamRetentionPeriod request"
@@ -254,31 +223,27 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap(streams =>
-        req
-          .decreaseStreamRetention(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-          .traverse(streamsRef.set)
-          .flatTap(
-            _.fold(
-              e =>
-                logger.warn(ctx.context, e)(
-                  "Decreasing the stream retention period was unuccessful"
-                ),
-              _ =>
-                logger.debug(ctx.context)(
-                  "Successfully decreased the stream retention period "
-                )
-            )
+      req
+        .decreaseStreamRetention(streamsRef)
+        .aggregateErrors
+        .flatTap(
+          _.fold(
+            e =>
+              logger.warn(ctx.context, e)(
+                "Decreasing the stream retention period was unuccessful"
+              ),
+            _ =>
+              logger.debug(ctx.context)(
+                "Successfully decreased the stream retention period "
+              )
           )
-      )
+        )
   }
 
   def increaseStreamRetention(
       req: IncreaseStreamRetentionPeriodRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, Unit]] = {
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing IncreaseStreamRetentionPeriod request"
@@ -286,40 +251,39 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap(streams =>
-        req
-          .increaseStreamRetention(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-          .traverse(streamsRef.set)
-          .flatTap(
-            _.fold(
-              e =>
-                logger.warn(ctx.context, e)(
-                  "Increasing the stream retention period was unuccessful"
-                ),
-              _ =>
-                logger.debug(ctx.context)(
-                  "Successfully increased the stream retention period "
-                )
-            )
+      req
+        .increaseStreamRetention(streamsRef)
+        .aggregateErrors
+        .flatTap(
+          _.fold(
+            e =>
+              logger.warn(ctx.context, e)(
+                "Increasing the stream retention period was unuccessful"
+              ),
+            _ =>
+              logger.debug(ctx.context)(
+                "Successfully increased the stream retention period "
+              )
           )
-      )
+        )
   }
 
   def describeLimits(
       context: LoggingContext
-  ): IO[Either[KinesisMockException, DescribeLimitsResponse]] =
+  ): IO[EitherResponse[DescribeLimitsResponse]] =
     logger.debug(context.context)("Processing DescribeLimits request") *>
       semaphores.describeLimits.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = DescribeLimitsResponse.get(config.shardLimit, streams)
-          logger.debug(context.context)("Successfully described limits") *>
-            logger
-              .trace(context.addJson("response", response.asJson).context)(
-                "Logging response"
-              )
-              .as(Right(response))
+        {
+          DescribeLimitsResponse
+            .get(config.shardLimit, streamsRef)
+            .flatMap(response =>
+              logger.debug(context.context)("Successfully described limits") *>
+                logger
+                  .trace(context.addJson("response", response.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(Right(response))
+            )
         },
         logger
           .warn(context.context)("Rate limit exceeded for DescribeLimits")
@@ -333,7 +297,7 @@ class Cache private (
   def describeStream(
       req: DescribeStreamRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, DescribeStreamResponse]] = {
+  ): IO[EitherResponse[DescribeStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStream request"
@@ -342,29 +306,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.describeStream.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .describeStream(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(ctx.context, e)(
-                  "Describing the stream was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(ctx.context)(
-                "Successfully described the stream"
-              ) *> logger
-                .trace(ctx.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .describeStream(streamsRef)
+          .aggregateErrors
+          .flatMap { response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(ctx.context, e)(
+                    "Describing the stream was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(ctx.context)(
+                  "Successfully described the stream"
+                ) *> logger
+                  .trace(ctx.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          },
         logger
           .warn(context.context)("Rate limit exceeded for DescribeStream")
           .as(
@@ -378,7 +340,7 @@ class Cache private (
   def describeStreamSummary(
       req: DescribeStreamSummaryRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, DescribeStreamSummaryResponse]] = {
+  ): IO[EitherResponse[DescribeStreamSummaryResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStreamSummary request"
@@ -387,29 +349,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.describeStreamSummary.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .describeStreamSummary(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(ctx.context, e)(
-                  "Describing the stream summary was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(ctx.context)(
-                "Successfully described the stream summary"
-              ) *> logger
-                .trace(ctx.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .describeStreamSummary(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(ctx.context, e)(
+                    "Describing the stream summary was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(ctx.context)(
+                  "Successfully described the stream summary"
+                ) *> logger
+                  .trace(ctx.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for DescribeStreamSummary"
@@ -428,7 +388,8 @@ class Cache private (
       req: RegisterStreamConsumerRequest,
       context: LoggingContext
   )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, RegisterStreamConsumerResponse]] = {
+      T: Timer[IO]
+  ): IO[EitherResponse[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
       "Processing RegisterStreamConsumer request"
@@ -437,31 +398,25 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.registerStreamConsumer.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .registerStreamConsumer(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-          response
-            .fold(
-              e =>
-                logger
-                  .warn(ctx.context, e)(
-                    "Describing the stream summary was unuccessful"
-                  ),
-              r =>
-                logger.debug(ctx.context)(
-                  "Successfully described the stream summary"
-                ) *> logger
-                  .trace(ctx.addJson("response", r._2.asJson).context)(
-                    "Logging response"
-                  )
-            ) *> response
-            .traverse { case (updated, response) =>
-              streamsRef
-                .set(updated)
-                .flatMap { _ =>
-                  supervisor
+        req
+          .registerStreamConsumer(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response
+              .fold(
+                e =>
+                  logger
+                    .warn(ctx.context, e)(
+                      "Describing the stream summary was unuccessful"
+                    )
+                    .as(response),
+                r =>
+                  logger.debug(ctx.context)(
+                    "Successfully described the stream summary"
+                  ) *> logger
+                    .trace(ctx.addJson("response", r.asJson).context)(
+                      "Logging response"
+                    ) *> supervisor
                     .supervise(
                       logger.debug(ctx.context)(
                         s"Delaying setting the consumer as ACTIVE for ${config.registerStreamConsumerDuration.toString}"
@@ -469,15 +424,14 @@ class Cache private (
                         IO.sleep(config.registerStreamConsumerDuration) *>
                         logger.debug(ctx.context)(
                           s"Setting consumer as ACTIVE"
-                        ) *>
-                        updated.streams.values
-                          .find(_.streamArn == req.streamArn)
-                          .traverse(stream =>
-                            streamsRef.set(
-                              updated.updateStream(
+                        ) *> streamsRef.update(x =>
+                          x.streams.values
+                            .find(_.streamArn == req.streamArn)
+                            .fold(x)(stream =>
+                              x.updateStream(
                                 stream.copy(consumers =
                                   stream.consumers ++ List(
-                                    response.consumer.consumerName -> response.consumer
+                                    r.consumer.consumerName -> r.consumer
                                       .copy(consumerStatus =
                                         ConsumerStatus.ACTIVE
                                       )
@@ -485,13 +439,12 @@ class Cache private (
                                 )
                               )
                             )
-                          )
+                        )
                     )
                     .void
-                }
-                .as(response)
-            }
-        },
+                    .as(response)
+              )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for RegisterStreamConsumer"
@@ -509,8 +462,7 @@ class Cache private (
   def deregisterStreamConsumer(
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext
-  )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -518,58 +470,51 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.deregisterStreamConsumer.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .deregisterStreamConsumer(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response
-            .fold(
-              e =>
-                logger
-                  .warn(context.context, e)(
-                    "Deregistering the stream consumer was unuccessful"
-                  ),
-              _ =>
-                logger.debug(context.context)(
-                  "Successfully registered the stream consumer"
-                )
-            ) *> response.traverse { case (updated, consumer) =>
-            streamsRef
-              .set(updated)
-              .flatMap { _ =>
-                supervisor
-                  .supervise(
-                    logger.debug(context.context)(
-                      s"Delaying removing the consumer for ${config.deregisterStreamConsumerDuration.toString}"
-                    ) *>
-                      IO.sleep(config.deregisterStreamConsumerDuration) *>
+        req
+          .deregisterStreamConsumer(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response
+              .fold(
+                e =>
+                  logger
+                    .warn(context.context, e)(
+                      "Deregistering the stream consumer was unuccessful"
+                    )
+                    .as(response.as(())),
+                consumer =>
+                  logger.debug(context.context)(
+                    "Successfully registered the stream consumer"
+                  ) *> supervisor
+                    .supervise(
                       logger.debug(context.context)(
-                        s"Removing the consumer"
+                        s"Delaying removing the consumer for ${config.deregisterStreamConsumerDuration.toString}"
                       ) *>
-                      updated.streams.values
-                        .find(s =>
-                          s.consumers.keys.toList
-                            .contains(consumer.consumerName)
-                        )
-                        .traverse(stream =>
-                          streamsRef.set(
-                            updated.updateStream(
-                              stream.copy(consumers =
-                                stream.consumers.filterNot {
-                                  case (consumerName, _) =>
-                                    consumerName == consumer.consumerName
-                                }
+                        IO.sleep(config.deregisterStreamConsumerDuration) *>
+                        logger.debug(context.context)(
+                          s"Removing the consumer"
+                        ) *>
+                        streamsRef.update(x =>
+                          x.streams.values
+                            .find(s =>
+                              s.consumers.keys.toList
+                                .contains(consumer.consumerName)
+                            )
+                            .fold(x)(stream =>
+                              x.updateStream(
+                                stream
+                                  .copy(consumers = stream.consumers.filterNot {
+                                    case (consumerName, _) =>
+                                      consumerName == consumer.consumerName
+                                  })
                               )
                             )
-                          )
                         )
-                  )
-                  .void
-              }
-          }
-        },
+                    )
+                    .void
+                    .as(response.as(()))
+              )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for DeregisterStreamConsumer"
@@ -587,7 +532,7 @@ class Cache private (
   def describeStreamConsumer(
       req: DescribeStreamConsumerRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, DescribeStreamConsumerResponse]] =
+  ): IO[EitherResponse[DescribeStreamConsumerResponse]] =
     logger.debug(context.context)(
       "Processing DescribeStreamConsumer request"
     ) *>
@@ -595,29 +540,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.describeStreamConsumer.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .describeStreamConsumer(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Describing the stream consumer was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully described the stream consumer"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .describeStreamConsumer(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Describing the stream consumer was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully described the stream consumer"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for DescribeStreamConsumer"
@@ -634,7 +577,7 @@ class Cache private (
   def disableEnhancedMonitoring(
       req: DisableEnhancedMonitoringRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, DisableEnhancedMonitoringResponse]] = {
+  ): IO[EitherResponse[DisableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DisableEnhancedMonitoring request"
@@ -642,39 +585,33 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .disableEnhancedMonitoring(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-
-        response.fold(
-          e =>
-            logger
-              .warn(context.context, e)(
-                "Disabling the enhanced monitoring was unuccessful"
-              )
-              .as(response),
-          r =>
-            logger.debug(context.context)(
-              "Successfully disabled enhanced monitoring"
-            ) *> logger
-              .trace(context.addJson("response", r._2.asJson).context)(
-                "Logging response"
-              )
-              .as(response)
+      req
+        .disableEnhancedMonitoring(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response.fold(
+            e =>
+              logger
+                .warn(context.context, e)(
+                  "Disabling the enhanced monitoring was unuccessful"
+                )
+                .as(response),
+            r =>
+              logger.debug(context.context)(
+                "Successfully disabled enhanced monitoring"
+              ) *> logger
+                .trace(context.addJson("response", r.asJson).context)(
+                  "Logging response"
+                )
+                .as(response)
+          )
         )
-
-        response.traverse { case (updated, response) =>
-          streamsRef.set(updated).as(response)
-        }
-      }
   }
 
   def enableEnhancedMonitoring(
       req: EnableEnhancedMonitoringRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, EnableEnhancedMonitoringResponse]] = {
+  ): IO[EitherResponse[EnableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing EnableEnhancedMonitoring request"
@@ -682,39 +619,33 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .enableEnhancedMonitoring(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-
-        response.fold(
-          e =>
-            logger
-              .warn(context.context, e)(
-                "Enabling the enhanced monitoring was unuccessful"
-              )
-              .as(response),
-          r =>
-            logger.debug(context.context)(
-              "Successfully enabled enhanced monitoring"
-            ) *> logger
-              .trace(context.addJson("response", r._2.asJson).context)(
-                "Logging response"
-              )
-              .as(response)
+      req
+        .enableEnhancedMonitoring(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response.fold(
+            e =>
+              logger
+                .warn(context.context, e)(
+                  "Enabling the enhanced monitoring was unuccessful"
+                )
+                .as(response),
+            r =>
+              logger.debug(context.context)(
+                "Successfully enabled enhanced monitoring"
+              ) *> logger
+                .trace(context.addJson("response", r.asJson).context)(
+                  "Logging response"
+                )
+                .as(response)
+          )
         )
-
-        response.traverse { case (updated, response) =>
-          streamsRef.set(updated).as(response)
-        }
-      }
   }
 
   def listShards(
       req: ListShardsRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, ListShardsResponse]] =
+  ): IO[EitherResponse[ListShardsResponse]] =
     logger.debug(context.context)(
       "Processing ListShards request"
     ) *>
@@ -722,29 +653,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.listShards.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .listShards(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Listing shards was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully listed shards"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .listShards(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Listing shards was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully listed shards"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for ListShards"
@@ -755,7 +684,7 @@ class Cache private (
   def listStreamConsumers(
       req: ListStreamConsumersRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, ListStreamConsumersResponse]] = {
+  ): IO[EitherResponse[ListStreamConsumersResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
       "Processing ListStreamConsumers request"
@@ -764,29 +693,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.listStreamConsumers.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .listStreamConsumers(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Listing stream consumers was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully listed stream consumers"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .listStreamConsumers(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Listing stream consumers was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully listed stream consumers"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(ctx.context)(
             "Rate limit exceeded for ListShards"
@@ -802,7 +729,7 @@ class Cache private (
   def listStreams(
       req: ListStreamsRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, ListStreamsResponse]] =
+  ): IO[EitherResponse[ListStreamsResponse]] =
     logger.debug(context.context)(
       "Processing ListStreams request"
     ) *>
@@ -810,29 +737,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.listStreams.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .listStreams(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Listing streams was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully listed streams"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .listStreams(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Listing streams was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully listed streams"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(context.context)(
             "Rate limit exceeded for ListStreams"
@@ -847,7 +772,7 @@ class Cache private (
   def listTagsForStream(
       req: ListTagsForStreamRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, ListTagsForStreamResponse]] = {
+  ): IO[EitherResponse[ListTagsForStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing ListTagsForStream request"
@@ -856,29 +781,27 @@ class Cache private (
         "Logging request"
       ) *>
       semaphores.listTagsForStream.tryAcquireRelease(
-        streamsRef.get.flatMap { streams =>
-          val response = req
-            .listTagsForStream(streams)
-            .toEither
-            .leftMap(KinesisMockException.aggregate)
-
-          response.fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Listing tags for stream was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully listed tags for stream"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-        },
+        req
+          .listTagsForStream(streamsRef)
+          .aggregateErrors
+          .flatMap(response =>
+            response.fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Listing tags for stream was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully listed tags for stream"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+          ),
         logger
           .warn(ctx.context)(
             "Rate limit exceeded for ListTagsForStream"
@@ -894,8 +817,7 @@ class Cache private (
   def startStreamEncryption(
       req: StartStreamEncryptionRequest,
       context: LoggingContext
-  )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -903,51 +825,46 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .startStreamEncryption(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-
-        response
-          .fold(
-            e =>
-              logger
-                .warn(ctx.context, e)(
-                  "Starting stream encryption was unuccessful"
-                ),
-            _ =>
-              logger.debug(ctx.context)(
-                "Successfully started stream encryption"
-              )
-          ) *> response.traverse(updated =>
-          streamsRef.set(updated) *>
-            supervisor
-              .supervise(
-                logger.debug(context.context)(
-                  s"Delaying setting the stream to active for ${config.startStreamEncryptionDuration.toString}"
-                ) *>
-                  IO.sleep(config.startStreamEncryptionDuration) *>
-                  logger.debug(context.context)(
-                    s"Setting the stream to active"
-                  ) *>
-                  streamsRef
-                    .set(
-                      updated.findAndUpdateStream(req.streamName)(x =>
-                        x.copy(streamStatus = StreamStatus.ACTIVE)
-                      )
-                    )
-              )
-              .void
+      req
+        .startStreamEncryption(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response
+            .fold(
+              e =>
+                logger
+                  .warn(ctx.context, e)(
+                    "Starting stream encryption was unuccessful"
+                  )
+                  .as(response),
+              _ =>
+                logger.debug(ctx.context)(
+                  "Successfully started stream encryption"
+                ) *> supervisor
+                  .supervise(
+                    logger.debug(context.context)(
+                      s"Delaying setting the stream to active for ${config.startStreamEncryptionDuration.toString}"
+                    ) *>
+                      IO.sleep(config.startStreamEncryptionDuration) *>
+                      logger.debug(context.context)(
+                        s"Setting the stream to active"
+                      ) *>
+                      streamsRef
+                        .update(updated =>
+                          updated.findAndUpdateStream(req.streamName)(x =>
+                            x.copy(streamStatus = StreamStatus.ACTIVE)
+                          )
+                        )
+                  )
+                  .as(response)
+            )
         )
-      }
   }
 
   def stopStreamEncryption(
       req: StopStreamEncryptionRequest,
       context: LoggingContext
-  )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -955,50 +872,49 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .stopStreamEncryption(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-
-        response
-          .fold(
-            e =>
-              logger
-                .warn(ctx.context, e)(
-                  "Stopping stream encryption was unuccessful"
-                ),
-            _ =>
-              logger.debug(ctx.context)(
-                "Successfully stopped stream encryption"
-              )
-          ) *> response.traverse(updated =>
-          streamsRef.set(updated) *>
-            supervisor
-              .supervise(
-                logger.debug(context.context)(
-                  s"Delaying setting the stream to active for ${config.stopStreamEncryptionDuration.toString}"
+      req
+        .stopStreamEncryption(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response
+            .fold(
+              e =>
+                logger
+                  .warn(ctx.context, e)(
+                    "Stopping stream encryption was unuccessful"
+                  )
+                  .as(response),
+              _ =>
+                logger.debug(ctx.context)(
+                  "Successfully stopped stream encryption"
                 ) *>
-                  IO.sleep(config.stopStreamEncryptionDuration) *>
-                  logger.debug(context.context)(
-                    s"Setting the stream to active"
-                  ) *>
-                  streamsRef
-                    .set(
-                      updated.findAndUpdateStream(req.streamName)(x =>
-                        x.copy(streamStatus = StreamStatus.ACTIVE)
-                      )
+                  supervisor
+                    .supervise(
+                      logger.debug(context.context)(
+                        s"Delaying setting the stream to active for ${config.stopStreamEncryptionDuration.toString}"
+                      ) *>
+                        IO.sleep(config.stopStreamEncryptionDuration) *>
+                        logger.debug(context.context)(
+                          s"Setting the stream to active"
+                        ) *>
+                        streamsRef
+                          .update(updated =>
+                            updated.findAndUpdateStream(req.streamName)(x =>
+                              x.copy(streamStatus = StreamStatus.ACTIVE)
+                            )
+                          )
                     )
-              )
-              .void
+                    .void
+                    .as(response)
+            )
         )
-      }
+
   }
 
   def getShardIterator(
       req: GetShardIteratorRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, GetShardIteratorResponse]] = {
+  ): IO[EitherResponse[GetShardIteratorResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing GetShardIterator request"
@@ -1006,82 +922,77 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .getShardIterator(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
+      req
+        .getShardIterator(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response
+            .fold(
+              e =>
+                logger
+                  .warn(ctx.context, e)(
+                    "Getting the shard iterator was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(ctx.context)(
+                  "Successfully got the shard iterator"
+                ) *> logger
+                  .trace(ctx.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+        )
 
-        response
-          .fold(
-            e =>
-              logger
-                .warn(ctx.context, e)(
-                  "Getting the shard iterator was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(ctx.context)(
-                "Successfully got the shard iterator"
-              ) *> logger
-                .trace(ctx.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-      }
   }
   def getRecords(
       req: GetRecordsRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, GetRecordsResponse]] =
+  ): IO[EitherResponse[GetRecordsResponse]] =
     logger.debug(context.context)(
       "Processing GetRecords request"
     ) *>
       logger.trace(context.addJson("request", req.asJson).context)(
         "Logging request"
       ) *>
-      streamsRef.get.flatMap { streams =>
-        val response = req
-          .getRecords(streams)
-          .toEither
-          .leftMap(KinesisMockException.aggregate)
-
-        response
-          .fold(
-            e =>
-              logger
-                .warn(context.context, e)(
-                  "Getting records was unuccessful"
-                )
-                .as(response),
-            r =>
-              logger.debug(context.context)(
-                "Successfully got records"
-              ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
-                  "Logging response"
-                )
-                .as(response)
-          )
-      }
+      req
+        .getRecords(streamsRef)
+        .aggregateErrors
+        .flatMap(response =>
+          response
+            .fold(
+              e =>
+                logger
+                  .warn(context.context, e)(
+                    "Getting records was unuccessful"
+                  )
+                  .as(response),
+              r =>
+                logger.debug(context.context)(
+                  "Successfully got records"
+                ) *> logger
+                  .trace(context.addJson("response", r.asJson).context)(
+                    "Logging response"
+                  )
+                  .as(response)
+            )
+        )
 
   def putRecord(
       req: PutRecordRequest,
       context: LoggingContext
-  ): IO[Either[KinesisMockException, PutRecordResponse]] = {
+  ): IO[EitherResponse[PutRecordResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecord request")
       _ <- logger.trace(context.addJson("request", req.asJson).context)(
         "Logging request"
       )
-      streams <- streamsRef.get
-      shardSemaphores <- shardsSemaphoresRef.get
-      put <- req
-        .putRecord(streams, shardSemaphores)
-        .map(_.toEither.leftMap(KinesisMockException.aggregate))
-      _ <- put.fold(
+      res <- req
+        .putRecord(streamsRef, shardSemaphoresRef)
+        .aggregateErrors
+      _ <- res.fold(
         e =>
           logger
             .warn(ctx.context, e)(
@@ -1091,12 +1002,10 @@ class Cache private (
           logger.debug(ctx.context)(
             "Successfully put record"
           ) *> logger
-            .trace(ctx.addJson("response", r._2.asJson).context)(
+            .trace(ctx.addJson("response", r.asJson).context)(
               "Logging response"
             )
       )
-      _ <- put.traverse { case (updated, _) => streamsRef.set(updated) }
-      res = put.map(_._2)
     } yield res
   }
 
@@ -1105,19 +1014,17 @@ class Cache private (
       context: LoggingContext
   )(implicit
       P: Parallel[IO]
-  ): IO[Either[KinesisMockException, PutRecordsResponse]] = {
+  ): IO[EitherResponse[PutRecordsResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecords request")
       _ <- logger.trace(context.addJson("request", req.asJson).context)(
         "Logging request"
       )
-      streams <- streamsRef.get
-      shardSemaphores <- shardsSemaphoresRef.get
-      put <- req
-        .putRecords(streams, shardSemaphores)
-        .map(_.toEither.leftMap(KinesisMockException.aggregate))
-      _ <- put.fold(
+      res <- req
+        .putRecords(streamsRef, shardSemaphoresRef)
+        .aggregateErrors
+      _ <- res.fold(
         e =>
           logger
             .warn(ctx.context, e)(
@@ -1127,12 +1034,10 @@ class Cache private (
           logger.debug(ctx.context)(
             "Successfully put records"
           ) *> logger
-            .trace(ctx.addJson("response", r._2.asJson).context)(
+            .trace(ctx.addJson("response", r.asJson).context)(
               "Logging response"
             )
       )
-      _ <- put.traverse { case (updated, _) => streamsRef.set(updated) }
-      res = put.map(_._2)
     } yield res
   }
 
@@ -1140,7 +1045,9 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext
   )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1150,11 +1057,9 @@ class Cache private (
       ) *>
       semaphores.mergeShards.tryAcquireRelease(
         for {
-          streams <- streamsRef.get
-          shardSemaphores <- shardsSemaphoresRef.get
           result <- req
-            .mergeShards(streams, shardSemaphores)
-            .map(_.toEither.leftMap(KinesisMockException.aggregate))
+            .mergeShards(streamsRef, shardSemaphoresRef)
+            .aggregateErrors
           _ <- result.fold(
             e =>
               logger
@@ -1166,32 +1071,24 @@ class Cache private (
                 "Successfully merged shards"
               )
           )
-          res <- result.traverse { case (updated, newShardsSemaphoreKey) =>
-            streamsRef.set(updated) *>
-              Semaphore[IO](1).flatMap(semaphore =>
-                shardsSemaphoresRef.update(shardsSemaphore =>
-                  shardsSemaphore ++ List(newShardsSemaphoreKey -> semaphore)
-                )
+          _ <- supervisor
+            .supervise(
+              logger.debug(context.context)(
+                s"Delaying setting the stream to active for ${config.mergeShardsDuration.toString}"
               ) *>
-              supervisor
-                .supervise(
-                  logger.debug(context.context)(
-                    s"Delaying setting the stream to active for ${config.mergeShardsDuration.toString}"
-                  ) *>
-                    IO.sleep(config.mergeShardsDuration) *>
-                    logger.debug(context.context)(
-                      s"Setting the stream to active"
-                    ) *>
-                    streamsRef
-                      .set(
-                        updated.findAndUpdateStream(req.streamName)(x =>
-                          x.copy(streamStatus = StreamStatus.ACTIVE)
-                        )
-                      )
-                )
-                .void
-          }
-        } yield res,
+                IO.sleep(config.mergeShardsDuration) *>
+                logger.debug(context.context)(
+                  s"Setting the stream to active"
+                ) *>
+                streamsRef
+                  .update(updated =>
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
+                  )
+            )
+            .void
+        } yield result,
         logger
           .warn(ctx.context)(
             "Rate limit exceeded for MergeShards"
@@ -1204,7 +1101,9 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext
   )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1214,11 +1113,9 @@ class Cache private (
       ) *>
       semaphores.splitShard.tryAcquireRelease(
         for {
-          streams <- streamsRef.get
-          shardSemaphores <- shardsSemaphoresRef.get
           result <- req
-            .splitShard(streams, shardSemaphores, config.shardLimit)
-            .map(_.toEither.leftMap(KinesisMockException.aggregate))
+            .splitShard(streamsRef, shardSemaphoresRef, config.shardLimit)
+            .aggregateErrors
           _ <- result.fold(
             e =>
               logger
@@ -1230,34 +1127,24 @@ class Cache private (
                 "Successfully split shard"
               )
           )
-          res <- result.traverse { case (updated, newShardsSemaphoreKeys) =>
-            streamsRef.set(updated) *>
-              Semaphore[IO](1)
-                .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
-                .flatMap(semaphores =>
-                  shardsSemaphoresRef.update(shardsSemaphore =>
-                    shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
-                  )
+          _ <- supervisor
+            .supervise(
+              logger.debug(context.context)(
+                s"Delaying setting the stream to active for ${config.splitShardDuration.toString}"
+              ) *>
+                IO.sleep(config.splitShardDuration) *>
+                logger.debug(context.context)(
+                  s"Setting the stream to active"
                 ) *>
-              supervisor
-                .supervise(
-                  logger.debug(context.context)(
-                    s"Delaying setting the stream to active for ${config.splitShardDuration.toString}"
-                  ) *>
-                    IO.sleep(config.splitShardDuration) *>
-                    logger.debug(context.context)(
-                      s"Setting the stream to active"
-                    ) *>
-                    streamsRef
-                      .set(
-                        updated.findAndUpdateStream(req.streamName)(x =>
-                          x.copy(streamStatus = StreamStatus.ACTIVE)
-                        )
-                      )
-                )
-                .void
-          }
-        } yield res,
+                streamsRef
+                  .update(updated =>
+                    updated.findAndUpdateStream(req.streamName)(x =>
+                      x.copy(streamStatus = StreamStatus.ACTIVE)
+                    )
+                  )
+            )
+            .void
+        } yield result,
         logger
           .warn(ctx.context)(
             "Rate limit exceeded for MergeShards"
@@ -1270,7 +1157,9 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext
   )(implicit
-      T: Temporal[IO]): IO[Either[KinesisMockException, Unit]] = {
+      T: Timer[IO],
+      CS: ContextShift[IO]
+  ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
@@ -1278,11 +1167,9 @@ class Cache private (
       logger.trace(ctx.addJson("request", req.asJson).context)(
         "Logging request"
       ) *> (for {
-        streams <- streamsRef.get
-        shardSemaphores <- shardsSemaphoresRef.get
         result <- req
-          .updateShardCount(streams, shardSemaphores, config.shardLimit)
-          .map(_.toEither.leftMap(KinesisMockException.aggregate))
+          .updateShardCount(streamsRef, shardSemaphoresRef, config.shardLimit)
+          .aggregateErrors
         _ <- result.fold(
           e =>
             logger
@@ -1294,34 +1181,24 @@ class Cache private (
               "Successfully updated shard count"
             )
         )
-        res <- result.traverse { case (updated, newShardsSemaphoreKeys) =>
-          streamsRef.set(updated) *>
-            Semaphore[IO](1)
-              .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
-              .flatMap(semaphores =>
-                shardsSemaphoresRef.update(shardsSemaphore =>
-                  shardsSemaphore ++ newShardsSemaphoreKeys.zip(semaphores)
-                )
+        _ <- supervisor
+          .supervise(
+            logger.debug(context.context)(
+              s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
+            ) *>
+              IO.sleep(config.updateShardCountDuration) *>
+              logger.debug(context.context)(
+                s"Setting the stream to active"
               ) *>
-            supervisor
-              .supervise(
-                logger.debug(context.context)(
-                  s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
-                ) *>
-                  IO.sleep(config.updateShardCountDuration) *>
-                  logger.debug(context.context)(
-                    s"Setting the stream to active"
-                  ) *>
-                  streamsRef
-                    .set(
-                      updated.findAndUpdateStream(req.streamName)(x =>
-                        x.copy(streamStatus = StreamStatus.ACTIVE)
-                      )
-                    )
-              )
-              .void
-        }
-      } yield res)
+              streamsRef
+                .update(updated =>
+                  updated.findAndUpdateStream(req.streamName)(x =>
+                    x.copy(streamStatus = StreamStatus.ACTIVE)
+                  )
+                )
+          )
+          .void
+      } yield result)
   }
 
 }
@@ -1331,13 +1208,13 @@ object Cache {
       config: CacheConfig
   )(implicit): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](Streams.empty)
-    shardsSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
+    shardSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
       Map.empty
     )
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
     cache <- supervisorResource.use(supervisor =>
-      IO(new Cache(ref, shardsSemaphoresRef, semaphores, config, supervisor))
+      IO(new Cache(ref, shardSemaphoresRef, semaphores, config, supervisor))
     )
   } yield cache
 }
