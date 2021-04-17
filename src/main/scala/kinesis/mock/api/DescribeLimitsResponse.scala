@@ -1,5 +1,7 @@
 package kinesis.mock.api
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import io.circe._
 
@@ -8,11 +10,16 @@ import kinesis.mock.models.Streams
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
 
 object DescribeLimitsResponse {
-  def get(shardLimit: Int, streams: Streams): DescribeLimitsResponse =
-    DescribeLimitsResponse(
-      streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum,
-      shardLimit
-    )
+  def get(
+      shardLimit: Int,
+      streamsRef: Ref[IO, Streams]
+  ): IO[DescribeLimitsResponse] =
+    streamsRef.get.map { streams =>
+      DescribeLimitsResponse(
+        streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum,
+        shardLimit
+      )
+    }
 
   implicit val describeLimitsResponseCirceEncoder
       : Encoder[DescribeLimitsResponse] =

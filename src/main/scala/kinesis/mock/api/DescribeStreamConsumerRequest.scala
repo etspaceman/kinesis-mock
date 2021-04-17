@@ -1,7 +1,8 @@
 package kinesis.mock
 package api
 
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -16,28 +17,26 @@ final case class DescribeStreamConsumerRequest(
     streamArn: Option[String]
 ) {
   def describeStreamConsumer(
-      streams: Streams
-  ): ValidatedNel[
-    KinesisMockException,
-    DescribeStreamConsumerResponse
-  ] = {
-    (consumerArn, consumerName, streamArn) match {
-      case (Some(cArn), _, _) =>
-        CommonValidations.findStreamByConsumerArn(cArn, streams).map {
-          case (consumer, _) => DescribeStreamConsumerResponse(consumer)
-        }
-      case (None, Some(cName), Some(sArn)) =>
-        CommonValidations.findStreamByArn(sArn, streams).andThen { stream =>
-          CommonValidations
-            .findConsumer(cName, stream)
-            .map(DescribeStreamConsumerResponse.apply)
-        }
-      case _ =>
-        InvalidArgumentException(
-          "ConsumerArn or both ConsumerName and StreamARN are required for this request."
-        ).invalidNel
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[DescribeStreamConsumerResponse]] =
+    streamsRef.get.map { streams =>
+      (consumerArn, consumerName, streamArn) match {
+        case (Some(cArn), _, _) =>
+          CommonValidations.findStreamByConsumerArn(cArn, streams).map {
+            case (consumer, _) => DescribeStreamConsumerResponse(consumer)
+          }
+        case (None, Some(cName), Some(sArn)) =>
+          CommonValidations.findStreamByArn(sArn, streams).andThen { stream =>
+            CommonValidations
+              .findConsumer(cName, stream)
+              .map(DescribeStreamConsumerResponse.apply)
+          }
+        case _ =>
+          InvalidArgumentException(
+            "ConsumerArn or both ConsumerName and StreamARN are required for this request."
+          ).invalidNel
+      }
     }
-  }
 }
 
 object DescribeStreamConsumerRequest {

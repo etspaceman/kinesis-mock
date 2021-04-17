@@ -1,14 +1,18 @@
 package kinesis.mock
 package api
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamSummaryTests extends munit.ScalaCheckSuite {
-  property("It should describe a stream summary")(forAll {
+class DescribeStreamSummaryTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should describe a stream summary")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -17,24 +21,28 @@ class DescribeStreamSummaryTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val req =
-        DescribeStreamSummaryRequest(streamName)
-      val res = req.describeStreamSummary(streams)
-      val streamDescriptionSummary = streams.streams
-        .get(streamName)
-        .map(s => StreamDescriptionSummary.fromStreamData(s))
-
-      (res.isValid && res.exists { response =>
-        streamDescriptionSummary.contains(response.streamDescriptionSummary)
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamSummaryRequest(streamName)
+        res <- req.describeStreamSummary(streamsRef)
+        streamDescriptionSummary = streams.streams
+          .get(streamName)
+          .map(s => StreamDescriptionSummary.fromStreamData(s))
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamDescriptionSummary.contains(response.streamDescriptionSummary)
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if the stream does not exist")(forAll {
+  test("It should reject if the stream does not exist")(PropF.forAllF {
     req: DescribeStreamSummaryRequest =>
       val streams = Streams.empty
 
-      val res = req.describeStreamSummary(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- req.describeStreamSummary(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 }

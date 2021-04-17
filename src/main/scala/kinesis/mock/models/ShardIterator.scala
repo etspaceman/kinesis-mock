@@ -7,7 +7,6 @@ import java.time.Instant
 import java.util.Base64
 
 import cats.data.Validated._
-import cats.data._
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -18,7 +17,7 @@ import javax.xml.bind.DatatypeConverter
 import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
-  def parse: ValidatedNel[KinesisMockException, ShardIteratorParts] = {
+  def parse: ValidatedResponse[ShardIteratorParts] = {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     val decoded = Base64.getDecoder.decode(value)
 

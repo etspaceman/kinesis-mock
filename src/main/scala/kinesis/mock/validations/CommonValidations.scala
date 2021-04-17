@@ -16,7 +16,7 @@ import kinesis.mock.models._
 object CommonValidations {
   def validateStreamName(
       streamName: StreamName
-  ): ValidatedNel[KinesisMockException, StreamName] =
+  ): ValidatedResponse[StreamName] =
     (
       if (!streamName.streamName.matches("[a-zA-Z0-9_.-]+"))
         InvalidArgumentException(
@@ -32,7 +32,7 @@ object CommonValidations {
 
   def validateStreamArn(
       streamArn: String
-  ): ValidatedNel[KinesisMockException, String] = (
+  ): ValidatedResponse[String] = (
     if (!streamArn.matches("arn:aws.*:kinesis:.*:\\d{12}:stream/.+"))
       InvalidArgumentException(
         s"StreamARN '$streamArn' is not formatted properly"
@@ -48,7 +48,7 @@ object CommonValidations {
   def findStream(
       streamName: StreamName,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, StreamData] =
+  ): ValidatedResponse[StreamData] =
     streams.streams
       .get(streamName)
       .toValidNel(
@@ -58,14 +58,14 @@ object CommonValidations {
   def findStreamByArn(
       streamArn: String,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, StreamData] = streams.streams.values
+  ): ValidatedResponse[StreamData] = streams.streams.values
     .find(_.streamArn == streamArn)
     .toValidNel(ResourceNotFoundException(s"StreamARN $streamArn not found"))
 
   def findStreamByConsumerArn(
       consumerArn: String,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, (Consumer, StreamData)] =
+  ): ValidatedResponse[(Consumer, StreamData)] =
     streams.streams.values
       .find(_.consumers.values.exists(_.consumerArn == consumerArn))
       .flatMap(stream =>
@@ -80,7 +80,7 @@ object CommonValidations {
   def isStreamActive(
       streamName: StreamName,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, StreamName] =
+  ): ValidatedResponse[StreamName] =
     if (
       streams.streams
         .get(streamName)
@@ -94,7 +94,7 @@ object CommonValidations {
   def isStreamActiveOrUpdating(
       streamName: StreamName,
       streams: Streams
-  ): ValidatedNel[KinesisMockException, StreamName] =
+  ): ValidatedResponse[StreamName] =
     if (
       streams.streams
         .get(streamName)
@@ -111,7 +111,7 @@ object CommonValidations {
       shardCountToAdd: Int,
       streams: Streams,
       shardLimit: Int
-  ): ValidatedNel[KinesisMockException, Int] =
+  ): ValidatedResponse[Int] =
     if (
       streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum +
         shardCountToAdd > shardLimit
@@ -123,7 +123,7 @@ object CommonValidations {
 
   def validateShardCount(
       shardCount: Int
-  ): ValidatedNel[KinesisMockException, Int] =
+  ): ValidatedResponse[Int] =
     if (shardCount < 1 || shardCount > 1000)
       LimitExceededException(
         s"The shard count must be between 1 and 1000"
@@ -132,7 +132,7 @@ object CommonValidations {
 
   def validateTagKeys(
       keys: Iterable[String]
-  ): ValidatedNel[KinesisMockException, Iterable[String]] =
+  ): ValidatedResponse[Iterable[String]] =
     (
       {
         val startsWithAws = keys.filter(_.startsWith("aws:"))
@@ -161,7 +161,7 @@ object CommonValidations {
 
   def validateRetentionPeriodHours(
       retentionPeriodHours: Int
-  ): ValidatedNel[KinesisMockException, Int] =
+  ): ValidatedResponse[Int] =
     if (
       retentionPeriodHours < StreamData.minRetentionPeriod.toHours || retentionPeriodHours > StreamData.maxRetentionPeriod.toHours
     )
@@ -172,7 +172,7 @@ object CommonValidations {
 
   def validateShardId(
       shardId: String
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedResponse[String] =
     (
       if (!shardId.matches("[a-zA-Z0-9_.-]+"))
         InvalidArgumentException(
@@ -188,7 +188,7 @@ object CommonValidations {
 
   def validateConsumerName(
       consumerName: ConsumerName
-  ): ValidatedNel[KinesisMockException, ConsumerName] = (
+  ): ValidatedResponse[ConsumerName] = (
     if (!consumerName.consumerName.matches("[a-zA-Z0-9_.-]+"))
       InvalidArgumentException(
         s"ConsumerName '$consumerName' contains invalid characters"
@@ -207,7 +207,7 @@ object CommonValidations {
   def findConsumer(
       consumerName: ConsumerName,
       streamData: StreamData
-  ): ValidatedNel[KinesisMockException, Consumer] =
+  ): ValidatedResponse[Consumer] =
     streamData.consumers
       .get(consumerName)
       .toValidNel(
@@ -218,7 +218,7 @@ object CommonValidations {
 
   def validateNextToken(
       nextToken: String
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedResponse[String] =
     if (nextToken.isEmpty || nextToken.length() > 1048576)
       InvalidArgumentException(
         s"NextToken length must be between 1 and 1048576"
@@ -227,7 +227,7 @@ object CommonValidations {
 
   def validateMaxResults(
       maxResults: Int
-  ): ValidatedNel[KinesisMockException, Int] =
+  ): ValidatedResponse[Int] =
     if (maxResults < 1 || maxResults > 10000)
       InvalidArgumentException(
         s"MaxResults must be between 1 and 10000"
@@ -236,14 +236,14 @@ object CommonValidations {
 
   def validateLimit(
       limit: Int
-  ): ValidatedNel[KinesisMockException, Int] =
+  ): ValidatedResponse[Int] =
     if (limit < 1 || limit > 10000)
       InvalidArgumentException(
         s"Limit must be between 1 and 10000"
       ).invalidNel
     else Valid(limit)
 
-  def validateKeyId(keyId: String): ValidatedNel[KinesisMockException, String] =
+  def validateKeyId(keyId: String): ValidatedResponse[String] =
     if (
       keyId.startsWith("arn:") && (
         (
@@ -275,7 +275,7 @@ object CommonValidations {
 
   def isKmsEncryptionType(
       encryptionType: EncryptionType
-  ): ValidatedNel[KinesisMockException, EncryptionType] =
+  ): ValidatedResponse[EncryptionType] =
     encryptionType match {
       case EncryptionType.KMS => Valid(encryptionType)
       case _ =>
@@ -286,7 +286,7 @@ object CommonValidations {
 
   def validateSequenceNumber(
       sequenceNumber: SequenceNumber
-  ): ValidatedNel[KinesisMockException, SequenceNumber] =
+  ): ValidatedResponse[SequenceNumber] =
     if (
       SequenceNumberConstant
         .withNameOption(sequenceNumber.value)
@@ -300,7 +300,7 @@ object CommonValidations {
   def findShard(
       shardId: String,
       stream: StreamData
-  ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] =
+  ): ValidatedResponse[(Shard, List[KinesisRecord])] =
     stream.shards.find { case (shard, _) =>
       shard.shardId.shardId == shardId
     } match {
@@ -315,7 +315,7 @@ object CommonValidations {
       partitionKey: String,
       explicitHashKey: Option[String],
       stream: StreamData
-  ): ValidatedNel[KinesisMockException, (Shard, List[KinesisRecord])] = {
+  ): ValidatedResponse[(Shard, List[KinesisRecord])] = {
     (explicitHashKey match {
       case Some(ehk) =>
         val hash = BigInt(ehk)
@@ -354,7 +354,7 @@ object CommonValidations {
 
   def validateExplicitHashKey(
       explicitHashKey: String
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedResponse[String] =
     if (!explicitHashKey.matches("0|([1-9]\\d{0,38})"))
       InvalidArgumentException(
         "ExplicitHashKey contains invalid characters"
@@ -363,21 +363,21 @@ object CommonValidations {
 
   def validatePartitionKey(
       partitionKey: String
-  ): ValidatedNel[KinesisMockException, String] =
+  ): ValidatedResponse[String] =
     if (partitionKey.isEmpty || partitionKey.length > 256)
       InvalidArgumentException(
         "Partition key must be between 1 and 256 in length"
       ).invalidNel
     else Valid(partitionKey)
 
-  def isShardOpen(shard: Shard): ValidatedNel[KinesisMockException, Shard] =
+  def isShardOpen(shard: Shard): ValidatedResponse[Shard] =
     if (!shard.isOpen)
       ResourceInUseException(s"Shard ${shard.shardId} is not active").invalidNel
     else Valid(shard)
 
   def validateData(
       data: Array[Byte]
-  ): ValidatedNel[KinesisMockException, Array[Byte]] =
+  ): ValidatedResponse[Array[Byte]] =
     if (data.length > 1048576)
       InvalidArgumentException("Data object is too large").invalidNel
     else Valid(data)

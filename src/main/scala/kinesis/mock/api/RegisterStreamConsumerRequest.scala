@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -16,48 +17,53 @@ final case class RegisterStreamConsumerRequest(
     streamArn: String
 ) {
   def registerStreamConsumer(
-      streams: Streams
-  ): ValidatedNel[
-    KinesisMockException,
-    (Streams, RegisterStreamConsumerResponse)
-  ] =
-    CommonValidations
-      .findStreamByArn(streamArn, streams)
-      .andThen(stream =>
-        (
-          CommonValidations.validateStreamArn(streamArn),
-          CommonValidations.validateConsumerName(consumerName),
-          if (stream.consumers.size >= 20)
-            LimitExceededException(
-              s"Only 20 consumers can be registered to a stream at once"
-            ).invalidNel
-          else Valid(()),
-          if (
-            stream.consumers.values
-              .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
-          )
-            LimitExceededException(
-              s"Only 5 consumers can be created at the same time"
-            ).invalidNel
-          else Valid(()),
-          if (stream.consumers.contains(consumerName))
-            ResourceInUseException(
-              s"Consumer $consumerName exists"
-            ).invalidNel
-          else Valid(())
-        ).mapN { (_, _, _, _, _) =>
-          val consumer = Consumer.create(streamArn, consumerName)
-          (
-            streams.updateStream(
-              stream
-                .copy(consumers =
-                  stream.consumers ++ List(consumerName -> consumer)
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[RegisterStreamConsumerResponse]] =
+    streamsRef.get.flatMap { streams =>
+      CommonValidations
+        .validateStreamArn(streamArn)
+        .andThen(_ =>
+          CommonValidations
+            .findStreamByArn(streamArn, streams)
+            .andThen(stream =>
+              (
+                CommonValidations.validateConsumerName(consumerName),
+                if (stream.consumers.size >= 20)
+                  LimitExceededException(
+                    s"Only 20 consumers can be registered to a stream at once"
+                  ).invalidNel
+                else Valid(()),
+                if (
+                  stream.consumers.values
+                    .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
                 )
-            ),
-            RegisterStreamConsumerResponse(consumer)
-          )
+                  LimitExceededException(
+                    s"Only 5 consumers can be created at the same time"
+                  ).invalidNel
+                else Valid(()),
+                if (stream.consumers.contains(consumerName))
+                  ResourceInUseException(
+                    s"Consumer $consumerName exists"
+                  ).invalidNel
+                else Valid(())
+              ).mapN { (_, _, _, _) => (stream, streamArn, consumerName) }
+            )
+        )
+        .traverse { case (stream, streamArn, consumerName) =>
+          val consumer = Consumer.create(streamArn, consumerName)
+
+          streamsRef
+            .update(x =>
+              x.updateStream(
+                stream
+                  .copy(consumers =
+                    stream.consumers ++ List(consumerName -> consumer)
+                  )
+              )
+            )
+            .as(RegisterStreamConsumerResponse(consumer))
         }
-      )
+    }
 }
 
 object RegisterStreamConsumerRequest {

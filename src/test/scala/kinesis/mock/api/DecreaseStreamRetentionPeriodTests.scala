@@ -2,14 +2,18 @@ package kinesis.mock.api
 
 import scala.concurrent.duration._
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DecreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
-  property("It should decrease the stream retention period")(forAll {
+class DecreaseStreamRetentionPeriodTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should decrease the stream retention period")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -24,19 +28,22 @@ class DecreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
             streamStatus = StreamStatus.ACTIVE
           )
         )
-      val req = DecreaseStreamRetentionPeriodRequest(24, streamName)
-      val res = req.decreaseStreamRetention(withIncreasedRetention)
-
-      (res.isValid && res.exists { s =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](withIncreasedRetention)
+        req = DecreaseStreamRetentionPeriodRequest(24, streamName)
+        res <- req.decreaseStreamRetention(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.retentionPeriod == 24.hours
-        }
-      }) :| s"req: $req\nres: $res\nstreams: $withIncreasedRetention"
+        },
+        s"req: $req\nres: $res\nstreams: $withIncreasedRetention"
+      )
   })
 
-  property(
+  test(
     "It should reject when the stream retention period is less than the request"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -45,9 +52,16 @@ class DecreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val req = DecreaseStreamRetentionPeriodRequest(48, streamName)
-      val res = req.decreaseStreamRetention(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res\nstreams: $streams"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DecreaseStreamRetentionPeriodRequest(48, streamName)
+        res <- req.decreaseStreamRetention(streamsRef)
+        streams <- streamsRef.get
+      } yield assert(
+        res.isInvalid && streams.streams.get(streamName).exists { stream =>
+          stream.retentionPeriod == 24.hours
+        },
+        s"req: $req\nres: $res\nstreams: $streams"
+      )
   })
 }

@@ -1,14 +1,18 @@
 package kinesis.mock
 package api
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class EnableEnhancedMonitoringTests extends munit.ScalaCheckSuite {
-  property("It should enable enhanced monitoring")(forAll {
+class EnableEnhancedMonitoringTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should enable enhanced monitoring")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -18,20 +22,23 @@ class EnableEnhancedMonitoringTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val req =
-        EnableEnhancedMonitoringRequest(
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = EnableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
           streamName
         )
-      val res = req.enableEnhancedMonitoring(streams)
-      val updatedMetrics = res.toOption.flatMap { case (s, _) =>
-        s.streams
+        res <- req.enableEnhancedMonitoring(streamsRef)
+        s <- streamsRef.get
+        updatedMetrics = s.streams
           .get(streamName)
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
-      }
 
-      (res.isValid && res.exists { case (_, response) =>
-        updatedMetrics.contains(response.desiredShardLevelMetrics)
-      }) :| s"req: $req\nres: $res\nupdatedMetrics: $updatedMetrics"
+      } yield assert(
+        res.isValid && res.exists { case response =>
+          updatedMetrics.contains(response.desiredShardLevelMetrics)
+        },
+        s"req: $req\nres: $res\nupdatedMetrics: $updatedMetrics"
+      )
   })
 }
