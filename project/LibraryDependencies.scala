@@ -24,7 +24,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "0.7.23"
+    val munitVersion = "0.7.25"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
     val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.1"
