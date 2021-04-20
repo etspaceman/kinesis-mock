@@ -1,9 +1,9 @@
 package kinesis.mock
 
 import cats.effect.IO
-import cats.effect.concurrent.Deferred
 import software.amazon.kinesis.coordinator.WorkerStateChangeListener
 import software.amazon.kinesis.coordinator.WorkerStateChangeListener.WorkerState
+import cats.effect.Deferred
 
 final case class WorkerStartedListener(started: Deferred[IO, Unit])
     extends WorkerStateChangeListener {

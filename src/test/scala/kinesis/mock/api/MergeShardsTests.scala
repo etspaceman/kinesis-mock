@@ -2,13 +2,14 @@ package kinesis.mock
 package api
 
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore}
 import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
+import cats.effect.Ref
+import cats.effect.std.Semaphore
 
 class MergeShardsTests
     extends munit.CatsEffectSuite

@@ -1,7 +1,7 @@
 package kinesis.mock.syntax
 
 import cats.effect.IO
-import cats.effect.concurrent.Semaphore
+import cats.effect.std.Semaphore
 
 object semaphore extends SemaphoreSyntax
 

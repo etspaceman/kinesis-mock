@@ -3,12 +3,12 @@ package kinesis.mock.api
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
+import cats.effect.Ref
 
 class DecreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite

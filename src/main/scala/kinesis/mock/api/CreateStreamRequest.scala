@@ -2,7 +2,6 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
@@ -10,6 +9,8 @@ import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
+import cats.effect.std.Semaphore
 
 final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   def createStream(
@@ -18,7 +19,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
+  ): IO[ValidatedResponse[Unit]] =
     streamsRef.get.flatMap { streams =>
       (
         CommonValidations.validateStreamName(streamName),

@@ -3,7 +3,7 @@ package cache
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
+import cats.effect.concurrent.Supervisor
 import cats.syntax.all._
 import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -13,6 +13,9 @@ import kinesis.mock.api._
 import kinesis.mock.models._
 import kinesis.mock.syntax.io._
 import kinesis.mock.syntax.semaphore._
+import cats.effect.{ Ref, Temporal }
+import cats.effect.implicits._
+import cats.effect.std.Semaphore
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
@@ -101,9 +104,7 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+      T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
@@ -163,7 +164,7 @@ class Cache private (
   def deleteStream(
       req: DeleteStreamRequest,
       context: LoggingContext
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addJson("request", req.asJson).context)(
@@ -385,7 +386,7 @@ class Cache private (
       req: RegisterStreamConsumerRequest,
       context: LoggingContext
   )(implicit
-      T: Timer[IO]
+      T: Temporal[IO]
   ): IO[EitherResponse[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -459,7 +460,7 @@ class Cache private (
   def deregisterStreamConsumer(
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -814,7 +815,7 @@ class Cache private (
   def startStreamEncryption(
       req: StartStreamEncryptionRequest,
       context: LoggingContext
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -861,7 +862,7 @@ class Cache private (
   def stopStreamEncryption(
       req: StopStreamEncryptionRequest,
       context: LoggingContext
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -1042,9 +1043,7 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+      T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1098,9 +1097,7 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+      T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1154,9 +1151,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+      T: Temporal[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
@@ -1203,7 +1198,7 @@ class Cache private (
 object Cache {
   def apply(
       config: CacheConfig
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
+  )(implicit): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](Streams.empty)
     shardSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
       Map.empty

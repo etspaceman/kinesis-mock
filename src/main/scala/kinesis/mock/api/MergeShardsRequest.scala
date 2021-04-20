@@ -4,7 +4,6 @@ package api
 import java.time.Instant
 
 import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
@@ -12,6 +11,8 @@ import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
+import cats.effect.std.Semaphore
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
 final case class MergeShardsRequest(
@@ -22,7 +23,7 @@ final case class MergeShardsRequest(
   def mergeShards(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
+  ): IO[ValidatedResponse[Unit]] =
     streamsRef.get.flatMap(streams =>
       CommonValidations
         .validateStreamName(streamName)

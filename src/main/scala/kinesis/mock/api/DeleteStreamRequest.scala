@@ -5,13 +5,14 @@ import scala.collection.SortedMap
 
 import cats.data.Validated._
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
+import cats.effect.std.Semaphore
 
 final case class DeleteStreamRequest(
     streamName: StreamName,

@@ -2,12 +2,12 @@ package kinesis.mock
 package api
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(

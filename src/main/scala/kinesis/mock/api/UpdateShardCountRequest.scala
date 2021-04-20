@@ -7,7 +7,6 @@ import java.time.Instant
 
 import cats.Parallel
 import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
@@ -15,6 +14,9 @@ import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
+import cats.effect.implicits._
+import cats.effect.std.Semaphore
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateShardCount.html
 final case class UpdateShardCountRequest(
@@ -26,7 +28,7 @@ final case class UpdateShardCountRequest(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[ValidatedResponse[Unit]] =
+  )(implicit): IO[ValidatedResponse[Unit]] =
     streamsRef.get.flatMap { streams =>
       val now = Instant.now()
       CommonValidations

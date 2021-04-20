@@ -2,18 +2,19 @@ package kinesis.mock
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp}
 import io.circe.syntax._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.cache.{Cache, CacheConfig}
+import cats.effect.Resource
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         logger <- Slf4jLogger.create[IO]
         cacheConfig <- CacheConfig.read(blocker)
@@ -49,7 +50,7 @@ object KinesisMockService extends IOApp {
           s"Starting Kinesis Http1 Plain Mock Service on port ${serviceConfig.http1PlainPort}"
         )
         res <- http2Server
-          .parZip(http1PlainServer)
+          .both(http1PlainServer)
           .use(_ => IO.never)
           .as(ExitCode.Success)
       } yield res

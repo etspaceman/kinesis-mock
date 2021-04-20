@@ -5,13 +5,13 @@ import scala.annotation.tailrec
 
 import cats.data.Validated._
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 final case class GetRecordsRequest(
     limit: Option[Int],
