@@ -9,7 +9,7 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp = "wolfendale" %% "scalacheck-gen-regexp" % "0.1.2"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.6.0"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.0.0.2"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.0"
 
   object Borer {
