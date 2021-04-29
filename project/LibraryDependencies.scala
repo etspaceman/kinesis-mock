@@ -13,7 +13,7 @@ object LibraryDependencies {
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.0"
 
   object Borer {
-    val borerVersion = "1.7.1"
+    val borerVersion = "1.7.2"
     val core = "io.bullet" %% "borer-core" % borerVersion
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
