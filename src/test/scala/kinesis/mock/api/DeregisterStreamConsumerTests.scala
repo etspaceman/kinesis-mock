@@ -3,14 +3,18 @@ package api
 
 import scala.collection.SortedMap
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
-  property("It should deregister stream consumers by consumerName")(forAll {
+class DeregisterStreamConsumerTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should deregister stream consumers by consumerName")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -31,21 +35,26 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
       }
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
 
-      val req =
-        DeregisterStreamConsumerRequest(None, Some(consumerName), streamArn)
-      val res =
-        req.deregisterStreamConsumer(updated)
-
-      (res.isValid && res.exists { case (s, _) =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DeregisterStreamConsumerRequest(
+          None,
+          Some(consumerName),
+          streamArn
+        )
+        res <- req.deregisterStreamConsumer(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should deregister stream consumers by consumerArn")(forAll {
+  test("It should deregister stream consumers by consumerArn")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -70,20 +79,22 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .flatMap(_.consumers.get(consumerName).map(_.consumerArn))
 
-      val req = DeregisterStreamConsumerRequest(consumerArn, None, None)
-      val res =
-        req.deregisterStreamConsumer(updated)
-
-      (res.isValid && res.exists { case (s, _) =>
-        s.streams.get(streamName).exists { stream =>
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DeregisterStreamConsumerRequest(consumerArn, None, None)
+        res <- req.deregisterStreamConsumer(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
-        }
-      }) :| s"req: $req\nres: $res"
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if consumer is not active")(forAll {
+  test("It should reject if consumer is not active")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -107,14 +118,17 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .flatMap(_.consumers.get(consumerName).map(_.consumerArn))
 
-      val req = DeregisterStreamConsumerRequest(consumerArn, None, None)
-      val res =
-        req.deregisterStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DeregisterStreamConsumerRequest(consumerArn, None, None)
+        res <- req.deregisterStreamConsumer(streamsRef)
+      } yield assert(
+        res.isInvalid,
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if consumer does not exist")(forAll {
+  test("It should reject if consumer does not exist")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -126,17 +140,23 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
 
-      val req =
-        DeregisterStreamConsumerRequest(None, Some(consumerName), streamArn)
-      val res =
-        req.deregisterStreamConsumer(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DeregisterStreamConsumerRequest(
+          None,
+          Some(consumerName),
+          streamArn
+        )
+        res <- req.deregisterStreamConsumer(streamsRef)
+      } yield assert(
+        res.isInvalid,
+        s"req: $req\nres: $res"
+      )
   })
 
-  property(
+  test(
     "It should reject if a consumerName is provided without a streamArn"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -156,16 +176,19 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
         )
       }
 
-      val req = DeregisterStreamConsumerRequest(None, Some(consumerName), None)
-      val res =
-        req.deregisterStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DeregisterStreamConsumerRequest(None, Some(consumerName), None)
+        res <- req.deregisterStreamConsumer(streamsRef)
+      } yield assert(
+        res.isInvalid,
+        s"req: $req\nres: $res"
+      )
   })
 
-  property(
+  test(
     "It should reject if a streamArn is provided without a consumerName"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -187,10 +210,13 @@ class DeregisterStreamConsumerTests extends munit.ScalaCheckSuite {
 
       val streamArn = updated.streams.get(streamName).map(_.streamArn)
 
-      val req = DeregisterStreamConsumerRequest(None, None, streamArn)
-      val res =
-        req.deregisterStreamConsumer(updated)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](updated)
+        req = DeregisterStreamConsumerRequest(None, None, streamArn)
+        res <- req.deregisterStreamConsumer(streamsRef)
+      } yield assert(
+        res.isInvalid,
+        s"req: $req\nres: $res"
+      )
   })
 }

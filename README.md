@@ -1,5 +1,10 @@
 # Kinesis Mock
 
+![](https://github.com/etspaceman/kinesis-mock/workflows/Scala%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/etspaceman/kinesis-mock/branch/main/graph/badge.svg?token=XH58VN2O49)](https://codecov.io/gh/etspaceman/kinesis-mock)
+[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
+[![Join the chat at https://gitter.im/etspaceman/kinesis-mock](https://badges.gitter.im/etspaceman/kinesis-mock.svg)](https://gitter.im/etspaceman/kinesis-mock?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 - [Kinesis Mock](#kinesis-mock)
 - [Overview](#overview)
 - [Starting the service](#starting-the-service)
@@ -19,8 +24,8 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.0.1
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.1
+docker pull ghcr.io/etspaceman/kinesis-mock:0.0.4
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.4
 ```
 
 You can also leverage the `kinesis-mock.jar` executable in the release assets:
@@ -225,7 +230,7 @@ object MyApp {
       .httpClient(nettyClient)
       .region(Region.US_EAST_1)
       .credentialsProvider(AwsCreds.LocalCreds)
-      .endpointOverride(URI.create(s"https://localhost:8000")) // dynamodb-local port
+      .endpointOverride(URI.create(s"http://localhost:8000")) // dynamodb-local port
       .build()
     
   object KCLRecordProcessor extends ShardRecordProcessor {

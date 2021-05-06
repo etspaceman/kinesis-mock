@@ -10,7 +10,6 @@ lazy val kinesisMock = project
     organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
     scalaVersion := "2.13.5",
-    resolvers += Resolver.bintrayRepo("wolfendale", "maven"),
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
@@ -62,7 +61,8 @@ lazy val kinesisMock = project
     Test / testOptions ++= {
       List(Tests.Argument(MUnitFramework, "+l"))
     },
-    assembly / test := {}
+    assembly / test := {},
+    coverageExcludedPackages := "org\\.typelevel\\.log4cats.*"
   )
   .configs(FunctionalTest)
   .settings(

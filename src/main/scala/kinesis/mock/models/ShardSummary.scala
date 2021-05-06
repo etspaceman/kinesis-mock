@@ -9,7 +9,9 @@ final case class ShardSummary(
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
     shardId: String
-)
+) {
+  val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
+}
 
 object ShardSummary {
   def fromShard(shard: Shard): ShardSummary = ShardSummary(

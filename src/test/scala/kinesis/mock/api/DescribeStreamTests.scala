@@ -1,14 +1,18 @@
 package kinesis.mock
 package api
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamTests extends munit.ScalaCheckSuite {
-  property("It should describe a stream")(forAll {
+class DescribeStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should describe a stream")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -17,19 +21,22 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
       val (streams, _) =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val req =
-        DescribeStreamRequest(None, None, streamName)
-      val res = req.describeStream(streams)
-      val streamDescription = streams.streams
-        .get(streamName)
-        .map(s => StreamDescription.fromStreamData(s, None, None))
-
-      (res.isValid && res.exists { response =>
-        streamDescription.contains(response.streamDescription)
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamRequest(None, None, streamName)
+        res <- req.describeStream(streamsRef)
+        streamDescription = streams.streams
+          .get(streamName)
+          .map(s => StreamDescription.fromStreamData(s, None, None))
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamDescription.contains(response.streamDescription)
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should limit the shard count")(forAll {
+  test("It should limit the shard count")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -39,21 +46,25 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
         Streams.empty.addStream(2, streamName, awsRegion, awsAccountId)
 
       val limit = Some(1)
-      val req =
-        DescribeStreamRequest(None, limit, streamName)
-      val res = req.describeStream(streams)
-      val streamDescription = streams.streams
-        .get(streamName)
-        .map(s => StreamDescription.fromStreamData(s, None, limit))
 
-      (res.isValid && res.exists { response =>
-        streamDescription.contains(
-          response.streamDescription
-        ) && response.streamDescription.shards.size == 1
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamRequest(None, limit, streamName)
+        res <- req.describeStream(streamsRef)
+        streamDescription = streams.streams
+          .get(streamName)
+          .map(s => StreamDescription.fromStreamData(s, None, limit))
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamDescription.contains(
+            response.streamDescription
+          ) && response.streamDescription.shards.size == 1
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should start after a shardId")(forAll {
+  test("It should start after a shardId")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -66,32 +77,34 @@ class DescribeStreamTests extends munit.ScalaCheckSuite {
         .get(streamName)
         .flatMap(_.shards.headOption.map(_._1.shardId.shardId))
 
-      val req =
-        DescribeStreamRequest(exclusiveStartShardId, None, streamName)
-      val res = req.describeStream(streams)
-      val streamDescription = streams.streams
-        .get(streamName)
-        .map(s =>
-          StreamDescription.fromStreamData(s, exclusiveStartShardId, None)
-        )
-
-      (res.isValid && res.exists { response =>
-        streamDescription.contains(
-          response.streamDescription
-        ) &&
-        response.streamDescription.shards.size == 3 &&
-        !response.streamDescription.shards.exists(x =>
-          exclusiveStartShardId.contains(x.shardId)
-        )
-      }) :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamRequest(exclusiveStartShardId, None, streamName)
+        res <- req.describeStream(streamsRef)
+        streamDescription = streams.streams
+          .get(streamName)
+          .map(s =>
+            StreamDescription.fromStreamData(s, exclusiveStartShardId, None)
+          )
+      } yield assert(
+        res.isValid && res.exists { response =>
+          streamDescription.contains(response.streamDescription) &&
+          response.streamDescription.shards.size == 3 &&
+          !response.streamDescription.shards.exists(x =>
+            exclusiveStartShardId.contains(x.shardId)
+          )
+        },
+        s"req: $req\nres: $res"
+      )
   })
 
-  property("It should reject if the stream does not exist")(forAll {
+  test("It should reject if the stream does not exist")(PropF.forAllF {
     req: DescribeStreamRequest =>
       val streams = Streams.empty
 
-      val res = req.describeStream(streams)
-
-      res.isInvalid :| s"req: $req\nres: $res"
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- req.describeStream(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res")
   })
 }

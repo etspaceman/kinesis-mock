@@ -1,7 +1,8 @@
 package kinesis.mock
 package api
 
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import io.circe._
 
@@ -14,15 +15,13 @@ final case class EnableEnhancedMonitoringRequest(
     streamName: StreamName
 ) {
   def enableEnhancedMonitoring(
-      streams: Streams
-  ): ValidatedNel[
-    KinesisMockException,
-    (Streams, EnableEnhancedMonitoringResponse)
-  ] =
-    CommonValidations
-      .findStream(streamName, streams)
-      .andThen(stream =>
-        CommonValidations.validateStreamName(streamName).map { _ =>
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[EnableEnhancedMonitoringResponse]] =
+    streamsRef.get.flatMap { streams =>
+      CommonValidations
+        .validateStreamName(streamName)
+        .andThen(_ => CommonValidations.findStream(streamName, streams))
+        .traverse { stream =>
           val current = stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =
             if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
@@ -31,18 +30,22 @@ final case class EnableEnhancedMonitoringRequest(
                 .toList
             else (current ++ shardLevelMetrics).distinct
 
-          (
-            streams.updateStream(
-              stream.copy(enhancedMonitoring = List(ShardLevelMetrics(desired)))
-            ),
-            EnableEnhancedMonitoringResponse(
-              current,
-              desired,
-              streamName
+          streamsRef
+            .update(x =>
+              x.updateStream(
+                stream
+                  .copy(enhancedMonitoring = List(ShardLevelMetrics(desired)))
+              )
             )
-          )
+            .as(
+              EnableEnhancedMonitoringResponse(
+                current,
+                desired,
+                streamName
+              )
+            )
         }
-      )
+    }
 }
 
 object EnableEnhancedMonitoringRequest {

@@ -2,7 +2,8 @@ package kinesis.mock
 package api
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -15,8 +16,8 @@ final case class ListStreamsRequest(
     limit: Option[Int]
 ) {
   def listStreams(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, ListStreamsResponse] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[ListStreamsResponse]] = streamsRef.get.map(streams =>
     (
       exclusiveStartStreamName match {
         case Some(streamName) =>
@@ -41,6 +42,7 @@ final case class ListStreamsRequest(
         else true
       ListStreamsResponse(hasMoreStreams, streamNames)
     })
+  )
 }
 
 object ListStreamsRequest {

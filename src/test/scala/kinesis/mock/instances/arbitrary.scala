@@ -181,6 +181,9 @@ object arbitrary {
     shard
   )
 
+  def shardSummaryGen(shardIndex: Int): Gen[ShardSummary] =
+    shardGen(shardIndex).map(ShardSummary.fromShard)
+
   implicit val shardArbitrary: Arbitrary[Shard] = Arbitrary(
     Gen.choose(100, 1000).flatMap(index => shardGen(index))
   )
@@ -610,8 +613,8 @@ object arbitrary {
   implicit val listShardsResponseArb: Arbitrary[ListShardsResponse] = Arbitrary(
     for {
       nextToken <- Gen.option(nextTokenGen(None))
-      shards <- Gen.sequence[List[Shard], Shard](
-        List.range(0, 100).map(x => shardGen(x))
+      shards <- Gen.sequence[List[ShardSummary], ShardSummary](
+        List.range(0, 100).map(x => shardSummaryGen(x))
       )
     } yield ListShardsResponse(nextToken, shards)
   )
@@ -687,7 +690,8 @@ object arbitrary {
     )
   )
 
-  val explicitHashKeyGen: Gen[String] = RegexpGen.from("0|([1-9]\\d{0,38})")
+  val explicitHashKeyGen: Gen[String] =
+    Gen.choose(Shard.minHashKey, Shard.maxHashKey).map(_.toString)
   val partitionKeyGen: Gen[String] =
     Gen.choose(1, 256).flatMap(size => Gen.stringOfN(size, Gen.alphaNumChar))
 

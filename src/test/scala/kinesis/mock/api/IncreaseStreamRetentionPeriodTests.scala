@@ -2,14 +2,18 @@ package kinesis.mock.api
 
 import scala.concurrent.duration._
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
-  property("It should increase the stream retention period")(forAll {
+class IncreaseStreamRetentionPeriodTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
+  test("It should increase the stream retention period")(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -22,19 +26,23 @@ class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
         _.copy(streamStatus = StreamStatus.ACTIVE)
       )
 
-      val req = IncreaseStreamRetentionPeriodRequest(48, streamName)
-      val res = req.increaseStreamRetention(active)
-
-      (res.isValid && res.exists { s =>
-        s.streams.get(streamName).exists { stream =>
-          stream.retentionPeriod == 48.hours
-        }
-      }) :| s"req: $req\nres: $res\nstreams: $streams"
+      for {
+        streamsRef <- Ref.of[IO, Streams](active)
+        req = IncreaseStreamRetentionPeriodRequest(48, streamName)
+        res <- req.increaseStreamRetention(streamsRef)
+        s <- streamsRef.get
+      } yield assert(
+        res.isValid &&
+          s.streams.get(streamName).exists { stream =>
+            stream.retentionPeriod == 48.hours
+          },
+        s"req: $req\nres: $res\nstreams: $streams"
+      )
   })
 
-  property(
+  test(
     "It should reject when the stream retention period is greater than the request"
-  )(forAll {
+  )(PropF.forAllF {
     (
         streamName: StreamName,
         awsRegion: AwsRegion,
@@ -47,9 +55,10 @@ class IncreaseStreamRetentionPeriodTests extends munit.ScalaCheckSuite {
         s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
       )
 
-      val req = IncreaseStreamRetentionPeriodRequest(48, streamName)
-      val res = req.increaseStreamRetention(withUpdatedRetention)
-
-      res.isInvalid :| s"req: $req\nres: $res\nstreams: $streams"
+      for {
+        streamsRef <- Ref.of[IO, Streams](withUpdatedRetention)
+        req = IncreaseStreamRetentionPeriodRequest(48, streamName)
+        res <- req.increaseStreamRetention(streamsRef)
+      } yield assert(res.isInvalid, s"req: $req\nres: $res\nstreams: $streams")
   })
 }

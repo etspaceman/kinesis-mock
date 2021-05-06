@@ -52,7 +52,7 @@ class GetRecordsTests
           shardIterator <- cache
             .getShardIterator(
               GetShardIteratorRequest(
-                shard.shardId.shardId,
+                shard.shardId,
                 ShardIteratorType.TRIM_HORIZON,
                 None,
                 streamName,

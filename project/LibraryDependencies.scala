@@ -7,13 +7,14 @@ object LibraryDependencies {
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
-  val ScalacheckGenRegexp = "wolfendale" %% "scalacheck-gen-regexp" % "0.1.2"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.5.0"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.0.0.2"
+  val ScalacheckGenRegexp =
+    "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.0"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.0"
 
   object Borer {
-    val borerVersion = "1.6.3"
+    val borerVersion = "1.7.2"
     val core = "io.bullet" %% "borer-core" % borerVersion
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
@@ -24,12 +25,12 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "0.7.23"
+    val munitVersion = "0.7.25"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "0.13.0"
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.2"
     val scalacheckEffect =
-      "org.typelevel" %% "scalacheck-effect-munit" % "0.7.1"
+      "org.typelevel" %% "scalacheck-effect-munit" % "1.0.1"
   }
 
   object Aws {
@@ -41,14 +42,14 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.5.0"
-    val catsEffectVersion = "2.4.0"
+    val catsVersion = "2.6.0"
+    val catsEffectVersion = "2.5.0"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "0.21.21"
+    val http4sVersion = "0.21.22"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
@@ -87,7 +88,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.23"
+    val refinedVersion = "0.9.24"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }

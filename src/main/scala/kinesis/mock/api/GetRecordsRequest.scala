@@ -4,7 +4,8 @@ package api
 import scala.annotation.tailrec
 
 import cats.data.Validated._
-import cats.data._
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
@@ -17,8 +18,8 @@ final case class GetRecordsRequest(
     shardIterator: ShardIterator
 ) {
   def getRecords(
-      streams: Streams
-  ): ValidatedNel[KinesisMockException, GetRecordsResponse] =
+      streamsRef: Ref[IO, Streams]
+  ): IO[ValidatedResponse[GetRecordsResponse]] = streamsRef.get.map { streams =>
     shardIterator.parse.andThen { parts =>
       CommonValidations
         .isStreamActiveOrUpdating(parts.streamName, streams)
@@ -155,6 +156,7 @@ final case class GetRecordsRequest(
             )
         )
     }
+  }
 }
 
 object GetRecordsRequest {

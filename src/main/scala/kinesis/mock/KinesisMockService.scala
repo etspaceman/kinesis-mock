@@ -10,6 +10,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.cache.{Cache, CacheConfig}
 
+// $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     Blocker[IO].use(blocker =>
@@ -54,3 +55,4 @@ object KinesisMockService extends IOApp {
       } yield res
     )
 }
+// $COVERAGE-ON$
