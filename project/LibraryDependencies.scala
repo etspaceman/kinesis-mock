@@ -7,13 +7,14 @@ object LibraryDependencies {
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
-  val ScalacheckGenRegexp = "wolfendale" %% "scalacheck-gen-regexp" % "0.1.2"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.6.0"
+  val ScalacheckGenRegexp =
+    "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.0"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.0"
 
   object Borer {
-    val borerVersion = "1.7.0"
+    val borerVersion = "1.7.2"
     val core = "io.bullet" %% "borer-core" % borerVersion
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
