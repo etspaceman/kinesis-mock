@@ -20,7 +20,7 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "1.3.0"
+    val log4CatsVersion = "1.3.1"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
