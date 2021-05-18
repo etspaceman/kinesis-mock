@@ -17,8 +17,10 @@ import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
+import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
+import software.amazon.awssdk.http.Protocol
 
 trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   private val trustAllCertificates =
@@ -30,9 +32,10 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       )
       .build()
 
-  def nettyClient: SdkAsyncHttpClient =
+  def nettyClient(protocol: Option[Protocol]): SdkAsyncHttpClient =
     NettyNioAsyncHttpClient
       .builder()
+      .maybeTransform(protocol)(_.protocol(_))
       .buildWithDefaults(trustAllCertificates)
 
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
@@ -44,7 +47,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
         IO(
           KinesisAsyncClient
             .builder()
-            .httpClient(nettyClient)
+            .httpClient(nettyClient(Some(testConfig.protocol)))
             .region(Region.US_EAST_1)
             .credentialsProvider(AwsCreds.LocalCreds)
             .endpointOverride(

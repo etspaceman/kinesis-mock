@@ -13,6 +13,7 @@ jobs:
       matrix:
         cbor_enabled: [true, false]
         service_port: [4567, 4568]
+        protocol: ['HTTP2', 'HTTP1_1']
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.11
@@ -24,6 +25,7 @@ jobs:
       env:
         CBOR_ENABLED: ${{ matrix.cbor_enabled }}
         SERVICE_PORT: ${{ matrix.service_port }}
+        PROTOCOL: ${{ matrix.protocol }}
     - name: Print Docker Logs
       if: ${{ failure() }}
       run: sbt dockerComposeLogs

@@ -10,10 +10,14 @@ pull_request_rules:
   - name: merge scala-steward's PRs
     conditions:
       - author=scala-steward
-      - status-success=build (false, 4567)
-      - status-success=build (false, 4568)
-      - status-success=build (true, 4567)
-      - status-success=build (true, 4568)
+      - status-success=build (false, 4567, HTTP2)
+      - status-success=build (false, 4568, HTTP2)
+      - status-success=build (true, 4567, HTTP2)
+      - status-success=build (true, 4568, HTTP2)
+      - status-success=build (false, 4567, HTTP1_1)
+      - status-success=build (false, 4568, HTTP1_1)
+      - status-success=build (true, 4567, HTTP1_1)
+      - status-success=build (true, 4568, HTTP1_1)
       - status-success=codecov/patch
       - status-success=codecov/project
     actions:

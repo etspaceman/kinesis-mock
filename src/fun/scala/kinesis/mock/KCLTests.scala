@@ -41,7 +41,7 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           IO(
             CloudWatchAsyncClient
               .builder()
-              .httpClient(nettyClient)
+              .httpClient(nettyClient(None))
               .region(Region.US_EAST_1)
               .credentialsProvider(AwsCreds.LocalCreds)
               .endpointOverride(
@@ -54,7 +54,7 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           IO(
             DynamoDbAsyncClient
               .builder()
-              .httpClient(nettyClient)
+              .httpClient(nettyClient(None))
               .region(Region.US_EAST_1)
               .credentialsProvider(AwsCreds.LocalCreds)
               .endpointOverride(
