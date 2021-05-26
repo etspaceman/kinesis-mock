@@ -41,6 +41,7 @@ these ports to a local one).
 
 | Variable | Data Type | Default Value | Notes |
 | -------- | --------- | ------------- | ----- |
+| INITIALIZE_STREAMS | String | | A comma-delimited string of stream names and its corresponding shard count to initialize during startup. For example: "my-first-stream=1,my-other-stream=2,my-last-stream=1"|
 | KINESIS_MOCK_HTTP2_PORT | Int | 4567 | Https Only |
 | KINESIS_MOCK_HTTP1_PLAIN_PORT | Int | 4568 | Http Only |
 | CREATE_STREAM_DURATION | Duration | 500ms | |
@@ -55,6 +56,8 @@ these ports to a local one).
 | SHARD_LIMIT | Int | 50 | |
 | AWS_ACCOUNT_ID | String | "000000000000" | |
 | AWS_REGION | String | "us-east-1" | |
+| LOG_LEVEL | String | "INFO" | |
+| ROOT_LOG_LEVEL | String | "ERROR" | |
 
 # Usage
 
