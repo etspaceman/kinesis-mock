@@ -10,7 +10,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe._
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circeBigDecimalInstant._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -95,21 +95,34 @@ final case class GetShardIteratorRequest(
                             InvalidArgumentException(
                               s"Timestamp cannot be in the future"
                             ).invalidNel
-                          else
+                          else {
+                            val sequenceNumber =
+                              data
+                                .find(
+                                  _.approximateArrivalTimestamp.toEpochMilli > ts.toEpochMilli
+                                )
+                                .map(data.indexOf)
+                                .flatMap(x =>
+                                  if (x == 0)
+                                    Some(
+                                      shard.sequenceNumberRange.startingSequenceNumber
+                                    )
+                                  else
+                                    data
+                                      .get(x.toLong - 1L)
+                                      .map(_.sequenceNumber)
+                                )
+                                .getOrElse(data.last.sequenceNumber)
                             Valid(
                               GetShardIteratorResponse(
                                 ShardIterator.create(
                                   streamName,
                                   shardId,
-                                  data
-                                    .findLast(
-                                      _.approximateArrivalTimestamp.toEpochMilli < ts.toEpochMilli
-                                    )
-                                    .map(_.sequenceNumber)
-                                    .getOrElse(data.last.sequenceNumber)
+                                  sequenceNumber
                                 )
                               )
                             )
+                          }
                         case (
                               ShardIteratorType.AT_SEQUENCE_NUMBER,
                               Some(seqNo),

@@ -8,6 +8,7 @@ import java.util.Base64
 import io.circe.{Decoder, Encoder}
 
 object circe {
+
   implicit val finiteDurationCirceEncoder: Encoder[FiniteDuration] =
     Encoder[String].contramap(_.toString)
 

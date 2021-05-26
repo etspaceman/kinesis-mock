@@ -5,7 +5,7 @@ import java.time.Instant
 import cats.kernel.Eq
 import io.circe._
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circeBigDecimalInstant._
 
 final case class ShardFilter(
     shardId: Option[String],
