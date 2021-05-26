@@ -55,6 +55,18 @@ these ports to a local one).
 | SHARD_LIMIT | Int | 50 | |
 | AWS_ACCOUNT_ID | String | "000000000000" | |
 | AWS_REGION | String | "us-east-1" | |
+| LOG_LEVEL| String | "INFO" | Sets the log-level for kinesis-mock specific logs |
+| ROOT_LOG_LEVEL | String | "ERROR" | Sets the log-level for all dependencies |
+
+## Log Levels
+
+You can configure the `LOG_LEVEL` of the mock with the following levels in mind:
+
+* `ERROR`- Unhandled errors in the service
+* `WARN` - Handled errors in the service (e.g. bad requests)
+* `INFO` - High-level, low-noise informational messages (default)
+* `DEBUG` - Low-level, high-noise informational messages
+* `TRACE` - Log data bodies going in / out of the service
 
 # Usage
 
