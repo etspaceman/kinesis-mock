@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -48,16 +48,22 @@ final case class RemoveTagsFromStreamRequest(
 }
 
 object RemoveTagsFromStreamRequest {
-  implicit val removeTagsFromStreamRequestEncoder
-      : Encoder[RemoveTagsFromStreamRequest] =
-    Encoder.forProduct2("StreamName", "TagKeys")(x => (x.streamName, x.tagKeys))
-  implicit val removeTagsFromStreamRequestDecoder
-      : Decoder[RemoveTagsFromStreamRequest] = { x =>
+  implicit val removeTagsFromStreamRequestCirceEncoder
+      : circe.Encoder[RemoveTagsFromStreamRequest] =
+    circe.Encoder.forProduct2("StreamName", "TagKeys")(x =>
+      (x.streamName, x.tagKeys)
+    )
+  implicit val removeTagsFromStreamRequestCirceDecoder
+      : circe.Decoder[RemoveTagsFromStreamRequest] = { x =>
     for {
       streamName <- x.downField("StreamName").as[StreamName]
       tagKeys <- x.downField("TagKeys").as[List[String]]
     } yield RemoveTagsFromStreamRequest(streamName, tagKeys)
   }
+  implicit val removeTagsFromStreamRequestEncoder
+      : Encoder[RemoveTagsFromStreamRequest] = Encoder.derive
+  implicit val removeTagsFromStreamRequestDecoder
+      : Decoder[RemoveTagsFromStreamRequest] = Decoder.derive
   implicit val removeTagsFromStreamRequestEq: Eq[RemoveTagsFromStreamRequest] =
     Eq.fromUniversalEquals
 

@@ -8,8 +8,9 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -76,17 +77,19 @@ final case class ListStreamConsumersRequest(
 }
 
 object ListStreamConsumersRequest {
-  implicit val listStreamConsumersRequestCirceEncoder
-      : Encoder[ListStreamConsumersRequest] =
-    Encoder.forProduct4(
+  def listStreamConsumersRequestCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[ListStreamConsumersRequest] =
+    circe.Encoder.forProduct4(
       "MaxResults",
       "NextToken",
       "StreamARN",
       "StreamCreationTimestamp"
     )(x => (x.maxResults, x.nextToken, x.streamArn, x.streamCreationTimestamp))
 
-  implicit val listStreamConsumersRequestCirceDecoder
-      : Decoder[ListStreamConsumersRequest] = x =>
+  def listStreamConsumersRequestCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[ListStreamConsumersRequest] = x =>
     for {
       maxResults <- x.downField("MaxResults").as[Option[Int]]
       nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
@@ -101,6 +104,19 @@ object ListStreamConsumersRequest {
       streamCreationTimestamp
     )
 
+  implicit val listStreamConsumersRequestEncoder
+      : Encoder[ListStreamConsumersRequest] = Encoder.instance(
+    listStreamConsumersRequestCirceEncoder(instantBigDecimalCirceEncoder),
+    listStreamConsumersRequestCirceEncoder(instantLongCirceEncoder)
+  )
+  implicit val listStreamConsumersRequestDecoder
+      : Decoder[ListStreamConsumersRequest] = Decoder.instance(
+    listStreamConsumersRequestCirceDecoder(instantBigDecimalCirceDecoder),
+    listStreamConsumersRequestCirceDecoder(instantLongCirceDecoder)
+  )
+
   implicit val listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.maxResults == y.maxResults && x.nextToken == y.nextToken && x.streamArn == y.streamArn && x.streamCreationTimestamp
+        .map(_.toEpochMilli) == y.streamCreationTimestamp.map(_.toEpochMilli)
 }

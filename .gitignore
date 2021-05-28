@@ -6,3 +6,4 @@
 .idea/
 .DS_STORE
 docker/image/lib/
+**/metals.sbt

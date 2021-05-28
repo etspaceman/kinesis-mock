@@ -29,19 +29,21 @@ class IncreaseStreamRetentionPeriodTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           _ <- cache
             .increaseStreamRetention(
               IncreaseStreamRetentionPeriodRequest(48, streamName),
-              context
+              context,
+              false
             )
             .rethrow
           res <- cache
             .describeStreamSummary(
               DescribeStreamSummaryRequest(streamName),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(res.streamDescriptionSummary.retentionPeriodHours == 48)

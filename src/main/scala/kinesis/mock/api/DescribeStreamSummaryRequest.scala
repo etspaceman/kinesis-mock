@@ -4,7 +4,7 @@ package api
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -32,14 +32,18 @@ final case class DescribeStreamSummaryRequest(
 }
 
 object DescribeStreamSummaryRequest {
-  implicit val describeStreamSummaryRequestEncoder
-      : Encoder[DescribeStreamSummaryRequest] =
-    Encoder.forProduct1("StreamName")(_.streamName)
-  implicit val describeStreamSummaryRequestDecoder
-      : Decoder[DescribeStreamSummaryRequest] =
+  implicit val describeStreamSummaryRequestCirceEncoder
+      : circe.Encoder[DescribeStreamSummaryRequest] =
+    circe.Encoder.forProduct1("StreamName")(_.streamName)
+  implicit val describeStreamSummaryRequestCirceDecoder
+      : circe.Decoder[DescribeStreamSummaryRequest] =
     _.downField("StreamName")
       .as[StreamName]
       .map(DescribeStreamSummaryRequest.apply)
+  implicit val describeStreamSummaryRequestEncoder
+      : Encoder[DescribeStreamSummaryRequest] = Encoder.derive
+  implicit val describeStreamSummaryRequestDecoder
+      : Decoder[DescribeStreamSummaryRequest] = Decoder.derive
   implicit val describeStreamSummaryRequestEq
       : Eq[DescribeStreamSummaryRequest] = Eq.fromUniversalEquals
 }

@@ -49,14 +49,14 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.21.23"
+    val http4sVersion = "0.21.24"
     val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
   }
 
   object Circe {
-    val circeVersion = "0.14.0"
+    val circeVersion = "0.14.1"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
@@ -88,7 +88,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.25"
+    val refinedVersion = "0.9.26"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }

@@ -27,7 +27,7 @@ class DisableEnhancedMonitoringTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- cache
             .enableEnhancedMonitoring(
@@ -35,7 +35,8 @@ class DisableEnhancedMonitoringTests
                 List(ShardLevelMetric.ALL),
                 streamName
               ),
-              context
+              context,
+              false
             )
             .rethrow
           res <- cache
@@ -44,13 +45,15 @@ class DisableEnhancedMonitoringTests
                 List(ShardLevelMetric.IncomingBytes),
                 streamName
               ),
-              context
+              context,
+              false
             )
             .rethrow
           streamMonitoring <- cache
             .describeStreamSummary(
               DescribeStreamSummaryRequest(streamName),
-              context
+              context,
+              false
             )
             .rethrow
             .map(

@@ -12,6 +12,15 @@ final case class LoggingContext private (context: Map[String, String]) {
   def addJson(key: String, js: Json): LoggingContext = copy(
     context + (key -> js.noSpacesSortKeys)
   )
+  def addEncoded[A: Encoder](
+      key: String,
+      a: A,
+      isCbor: Boolean
+  ): LoggingContext =
+    addJson(
+      key,
+      if (isCbor) Encoder[A].circeCborEncoder(a) else Encoder[A].circeEncoder(a)
+    )
 }
 
 object LoggingContext {

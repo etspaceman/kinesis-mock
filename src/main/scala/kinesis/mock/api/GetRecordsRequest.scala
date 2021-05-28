@@ -8,7 +8,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -185,18 +185,21 @@ object GetRecordsRequest {
       )
   }
 
-  implicit val getRecordsRequestCirceEncoder: Encoder[GetRecordsRequest] =
-    Encoder.forProduct2("Limit", "ShardIterator")(x =>
+  implicit val getRecordsRequestCirceEncoder: circe.Encoder[GetRecordsRequest] =
+    circe.Encoder.forProduct2("Limit", "ShardIterator")(x =>
       (x.limit, x.shardIterator)
     )
 
-  implicit val getRecordsRequestCirceDecoder: Decoder[GetRecordsRequest] =
+  implicit val getRecordsRequestCirceDecoder: circe.Decoder[GetRecordsRequest] =
     x =>
       for {
         limit <- x.downField("Limit").as[Option[Int]]
         shardIterator <- x.downField("ShardIterator").as[ShardIterator]
       } yield GetRecordsRequest(limit, shardIterator)
-
+  implicit val getRecordsRequestEncoder: Encoder[GetRecordsRequest] =
+    Encoder.derive
+  implicit val getRecordsRequestDecoder: Decoder[GetRecordsRequest] =
+    Decoder.derive
   implicit val getRecordsRequestEq: Eq[GetRecordsRequest] =
     Eq.fromUniversalEquals
 }

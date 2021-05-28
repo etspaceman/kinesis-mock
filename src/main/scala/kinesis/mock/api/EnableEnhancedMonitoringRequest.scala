@@ -4,7 +4,7 @@ package api
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -49,13 +49,13 @@ final case class EnableEnhancedMonitoringRequest(
 }
 
 object EnableEnhancedMonitoringRequest {
-  implicit val enableEnhancedMonitoringRequestEncoder
-      : Encoder[EnableEnhancedMonitoringRequest] =
-    Encoder.forProduct2("ShardLevelMetrics", "StreamName")(x =>
+  implicit val enableEnhancedMonitoringRequestCirceEncoder
+      : circe.Encoder[EnableEnhancedMonitoringRequest] =
+    circe.Encoder.forProduct2("ShardLevelMetrics", "StreamName")(x =>
       (x.shardLevelMetrics, x.streamName)
     )
-  implicit val enableEnhancedMonitoringRequestDecoder
-      : Decoder[EnableEnhancedMonitoringRequest] = { x =>
+  implicit val enableEnhancedMonitoringRequestCirceDecoder
+      : circe.Decoder[EnableEnhancedMonitoringRequest] = { x =>
     for {
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
@@ -63,6 +63,10 @@ object EnableEnhancedMonitoringRequest {
       streamName <- x.downField("StreamName").as[StreamName]
     } yield EnableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
   }
+  implicit val enableEnhancedMonitoringRequestEncoder
+      : Encoder[EnableEnhancedMonitoringRequest] = Encoder.derive
+  implicit val enableEnhancedMonitoringRequestDecoder
+      : Decoder[EnableEnhancedMonitoringRequest] = Decoder.derive
   implicit val enableEnhancedMonitoringRequestEq
       : Eq[EnableEnhancedMonitoringRequest] = Eq.fromUniversalEquals
 }

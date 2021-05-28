@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -67,18 +67,22 @@ final case class RegisterStreamConsumerRequest(
 }
 
 object RegisterStreamConsumerRequest {
-  implicit val registerStreamConsumerRequestEncoder
-      : Encoder[RegisterStreamConsumerRequest] =
-    Encoder.forProduct2("ConsumerName", "StreamARN")(x =>
+  implicit val registerStreamConsumerRequestCirceEncoder
+      : circe.Encoder[RegisterStreamConsumerRequest] =
+    circe.Encoder.forProduct2("ConsumerName", "StreamARN")(x =>
       (x.consumerName, x.streamArn)
     )
-  implicit val registerStreamConsumerRequestDecoder
-      : Decoder[RegisterStreamConsumerRequest] = { x =>
+  implicit val registerStreamConsumerRequestCirceDecoder
+      : circe.Decoder[RegisterStreamConsumerRequest] = { x =>
     for {
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       streamArn <- x.downField("StreamARN").as[String]
     } yield RegisterStreamConsumerRequest(consumerName, streamArn)
   }
+  implicit val registerStreamConsumerRequestEncoder
+      : Encoder[RegisterStreamConsumerRequest] = Encoder.derive
+  implicit val registerStreamConsumerRequestDecoder
+      : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
   implicit val registerStreamConsumerRequestEq
       : Eq[RegisterStreamConsumerRequest] = Eq.fromUniversalEquals
 }

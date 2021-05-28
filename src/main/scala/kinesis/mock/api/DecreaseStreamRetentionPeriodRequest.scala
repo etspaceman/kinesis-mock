@@ -8,7 +8,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -50,13 +50,13 @@ final case class DecreaseStreamRetentionPeriodRequest(
 }
 
 object DecreaseStreamRetentionPeriodRequest {
-  implicit val decreaseStreamRetentionRequestEncoder
-      : Encoder[DecreaseStreamRetentionPeriodRequest] =
-    Encoder.forProduct2("RetentionPeriodHours", "StreamName")(x =>
+  implicit val decreaseStreamRetentionPeriodRequestCirceEncoder
+      : circe.Encoder[DecreaseStreamRetentionPeriodRequest] =
+    circe.Encoder.forProduct2("RetentionPeriodHours", "StreamName")(x =>
       (x.retentionPeriodHours, x.streamName)
     )
-  implicit val decreaseStreamRetentionRequestDecoder
-      : Decoder[DecreaseStreamRetentionPeriodRequest] = { x =>
+  implicit val decreaseStreamRetentionPeriodRequestCirceDecoder
+      : circe.Decoder[DecreaseStreamRetentionPeriodRequest] = { x =>
     for {
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
@@ -65,6 +65,12 @@ object DecreaseStreamRetentionPeriodRequest {
       streamName
     )
   }
+  implicit val decreaseStreamRetentionPeriodRequestEncoder
+      : Encoder[DecreaseStreamRetentionPeriodRequest] =
+    Encoder.derive
+  implicit val decreaseStreamRetentionPeriodRequestDecoder
+      : Decoder[DecreaseStreamRetentionPeriodRequest] =
+    Decoder.derive
   implicit val decreaseStreamRetentionEq
       : Eq[DecreaseStreamRetentionPeriodRequest] =
     Eq.fromUniversalEquals
