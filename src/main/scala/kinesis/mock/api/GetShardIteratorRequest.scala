@@ -99,7 +99,7 @@ final case class GetShardIteratorRequest(
                             val sequenceNumber =
                               data
                                 .find(
-                                  _.approximateArrivalTimestamp.toEpochMilli > ts.toEpochMilli
+                                  _.approximateArrivalTimestamp.toEpochMilli >= ts.toEpochMilli
                                 )
                                 .map(data.indexOf)
                                 .flatMap(x =>
