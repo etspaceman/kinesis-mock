@@ -4,15 +4,14 @@ import scala.concurrent.duration._
 
 import cats.effect.{Blocker, IO}
 import cats.syntax.all._
-import org.scalacheck.Test
 import org.scalacheck.effect.PropF
+import org.scalacheck.{Gen, Test}
 
 import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
-import org.scalacheck.Gen
 
 class ListStreamConsumersTests
     extends munit.CatsEffectSuite
