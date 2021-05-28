@@ -29,13 +29,14 @@ class ListStreamsTests extends munit.CatsEffectSuite {
         )
         _ <- streamNames.traverse(streamName =>
           cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
         )
         res <- cache
           .listStreams(
             ListStreamsRequest(None, None),
-            context
+            context,
+            false
           )
           .rethrow
       } yield assert(

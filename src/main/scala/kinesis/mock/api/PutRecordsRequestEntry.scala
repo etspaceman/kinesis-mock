@@ -1,7 +1,8 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -13,15 +14,15 @@ final case class PutRecordsRequestEntry(
 
 object PutRecordsRequestEntry {
   implicit val putRecordsRequestEntryCirceEncoder
-      : Encoder[PutRecordsRequestEntry] =
-    Encoder.forProduct3(
+      : circe.Encoder[PutRecordsRequestEntry] =
+    circe.Encoder.forProduct3(
       "Data",
       "ExplicitHashKey",
       "PartitionKey"
     )(x => (x.data, x.explicitHashKey, x.partitionKey))
 
   implicit val putRecordsRequestEntryCirceDecoder
-      : Decoder[PutRecordsRequestEntry] =
+      : circe.Decoder[PutRecordsRequestEntry] =
     x =>
       for {
         data <- x.downField("Data").as[Array[Byte]]
@@ -32,6 +33,11 @@ object PutRecordsRequestEntry {
         explicitHashKey,
         partitionKey
       )
+
+  implicit val putRecordsRequestEntryEncoder: Encoder[PutRecordsRequestEntry] =
+    Encoder.derive
+  implicit val putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
+    Decoder.derive
 
   implicit val putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
     x.data.sameElements(y.data) &&

@@ -30,7 +30,7 @@ class PutRecordsTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           req <- IO(
@@ -41,11 +41,12 @@ class PutRecordsTests
               streamName
             )
           )
-          _ <- cache.putRecords(req, context).rethrow
+          _ <- cache.putRecords(req, context, false).rethrow
           shard <- cache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.shards.head)
@@ -58,12 +59,13 @@ class PutRecordsTests
                 streamName,
                 None
               ),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.shardIterator)
           res <- cache
-            .getRecords(GetRecordsRequest(None, shardIterator), context)
+            .getRecords(GetRecordsRequest(None, shardIterator), context, false)
             .rethrow
         } yield assert(
           res.records.length == 5 && res.records.forall(rec =>

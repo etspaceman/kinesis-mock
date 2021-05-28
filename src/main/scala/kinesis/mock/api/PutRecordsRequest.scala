@@ -9,7 +9,7 @@ import cats.effect.IO
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -139,14 +139,22 @@ final case class PutRecordsRequest(
 }
 
 object PutRecordsRequest {
-  implicit val putRecordsRequestCirceEncoder: Encoder[PutRecordsRequest] =
-    Encoder.forProduct2("Records", "StreamName")(x => (x.records, x.streamName))
+  implicit val putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
+    circe.Encoder.forProduct2("Records", "StreamName")(x =>
+      (x.records, x.streamName)
+    )
 
-  implicit val putRecordsRequestCirceDecoder: Decoder[PutRecordsRequest] = x =>
-    for {
-      records <- x.downField("Records").as[List[PutRecordsRequestEntry]]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield PutRecordsRequest(records, streamName)
+  implicit val putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
+    x =>
+      for {
+        records <- x.downField("Records").as[List[PutRecordsRequestEntry]]
+        streamName <- x.downField("StreamName").as[StreamName]
+      } yield PutRecordsRequest(records, streamName)
+
+  implicit val putRecordsRequestEncoder: Encoder[PutRecordsRequest] =
+    Encoder.derive
+  implicit val putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
+    Decoder.derive
 
   implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
     x.records === y.records &&

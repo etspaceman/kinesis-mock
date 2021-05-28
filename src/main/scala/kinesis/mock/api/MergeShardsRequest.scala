@@ -8,7 +8,7 @@ import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -155,19 +155,26 @@ final case class MergeShardsRequest(
 }
 
 object MergeShardsRequest {
-  implicit val mergeShardsRequestCirceEncoder: Encoder[MergeShardsRequest] =
-    Encoder.forProduct3("AdjacentShardToMerge", "ShardToMerge", "StreamName")(
-      x => (x.adjacentShardToMerge, x.shardToMerge, x.streamName)
-    )
+  implicit val mergeShardsRequestCirceEncoder
+      : circe.Encoder[MergeShardsRequest] =
+    circe.Encoder.forProduct3(
+      "AdjacentShardToMerge",
+      "ShardToMerge",
+      "StreamName"
+    )(x => (x.adjacentShardToMerge, x.shardToMerge, x.streamName))
 
-  implicit val mergeShardsRequestCirceDecoder: Decoder[MergeShardsRequest] =
+  implicit val mergeShardsRequestCirceDecoder
+      : circe.Decoder[MergeShardsRequest] =
     x =>
       for {
         adjacentShardToMerge <- x.downField("AdjacentShardToMerge").as[String]
         shardToMerge <- x.downField("ShardToMerge").as[String]
         streamName <- x.downField("StreamName").as[StreamName]
       } yield MergeShardsRequest(adjacentShardToMerge, shardToMerge, streamName)
-
+  implicit val mergeShardsRequestEncoder: Encoder[MergeShardsRequest] =
+    Encoder.derive
+  implicit val mergeShardsRequestDecoder: Decoder[MergeShardsRequest] =
+    Decoder.derive
   implicit val mergeShardsRequestEq: Eq[MergeShardsRequest] =
     Eq.fromUniversalEquals
 }

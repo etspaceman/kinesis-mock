@@ -1,9 +1,10 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import java.time.Instant
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -24,7 +25,9 @@ object Consumer {
       ConsumerStatus.CREATING
     )
   }
-  implicit val consumerCirceEncoder: Encoder[Consumer] = Encoder.forProduct4(
+  def consumerCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[Consumer] = circe.Encoder.forProduct4(
     "ConsumerARN",
     "ConsumerCreationTimestamp",
     "ConsumerName",
@@ -38,7 +41,9 @@ object Consumer {
     )
   )
 
-  implicit val consumerCirceDecoder: Decoder[Consumer] = { x =>
+  def consumerCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[Consumer] = { x =>
     for {
       consumerArn <- x.downField("ConsumerARN").as[String]
       consumerCreationTimestamp <- x
@@ -53,6 +58,16 @@ object Consumer {
       consumerStatus
     )
   }
+
+  implicit val consumerEncoder: Encoder[Consumer] = Encoder.instance(
+    consumerCirceEncoder(instantDoubleCirceEncoder),
+    consumerCirceEncoder(instantLongCirceEncoder)
+  )
+
+  implicit val consumerDecoder: Decoder[Consumer] = Decoder.instance(
+    consumerCirceDecoder(instantDoubleCirceDecoder),
+    consumerCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val consumerEq: Eq[Consumer] = (x, y) =>
     x.consumerArn == y.consumerArn &&

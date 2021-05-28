@@ -28,18 +28,20 @@ class ListTagsForStreamTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- cache
             .addTagsToStream(
               AddTagsToStreamRequest(streamName, tags),
-              context
+              context,
+              false
             )
             .rethrow
           res <- cache
             .listTagsForStream(
               ListTagsForStreamRequest(None, None, streamName),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(Tags.fromTagList(res.tags) == tags)

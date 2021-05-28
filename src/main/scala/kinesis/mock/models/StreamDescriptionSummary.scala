@@ -1,9 +1,10 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import java.time.Instant
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -35,8 +36,9 @@ object StreamDescriptionSummary {
       streamData.streamStatus
     )
 
-  implicit val streamDescriptionSummaryCirceEncoder
-      : Encoder[StreamDescriptionSummary] = Encoder.forProduct10(
+  def streamDescriptionSummaryCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct10(
     "ConsumerCount",
     "EncryptionType",
     "EnhancedMonitoring",
@@ -62,8 +64,9 @@ object StreamDescriptionSummary {
     )
   )
 
-  implicit val streamDescriptionSummaryCirceDecoder
-      : Decoder[StreamDescriptionSummary] = x =>
+  def streamDescriptionSummaryCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[StreamDescriptionSummary] = x =>
     for {
       consumerCount <- x.downField("ConsumerCount").as[Option[Int]]
       encryptionType <- x.downField("EncryptionType").as[Option[EncryptionType]]
@@ -91,6 +94,18 @@ object StreamDescriptionSummary {
       streamName,
       streamStatus
     )
+
+  implicit val streamDescriptionSummaryEncoder
+      : Encoder[StreamDescriptionSummary] = Encoder.instance(
+    streamDescriptionSummaryCirceEncoder(instantDoubleCirceEncoder),
+    streamDescriptionSummaryCirceEncoder(instantLongCirceEncoder)
+  )
+
+  implicit val streamDescriptionSummaryDecoder
+      : Decoder[StreamDescriptionSummary] = Decoder.instance(
+    streamDescriptionSummaryCirceDecoder(instantDoubleCirceDecoder),
+    streamDescriptionSummaryCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
     (x, y) =>

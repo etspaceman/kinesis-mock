@@ -28,22 +28,25 @@ class RemoveTagsFromStreamTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- cache
             .addTagsToStream(
               AddTagsToStreamRequest(streamName, tags),
-              context
+              context,
+              false
             )
             .rethrow
           _ <- cache.removeTagsFromStream(
             RemoveTagsFromStreamRequest(streamName, tags.tags.keys.toList),
-            context
+            context,
+            false
           )
           res <- cache
             .listTagsForStream(
               ListTagsForStreamRequest(None, None, streamName),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(res.tags.tags.isEmpty)

@@ -30,20 +30,22 @@ class RegisterStreamConsumerTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           streamArn <- cache
             .describeStreamSummary(
               DescribeStreamSummaryRequest(streamName),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.streamDescriptionSummary.streamArn)
           _ <- cache
             .registerStreamConsumer(
               RegisterStreamConsumerRequest(consumerName, streamArn),
-              context
+              context,
+              false
             )
             .rethrow
           describeStreamConsumerReq = DescribeStreamConsumerRequest(
@@ -54,7 +56,8 @@ class RegisterStreamConsumerTests
           checkStream1 <- cache
             .describeStreamConsumer(
               describeStreamConsumerReq,
-              context
+              context,
+              false
             )
             .rethrow
           _ <- IO.sleep(
@@ -63,7 +66,8 @@ class RegisterStreamConsumerTests
           checkStream2 <- cache
             .describeStreamConsumer(
               describeStreamConsumerReq,
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(

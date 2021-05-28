@@ -1,7 +1,8 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 import io.circe.syntax._
 
 final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
@@ -11,13 +12,15 @@ final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
 }
 
 object HashKeyRange {
-  implicit val hashKeyRangeCirceEncoder: Encoder[HashKeyRange] = x =>
-    JsonObject(
-      "EndingHashKey" -> x.endingHashKey.toString.asJson,
-      "StartingHashKey" -> x.startingHashKey.toString.asJson
-    ).asJson
+  implicit val hashKeyRangeCirceEncoder: circe.Encoder[HashKeyRange] = x =>
+    circe
+      .JsonObject(
+        "EndingHashKey" -> x.endingHashKey.toString.asJson,
+        "StartingHashKey" -> x.startingHashKey.toString.asJson
+      )
+      .asJson
 
-  implicit val hashKeyRangeCirceDecoder: Decoder[HashKeyRange] = { x =>
+  implicit val hashKeyRangeCirceDecoder: circe.Decoder[HashKeyRange] = { x =>
     for {
       endingHashKey <- x.downField("EndingHashKey").as[String].map(BigInt.apply)
       startingHashKey <- x
@@ -26,6 +29,11 @@ object HashKeyRange {
         .map(BigInt.apply)
     } yield HashKeyRange(endingHashKey, startingHashKey)
   }
+
+  implicit val hashKeyRangeEncoder: Encoder[HashKeyRange] =
+    Encoder.derive
+  implicit val hashKeyRangeDecoder: Decoder[HashKeyRange] =
+    Decoder.derive
 
   implicit val hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
 }

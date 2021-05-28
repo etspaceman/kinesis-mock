@@ -1,11 +1,12 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import scala.collection.SortedMap
 
 import java.time.Instant
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -60,7 +61,9 @@ object Shard {
   implicit val shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
-  implicit val shardCirceEncoder: Encoder[Shard] = Encoder.forProduct8(
+  def shardCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[Shard] = circe.Encoder.forProduct8(
     "AdjacentParentShardId",
     "ClosedTimestamp",
     "CreatedAtTimestamp",
@@ -82,7 +85,9 @@ object Shard {
     )
   )
 
-  implicit val shardCirceDecoder: Decoder[Shard] = { x =>
+  def shardCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[Shard] = { x =>
     for {
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
@@ -106,6 +111,16 @@ object Shard {
       ShardId(shardId, shardIndex)
     )
   }
+
+  implicit val shardEncoder: Encoder[Shard] = Encoder.instance(
+    shardCirceEncoder(instantDoubleCirceEncoder),
+    shardCirceEncoder(instantLongCirceEncoder)
+  )
+
+  implicit val shardDecoder: Decoder[Shard] = Decoder.instance(
+    shardCirceDecoder(instantDoubleCirceDecoder),
+    shardCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val shardEq: Eq[Shard] = (x, y) =>
     x.adjacentParentShardId == y.adjacentParentShardId &&

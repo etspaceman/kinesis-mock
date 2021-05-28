@@ -8,9 +8,9 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
-import kinesis.mock.instances.circeBigDecimalInstant._
+import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
@@ -193,9 +193,10 @@ final case class GetShardIteratorRequest(
 }
 
 object GetShardIteratorRequest {
-  implicit val getShardIteratorRequestCirceEncoder
-      : Encoder[GetShardIteratorRequest] =
-    Encoder.forProduct5(
+  def getShardIteratorRequestCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[GetShardIteratorRequest] =
+    circe.Encoder.forProduct5(
       "ShardId",
       "ShardIteratorType",
       "StartingSequenceNumber",
@@ -211,8 +212,9 @@ object GetShardIteratorRequest {
       )
     )
 
-  implicit val getShardIteratorRequestCirceDecoder
-      : Decoder[GetShardIteratorRequest] =
+  def getShardIteratorRequestCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[GetShardIteratorRequest] =
     x =>
       for {
         shardId <- x.downField("ShardId").as[String]
@@ -231,6 +233,18 @@ object GetShardIteratorRequest {
         streamName,
         timestamp
       )
+
+  implicit val getShardIteratorRequestEncoder
+      : Encoder[GetShardIteratorRequest] = Encoder.instance(
+    getShardIteratorRequestCirceEncoder(instantBigDecimalCirceEncoder),
+    getShardIteratorRequestCirceEncoder(instantLongCirceEncoder)
+  )
+
+  implicit val getShardIteratorRequestDecoder
+      : Decoder[GetShardIteratorRequest] = Decoder.instance(
+    getShardIteratorRequestCirceDecoder(instantBigDecimalCirceDecoder),
+    getShardIteratorRequestCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
     (x, y) =>

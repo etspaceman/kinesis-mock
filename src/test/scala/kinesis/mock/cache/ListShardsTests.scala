@@ -27,12 +27,13 @@ class ListShardsTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(5, streamName), context)
+            .createStream(CreateStreamRequest(5, streamName), context, false)
             .rethrow
           res <- cache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(

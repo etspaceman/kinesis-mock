@@ -5,7 +5,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -82,13 +82,13 @@ final case class DeregisterStreamConsumerRequest(
 }
 
 object DeregisterStreamConsumerRequest {
-  implicit val deregisterStreamConsumerRequestEncoder
-      : Encoder[DeregisterStreamConsumerRequest] =
-    Encoder.forProduct3("ConsumerARN", "ConsumerName", "StreamARN")(x =>
+  implicit val deregisterStreamConsumerRequestCirceEncoder
+      : circe.Encoder[DeregisterStreamConsumerRequest] =
+    circe.Encoder.forProduct3("ConsumerARN", "ConsumerName", "StreamARN")(x =>
       (x.consumerArn, x.consumerName, x.streamArn)
     )
-  implicit val deregisterStreamConsumerRequestDecoder
-      : Decoder[DeregisterStreamConsumerRequest] = { x =>
+  implicit val deregisterStreamConsumerRequestCirceDecoder
+      : circe.Decoder[DeregisterStreamConsumerRequest] = { x =>
     for {
       consumerArn <- x.downField("ConsumerARN").as[Option[String]]
       consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
@@ -99,6 +99,12 @@ object DeregisterStreamConsumerRequest {
       streamArn
     )
   }
+  implicit val deregisterStreamConsumerRequestEncoder
+      : Encoder[DeregisterStreamConsumerRequest] =
+    Encoder.derive
+  implicit val deregisterStreamConsumerRequestDecoder
+      : Decoder[DeregisterStreamConsumerRequest] =
+    Decoder.derive
   implicit val deregisterStreamConsumerEq: Eq[DeregisterStreamConsumerRequest] =
     Eq.fromUniversalEquals
 }

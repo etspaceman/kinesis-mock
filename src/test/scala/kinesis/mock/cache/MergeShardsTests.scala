@@ -29,7 +29,7 @@ class MergeShardsTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(5, streamName), context)
+            .createStream(CreateStreamRequest(5, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           adjacentParentShardId = ShardId.create(1).shardId
@@ -41,16 +41,17 @@ class MergeShardsTests
                 parentShardId,
                 streamName
               ),
-              context
+              context,
+              false
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(200.millis))
           checkStream2 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
           checkShards <- cache
             .listShards(
@@ -62,7 +63,8 @@ class MergeShardsTests
                 None,
                 Some(streamName)
               ),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(

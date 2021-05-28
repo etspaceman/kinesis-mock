@@ -8,7 +8,7 @@ import cats.effect.IO
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -70,19 +70,24 @@ final case class DeleteStreamRequest(
 }
 
 object DeleteStreamRequest {
-  implicit val deleteStreamRequestCirceEncoder: Encoder[DeleteStreamRequest] =
-    Encoder.forProduct2("StreamName", "EnforceConsumerDeletion")(x =>
+  implicit val deleteStreamRequestCirceEncoder
+      : circe.Encoder[DeleteStreamRequest] =
+    circe.Encoder.forProduct2("StreamName", "EnforceConsumerDeletion")(x =>
       (x.streamName, x.enforceConsumerDeletion)
     )
-  implicit val deleteStreamRequestCirceDecoder: Decoder[DeleteStreamRequest] = {
-    x =>
-      for {
-        streamName <- x.downField("StreamName").as[StreamName]
-        enforceConsumerDeletion <- x
-          .downField("EnforceConsumerDeletion")
-          .as[Option[Boolean]]
-      } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
+  implicit val deleteStreamRequestCirceDecoder
+      : circe.Decoder[DeleteStreamRequest] = { x =>
+    for {
+      streamName <- x.downField("StreamName").as[StreamName]
+      enforceConsumerDeletion <- x
+        .downField("EnforceConsumerDeletion")
+        .as[Option[Boolean]]
+    } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
   }
+  implicit val deleteStreamRequestEncoder: Encoder[DeleteStreamRequest] =
+    Encoder.derive
+  implicit val deleteStreamRequestDecoder: Decoder[DeleteStreamRequest] =
+    Decoder.derive
   implicit val deleteStreamRequestEq: Eq[DeleteStreamRequest] =
     Eq.fromUniversalEquals
 }

@@ -26,11 +26,12 @@ class Cache private (
 
   def addTagsToStream(
       req: AddTagsToStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing AddTagsToStream request") *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.addTagsToStream.tryAcquireRelease(
@@ -62,11 +63,12 @@ class Cache private (
   }
   def removeTagsFromStream(
       req: RemoveTagsFromStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing RemoveTagsFromStream request") *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.removeTagsFromStream.tryAcquireRelease(
@@ -99,14 +101,15 @@ class Cache private (
 
   def createStream(
       req: CreateStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
   ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.createStream.tryAcquireRelease(
@@ -162,11 +165,12 @@ class Cache private (
 
   def deleteStream(
       req: DeleteStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.deleteStream.tryAcquireRelease(
@@ -211,13 +215,14 @@ class Cache private (
 
   def decreaseStreamRetention(
       req: DecreaseStreamRetentionPeriodRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DecreaseStreamRetentionPeriod request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -239,13 +244,14 @@ class Cache private (
 
   def increaseStreamRetention(
       req: IncreaseStreamRetentionPeriodRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing IncreaseStreamRetentionPeriod request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -293,13 +299,14 @@ class Cache private (
 
   def describeStream(
       req: DescribeStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[DescribeStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStream request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.describeStream.tryAcquireRelease(
@@ -318,7 +325,7 @@ class Cache private (
                 logger.debug(ctx.context)(
                   "Successfully described the stream"
                 ) *> logger
-                  .trace(ctx.addJson("response", r.asJson).context)(
+                  .trace(ctx.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -336,13 +343,14 @@ class Cache private (
 
   def describeStreamSummary(
       req: DescribeStreamSummaryRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[DescribeStreamSummaryResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStreamSummary request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.describeStreamSummary.tryAcquireRelease(
@@ -361,7 +369,7 @@ class Cache private (
                 logger.debug(ctx.context)(
                   "Successfully described the stream summary"
                 ) *> logger
-                  .trace(ctx.addJson("response", r.asJson).context)(
+                  .trace(ctx.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -383,7 +391,8 @@ class Cache private (
 
   def registerStreamConsumer(
       req: RegisterStreamConsumerRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       T: Timer[IO]
   ): IO[EitherResponse[RegisterStreamConsumerResponse]] = {
@@ -391,7 +400,7 @@ class Cache private (
     logger.debug(ctx.context)(
       "Processing RegisterStreamConsumer request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.registerStreamConsumer.tryAcquireRelease(
@@ -411,7 +420,7 @@ class Cache private (
                   logger.debug(ctx.context)(
                     "Successfully described the stream summary"
                   ) *> logger
-                    .trace(ctx.addJson("response", r.asJson).context)(
+                    .trace(ctx.addEncoded("response", r, isCbor).context)(
                       "Logging response"
                     ) *> supervisor
                     .supervise(
@@ -458,12 +467,13 @@ class Cache private (
 
   def deregisterStreamConsumer(
       req: DeregisterStreamConsumerRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
-      logger.trace(context.addJson("request", req.asJson).context)(
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.deregisterStreamConsumer.tryAcquireRelease(
@@ -528,12 +538,13 @@ class Cache private (
 
   def describeStreamConsumer(
       req: DescribeStreamConsumerRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[DescribeStreamConsumerResponse]] =
     logger.debug(context.context)(
       "Processing DescribeStreamConsumer request"
     ) *>
-      logger.trace(context.addJson("request", req.asJson).context)(
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.describeStreamConsumer.tryAcquireRelease(
@@ -552,7 +563,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully described the stream consumer"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -573,13 +584,14 @@ class Cache private (
 
   def disableEnhancedMonitoring(
       req: DisableEnhancedMonitoringRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[DisableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DisableEnhancedMonitoring request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -597,7 +609,7 @@ class Cache private (
               logger.debug(context.context)(
                 "Successfully disabled enhanced monitoring"
               ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
+                .trace(context.addEncoded("response", r, isCbor).context)(
                   "Logging response"
                 )
                 .as(response)
@@ -607,13 +619,14 @@ class Cache private (
 
   def enableEnhancedMonitoring(
       req: EnableEnhancedMonitoringRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[EnableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing EnableEnhancedMonitoring request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -631,7 +644,7 @@ class Cache private (
               logger.debug(context.context)(
                 "Successfully enabled enhanced monitoring"
               ) *> logger
-                .trace(context.addJson("response", r.asJson).context)(
+                .trace(context.addEncoded("response", r, isCbor).context)(
                   "Logging response"
                 )
                 .as(response)
@@ -641,12 +654,13 @@ class Cache private (
 
   def listShards(
       req: ListShardsRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[ListShardsResponse]] =
     logger.debug(context.context)(
       "Processing ListShards request"
     ) *>
-      logger.trace(context.addJson("request", req.asJson).context)(
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.listShards.tryAcquireRelease(
@@ -665,7 +679,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully listed shards"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -680,13 +694,14 @@ class Cache private (
 
   def listStreamConsumers(
       req: ListStreamConsumersRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[ListStreamConsumersResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
       "Processing ListStreamConsumers request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.listStreamConsumers.tryAcquireRelease(
@@ -705,7 +720,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully listed stream consumers"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -725,12 +740,13 @@ class Cache private (
 
   def listStreams(
       req: ListStreamsRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[ListStreamsResponse]] =
     logger.debug(context.context)(
       "Processing ListStreams request"
     ) *>
-      logger.trace(context.addJson("request", req.asJson).context)(
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.listStreams.tryAcquireRelease(
@@ -749,7 +765,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully listed streams"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -768,13 +784,14 @@ class Cache private (
 
   def listTagsForStream(
       req: ListTagsForStreamRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[ListTagsForStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing ListTagsForStream request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.listTagsForStream.tryAcquireRelease(
@@ -793,7 +810,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully listed tags for stream"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -813,13 +830,14 @@ class Cache private (
 
   def startStreamEncryption(
       req: StartStreamEncryptionRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -860,13 +878,14 @@ class Cache private (
 
   def stopStreamEncryption(
       req: StopStreamEncryptionRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -910,13 +929,14 @@ class Cache private (
 
   def getShardIterator(
       req: GetShardIteratorRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[GetShardIteratorResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing GetShardIterator request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -935,7 +955,7 @@ class Cache private (
                 logger.debug(ctx.context)(
                   "Successfully got the shard iterator"
                 ) *> logger
-                  .trace(ctx.addJson("response", r.asJson).context)(
+                  .trace(ctx.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -945,12 +965,13 @@ class Cache private (
   }
   def getRecords(
       req: GetRecordsRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[GetRecordsResponse]] =
     logger.debug(context.context)(
       "Processing GetRecords request"
     ) *>
-      logger.trace(context.addJson("request", req.asJson).context)(
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       req
@@ -969,7 +990,7 @@ class Cache private (
                 logger.debug(context.context)(
                   "Successfully got records"
                 ) *> logger
-                  .trace(context.addJson("response", r.asJson).context)(
+                  .trace(context.addEncoded("response", r, isCbor).context)(
                     "Logging response"
                   )
                   .as(response)
@@ -978,12 +999,13 @@ class Cache private (
 
   def putRecord(
       req: PutRecordRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   ): IO[EitherResponse[PutRecordResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecord request")
-      _ <- logger.trace(context.addJson("request", req.asJson).context)(
+      _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
       res <- req
@@ -999,7 +1021,7 @@ class Cache private (
           logger.debug(ctx.context)(
             "Successfully put record"
           ) *> logger
-            .trace(ctx.addJson("response", r.asJson).context)(
+            .trace(ctx.addEncoded("response", r, isCbor).context)(
               "Logging response"
             )
       )
@@ -1008,14 +1030,15 @@ class Cache private (
 
   def putRecords(
       req: PutRecordsRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       P: Parallel[IO]
   ): IO[EitherResponse[PutRecordsResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecords request")
-      _ <- logger.trace(context.addJson("request", req.asJson).context)(
+      _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
       res <- req
@@ -1031,7 +1054,7 @@ class Cache private (
           logger.debug(ctx.context)(
             "Successfully put records"
           ) *> logger
-            .trace(ctx.addJson("response", r.asJson).context)(
+            .trace(ctx.addEncoded("response", r, isCbor).context)(
               "Logging response"
             )
       )
@@ -1040,7 +1063,8 @@ class Cache private (
 
   def mergeShards(
       req: MergeShardsRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
@@ -1049,7 +1073,7 @@ class Cache private (
     logger.debug(ctx.context)(
       "Processing MergeShards request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.mergeShards.tryAcquireRelease(
@@ -1096,7 +1120,8 @@ class Cache private (
 
   def splitShard(
       req: SplitShardRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
@@ -1105,7 +1130,7 @@ class Cache private (
     logger.debug(ctx.context)(
       "Processing SplitShard request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *>
       semaphores.splitShard.tryAcquireRelease(
@@ -1152,7 +1177,8 @@ class Cache private (
 
   def updateShardCount(
       req: UpdateShardCountRequest,
-      context: LoggingContext
+      context: LoggingContext,
+      isCbor: Boolean
   )(implicit
       T: Timer[IO],
       CS: ContextShift[IO]
@@ -1161,7 +1187,7 @@ class Cache private (
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
     ) *>
-      logger.trace(ctx.addJson("request", req.asJson).context)(
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *> (for {
         result <- req
