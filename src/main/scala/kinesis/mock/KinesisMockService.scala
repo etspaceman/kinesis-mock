@@ -30,7 +30,7 @@ object KinesisMockService extends IOApp {
             .info(
               s"Initializing stream '${s.streamName}' (shardCount=${s.shardCount})"
             )
-            .flatTap(_ => cache.createStream(s, context))
+            .flatTap(_ => cache.createStream(s, context, false))
         )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
