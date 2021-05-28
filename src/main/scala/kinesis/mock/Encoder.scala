@@ -7,7 +7,7 @@ trait Encoder[A] {
   def circeEncoder: circe.Encoder[A]
   def circeCborEncoder: circe.Encoder[A]
   lazy val borerEncoder: borer.Encoder[A] =
-    borer.compat.circe.borerEncoderFromCirceEncoder(circeCborEncoder)
+    kinesis.mock.instances.borer.borerEncoderFromCirceEncoder(circeCborEncoder)
 }
 
 object Encoder {
