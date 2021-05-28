@@ -12,6 +12,7 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
+import org.scalacheck.Gen
 
 class ListStreamConsumersTests
     extends munit.CatsEffectSuite
@@ -41,7 +42,16 @@ class ListStreamConsumersTests
             )
             .rethrow
             .map(_.streamDescriptionSummary.streamArn)
-          consumerNames <- IO(consumerNameArb.arbitrary.take(3))
+          consumerNames <- IO(
+            Gen
+              .listOfN(3, consumerNameArb.arbitrary)
+              .suchThat(x =>
+                x.groupBy(identity)
+                  .collect { case (_, y) if y.length > 1 => x }
+                  .isEmpty
+              )
+              .one
+          )
           registerResults <- consumerNames.toList.traverse(consumerName =>
             cache
               .registerStreamConsumer(
