@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -48,18 +48,23 @@ final case class StartStreamEncryptionRequest(
 
 object StartStreamEncryptionRequest {
   implicit val startStreamEncryptionRequestCirceEncoder
-      : Encoder[StartStreamEncryptionRequest] =
-    Encoder.forProduct3("EncryptionType", "KeyId", "StreamName")(x =>
+      : circe.Encoder[StartStreamEncryptionRequest] =
+    circe.Encoder.forProduct3("EncryptionType", "KeyId", "StreamName")(x =>
       (x.encryptionType, x.keyId, x.streamName)
     )
 
   implicit val startStreamEncryptionRequestCirceDecoder
-      : Decoder[StartStreamEncryptionRequest] = x =>
+      : circe.Decoder[StartStreamEncryptionRequest] = x =>
     for {
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
       keyId <- x.downField("KeyId").as[String]
       streamName <- x.downField("StreamName").as[StreamName]
     } yield StartStreamEncryptionRequest(encryptionType, keyId, streamName)
+
+  implicit val startStreamEncryptionRequestEncoder
+      : Encoder[StartStreamEncryptionRequest] = Encoder.derive
+  implicit val startStreamEncryptionRequestDecoder
+      : Decoder[StartStreamEncryptionRequest] = Decoder.derive
 
   implicit val startStreamEncryptionRequestEq
       : Eq[StartStreamEncryptionRequest] = Eq.fromUniversalEquals

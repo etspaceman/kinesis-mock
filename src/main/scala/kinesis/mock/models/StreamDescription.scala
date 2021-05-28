@@ -1,10 +1,11 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import java.time.Instant
 
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -57,8 +58,10 @@ object StreamDescription {
     )
   }
 
-  implicit val streamDescriptionCirceEncoder: Encoder[StreamDescription] =
-    Encoder.forProduct10(
+  def streamDescriptionCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[StreamDescription] =
+    circe.Encoder.forProduct10(
       "EncryptionType",
       "EnhancedMonitoring",
       "HasMoreShards",
@@ -84,38 +87,51 @@ object StreamDescription {
       )
     )
 
-  implicit val streamDescriptionCirceDecoder: Decoder[StreamDescription] = {
-    x =>
-      for {
-        encryptionType <- x
-          .downField("EncryptionType")
-          .as[Option[EncryptionType]]
-        enhancedMonitoring <- x
-          .downField("EnhancedMonitoring")
-          .as[List[ShardLevelMetrics]]
-        hasMoreShards <- x.downField("HasMoreShards").as[Boolean]
-        keyId <- x.downField("KeyId").as[Option[String]]
-        retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
-        shards <- x.downField("Shards").as[List[ShardSummary]]
-        streamArn <- x.downField("StreamARN").as[String]
-        streamCreationTimestamp <- x
-          .downField("StreamCreationTimestamp")
-          .as[Instant]
-        streamName <- x.downField("StreamName").as[StreamName]
-        streamStatus <- x.downField("StreamStatus").as[StreamStatus]
-      } yield StreamDescription(
-        encryptionType,
-        enhancedMonitoring,
-        hasMoreShards,
-        keyId,
-        retentionPeriodHours,
-        shards,
-        streamArn,
-        streamCreationTimestamp,
-        streamName,
-        streamStatus
-      )
+  def streamDescriptionCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[StreamDescription] = { x =>
+    for {
+      encryptionType <- x
+        .downField("EncryptionType")
+        .as[Option[EncryptionType]]
+      enhancedMonitoring <- x
+        .downField("EnhancedMonitoring")
+        .as[List[ShardLevelMetrics]]
+      hasMoreShards <- x.downField("HasMoreShards").as[Boolean]
+      keyId <- x.downField("KeyId").as[Option[String]]
+      retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
+      shards <- x.downField("Shards").as[List[ShardSummary]]
+      streamArn <- x.downField("StreamARN").as[String]
+      streamCreationTimestamp <- x
+        .downField("StreamCreationTimestamp")
+        .as[Instant]
+      streamName <- x.downField("StreamName").as[StreamName]
+      streamStatus <- x.downField("StreamStatus").as[StreamStatus]
+    } yield StreamDescription(
+      encryptionType,
+      enhancedMonitoring,
+      hasMoreShards,
+      keyId,
+      retentionPeriodHours,
+      shards,
+      streamArn,
+      streamCreationTimestamp,
+      streamName,
+      streamStatus
+    )
   }
+
+  implicit val streamDescriptionEncoder: Encoder[StreamDescription] =
+    Encoder.instance(
+      streamDescriptionCirceEncoder(instantDoubleCirceEncoder),
+      streamDescriptionCirceEncoder(instantLongCirceEncoder)
+    )
+
+  implicit val streamDescriptionDecoder: Decoder[StreamDescription] =
+    Decoder.instance(
+      streamDescriptionCirceDecoder(instantDoubleCirceDecoder),
+      streamDescriptionCirceDecoder(instantLongCirceDecoder)
+    )
 
   implicit val streamDescriptionEq: Eq[StreamDescription] =
     (x, y) =>

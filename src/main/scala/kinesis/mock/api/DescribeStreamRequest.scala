@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -49,20 +49,25 @@ final case class DescribeStreamRequest(
 }
 
 object DescribeStreamRequest {
-  implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
-    Encoder.forProduct3("ExclusiveStartShardId", "Limit", "StreamName")(x =>
-      (x.exclusiveStartShardId, x.limit, x.streamName)
+  implicit val describeStreamRequestCirceEncoder
+      : circe.Encoder[DescribeStreamRequest] =
+    circe.Encoder.forProduct3("ExclusiveStartShardId", "Limit", "StreamName")(
+      x => (x.exclusiveStartShardId, x.limit, x.streamName)
     )
-  implicit val describeStreamRequestDecoder: Decoder[DescribeStreamRequest] = {
-    x =>
-      for {
-        exclusiveStartShardId <- x
-          .downField("ExclusiveStartShardId")
-          .as[Option[String]]
-        limit <- x.downField("Limit").as[Option[Int]]
-        streamName <- x.downField("StreamName").as[StreamName]
-      } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName)
+  implicit val describeStreamRequestCirceDecoder
+      : circe.Decoder[DescribeStreamRequest] = { x =>
+    for {
+      exclusiveStartShardId <- x
+        .downField("ExclusiveStartShardId")
+        .as[Option[String]]
+      limit <- x.downField("Limit").as[Option[Int]]
+      streamName <- x.downField("StreamName").as[StreamName]
+    } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName)
   }
+  implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
+    Encoder.derive
+  implicit val describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
+    Decoder.derive
   implicit val describeStreamRequestEq: Eq[DescribeStreamRequest] =
     Eq.fromUniversalEquals
 }

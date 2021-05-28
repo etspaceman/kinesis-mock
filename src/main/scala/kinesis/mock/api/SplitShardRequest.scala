@@ -8,7 +8,7 @@ import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -139,18 +139,25 @@ final case class SplitShardRequest(
 }
 
 object SplitShardRequest {
-  implicit val splitShardRequestCirceEncoder: Encoder[SplitShardRequest] =
-    Encoder.forProduct3("NewStartingHashKey", "ShardToSplit", "StreamName")(x =>
-      (x.newStartingHashKey, x.shardToSplit, x.streamName)
-    )
+  implicit val splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
+    circe.Encoder.forProduct3(
+      "NewStartingHashKey",
+      "ShardToSplit",
+      "StreamName"
+    )(x => (x.newStartingHashKey, x.shardToSplit, x.streamName))
 
-  implicit val splitShardRequestCirceDecoder: Decoder[SplitShardRequest] =
+  implicit val splitShardRequestCirceDecoder: circe.Decoder[SplitShardRequest] =
     x =>
       for {
         newStartingHashKey <- x.downField("NewStartingHashKey").as[String]
         shardToSplit <- x.downField("ShardToSplit").as[String]
         streamName <- x.downField("StreamName").as[StreamName]
       } yield SplitShardRequest(newStartingHashKey, shardToSplit, streamName)
+
+  implicit val splitShardRequestEncoder: Encoder[SplitShardRequest] =
+    Encoder.derive
+  implicit val splitShardRequestDecoder: Decoder[SplitShardRequest] =
+    Decoder.derive
 
   implicit val splitShardRequestEq: Eq[SplitShardRequest] =
     Eq.fromUniversalEquals

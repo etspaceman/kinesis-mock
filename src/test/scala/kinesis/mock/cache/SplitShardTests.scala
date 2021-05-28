@@ -29,7 +29,7 @@ class SplitShardTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(5, streamName), context)
+            .createStream(CreateStreamRequest(5, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           listShardsReq = ListShardsRequest(
@@ -41,7 +41,7 @@ class SplitShardTests
             Some(streamName)
           )
           shardToSplit <- cache
-            .listShards(listShardsReq, context)
+            .listShards(listShardsReq, context, false)
             .rethrow
             .map(_.shards.head)
           _ <- cache
@@ -51,18 +51,19 @@ class SplitShardTests
                 shardToSplit.shardId,
                 streamName
               ),
-              context
+              context,
+              false
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.splitShardDuration.plus(200.millis))
           checkStream2 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
-          checkShards <- cache.listShards(listShardsReq, context).rethrow
+          checkShards <- cache.listShards(listShardsReq, context, false).rethrow
         } yield assert(
           checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
             checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&

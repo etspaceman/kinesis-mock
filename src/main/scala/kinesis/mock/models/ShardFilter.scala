@@ -1,9 +1,10 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import java.time.Instant
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -14,17 +15,30 @@ final case class ShardFilter(
 )
 
 object ShardFilter {
-  implicit val shardFilterCirceEncoder: Encoder[ShardFilter] =
-    Encoder.forProduct3("ShardId", "Timestamp", "Type")(x =>
+  def shardFilterCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[ShardFilter] =
+    circe.Encoder.forProduct3("ShardId", "Timestamp", "Type")(x =>
       (x.shardId, x.timestamp, x.`type`)
     )
 
-  implicit val shardFilterCirceDecoder: Decoder[ShardFilter] = x =>
+  def shardFilterCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[ShardFilter] = x =>
     for {
       shardId <- x.downField("ShardId").as[Option[String]]
       timestamp <- x.downField("Timestamp").as[Option[Instant]]
       `type` <- x.downField("Type").as[ShardFilterType]
     } yield ShardFilter(shardId, timestamp, `type`)
+
+  implicit val shardFilterEncoder: Encoder[ShardFilter] = Encoder.instance(
+    shardFilterCirceEncoder(instantBigDecimalCirceEncoder),
+    shardFilterCirceEncoder(instantLongCirceEncoder)
+  )
+  implicit val shardFilterDecoder: Decoder[ShardFilter] = Decoder.instance(
+    shardFilterCirceDecoder(instantBigDecimalCirceDecoder),
+    shardFilterCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val shardFilterEq: Eq[ShardFilter] = (x, y) =>
     x.shardId == y.shardId &&

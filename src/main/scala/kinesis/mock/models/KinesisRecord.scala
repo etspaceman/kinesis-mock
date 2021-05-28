@@ -1,9 +1,10 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import java.time.Instant
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 
@@ -22,8 +23,10 @@ final case class KinesisRecord(
 }
 
 object KinesisRecord {
-  implicit val kinesisRecordCirceEncoder: Encoder[KinesisRecord] =
-    Encoder.forProduct5(
+  def kinesisRecordCirceEncoder(implicit
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[KinesisRecord] =
+    circe.Encoder.forProduct5(
       "ApproximateArrivalTimestamp",
       "Data",
       "EncryptionType",
@@ -39,7 +42,9 @@ object KinesisRecord {
       )
     )
 
-  implicit val kinesisRecordCirceDecoder: Decoder[KinesisRecord] =
+  def kinesisRecordCirceDecoder(implicit
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[KinesisRecord] =
     x =>
       for {
         approximateArrivalTimestamp <- x
@@ -56,6 +61,16 @@ object KinesisRecord {
         partitionKey,
         sequenceNumber
       )
+
+  implicit val kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
+    kinesisRecordCirceEncoder(instantDoubleCirceEncoder),
+    kinesisRecordCirceEncoder(instantLongCirceEncoder)
+  )
+
+  implicit val kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
+    kinesisRecordCirceDecoder(instantDoubleCirceDecoder),
+    kinesisRecordCirceDecoder(instantLongCirceDecoder)
+  )
 
   implicit val kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
     x.approximateArrivalTimestamp.getEpochSecond == y.approximateArrivalTimestamp.getEpochSecond &&

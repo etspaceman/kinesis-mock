@@ -1,7 +1,8 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 
@@ -13,8 +14,8 @@ final case class EnableEnhancedMonitoringResponse(
 
 object EnableEnhancedMonitoringResponse {
   implicit val enableEnhancedMonitoringResponseCirceEncoder
-      : Encoder[EnableEnhancedMonitoringResponse] =
-    Encoder.forProduct3(
+      : circe.Encoder[EnableEnhancedMonitoringResponse] =
+    circe.Encoder.forProduct3(
       "CurrentShardLevelMetrics",
       "DesiredShardLevelMetrics",
       "StreamName"
@@ -23,7 +24,7 @@ object EnableEnhancedMonitoringResponse {
     )
 
   implicit val enableEnhancedMonitoringResponseCirceDecoder
-      : Decoder[EnableEnhancedMonitoringResponse] = { x =>
+      : circe.Decoder[EnableEnhancedMonitoringResponse] = { x =>
     for {
       currentShardLevelMetrics <- x
         .downField("CurrentShardLevelMetrics")
@@ -38,6 +39,10 @@ object EnableEnhancedMonitoringResponse {
       streamName
     )
   }
+  implicit val enableEnhancedMonitoringResponseEncoder
+      : Encoder[EnableEnhancedMonitoringResponse] = Encoder.derive
+  implicit val enableEnhancedMonitoringResponseDecoder
+      : Decoder[EnableEnhancedMonitoringResponse] = Decoder.derive
   implicit val enableEnhancedMonitoringResponseEq
       : Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
 }
