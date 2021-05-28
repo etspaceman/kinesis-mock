@@ -8,12 +8,13 @@ import java.util.Base64
 import io.circe.{Decoder, Encoder}
 
 object circe {
+  // Used for CBOR
   val instantLongCirceEncoder: Encoder[Instant] =
     Encoder[Long].contramap(_.toEpochMilli)
-
   val instantLongCirceDecoder: Decoder[Instant] =
     Decoder[Long].map(Instant.ofEpochMilli)
 
+  // Used for (most) JSON
   val instantDoubleCirceEncoder: Encoder[Instant] =
     Encoder[Double].contramap(x =>
       java.math.BigDecimal
@@ -29,6 +30,7 @@ object circe {
       )
     )
 
+  // Used for some JSON, e.g. ListShards (ShardFilter) and GetShardIteratorRequest
   val instantBigDecimalCirceEncoder: Encoder[Instant] =
     Encoder[java.math.BigDecimal].contramap(x =>
       java.math.BigDecimal
