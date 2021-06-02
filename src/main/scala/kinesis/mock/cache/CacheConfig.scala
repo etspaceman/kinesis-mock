@@ -36,11 +36,11 @@ object CacheConfig {
   implicit val cacheConfigReader: ConfigReader[CacheConfig] = deriveReader
   implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] = deriveEncoder
 
-  implicit val initialStreamsReader: ConfigReader[List[CreateStreamRequest]] = {
+  implicit val initializeStreamsReader: ConfigReader[List[CreateStreamRequest]] = {
     ConfigReader.fromString { s =>
       s.split(',')
         .toList
-        .map(_.split('=').toList)
+        .map(_.split(':').toList)
         .traverse {
           case name :: count :: Nil =>
             count.toIntOption.map(CreateStreamRequest(_, StreamName(name)))
@@ -50,7 +50,7 @@ object CacheConfig {
           CannotConvert(
             s,
             "List[CreateStreamRequest]",
-            "Invalid format. Expected: \"<String>=<Int>,<String>=<Int>,...\""
+            "Invalid format. Expected: \"<String>:<Int>,<String>:<Int>,...\""
           )
         )
     }
