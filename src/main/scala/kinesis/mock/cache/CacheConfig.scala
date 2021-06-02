@@ -43,7 +43,7 @@ object CacheConfig {
         .toList
         .map(_.split(':').toList)
         .traverse {
-          case name :: count :: Nil =>
+          case name :: count :: Nil if name.nonEmpty && count.nonEmpty =>
             count.toIntOption.map(CreateStreamRequest(_, StreamName(name)))
           case _ => none
         }
