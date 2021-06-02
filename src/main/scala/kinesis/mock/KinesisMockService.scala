@@ -36,10 +36,9 @@ object KinesisMockService extends IOApp {
                     s"(shardCount=${s.shardCount})"
                 )
                 _ <- cache.createStream(s, context, false)
-                _ <- IO.sleep(cacheConfig.createStreamDuration)
               } yield {}
             )
-          )
+          ).flatTap(_ => IO.sleep(cacheConfig.createStreamDuration))
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
         context <- ssl.loadContextFromClasspath[IO](
