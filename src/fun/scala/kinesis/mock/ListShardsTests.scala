@@ -3,6 +3,7 @@ package kinesis.mock
 import scala.concurrent.duration._
 
 import cats.effect.IO
+import cats.implicits._
 import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
@@ -34,6 +35,25 @@ class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         .toIO
     } yield assert(
       res.shards().size() == 3,
+      s"$res"
+    )
+  }
+
+  fixture.test("It should list shards for initialized streams") { resources =>
+    for {
+      res <- initializedStreams.map { case (name,_) =>
+        resources.kinesisClient
+          .listShards(
+            ListShardsRequest
+              .builder()
+              .streamName(name)
+              .build()
+          )
+          .toIO
+          .map(name -> _.shards())
+      }.parSequence
+    } yield assert(
+      res.map { case (name, shards) => name -> shards.size() } == initializedStreams,
       s"$res"
     )
   }

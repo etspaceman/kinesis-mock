@@ -128,11 +128,20 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   def describeStreamSummary(
       resources: KinesisFunctionalTestResources
   ): IO[DescribeStreamSummaryResponse] =
-    resources.kinesisClient
+    describeStreamSummary(
+      resources.kinesisClient,
+      resources.streamName.streamName
+    )
+
+  def describeStreamSummary(
+      kinesisClient: KinesisAsyncClient,
+      streamName: String
+  ): IO[DescribeStreamSummaryResponse] =
+    kinesisClient
       .describeStreamSummary(
         DescribeStreamSummaryRequest
           .builder()
-          .streamName(resources.streamName.streamName)
+          .streamName(streamName)
           .build
       )
       .toIO

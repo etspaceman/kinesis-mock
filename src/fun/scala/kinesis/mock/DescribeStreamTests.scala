@@ -2,6 +2,7 @@ package kinesis.mock
 
 import java.util.Collections
 
+import cats.implicits._
 import software.amazon.awssdk.services.kinesis.model._
 
 class DescribeStreamTests
@@ -35,6 +36,17 @@ class DescribeStreamTests
     } yield assert(
       res.streamDescriptionSummary == expected,
       s"${res.streamDescriptionSummary()}\n$expected"
+    )
+  }
+
+  fixture.test("It should describe initialized streams") { resources =>
+    for {
+      res <- initializedStreams.map { case (name,_) =>
+        describeStreamSummary(resources.kinesisClient, name).map(_.streamDescriptionSummary())
+      }.parSequence
+    } yield assert(
+      res.map(x => x.streamName() -> x.openShardCount()) == initializedStreams,
+      s"$res"
     )
   }
 }
