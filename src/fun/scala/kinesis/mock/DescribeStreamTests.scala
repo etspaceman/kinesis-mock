@@ -45,7 +45,8 @@ class DescribeStreamTests
         describeStreamSummary(resources.kinesisClient, name).map(_.streamDescriptionSummary())
       }.parSequence
     } yield assert(
-      res.map(x => x.streamName() -> x.openShardCount()) == initializedStreams,
+      res.map(x => x.streamName() -> x.openShardCount()) == initializedStreams &&
+        res.forall(x => x.streamStatus() == StreamStatus.ACTIVE),
       s"$res"
     )
   }
