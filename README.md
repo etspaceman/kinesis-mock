@@ -24,8 +24,8 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.0.5
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.5
+docker pull ghcr.io/etspaceman/kinesis-mock:0.0.6
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.6
 ```
 
 You can also leverage the `kinesis-mock.jar` executable in the release assets:
