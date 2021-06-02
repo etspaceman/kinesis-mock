@@ -36,7 +36,8 @@ object CacheConfig {
   implicit val cacheConfigReader: ConfigReader[CacheConfig] = deriveReader
   implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] = deriveEncoder
 
-  implicit val initializeStreamsReader: ConfigReader[List[CreateStreamRequest]] = {
+  implicit val initializeStreamsReader
+      : ConfigReader[List[CreateStreamRequest]] = {
     ConfigReader.fromString { s =>
       s.split(',')
         .toList

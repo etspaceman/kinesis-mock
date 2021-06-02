@@ -41,7 +41,7 @@ class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
   fixture.test("It should list shards for initialized streams") { resources =>
     for {
-      res <- initializedStreams.map { case (name,_) =>
+      res <- initializedStreams.map { case (name, _) =>
         resources.kinesisClient
           .listShards(
             ListShardsRequest
@@ -53,7 +53,9 @@ class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           .map(name -> _.shards())
       }.parSequence
     } yield assert(
-      res.map { case (name, shards) => name -> shards.size() } == initializedStreams,
+      res.map { case (name, shards) =>
+        name -> shards.size()
+      } == initializedStreams,
       s"$res"
     )
   }

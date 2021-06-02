@@ -10,7 +10,9 @@ class DescribeLimitsTest extends munit.CatsEffectSuite with AwsFunctionalTests {
         .describeLimits()
         .toIO
     } yield assert(
-      res.openShardCount() == (initializedStreams.map(_._2).sum + genStreamShardCount) &&
+      res.openShardCount() == (initializedStreams
+        .map(_._2)
+        .sum + genStreamShardCount) &&
         res.shardLimit() == resources.cacheConfig.shardLimit,
       s"$res"
     )

@@ -17,7 +17,9 @@ class ListStreamsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     for {
       res <- resources.kinesisClient.listStreams().toIO
     } yield assert(
-      initializedStreams.forall { case (name,_) => res.streamNames().contains(name) },
+      initializedStreams.forall { case (name, _) =>
+        res.streamNames().contains(name)
+      },
       s"$res"
     )
   }

@@ -25,15 +25,21 @@ object KinesisMockService extends IOApp {
           "Logging Cache Config"
         )
         cache <- Cache(cacheConfig)
-        _ <- cacheConfig.initializeStreams.toList.flatten.map(s =>
-          for {
-            _ <- logger.info(
-              s"Initializing stream '${s.streamName}' " +
-                s"(shardCount=${s.shardCount})")
-            _ <- cache.createStream(s, context, false)
-            _ <- IO.sleep(cacheConfig.createStreamDuration)
-          } yield {}
-        ).parSequence_
+        _ <- cacheConfig.initializeStreams.toList.flatten
+          .grouped(5)
+          .toList
+          .flatTraverse(
+            _.parTraverse(s =>
+              for {
+                _ <- logger.info(
+                  s"Initializing stream '${s.streamName}' " +
+                    s"(shardCount=${s.shardCount})"
+                )
+                _ <- cache.createStream(s, context, false)
+                _ <- IO.sleep(cacheConfig.createStreamDuration)
+              } yield {}
+            )
+          )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
         context <- ssl.loadContextFromClasspath[IO](

@@ -41,11 +41,15 @@ class DescribeStreamTests
 
   fixture.test("It should describe initialized streams") { resources =>
     for {
-      res <- initializedStreams.map { case (name,_) =>
-        describeStreamSummary(resources.kinesisClient, name).map(_.streamDescriptionSummary())
-      }.parSequence
+      res <- initializedStreams.parTraverse { case (name, _) =>
+        describeStreamSummary(resources.kinesisClient, name).map(
+          _.streamDescriptionSummary()
+        )
+      }
     } yield assert(
-      res.map(s => s.streamName() -> s.openShardCount()) == initializedStreams &&
+      res.map(s =>
+        s.streamName() -> s.openShardCount()
+      ) == initializedStreams &&
         res.forall(s => s.streamStatus() == StreamStatus.ACTIVE),
       s"$res"
     )
