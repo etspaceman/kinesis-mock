@@ -22,7 +22,7 @@ class DescribeStreamTests
             .shardLevelMetricsWithStrings(Collections.emptyList[String]())
             .build()
         )
-        .openShardCount(1)
+        .openShardCount(genStreamShardCount)
         .retentionPeriodHours(24)
         .streamARN(
           s"arn:aws:kinesis:${resources.cacheConfig.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
