@@ -1,15 +1,21 @@
 package kinesis.mock
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
+import cats.effect.concurrent.Semaphore
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import cats.implicits._
 import io.circe.syntax._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.syntax.kleisli._
+import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import retry._
 
+import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
+import kinesis.mock.models.{StreamName, StreamStatus}
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
@@ -25,20 +31,13 @@ object KinesisMockService extends IOApp {
           "Logging Cache Config"
         )
         cache <- Cache(cacheConfig)
-        _ <- cacheConfig.initializeStreams.toList.flatten
-          .grouped(3)
-          .toList
-          .flatTraverse(
-            _.parTraverse(s =>
-              for {
-                _ <- logger.info(
-                  s"Initializing stream '${s.streamName}' " +
-                    s"(shardCount=${s.shardCount})"
-                )
-                _ <- cache.createStream(s, context, false)
-              } yield {}
-            ).flatTap(_ => IO.sleep(cacheConfig.createStreamDuration))
-          )
+        _ <- initializeStreams(
+          cache,
+          cacheConfig.createStreamDuration,
+          context,
+          logger,
+          cacheConfig.initializeStreams.toList.flatten
+        )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
         context <- ssl.loadContextFromClasspath[IO](
@@ -69,5 +68,46 @@ object KinesisMockService extends IOApp {
           .as(ExitCode.Success)
       } yield res
     )
+
+  def initializeStreams(
+      cache: Cache,
+      createStreamDuration: FiniteDuration,
+      context: LoggingContext,
+      logger: SelfAwareStructuredLogger[IO],
+      streams: List[CreateStreamRequest]
+  ): IO[Unit] = {
+    def isCreateStreamDone(streamName: StreamName): IO[Boolean] = {
+      val descReq = DescribeStreamSummaryRequest(streamName)
+      cache
+        .describeStreamSummary(descReq, context, isCbor = false)
+        .map {
+          case Left(_) => false
+          case Right(v) =>
+            v.streamDescriptionSummary.streamStatus != StreamStatus.CREATING
+        }
+    }
+
+    def initStream(req: CreateStreamRequest): IO[Unit] =
+      for {
+        _ <- logger.info(
+          s"Initializing stream '${req.streamName}' " +
+            s"(shardCount=${req.shardCount})"
+        )
+        _ <- cache.createStream(req, context, isCbor = false)
+        _ <- retryingOnFailures[Boolean](
+          RetryPolicies
+            .limitRetries[IO](3)
+            .join(RetryPolicies.constantDelay(createStreamDuration)),
+          identity,
+          noop[IO, Boolean]
+        )(isCreateStreamDone(req.streamName))
+      } yield {}
+
+    for {
+      semaphore <- Semaphore[IO](5)
+      _ <- streams
+        .parTraverse(stream => semaphore.withPermit(initStream(stream).void))
+    } yield {}
+  }
 }
 // $COVERAGE-ON$
