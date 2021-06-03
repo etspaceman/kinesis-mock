@@ -2,6 +2,7 @@ package kinesis.mock
 
 import java.util.Collections
 
+import cats.implicits._
 import software.amazon.awssdk.services.kinesis.model._
 
 class DescribeStreamTests
@@ -21,7 +22,7 @@ class DescribeStreamTests
             .shardLevelMetricsWithStrings(Collections.emptyList[String]())
             .build()
         )
-        .openShardCount(1)
+        .openShardCount(genStreamShardCount)
         .retentionPeriodHours(24)
         .streamARN(
           s"arn:aws:kinesis:${resources.cacheConfig.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
@@ -35,6 +36,22 @@ class DescribeStreamTests
     } yield assert(
       res.streamDescriptionSummary == expected,
       s"${res.streamDescriptionSummary()}\n$expected"
+    )
+  }
+
+  fixture.test("It should describe initialized streams") { resources =>
+    for {
+      res <- initializedStreams.parTraverse { case (name, _) =>
+        describeStreamSummary(resources.kinesisClient, name).map(
+          _.streamDescriptionSummary()
+        )
+      }
+    } yield assert(
+      res.map(s =>
+        s.streamName() -> s.openShardCount()
+      ) == initializedStreams &&
+        res.forall(s => s.streamStatus() == StreamStatus.ACTIVE),
+      s"$res"
     )
   }
 }

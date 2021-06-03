@@ -3,6 +3,7 @@ package kinesis.mock
 import scala.concurrent.ExecutionContext
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.implicits._
 import io.circe.syntax._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.syntax.kleisli._
@@ -24,6 +25,21 @@ object KinesisMockService extends IOApp {
           "Logging Cache Config"
         )
         cache <- Cache(cacheConfig)
+        _ <- cacheConfig.initializeStreams.toList.flatten
+          .grouped(5)
+          .toList
+          .flatTraverse(
+            _.parTraverse(s =>
+              for {
+                _ <- logger.info(
+                  s"Initializing stream '${s.streamName}' " +
+                    s"(shardCount=${s.shardCount})"
+                )
+                _ <- cache.createStream(s, context, false)
+              } yield {}
+            )
+          )
+          .flatTap(_ => IO.sleep(cacheConfig.createStreamDuration))
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
         context <- ssl.loadContextFromClasspath[IO](

@@ -21,6 +21,14 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
+  protected val genStreamShardCount = 1
+
+  // this must match env var INITIALIZE_STREAMS in docker-compose.yml
+  protected val initializedStreams = List(
+    "my-initial-stream" -> 3,
+    "my-other-initial-stream" -> 2
+  )
+
   private val trustAllCertificates =
     AttributeMap
       .builder()
@@ -75,7 +83,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
         CreateStreamRequest
           .builder()
           .streamName(resources.streamName.streamName)
-          .shardCount(1)
+          .shardCount(genStreamShardCount)
           .build()
       )
       .toIO
@@ -120,11 +128,20 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   def describeStreamSummary(
       resources: KinesisFunctionalTestResources
   ): IO[DescribeStreamSummaryResponse] =
-    resources.kinesisClient
+    describeStreamSummary(
+      resources.kinesisClient,
+      resources.streamName.streamName
+    )
+
+  def describeStreamSummary(
+      kinesisClient: KinesisAsyncClient,
+      streamName: String
+  ): IO[DescribeStreamSummaryResponse] =
+    kinesisClient
       .describeStreamSummary(
         DescribeStreamSummaryRequest
           .builder()
-          .streamName(resources.streamName.streamName)
+          .streamName(streamName)
           .build
       )
       .toIO
