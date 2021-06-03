@@ -76,7 +76,7 @@ object KinesisMockService extends IOApp {
       logger: SelfAwareStructuredLogger[IO],
       streams: List[CreateStreamRequest]
   ): IO[Unit] = {
-    def isCreateStreamDone(streamName: StreamName): IO[Boolean] = {
+    def isInitStreamDone(streamName: StreamName): IO[Boolean] = {
       val descReq = DescribeStreamSummaryRequest(streamName)
       cache
         .describeStreamSummary(descReq, context, isCbor = false)
@@ -100,7 +100,7 @@ object KinesisMockService extends IOApp {
             .join(RetryPolicies.constantDelay(createStreamDuration)),
           identity,
           noop[IO, Boolean]
-        )(isCreateStreamDone(req.streamName))
+        )(isInitStreamDone(req.streamName))
       } yield {}
 
     for {
