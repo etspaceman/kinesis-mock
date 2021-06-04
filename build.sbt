@@ -16,6 +16,7 @@ lazy val kinesisMock = project
       Borer.core,
       Cats.core,
       Cats.effect,
+      CatsRetry,
       Circe.core,
       Circe.derivation,
       PureConfig.core,
@@ -44,8 +45,7 @@ lazy val kinesisMock = project
       ScalacheckGenRegexp % Test,
       Aws.kinesis % FunctionalTest,
       Aws.kpl % FunctionalTest,
-      Aws.kcl % FunctionalTest,
-      CatsRetry % FunctionalTest
+      Aws.kcl % FunctionalTest
     ),
     semanticdbEnabled := true,
     semanticdbVersion := "4.4.10",

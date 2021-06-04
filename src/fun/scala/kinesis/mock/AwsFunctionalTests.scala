@@ -25,8 +25,17 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
 
   // this must match env var INITIALIZE_STREAMS in docker-compose.yml
   protected val initializedStreams = List(
-    "my-initial-stream" -> 3,
-    "my-other-initial-stream" -> 2
+    "stream1" -> 3,
+    "stream2" -> 2,
+    "stream3" -> 1,
+    "stream4" -> 2,
+    "stream5" -> 3,
+    "stream6" -> 5,
+    "stream7" -> 5,
+    "stream8" -> 3,
+    "stream9" -> 1,
+    "stream10" -> 3,
+    "stream11" -> 2
   )
 
   private val trustAllCertificates =
