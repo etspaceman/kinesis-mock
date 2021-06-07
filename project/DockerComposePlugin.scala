@@ -110,6 +110,22 @@ object DockerComposePlugin extends AutoPlugin {
       throw new IllegalStateException(s"docker-compose logs returned $res")
   }
 
+  val dockerComposePsTask: Def.Initialize[Task[Unit]] = Def.task {
+    val log = sbt.Keys.streams.value.log
+    val cmd =
+      s"docker-compose -f ${composeFile.value} ps -a"
+    log.info(s"Running $cmd")
+    val res = Process(
+      cmd,
+      None,
+      "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
+      "DOCKER_NET_NAME" -> networkName.value,
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+    ).!
+    if (res != 0)
+      throw new IllegalStateException(s"docker-compose ps -a returned $res")
+  }
+
   def dockerComposeTestQuickTask(
       configuration: Configuration
   ): Def.Initialize[Task[Unit]] =
@@ -126,6 +142,7 @@ object DockerComposePlugin extends AutoPlugin {
       dockerComposeUp := dockerComposeUpTask.value,
       dockerComposeDown := dockerComposeDownTask.value,
       dockerComposeLogs := dockerComposeLogsTask.value,
+      dockerComposePs := dockerComposePsTask.value,
       dockerComposeTestQuick := dockerComposeTestQuickTask(configuration).value,
       composeFileLocation := "docker/",
       networkName := sys.env
@@ -164,4 +181,6 @@ object DockerComposePluginKeys {
     taskKey[Unit]("Runs `docker-compose -f <file> down` for the scope")
   val dockerComposeLogs =
     taskKey[Unit]("Runs `docker-compose -f <file> logs` for the scope")
+  val dockerComposePs =
+    taskKey[Unit]("Runs `docker-compose -f <file> ps -a` for the scope")
 }
