@@ -31,7 +31,7 @@ services:
       test: "curl --fail http://localhost:4568/healthcheck || exit 1"
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "4567:4567"
       - "4568:4568"
