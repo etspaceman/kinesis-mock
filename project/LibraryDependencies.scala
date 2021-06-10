@@ -63,7 +63,7 @@ object LibraryDependencies {
   }
 
   object PureConfig {
-    private val pureConfigVersion = "0.14.1"
+    private val pureConfigVersion = "0.16.0"
     val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
     val enumeratum =
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
