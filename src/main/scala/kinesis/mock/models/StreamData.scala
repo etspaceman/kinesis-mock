@@ -1,9 +1,15 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
+
+import io.circe
+import io.circe.derivation._
+
+import kinesis.mock.instances.circe._
 
 final case class StreamData(
     consumers: SortedMap[ConsumerName, Consumer],
@@ -23,6 +29,18 @@ final case class StreamData(
 object StreamData {
   val minRetentionPeriod: FiniteDuration = 24.hours
   val maxRetentionPeriod: FiniteDuration = 365.days
+
+  private implicit val consumerCirceEncoder: circe.Encoder[Consumer] =
+    Encoder[Consumer].circeEncoder
+  private implicit val kinesisRecordCirceEncoder: circe.Encoder[KinesisRecord] =
+    Encoder[KinesisRecord].circeEncoder
+  private implicit val consumerCirceDecoder: circe.Decoder[Consumer] =
+    Decoder[Consumer].circeDecoder
+  private implicit val kinesisRecordCirceDecoder: circe.Decoder[KinesisRecord] =
+    Decoder[KinesisRecord].circeDecoder
+
+  implicit val streamDataCirceEncoder: circe.Encoder[StreamData] = deriveEncoder
+  implicit val streamDataCirceDecoder: circe.Decoder[StreamData] = deriveDecoder
 
   def create(
       shardCount: Int,

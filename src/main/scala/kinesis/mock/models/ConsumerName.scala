@@ -17,5 +17,9 @@ object ConsumerName {
     Encoder[String].contramap(_.consumerName)
   implicit val consumerNameCirceDecoder: Decoder[ConsumerName] =
     Decoder[String].map(ConsumerName.apply)
+  implicit val consumerNameCirceKeyEncoder: KeyEncoder[ConsumerName] =
+    KeyEncoder[String].contramap(_.consumerName)
+  implicit val consumerNameCirceKeyDecoder: KeyDecoder[ConsumerName] =
+    KeyDecoder[String].map(ConsumerName.apply)
   implicit val consumerNameEq: Eq[ConsumerName] = Eq.fromUniversalEquals
 }

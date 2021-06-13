@@ -58,6 +58,12 @@ these ports to a local one).
 | AWS_REGION | String | "us-east-1" | |
 | LOG_LEVEL| String | "INFO" | Sets the log-level for kinesis-mock specific logs |
 | ROOT_LOG_LEVEL | String | "ERROR" | Sets the log-level for all dependencies |
+| LOAD_DATA_IF_EXISTS | Boolean | true | Loads data from the configured persisted data file if it exists |
+| SHOULD_PERSIST_DATA | Boolean | false | Persists data to disk. Used to keep data during restarts of the service |
+| PERSIST_PATH | String | "data/" | Path to persist data to |
+| PERSIST_FILE_NAME | String | "kinesis-data.json" | File name for persisted data |
+| PERSIST_INTERVAL | Duration | 5s | Delay between data persistence |
+
 
 ## Log Levels
 
