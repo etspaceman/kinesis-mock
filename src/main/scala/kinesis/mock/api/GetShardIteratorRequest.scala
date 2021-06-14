@@ -127,6 +127,20 @@ final case class GetShardIteratorRequest(
                               ShardIteratorType.AT_SEQUENCE_NUMBER,
                               Some(seqNo),
                               _
+                            ) if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                          Valid(
+                            GetShardIteratorResponse(
+                              ShardIterator.create(
+                                streamName,
+                                shardId,
+                                shard.sequenceNumberRange.startingSequenceNumber
+                              )
+                            )
+                          )
+                        case (
+                              ShardIteratorType.AT_SEQUENCE_NUMBER,
+                              Some(seqNo),
+                              _
                             ) =>
                           data.find(_.sequenceNumber == seqNo) match {
                             case Some(record) =>
@@ -157,7 +171,20 @@ final case class GetShardIteratorRequest(
                                 s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
                               ).invalidNel
                           }
-
+                        case (
+                              ShardIteratorType.AFTER_SEQUENCE_NUMBER,
+                              Some(seqNo),
+                              _
+                            ) if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                          Valid(
+                            GetShardIteratorResponse(
+                              ShardIterator.create(
+                                streamName,
+                                shardId,
+                                shard.sequenceNumberRange.startingSequenceNumber
+                              )
+                            )
+                          )
                         case (
                               ShardIteratorType.AFTER_SEQUENCE_NUMBER,
                               Some(seqNo),
