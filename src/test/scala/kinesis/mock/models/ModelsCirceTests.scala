@@ -20,6 +20,8 @@ class ModelsCirceTests extends CirceTests {
   identityLawTest[SequenceNumber]
   identityLawTest[SequenceNumberConstant]
   identityLawTest[SequenceNumberRange]
+  identityLawTest[Streams]
+  identityLawTest[StreamData]
   identityLawTest[StreamName]
   identityLawTest[StreamStatus]
   identityLawTest[TagList]

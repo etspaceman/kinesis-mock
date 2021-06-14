@@ -1234,22 +1234,19 @@ class Cache private (
         semaphores.persistData.withPermit(
           for {
             streams <- streamsRef.get
-            path = config.persistConfig.path
-            fileName = config.persistConfig.fileName
-            file = path / fileName
             ctx = context ++ List(
-              "fileName" -> fileName,
-              "path" -> path.toString
+              "fileName" -> config.persistConfig.fileName,
+              "path" -> config.persistConfig.osPath.toString
             )
-            _ <- IO(os.exists(path)).ifM(
+            _ <- IO(os.exists(config.persistConfig.osPath)).ifM(
               IO.unit,
               logger.info(ctx.context)("Creating directories") >> IO(
-                os.makeDir.all(path)
+                os.makeDir.all(config.persistConfig.osPath)
               )
             )
             js = streams.asJson
             jacksonJs = circeToJackson(js)
-            fw = new FileWriter(file.toIO, false)
+            fw = new FileWriter(config.persistConfig.osFile.toIO, false)
             om = new ObjectMapper()
             _ <- logger.debug(ctx.context)("Persisting stream data to disk")
             res <- IO(om.writer().writeValue(fw, jacksonJs))
@@ -1280,18 +1277,15 @@ object Cache {
   def loadFromFile(
       config: CacheConfig
   )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = {
-    val path = config.persistConfig.path
-    val fileName = config.persistConfig.fileName
-    val file = path / fileName
     val om = new ObjectMapper()
 
-    IO(os.exists(file)).ifM(
-      apply(config),
+    IO(os.exists(config.persistConfig.osPath)).ifM(
       for {
-        jn <- IO(om.readTree(file.toIO))
+        jn <- IO(om.readTree(config.persistConfig.osFile.toIO))
         streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
         res <- apply(config, streams)
-      } yield res
+      } yield res,
+      apply(config)
     )
   }
 }

@@ -3,6 +3,8 @@ package models
 
 import scala.collection.SortedMap
 
+import cats.Eq
+import cats.syntax.all._
 import io.circe._
 import io.circe.derivation._
 
@@ -71,4 +73,6 @@ object Streams {
   val empty: Streams = Streams(SortedMap.empty)
   implicit val streamsCirceEncoder: Encoder[Streams] = deriveEncoder
   implicit val streamsCirceDecoder: Decoder[Streams] = deriveDecoder
+  implicit val streamsEq: Eq[Streams] = (x, y) =>
+    x.streams.toMap === y.streams.toMap
 }

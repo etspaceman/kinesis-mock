@@ -3,7 +3,7 @@ package kinesis.mock
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-import cats.effect.concurrent.{Semaphore, Supervisor}
+import cats.effect.concurrent.Semaphore
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import cats.implicits._
 import io.circe.syntax._
@@ -70,28 +70,20 @@ object KinesisMockService extends IOApp {
         )
         res <- http2Server
           .parZip(http1PlainServer)
+          .parZip(
+            persistDataLoop(
+              cacheConfig.persistConfig.shouldPersist,
+              cacheConfig.persistConfig.interval,
+              cache,
+              logger
+            ).background
+          )
           .onFinalize(
             IO.pure(cacheConfig.persistConfig.shouldPersist)
               .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
           )
           .use(_ => IO.never)
           .as(ExitCode.Success)
-        _ <- IO
-          .pure(cacheConfig.persistConfig.shouldPersist)
-          .ifM(
-            Supervisor[IO].use(supervisor =>
-              supervisor.supervise(
-                persistDataLoop(
-                  cacheConfig.persistConfig.interval,
-                  cache,
-                  logger
-                )
-              )
-            ),
-            logger.info(LoggingContext.create.context)(
-              "Not configured to persist data, persist loop not started"
-            )
-          )
       } yield res
     )
 
@@ -137,19 +129,26 @@ object KinesisMockService extends IOApp {
   }
 
   def persistDataLoop(
+      shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
       logger: SelfAwareStructuredLogger[IO]
   ): IO[Unit] = {
     val context = LoggingContext.create
-    logger.info(context.context)("Starting persist data loop") >>
-      retryingOnFailuresAndAllErrors[Unit](
-        constantDelay[IO](interval),
-        _ => false,
-        noop[IO, Unit],
-        (e: Throwable, _) =>
-          logger.error(context.context, e)("Failed to persist data")
-      )(cache.persistToDisk(context))
+    IO.pure(shouldPersist)
+      .ifM(
+        logger.info(context.context)("Starting persist data loop") >>
+          retryingOnFailuresAndAllErrors[Unit](
+            constantDelay[IO](interval),
+            _ => false,
+            noop[IO, Unit],
+            (e: Throwable, _) =>
+              logger.error(context.context, e)("Failed to persist data")
+          )(cache.persistToDisk(context)),
+        logger.info(LoggingContext.create.context)(
+          "Not configured to persist data, persist loop not started"
+        )
+      )
   }
 }
 // $COVERAGE-ON$
