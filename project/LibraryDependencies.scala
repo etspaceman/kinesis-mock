@@ -1,7 +1,7 @@
 import sbt._
 
 object LibraryDependencies {
-  val KindProjector = "org.typelevel" % "kind-projector" % "0.11.3"
+  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.0"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.5.0"
   val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
@@ -9,9 +9,10 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.0"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.2"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
-  val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.0.0"
+  val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
+  val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
 
   object Borer {
     val borerVersion = "1.7.2"
@@ -20,29 +21,29 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "1.3.0"
+    val log4CatsVersion = "1.3.1"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
   object Munit {
-    val munitVersion = "0.7.25"
+    val munitVersion = "0.7.26"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.2"
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.5"
     val scalacheckEffect =
-      "org.typelevel" %% "scalacheck-effect-munit" % "1.0.1"
+      "org.typelevel" %% "scalacheck-effect-munit" % "1.0.2"
   }
 
   object Aws {
     val sdkVersion = "2.16.18"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.6"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.7"
     val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.4"
   }
 
   object Cats {
-    val catsVersion = "2.6.0"
+    val catsVersion = "2.6.1"
     val catsEffectVersion = "2.5.0"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
@@ -56,10 +57,11 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.13.0"
+    val circeVersion = "0.14.1"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
+    val jackson = "io.circe" %% "circe-jackson212" % "0.14.0"
   }
 
   object PureConfig {
@@ -88,7 +90,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.24"
+    val refinedVersion = "0.9.26"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }

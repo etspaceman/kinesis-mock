@@ -1,21 +1,68 @@
 package kinesis.mock.instances
 
+import scala.collection.SortedMap
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Try
 
 import java.time.Instant
 import java.util.Base64
+import java.util.concurrent.TimeUnit
 
-import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
+import io.circe.{Decoder, Encoder, JsonObject, KeyDecoder, KeyEncoder}
+import os.Path
 
 object circe {
+  // Used for CBOR
+  val instantLongCirceEncoder: Encoder[Instant] =
+    Encoder[Long].contramap(_.toEpochMilli)
+  val instantLongCirceDecoder: Decoder[Instant] =
+    Decoder[Long].map(Instant.ofEpochMilli)
+
+  // Used for (most) JSON
+  val instantDoubleCirceEncoder: Encoder[Instant] =
+    Encoder[Double].contramap(x =>
+      java.math.BigDecimal
+        .valueOf(x.toEpochMilli)
+        .scaleByPowerOfTen(-3)
+        .doubleValue()
+    )
+
+  val instantDoubleCirceDecoder: Decoder[Instant] =
+    Decoder[Double].map(x =>
+      Instant.ofEpochMilli(
+        java.math.BigDecimal.valueOf(x).scaleByPowerOfTen(3).longValue()
+      )
+    )
+
+  // Used for some JSON, e.g. ListShards (ShardFilter) and GetShardIteratorRequest
+  val instantBigDecimalCirceEncoder: Encoder[Instant] =
+    Encoder[java.math.BigDecimal].contramap(x =>
+      java.math.BigDecimal
+        .valueOf(x.toEpochMilli)
+        .scaleByPowerOfTen(-3)
+    )
+
+  val instantBigDecimalCirceDecoder: Decoder[Instant] =
+    Decoder[java.math.BigDecimal].map(x =>
+      Instant.ofEpochMilli(
+        x.scaleByPowerOfTen(3).longValue()
+      )
+    )
+
+  implicit val timeUnitCirceEncoder: Encoder[TimeUnit] =
+    Encoder[String].contramap(_.name())
+  implicit val timeUnitCirceDecoder: Decoder[TimeUnit] =
+    Decoder[String].emapTry(x => Try(TimeUnit.valueOf(x)))
+
   implicit val finiteDurationCirceEncoder: Encoder[FiniteDuration] =
-    Encoder[String].contramap(_.toString)
+    x => JsonObject("length" -> x.length.asJson, "unit" -> x.unit.asJson).asJson
 
-  implicit val instantCirceEncoder: Encoder[Instant] =
-    Encoder[Long].contramap(_.getEpochSecond())
-
-  implicit val instantCirceDecoder: Decoder[Instant] =
-    Decoder[Long].map(Instant.ofEpochSecond)
+  implicit val finiteDurationCirceDecoder: Decoder[FiniteDuration] = x =>
+    for {
+      length <- x.downField("length").as[Long]
+      unit <- x.downField("unit").as[TimeUnit]
+    } yield FiniteDuration(length, unit)
 
   implicit val arrayBytesCirceEncoder: Encoder[Array[Byte]] =
     Encoder[String].contramap(str =>
@@ -24,4 +71,14 @@ object circe {
 
   implicit val arrayBytesCirceDecoder: Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))
+
+  implicit def sortedMapCirceEncoder[K: KeyEncoder, V: Encoder]
+      : Encoder[SortedMap[K, V]] = Encoder[Map[K, V]].contramap(_.toMap)
+
+  implicit def sortedMapCirceDecoder[K: KeyDecoder: Ordering, V: Decoder]
+      : Decoder[SortedMap[K, V]] =
+    Decoder[Map[K, V]].map(x => SortedMap.from(x))
+
+  implicit val pathCirceEncoder: Encoder[Path] =
+    Encoder[String].contramap(_.toString())
 }

@@ -24,8 +24,8 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.0.4
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.4
+docker pull ghcr.io/etspaceman/kinesis-mock:0.0.8
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.8
 ```
 
 You can also leverage the `kinesis-mock.jar` executable in the release assets:
@@ -41,6 +41,7 @@ these ports to a local one).
 
 | Variable | Data Type | Default Value | Notes |
 | -------- | --------- | ------------- | ----- |
+| INITIALIZE_STREAMS | String | | A comma-delimited string of stream names and its corresponding shard count to initialize during startup. For example: "my-first-stream:1,my-other-stream:2,my-last-stream:1"|
 | KINESIS_MOCK_HTTP2_PORT | Int | 4567 | Https Only |
 | KINESIS_MOCK_HTTP1_PLAIN_PORT | Int | 4568 | Http Only |
 | CREATE_STREAM_DURATION | Duration | 500ms | |
@@ -55,6 +56,24 @@ these ports to a local one).
 | SHARD_LIMIT | Int | 50 | |
 | AWS_ACCOUNT_ID | String | "000000000000" | |
 | AWS_REGION | String | "us-east-1" | |
+| LOG_LEVEL| String | "INFO" | Sets the log-level for kinesis-mock specific logs |
+| ROOT_LOG_LEVEL | String | "ERROR" | Sets the log-level for all dependencies |
+| LOAD_DATA_IF_EXISTS | Boolean | true | Loads data from the configured persisted data file if it exists |
+| SHOULD_PERSIST_DATA | Boolean | false | Persists data to disk. Used to keep data during restarts of the service |
+| PERSIST_PATH | String | "data" | Path to persist data to. If it doesn't start with "/", the path is considered relative to the present working directory. |
+| PERSIST_FILE_NAME | String | "kinesis-data.json" | File name for persisted data |
+| PERSIST_INTERVAL | Duration | 5s | Delay between data persistence |
+
+
+## Log Levels
+
+You can configure the `LOG_LEVEL` of the mock with the following levels in mind:
+
+* `ERROR`- Unhandled errors in the service
+* `WARN` - Handled errors in the service (e.g. bad requests)
+* `INFO` - High-level, low-noise informational messages (default)
+* `DEBUG` - Low-level, high-noise informational messages
+* `TRACE` - Log data bodies going in / out of the service
 
 # Usage
 

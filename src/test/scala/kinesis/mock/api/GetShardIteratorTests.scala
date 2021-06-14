@@ -237,6 +237,61 @@ class GetShardIteratorTests
       )
   })
 
+  test(
+    "It should get a shard iterator for AT_SEQUENCE_NUMBER if the sequence number is the beginning of the shard"
+  )(PropF.forAllF {
+    (
+        streamName: StreamName,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val (streams, _) =
+        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+
+      val shard = streams.streams(streamName).shards.head._1
+
+      val records: List[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+          case (record, index) =>
+            record.copy(sequenceNumber =
+              SequenceNumber.create(
+                shard.createdAtTimestamp,
+                shard.shardId.index,
+                None,
+                Some(index),
+                Some(record.approximateArrivalTimestamp)
+              )
+            )
+        }
+
+      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+        s.copy(
+          shards = SortedMap(s.shards.head._1 -> records),
+          streamStatus = StreamStatus.ACTIVE
+        )
+      }
+
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        req = GetShardIteratorRequest(
+          shard.shardId.shardId,
+          ShardIteratorType.AT_SEQUENCE_NUMBER,
+          Some(shard.sequenceNumberRange.startingSequenceNumber),
+          streamName,
+          None
+        )
+        res <- req.getShardIterator(streamsRef)
+        parsed = res.andThen(_.shardIterator.parse)
+      } yield assert(
+        parsed.isValid && parsed.exists { parts =>
+          parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
+          parts.shardId == shard.shardId.shardId &&
+          parts.streamName == streamName
+        },
+        s"req: $req\nres: $parsed\n"
+      )
+  })
+
   test("It should get a shard iterator for AFTER_SEQUENCE_NUMBER")(
     PropF.forAllF {
       (
@@ -284,6 +339,63 @@ class GetShardIteratorTests
         } yield assert(
           parsed.isValid && parsed.exists { parts =>
             parts.sequenceNumber == records(25).sequenceNumber &&
+            parts.shardId == shard.shardId.shardId &&
+            parts.streamName == streamName
+          },
+          s"req: $req\nres: $parsed\n"
+        )
+    }
+  )
+
+  test(
+    "It should get a shard iterator for AFTER_SEQUENCE_NUMBER if the sequence number is the beginning of the shard"
+  )(
+    PropF.forAllF {
+      (
+          streamName: StreamName,
+          awsRegion: AwsRegion,
+          awsAccountId: AwsAccountId
+      ) =>
+        val (streams, _) =
+          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+
+        val shard = streams.streams(streamName).shards.head._1
+
+        val records: List[KinesisRecord] =
+          kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+            case (record, index) =>
+              record.copy(sequenceNumber =
+                SequenceNumber.create(
+                  shard.createdAtTimestamp,
+                  shard.shardId.index,
+                  None,
+                  Some(index),
+                  Some(record.approximateArrivalTimestamp)
+                )
+              )
+          }
+
+        val withRecords = streams.findAndUpdateStream(streamName) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
+        }
+
+        for {
+          streamsRef <- Ref.of[IO, Streams](withRecords)
+          req = GetShardIteratorRequest(
+            shard.shardId.shardId,
+            ShardIteratorType.AFTER_SEQUENCE_NUMBER,
+            Some(shard.sequenceNumberRange.startingSequenceNumber),
+            streamName,
+            None
+          )
+          res <- req.getShardIterator(streamsRef)
+          parsed = res.andThen(_.shardIterator.parse)
+        } yield assert(
+          parsed.isValid && parsed.exists { parts =>
+            parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
             parts.streamName == streamName
           },

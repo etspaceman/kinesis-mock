@@ -1,7 +1,8 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.models.TagList
 
@@ -12,16 +13,23 @@ final case class ListTagsForStreamResponse(
 
 object ListTagsForStreamResponse {
   implicit val listTagsForStreamResponseCirceEncoder
-      : Encoder[ListTagsForStreamResponse] =
-    Encoder.forProduct2("HasMoreTags", "Tags")(x => (x.hasMoreTags, x.tags))
+      : circe.Encoder[ListTagsForStreamResponse] =
+    circe.Encoder.forProduct2("HasMoreTags", "Tags")(x =>
+      (x.hasMoreTags, x.tags)
+    )
 
   implicit val listTagsForStreamResponseCirceDecoder
-      : Decoder[ListTagsForStreamResponse] =
+      : circe.Decoder[ListTagsForStreamResponse] =
     x =>
       for {
         hasMoreTags <- x.downField("HasMoreTags").as[Boolean]
         tags <- x.downField("Tags").as[TagList]
       } yield ListTagsForStreamResponse(hasMoreTags, tags)
+
+  implicit val listTagsForStreamResponseEncoder
+      : Encoder[ListTagsForStreamResponse] = Encoder.derive
+  implicit val listTagsForStreamResponseDecoder
+      : Decoder[ListTagsForStreamResponse] = Decoder.derive
 
   implicit val listTagsForStreamResponseEq: Eq[ListTagsForStreamResponse] =
     Eq.fromUniversalEquals

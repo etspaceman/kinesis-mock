@@ -12,6 +12,10 @@ object StreamName {
     Encoder[String].contramap(_.streamName)
   implicit val streamNameCirceDecoder: Decoder[StreamName] =
     Decoder[String].map(StreamName.apply)
+  implicit val streamNameCirceKeyEncoder: KeyEncoder[StreamName] =
+    KeyEncoder[String].contramap(_.streamName)
+  implicit val streamNameCirceKeyDecoder: KeyDecoder[StreamName] =
+    KeyDecoder[String].map(StreamName.apply)
   implicit val streamNameEq: Eq[StreamName] = Eq.fromUniversalEquals
   implicit val streamNameOrdering: Ordering[StreamName] =
     (x: StreamName, y: StreamName) =>

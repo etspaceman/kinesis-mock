@@ -29,7 +29,7 @@ class UpdateShardCountTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(5, streamName), context)
+            .createStream(CreateStreamRequest(5, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           _ <- cache
@@ -39,21 +39,23 @@ class UpdateShardCountTests
                 streamName,
                 10
               ),
-              context
+              context,
+              false
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(200.millis))
           checkStream2 <- cache
-            .describeStreamSummary(describeStreamSummaryReq, context)
+            .describeStreamSummary(describeStreamSummaryReq, context, false)
             .rethrow
           checkShards <- cache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(

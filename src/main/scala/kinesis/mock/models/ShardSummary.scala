@@ -1,7 +1,8 @@
-package kinesis.mock.models
+package kinesis.mock
+package models
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 final case class ShardSummary(
     adjacentParentShardId: Option[String],
@@ -22,8 +23,8 @@ object ShardSummary {
     shard.shardId.shardId
   )
 
-  implicit val shardSummaryCirceEncoder: Encoder[ShardSummary] =
-    Encoder.forProduct5(
+  implicit val shardSummaryCirceEncoder: circe.Encoder[ShardSummary] =
+    circe.Encoder.forProduct5(
       "AdjacentParentShardId",
       "HashKeyRange",
       "ParentShardId",
@@ -39,7 +40,7 @@ object ShardSummary {
       )
     )
 
-  implicit val shardSummaryCirceDecoder: Decoder[ShardSummary] = { x =>
+  implicit val shardSummaryCirceDecoder: circe.Decoder[ShardSummary] = { x =>
     for {
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
@@ -58,5 +59,8 @@ object ShardSummary {
       shardId
     )
   }
+
+  implicit val shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
+  implicit val shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
   implicit val shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
 }

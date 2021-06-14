@@ -11,7 +11,7 @@ import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -128,18 +128,23 @@ final case class UpdateShardCountRequest(
 
 object UpdateShardCountRequest {
   implicit val updateShardCountRequestCirceEncoder
-      : Encoder[UpdateShardCountRequest] =
-    Encoder.forProduct3("ScalingType", "StreamName", "TargetShardCount")(x =>
-      (x.scalingType, x.streamName, x.targetShardCount)
+      : circe.Encoder[UpdateShardCountRequest] =
+    circe.Encoder.forProduct3("ScalingType", "StreamName", "TargetShardCount")(
+      x => (x.scalingType, x.streamName, x.targetShardCount)
     )
 
   implicit val updateShardCountRequestCirceDecoder
-      : Decoder[UpdateShardCountRequest] = x =>
+      : circe.Decoder[UpdateShardCountRequest] = x =>
     for {
       scalingType <- x.downField("ScalingType").as[ScalingType]
       streamName <- x.downField("StreamName").as[StreamName]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
     } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
+
+  implicit val updateShardCountRequestEncoder
+      : Encoder[UpdateShardCountRequest] = Encoder.derive
+  implicit val updateShardCountRequestDecoder
+      : Decoder[UpdateShardCountRequest] = Decoder.derive
 
   implicit val updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
     Eq.fromUniversalEquals

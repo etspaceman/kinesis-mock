@@ -8,7 +8,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 import kinesis.mock.models._
@@ -167,8 +167,11 @@ final case class ListShardsRequest(
 }
 
 object ListShardsRequest {
-  implicit val listShardsRequestEncoder: Encoder[ListShardsRequest] =
-    Encoder.forProduct6(
+  def listShardsRequestCirceEncoder(implicit
+      ESF: circe.Encoder[ShardFilter],
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[ListShardsRequest] =
+    circe.Encoder.forProduct6(
       "ExclusiveStartShardId",
       "MaxResults",
       "NextToken",
@@ -185,7 +188,10 @@ object ListShardsRequest {
         x.streamName
       )
     )
-  implicit val listShardsRequestDecoder: Decoder[ListShardsRequest] = { x =>
+  def listShardsRequestCirceDecoder(implicit
+      DSF: circe.Decoder[ShardFilter],
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[ListShardsRequest] = { x =>
     for {
       exclusiveStartShardId <- x
         .downField("ExclusiveStartShardId")
@@ -206,6 +212,28 @@ object ListShardsRequest {
       streamName
     )
   }
+  implicit val listShardsRequestEncoder: Encoder[ListShardsRequest] =
+    Encoder.instance(
+      listShardsRequestCirceEncoder(
+        Encoder[ShardFilter].circeEncoder,
+        instantBigDecimalCirceEncoder
+      ),
+      listShardsRequestCirceEncoder(
+        Encoder[ShardFilter].circeCborEncoder,
+        instantLongCirceEncoder
+      )
+    )
+  implicit val listShardsRequestDecoder: Decoder[ListShardsRequest] =
+    Decoder.instance(
+      listShardsRequestCirceDecoder(
+        Decoder[ShardFilter].circeDecoder,
+        instantBigDecimalCirceDecoder
+      ),
+      listShardsRequestCirceDecoder(
+        Decoder[ShardFilter].circeCborDecoder,
+        instantLongCirceDecoder
+      )
+    )
 
   implicit val listShardsRequestEq: Eq[ListShardsRequest] =
     (x, y) =>

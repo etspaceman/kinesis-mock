@@ -10,7 +10,7 @@ import cats.effect.IO
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.instances.circe._
 import kinesis.mock.models._
@@ -110,8 +110,8 @@ final case class PutRecordRequest(
 }
 
 object PutRecordRequest {
-  implicit val purtRecordRequestCirceEncoder: Encoder[PutRecordRequest] =
-    Encoder.forProduct5(
+  implicit val purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
+    circe.Encoder.forProduct5(
       "Data",
       "ExplicitHashKey",
       "PartitionKey",
@@ -127,7 +127,7 @@ object PutRecordRequest {
       )
     )
 
-  implicit val putRecordRequestCirceDecoder: Decoder[PutRecordRequest] =
+  implicit val putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
     x =>
       for {
         data <- x.downField("Data").as[Array[Byte]]
@@ -144,6 +144,11 @@ object PutRecordRequest {
         sequenceNumberForOrdering,
         streamName
       )
+
+  implicit val putRecordRequestEncoder: Encoder[PutRecordRequest] =
+    Encoder.derive
+  implicit val putRecordRequestDecoder: Decoder[PutRecordRequest] =
+    Decoder.derive
 
   implicit val putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
     x.data.sameElements(y.data) &&

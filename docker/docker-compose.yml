@@ -1,4 +1,4 @@
-version: '2.2'
+version: '2.4'
 services:
   dynamodb:
     command: "-jar DynamoDBLocal.jar -inMemory"
@@ -24,14 +24,28 @@ services:
     image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
     environment:
       - "LOG_LEVEL=TRACE"
+      # This must match 'initializedStreams' variable in AwsFunctionalTests
+      - "INITIALIZE_STREAMS=stream1:3,stream2:2,stream3:1,stream4:2,stream5:3,stream6:5,stream7:5,stream8:3,stream9:1,stream10:3,stream11:2"
+      - "SHOULD_PERSIST_DATA=true"
     healthcheck:
       test: "curl --fail http://localhost:4568/healthcheck || exit 1"
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "4567:4567"
       - "4568:4568"
+  awscli:
+    image: amazon/aws-cli:latest
+    environment:
+      - "AWS_ACCESS_KEY_ID=foo"
+      - "AWS_SECRET_ACCESS_KEY=bar"
+      - "AWS_DEFAULT_REGION=us-east-1"
+    entrypoint: "bash -c"
+    command: "'aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis list-streams && exit 0 || exit 1'"
+    depends_on:
+      kinesis-mock:
+        condition: service_healthy
   ready:
     image: "library/hello-world"
     depends_on:
@@ -39,6 +53,8 @@ services:
         condition: service_healthy
       kinesis-mock:
         condition: service_healthy
+      awscli:
+        condition: service_completed_successfully
 networks:
   default:
     external:

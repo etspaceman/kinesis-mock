@@ -29,13 +29,14 @@ class GetShardIteratorTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           shard <- cache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.shards.head)
@@ -48,7 +49,8 @@ class GetShardIteratorTests
                 streamName,
                 None
               ),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.shardIterator)

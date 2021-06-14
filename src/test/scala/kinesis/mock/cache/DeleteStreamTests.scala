@@ -29,24 +29,27 @@ class DeleteStreamTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           res <- cache
             .deleteStream(
               DeleteStreamRequest(streamName, None),
-              context
+              context,
+              false
             )
             .rethrow
           describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache.describeStreamSummary(
             describeStreamSummaryReq,
-            context
+            context,
+            false
           )
           _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
           checkStream2 <- cache.describeStreamSummary(
             describeStreamSummaryReq,
-            context
+            context,
+            false
           )
         } yield assert(
           checkStream1.exists(

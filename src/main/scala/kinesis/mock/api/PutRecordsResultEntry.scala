@@ -1,7 +1,8 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.kernel.Eq
-import io.circe._
+import io.circe
 
 import kinesis.mock.models.SequenceNumber
 
@@ -14,8 +15,8 @@ final case class PutRecordsResultEntry(
 
 object PutRecordsResultEntry {
   implicit val putRecordsResultEntryCirceEncoder
-      : Encoder[PutRecordsResultEntry] =
-    Encoder.forProduct4(
+      : circe.Encoder[PutRecordsResultEntry] =
+    circe.Encoder.forProduct4(
       "ErrorCode",
       "ErrorMessage",
       "SequenceNumber",
@@ -23,7 +24,7 @@ object PutRecordsResultEntry {
     )(x => (x.errorCode, x.errorMessage, x.sequenceNumber, x.shardId))
 
   implicit val putRecordsResultEntryCirceDecoder
-      : Decoder[PutRecordsResultEntry] =
+      : circe.Decoder[PutRecordsResultEntry] =
     x =>
       for {
         errorCode <- x.downField("ErrorCode").as[Option[PutRecordsErrorCode]]
@@ -38,6 +39,10 @@ object PutRecordsResultEntry {
         sequenceNumber,
         shardId
       )
+  implicit val putRecordsResultEntryEncoder: Encoder[PutRecordsResultEntry] =
+    Encoder.derive
+  implicit val putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
+    Decoder.derive
 
   implicit val putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
     Eq.fromUniversalEquals

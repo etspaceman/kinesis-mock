@@ -30,7 +30,7 @@ class StartStreamEncryptionTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           keyId <- IO(keyIdGen.one)
@@ -41,18 +41,19 @@ class StartStreamEncryptionTests
                 keyId,
                 streamName
               ),
-              context
+              context,
+              false
             )
             .rethrow
           describeReq = DescribeStreamSummaryRequest(streamName)
           checkStream1 <- cache
-            .describeStreamSummary(describeReq, context)
+            .describeStreamSummary(describeReq, context, false)
             .rethrow
           _ <- IO.sleep(
             cacheConfig.startStreamEncryptionDuration.plus(200.millis)
           )
           checkStream2 <- cache
-            .describeStreamSummary(describeReq, context)
+            .describeStreamSummary(describeReq, context, false)
             .rethrow
         } yield assert(
           checkStream1.streamDescriptionSummary.encryptionType.contains(

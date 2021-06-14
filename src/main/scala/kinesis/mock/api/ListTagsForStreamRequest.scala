@@ -8,7 +8,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.kernel.Eq
 import cats.syntax.all._
-import io.circe._
+import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
@@ -62,13 +62,13 @@ final case class ListTagsForStreamRequest(
 
 object ListTagsForStreamRequest {
   implicit val listTagsForStreamRequestCirceEncoder
-      : Encoder[ListTagsForStreamRequest] =
-    Encoder.forProduct3("ExclusiveStartTagKey", "Limit", "StreamName")(x =>
-      (x.exclusiveStartTagKey, x.limit, x.streamName)
+      : circe.Encoder[ListTagsForStreamRequest] =
+    circe.Encoder.forProduct3("ExclusiveStartTagKey", "Limit", "StreamName")(
+      x => (x.exclusiveStartTagKey, x.limit, x.streamName)
     )
 
   implicit val listTagsForStreamRequestCirceDecoder
-      : Decoder[ListTagsForStreamRequest] =
+      : circe.Decoder[ListTagsForStreamRequest] =
     x =>
       for {
         exclusiveStartTagKey <- x
@@ -78,6 +78,10 @@ object ListTagsForStreamRequest {
         streamName <- x.downField("StreamName").as[StreamName]
       } yield ListTagsForStreamRequest(exclusiveStartTagKey, limit, streamName)
 
+  implicit val listTagsForStreamRequestEncoder
+      : Encoder[ListTagsForStreamRequest] = Encoder.derive
+  implicit val listTagsForStreamRequestDecoder
+      : Decoder[ListTagsForStreamRequest] = Decoder.derive
   implicit val listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
     Eq.fromUniversalEquals
 }

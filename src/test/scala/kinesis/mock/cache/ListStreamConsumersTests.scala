@@ -4,8 +4,8 @@ import scala.concurrent.duration._
 
 import cats.effect.{Blocker, IO}
 import cats.syntax.all._
-import org.scalacheck.Test
 import org.scalacheck.effect.PropF
+import org.scalacheck.{Gen, Test}
 
 import kinesis.mock.LoggingContext
 import kinesis.mock.api._
@@ -30,29 +30,41 @@ class ListStreamConsumersTests
           cache <- Cache(cacheConfig)
           context = LoggingContext.create
           _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context)
+            .createStream(CreateStreamRequest(1, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
           streamArn <- cache
             .describeStreamSummary(
               DescribeStreamSummaryRequest(streamName),
-              context
+              context,
+              false
             )
             .rethrow
             .map(_.streamDescriptionSummary.streamArn)
-          consumerNames <- IO(consumerNameArb.arbitrary.take(3))
+          consumerNames <- IO(
+            Gen
+              .listOfN(3, consumerNameArb.arbitrary)
+              .suchThat(x =>
+                x.groupBy(identity)
+                  .collect { case (_, y) if y.length > 1 => x }
+                  .isEmpty
+              )
+              .one
+          )
           registerResults <- consumerNames.toList.traverse(consumerName =>
             cache
               .registerStreamConsumer(
                 RegisterStreamConsumerRequest(consumerName, streamArn),
-                context
+                context,
+                false
               )
               .rethrow
           )
           res <- cache
             .listStreamConsumers(
               ListStreamConsumersRequest(None, None, streamArn, None),
-              context
+              context,
+              false
             )
             .rethrow
         } yield assert(
