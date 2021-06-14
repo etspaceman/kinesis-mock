@@ -152,6 +152,17 @@ final case class GetShardIteratorRequest(
                                     )
                                   )
                                 )
+                            case None
+                                if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                              Valid(
+                                GetShardIteratorResponse(
+                                  ShardIterator.create(
+                                    streamName,
+                                    shardId,
+                                    shard.sequenceNumberRange.startingSequenceNumber
+                                  )
+                                )
+                              )
                             case None =>
                               ResourceNotFoundException(
                                 s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
@@ -171,6 +182,17 @@ final case class GetShardIteratorRequest(
                                     streamName,
                                     shardId,
                                     data(data.indexOf(record)).sequenceNumber
+                                  )
+                                )
+                              )
+                            case None
+                                if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                              Valid(
+                                GetShardIteratorResponse(
+                                  ShardIterator.create(
+                                    streamName,
+                                    shardId,
+                                    shard.sequenceNumberRange.startingSequenceNumber
                                   )
                                 )
                               )
