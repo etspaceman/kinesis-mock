@@ -7,6 +7,8 @@ import java.time.Instant
 
 import cats.kernel.Eq
 import io.circe
+import io.circe.parser._
+import io.circe.syntax._
 
 import kinesis.mock.instances.circe._
 
@@ -121,6 +123,16 @@ object Shard {
     shardCirceDecoder(instantDoubleCirceDecoder),
     shardCirceDecoder(instantLongCirceDecoder)
   )
+
+  implicit val shardCirceKeyEncoder: circe.KeyEncoder[Shard] =
+    circe
+      .KeyEncoder[String]
+      .contramap(x => shardCirceEncoder.apply(x).asJson.noSpaces)
+
+  implicit val shardCirceKeyDecoder: circe.KeyDecoder[Shard] =
+    circe.KeyDecoder.instance(x =>
+      parse(x).flatMap(_.as[Shard](shardCirceDecoder)).toOption
+    )
 
   implicit val shardEq: Eq[Shard] = (x, y) =>
     x.adjacentParentShardId == y.adjacentParentShardId &&

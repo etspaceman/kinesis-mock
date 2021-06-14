@@ -12,6 +12,7 @@ object LibraryDependencies {
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.2"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
+  val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
 
   object Borer {
     val borerVersion = "1.7.2"
@@ -60,6 +61,7 @@ object LibraryDependencies {
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
+    val jackson = "io.circe" %% "circe-jackson212" % "0.14.0"
   }
 
   object PureConfig {

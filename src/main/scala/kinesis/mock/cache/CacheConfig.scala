@@ -29,7 +29,8 @@ final case class CacheConfig(
     updateShardCountDuration: FiniteDuration,
     shardLimit: Int,
     awsAccountId: AwsAccountId,
-    awsRegion: AwsRegion
+    awsRegion: AwsRegion,
+    persistConfig: PersistConfig
 )
 
 object CacheConfig {

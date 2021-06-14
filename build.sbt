@@ -19,6 +19,8 @@ lazy val kinesisMock = project
       CatsRetry,
       Circe.core,
       Circe.derivation,
+      Circe.parser,
+      Circe.jackson,
       PureConfig.core,
       PureConfig.enumeratum,
       Enumeratum.cats,
@@ -31,11 +33,11 @@ lazy val kinesisMock = project
       Logback,
       Log4Cats.slf4j,
       GraalSvm % "compile-internal",
+      OsLib,
       PureConfig.catsEffect,
       PureConfig.core,
       PureConfig.enumeratum,
       UUIDCreator,
-      Circe.parser % Test,
       Enumeratum.scalacheck % Test,
       Munit.core % Test,
       Munit.catsEffect2 % Test,
@@ -62,6 +64,10 @@ lazy val kinesisMock = project
       List(Tests.Argument(MUnitFramework, "+l"))
     },
     assembly / test := {},
+    assembly / assemblyMergeStrategy := {
+      case PathList("module-info.class", _ @_*) => MergeStrategy.discard
+      case x                                    => MergeStrategy.defaultMergeStrategy(x)
+    },
     coverageExcludedPackages := "org\\.typelevel\\.log4cats.*"
   )
   .configs(FunctionalTest)

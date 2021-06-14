@@ -880,4 +880,14 @@ object arbitrary {
     )
   )
 
+  implicit val streamsArb: Arbitrary[Streams] = Arbitrary {
+    Gen
+      .choose(0, 2)
+      .flatMap(size => Gen.listOfN(size, streamDataArbitrary.arbitrary))
+      .suchThat(x =>
+        x.groupBy(_.streamName).filter { case (_, x) => x.length > 1 }.isEmpty
+      )
+      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamName -> sd))))
+  }
+
 }

@@ -1,10 +1,14 @@
 package kinesis.mock
 package cache
 
+import java.io.FileWriter
+
 import cats.Parallel
 import cats.effect._
 import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
 import cats.syntax.all._
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.circe.jackson._
 import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -1224,13 +1228,42 @@ class Cache private (
       } yield result)
   }
 
+  def persistToDisk(context: LoggingContext): IO[Unit] =
+    IO.pure(config.persistConfig.shouldPersist)
+      .ifM(
+        semaphores.persistData.withPermit(
+          for {
+            streams <- streamsRef.get
+            ctx = context ++ List(
+              "fileName" -> config.persistConfig.fileName,
+              "path" -> config.persistConfig.osPath.toString
+            )
+            _ <- IO(os.exists(config.persistConfig.osPath)).ifM(
+              IO.unit,
+              logger.info(ctx.context)("Creating directories") >> IO(
+                os.makeDir.all(config.persistConfig.osPath)
+              )
+            )
+            js = streams.asJson
+            jacksonJs = circeToJackson(js)
+            fw = new FileWriter(config.persistConfig.osFile.toIO, false)
+            om = new ObjectMapper()
+            _ <- logger.debug(ctx.context)("Persisting stream data to disk")
+            res <- IO(om.writer().writeValue(fw, jacksonJs))
+            _ <- logger.debug(ctx.context)("Successfully persisted stream data")
+          } yield res
+        ),
+        logger
+          .warn(context.context)("Persist config was not provided, ignoring")
+      )
 }
 
 object Cache {
   def apply(
-      config: CacheConfig
+      config: CacheConfig,
+      streams: Streams = Streams.empty // scalafix:ok
   )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
-    ref <- Ref.of[IO, Streams](Streams.empty)
+    ref <- Ref.of[IO, Streams](streams)
     shardSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
       Map.empty
     )
@@ -1240,4 +1273,19 @@ object Cache {
       IO(new Cache(ref, shardSemaphoresRef, semaphores, config, supervisor))
     )
   } yield cache
+
+  def loadFromFile(
+      config: CacheConfig
+  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = {
+    val om = new ObjectMapper()
+
+    IO(os.exists(config.persistConfig.osPath)).ifM(
+      for {
+        jn <- IO(om.readTree(config.persistConfig.osFile.toIO))
+        streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
+        res <- apply(config, streams)
+      } yield res,
+      apply(config)
+    )
+  }
 }

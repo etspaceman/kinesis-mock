@@ -38,6 +38,7 @@ object ScalacSettings {
     "8", // Enable paralellisation — change to desired number!
     "-Ycache-plugin-class-loader:last-modified", // Enables caching of classloaders for compiler plugins
     "-Ycache-macro-class-loader:last-modified", // and macro definitions. This can lead to performance improvements.
-    "-Ymacro-annotations" // Enables macro annotations (used for newtypes)
+    "-Ymacro-annotations", // Enables macro annotations (used for newtypes)
+    "-Ywarn-macros:after" // Ensure macros are expanded before warnings are thrown
   )
 }
