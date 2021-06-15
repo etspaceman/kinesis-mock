@@ -19,11 +19,11 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
-    - name: Install scoop
-      run: graal\installScoop.ps1
+    - name: Install Chocolatey
+      run: graal\installChoco.ps1
       shell: powershell
     - name: Install sbt
-      run: scoop install sbt 
+      run: choco install sbt 
     - name: Build assembly jar
       run: sbt assembly
       shell: powershell
@@ -99,7 +99,7 @@ jobs:
     - name: Install musl
       run: brew install FiloSottile/musl-cross/musl-cross
     - name: Install sbt
-      run: brew install
+      run: brew install sbt
     - name: Build assembly jar
       run: sbt assembly
     - name: Build native image

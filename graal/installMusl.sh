@@ -8,5 +8,5 @@ mkdir ${RESULT_LIB} && \
     cd / && rm -rf /muscl && rm -f /musl.tar.gz && \
     cp /usr/lib/gcc/x86_64-redhat-linux/8/libstdc++.a ${RESULT_LIB}/lib/
 
-export PATH="$PATH:${RESULT_LIB}/bin"
-export CC="musl-gcc"
+echo "${RESULT_LIB}/bin" >> $GITHUB_PATH
+echo "CC=musl-gcc" >> $GITHUB_ENV
