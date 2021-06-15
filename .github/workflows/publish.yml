@@ -17,13 +17,18 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
+    - name: Install scoop
+      run: graal\installScoop.ps1
+      shell: powershell
+    - name: Install sbt
+      run: scoop install sbt 
     - name: Build assembly jar
       run: sbt assembly
       shell: powershell
     - name: Build native image
-      run: graal/buildNativeImage.ps
+      run: graal\buildNativeImage.ps1
       env:
-        JAR_FILE: docker/image/lib/kinesis-mock.jar
+        JAR_FILE: docker\image\lib\kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock.exe
       shell: powershell
     - name: Run UPX
@@ -53,6 +58,8 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
+    - name: Install musl
+      run: graal/installMusl.sh
     - name: Build assembly jar
       run: sbt assembly
     - name: Build native image
@@ -87,6 +94,10 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
+    - name: Install musl
+      run: brew install FiloSottile/musl-cross/musl-cross
+    - name: Install sbt
+      run: brew install
     - name: Build assembly jar
       run: sbt assembly
     - name: Build native image
