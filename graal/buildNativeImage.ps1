@@ -3,7 +3,6 @@ $OUTPUT_FILE = $env:OUTPUT_FILE;
 
 native-image.cmd `
     --no-server `
-    --static `
     -H:+StaticExecutableWithDynamicLibC `
     -J-Xmx7G `
     --no-fallback `
