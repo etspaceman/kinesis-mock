@@ -1,4 +1,4 @@
-RESULT_LIB="/staticlibs"
+RESULT_LIB="staticlibs"
 
 mkdir ${RESULT_LIB} && \
     curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz && \
