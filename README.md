@@ -28,10 +28,22 @@ docker pull ghcr.io/etspaceman/kinesis-mock:0.0.8
 docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.8
 ```
 
-You can also leverage the `kinesis-mock.jar` executable in the release assets:
+You can also leverage the following executable options in the release assets:
 
 ```shell
 java -jar ./kinesis-mock.jar
+```
+
+```shell
+kinesis-mock-linux-amd64
+```
+
+```shell
+kinesis-mock-macos-amd64
+```
+
+```powershell
+kinesis-mock.exe
 ```
 
 # Service Configuration
