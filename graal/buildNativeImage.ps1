@@ -1,9 +1,8 @@
-$JAR_FILE = $env:JAR_FILE ?? "kinesis-mock.jar";
-$OUTPUT_FILE = $env:OUTPUT_FILE ?? "kinesis-mock-native";
+$JAR_FILE = $env:JAR_FILE;
+$OUTPUT_FILE = $env:OUTPUT_FILE;
 
 native-image.cmd `
     --no-server `
-    --static `
     -H:+StaticExecutableWithDynamicLibC `
     -J-Xmx7G `
     --no-fallback `
