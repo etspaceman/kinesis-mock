@@ -1,6 +1,6 @@
 RESULT_LIB="staticlibs"
 
-sudo apt-get install libstdc++6-4.2-dbg
+sudo apt-get install -y apt-file && apt-file find libstdc++.a
 
 mkdir ${RESULT_LIB} && \
     curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz && \
