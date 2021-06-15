@@ -42,7 +42,8 @@ object DockerComposePlugin extends AutoPlugin {
         None,
         "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
         "DOCKER_NET_NAME" -> networkName.value,
-        "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+        "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
+        "STATIC_TYPE" -> staticType.value
       ).!
       if (res != 0)
         throw new IllegalStateException(s"docker-compose up returned $res")
@@ -66,7 +67,8 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
+      "STATIC_TYPE" -> staticType.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose kill returned $res")
@@ -81,7 +83,8 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
+      "STATIC_TYPE" -> staticType.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose down returned $res")
@@ -104,7 +107,8 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
+      "STATIC_TYPE" -> staticType.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose logs returned $res")
@@ -120,7 +124,8 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
+      "STATIC_TYPE" -> staticType.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose ps -a returned $res")
@@ -149,6 +154,7 @@ object DockerComposePlugin extends AutoPlugin {
         .getOrElse("DOCKER_NET_NAME", "kinesis_mock_network"),
       composeProjectName := sys.env
         .getOrElse("COMPOSE_PROJECT_NAME", "kinesis-mock"),
+      staticType := sys.env.getOrElse("STATIC_TYPE", "static"),
       buildImage := true
     )
 
@@ -168,6 +174,10 @@ object DockerComposePluginKeys {
   val buildImage = settingKey[Boolean](
     "Determines if dockerComposeUp should also build a docker image via the DockerImagePlugin"
   )
+
+  val staticType =
+    settingKey[String]("Static type to use when building the native image. 'static', 'mostly-static' and 'dynamic' are the acceptable values.")
+
   val createNetwork = taskKey[Unit]("Creates a docker network")
   val removeNetwork = taskKey[Unit]("Removes a docker network")
 
