@@ -30,21 +30,16 @@ docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.10
 
 You can also leverage the following executable options in the release assets:
 
-```shell
-java -jar ./kinesis-mock.jar
-```
+| File | Description | Launching |
+| kinesis-mock.jar | Executable JAR file that can be run in any environment with JDK 11 | `java -jar ./kinesis-mock.jar` |
+| kinesis-mock-linux-amd64-dynamic | GraalVM Native Image executable for Linux. Loads dependencies like libc at runtime. | `./kinesis-mock-linux-amd64-dynamic` |
+| kinesis-mock-linux-amd64-static | GraalVM Native Image executable for Linux. All dependencies are statically provided. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
+| kinesis-mock-linux-amd64-mostly-static | GraalVM Native Image executable for Linux. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
+| kinesis-mock-macos-amd64-dynamic | GraalVM Native Image executable for MacOS. Loads dependencies like libc at runtime. | `./kinesis-mock-macos-amd64-dynamic` |
+| kinesis-mock-dynamic.exe | GraalVM Native Image executable for Windows. Loads dependencies like libc at runtime. | `./kinesis-mock-dynamic.exe` |
+| kinesis-mock-mostly-static.exe | GraalVM Native Image executable for Windows. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-mostly-static.exe` |
 
-```shell
-kinesis-mock-linux-amd64
-```
-
-```shell
-kinesis-mock-macos-amd64
-```
-
-```powershell
-kinesis-mock.exe
-```
+See [the GraalVM documentation](https://www.graalvm.org/reference-manual/native-image/StaticImages/) for more information about static vs non-static Native Image distributions.
 
 # Service Configuration
 
