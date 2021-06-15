@@ -3,6 +3,8 @@ name: Publish Artifacts and Docker Image
 on:
   release:
     types: [published]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   buildWindowsExecutable:
