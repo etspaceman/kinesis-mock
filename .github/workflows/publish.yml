@@ -58,7 +58,7 @@ jobs:
         graalvm-version: 21.0.0.2
         native-image: true
     - name: Install musl
-      run: sudo apt-get install -y musl
+      run: sudo apt-get install -y musl-tools
     - name: Build assembly jar
       run: sbt assembly
     - name: Build native image
