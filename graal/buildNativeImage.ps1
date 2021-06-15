@@ -1,9 +1,10 @@
 $JAR_FILE = $env:JAR_FILE;
 $OUTPUT_FILE = $env:OUTPUT_FILE;
+$STATIC_ARG = if($env:STATIC_TYPE -eq "mostly-static") { "-H:+StaticExecutableWithDynamicLibC" } else { "" }
 
 native-image.cmd `
     --no-server `
-    -H:+StaticExecutableWithDynamicLibC `
+    $STATIC_ARG `
     -J-Xmx7G `
     --no-fallback `
     --verbose `

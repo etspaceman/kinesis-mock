@@ -21,28 +21,11 @@ RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.11.tar.gz && \
     cd / && rm -rf /zlib && rm -f /zlib.tar.gz
 
 ARG DOCKER_SERVICE_JAR
+ARG STATIC_TYPE
 COPY ${DOCKER_SERVICE_JAR} ./kinesis-mock.jar
 COPY graal ./graal
 
-RUN native-image \
-    --no-server \
-    --static \
-    --libc=musl \
-    -J-Xmx7G \
-    --no-fallback \
-    --verbose \
-    --enable-all-security-services \
-    --enable-url-protocols=http,https \
-    --initialize-at-build-time=scala \
-    -H:ReflectionConfigurationFiles=graal/reflect-config.json \
-    -H:ResourceConfigurationFiles=graal/resource-config.json \
-    -H:+ReportExceptionStackTraces \
-    -H:+AddAllCharsets \
-    --report-unsupported-elements-at-runtime \
-    --allow-incomplete-classpath \
-    --install-exit-handlers \
-    -jar kinesis-mock.jar \
-    kinesis-mock-native
+RUN ./graal/buildNativeImageLinux.sh ${STATIC_TYPE}
 
 RUN microdnf install xz && \
     curl -sL -o - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar xJ && \
