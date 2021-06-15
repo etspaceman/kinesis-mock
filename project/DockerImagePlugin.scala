@@ -20,6 +20,7 @@ object DockerImagePlugin extends AutoPlugin {
     val cmd =
       s"""docker build \\
          |  --build-arg DOCKER_SERVICE_JAR=${jarLocation.value + name.value}.jar \\
+         |  --build-arg STATIC_TYPE=${staticType.value} \\
          |  -f ${dockerfileLocation.value + dockerfile.value} \\
          |  -t ${dockerTagTask.value} \\
          |  .""".stripMargin
@@ -57,7 +58,8 @@ object DockerImagePlugin extends AutoPlugin {
       dockerfile := "Dockerfile",
       assembly / assemblyOutputPath := file(
         s"${jarLocation.value + name.value}.jar"
-      )
+      ),
+      staticType := sys.env.getOrElse("STATIC_TYPE", "static"),
     )
 }
 
@@ -75,6 +77,8 @@ object DockerImagePluginKeys {
   val dockerfileLocation =
     settingKey[String]("Location of the Dockerfile, e.g. docker/")
   val dockerfile = settingKey[String]("Dockerfile to use, e.g. Dockerfile")
+    val staticType =
+    settingKey[String]("Static type to use when building the native image. 'static', 'mostly-static' and 'dynamic' are the acceptable values.")
   val buildDockerImage =
     taskKey[Unit]("Builds the docker images defined in the project.")
   val packageAndBuildDockerImage = taskKey[Unit](

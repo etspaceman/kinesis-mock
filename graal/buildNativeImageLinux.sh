@@ -1,4 +1,4 @@
-STATIC_TYPE=${STATIC_TYPE:-static}
+STATIC_TYPE=${1:-static}
 
 if [[ $STATIC_TYPE = "static" ]]; then
     STATIC_ARG="--static --libc=musl"

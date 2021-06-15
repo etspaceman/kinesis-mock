@@ -22,11 +22,10 @@ RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.11.tar.gz && \
 
 ARG DOCKER_SERVICE_JAR
 ARG STATIC_TYPE
-ENV STATIC_TYPE=${STATIC_TYPE}
 COPY ${DOCKER_SERVICE_JAR} ./kinesis-mock.jar
 COPY graal ./graal
 
-RUN ./graal/buildNativeImageLinux.sh
+RUN ./graal/buildNativeImageLinux.sh ${STATIC_TYPE}
 
 RUN microdnf install xz && \
     curl -sL -o - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar xJ && \
