@@ -21,10 +21,11 @@ jobs:
       run: sbt assembly
       shell: powershell
     - name: Build native image
-      run: graal/buildNativeImage.sh
+      run: graal\buildNativeImage.ps
       env:
-        JAR_FILE: docker/image/lib/kinesis-mock.jar
+        JAR_FILE: docker\image\lib\kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock.exe
+      shell: powershell
     - name: Run UPX
       uses: crazy-max/ghaction-upx@v1.3.3
       with:
