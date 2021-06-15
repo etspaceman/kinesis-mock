@@ -30,6 +30,22 @@ object DockerComposePlugin extends AutoPlugin {
 
   val composeFile: Def.Initialize[Task[String]] =
     Def.task(s"${composeFileLocation.value}docker-compose.yml")
+  
+  val dockerComposeBuildTask: Def.Initialize[Task[Unit]] = Def.task {
+    val log = sbt.Keys.streams.value.log
+      val cmd =
+        s"docker-compose -f ${composeFile.value} build --build-arg STATIC_TYPE=${staticType.value}"
+      log.info(s"Running $cmd")
+      val res = Process(
+        cmd,
+        None,
+        "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
+        "DOCKER_NET_NAME" -> networkName.value,
+        "COMPOSE_PROJECT_NAME" -> composeProjectName.value
+      ).!
+      if (res != 0)
+        throw new IllegalStateException(s"docker-compose up returned $res")
+  }
 
   val dockerComposeUpBaseTask: Def.Initialize[Task[Unit]] = Def
     .task {
@@ -42,13 +58,12 @@ object DockerComposePlugin extends AutoPlugin {
         None,
         "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
         "DOCKER_NET_NAME" -> networkName.value,
-        "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
-        "STATIC_TYPE" -> staticType.value
+        "COMPOSE_PROJECT_NAME" -> composeProjectName.value
       ).!
       if (res != 0)
         throw new IllegalStateException(s"docker-compose up returned $res")
     }
-    .dependsOn(createNetworkTask)
+    .dependsOn(createNetworkTask, dockerComposeBuildTask)
 
   val dockerComposeUpTask: Def.Initialize[Task[Unit]] = Def.taskDyn {
     if (buildImage.value) {
@@ -67,8 +82,7 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
-      "STATIC_TYPE" -> staticType.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose kill returned $res")
@@ -83,8 +97,7 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
-      "STATIC_TYPE" -> staticType.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose down returned $res")
@@ -107,8 +120,7 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
-      "STATIC_TYPE" -> staticType.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose logs returned $res")
@@ -124,8 +136,7 @@ object DockerComposePlugin extends AutoPlugin {
       None,
       "DOCKER_TAG_VERSION" -> (ThisBuild / version).value,
       "DOCKER_NET_NAME" -> networkName.value,
-      "COMPOSE_PROJECT_NAME" -> composeProjectName.value,
-      "STATIC_TYPE" -> staticType.value
+      "COMPOSE_PROJECT_NAME" -> composeProjectName.value
     ).!
     if (res != 0)
       throw new IllegalStateException(s"docker-compose ps -a returned $res")
@@ -148,6 +159,7 @@ object DockerComposePlugin extends AutoPlugin {
       dockerComposeDown := dockerComposeDownTask.value,
       dockerComposeLogs := dockerComposeLogsTask.value,
       dockerComposePs := dockerComposePsTask.value,
+      dockerComposeBuild := dockerComposeBuildTask.value,
       dockerComposeTestQuick := dockerComposeTestQuickTask(configuration).value,
       composeFileLocation := "docker/",
       networkName := sys.env
@@ -193,4 +205,6 @@ object DockerComposePluginKeys {
     taskKey[Unit]("Runs `docker-compose -f <file> logs` for the scope")
   val dockerComposePs =
     taskKey[Unit]("Runs `docker-compose -f <file> ps -a` for the scope")
+  val dockerComposeBuild =
+    taskKey[Unit]("Runs `docker-compose -f <file> build` for the scope")
 }
