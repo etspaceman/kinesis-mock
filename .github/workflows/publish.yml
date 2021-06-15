@@ -93,14 +93,12 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
-    - name: Install musl
-      run: brew install FiloSottile/musl-cross/musl-cross
     - name: Install sbt
       run: brew install sbt
     - name: Build assembly jar
       run: sbt assembly
     - name: Build native image
-      run: graal/buildNativeImage.sh
+      run: graal/buildNativeImageMac.sh
       env:
         JAR_FILE: docker/image/lib/kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock-macos-amd64
