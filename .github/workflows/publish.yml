@@ -57,6 +57,8 @@ jobs:
         java-version: 11
         graalvm-version: 21.0.0.2
         native-image: true
+    - name: Find file
+      run: locate libstdc++.so.6
     - name: Install static dependencies
       run: graal/installStaticDependencies.sh
     - name: Build assembly jar
