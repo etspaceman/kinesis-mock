@@ -92,10 +92,9 @@ jobs:
         JAR_FILE: docker/image/lib/kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock-macos-amd64
     - name: Run UPX
-      uses: crazy-max/ghaction-upx@v1.3.3
+      uses: svenstaro/upx-action@v2
       with:
-        version: latest
-        file: kinesis-mock-macos-amd64
+        file: ./kinesis-mock-macos-amd64
         args: '-7'
     - name: Upload to release
       id: upload-release-asset 
