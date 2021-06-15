@@ -21,9 +21,9 @@ jobs:
       run: sbt assembly
       shell: powershell
     - name: Build native image
-      run: graal\buildNativeImage.ps
+      run: graal/buildNativeImage.ps
       env:
-        JAR_FILE: docker\image\lib\kinesis-mock.jar
+        JAR_FILE: docker/image/lib/kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock.exe
       shell: powershell
     - name: Run UPX
@@ -42,6 +42,7 @@ jobs:
         asset_path: ./kinesis-mock.exe
         asset_name: kinesis-mock.exe
         asset_content_type: application/vnd.microsoft.portable-executable
+
   buildLinuxExecutable:
     name: Build Native Image Exceutable for Linux
     runs-on: ubuntu-latest
@@ -75,6 +76,7 @@ jobs:
         asset_path: ./kinesis-mock-linux-amd64
         asset_name: kinesis-mock-linux-amd64
         asset_content_type: application/octet-stream
+
   buildMacOSExecutable:
     name: Build Native Image Exceutable for MacOS
     runs-on: macos-latest
@@ -108,6 +110,7 @@ jobs:
         asset_path: ./kinesis-mock-macos-amd64
         asset_name: kinesis-mock-macos-amd64
         asset_content_type: application/octet-stream
+        
   buildDockerImage:
     name: Push Docker image to Container Registry
     runs-on: ubuntu-latest

@@ -11,8 +11,8 @@ native-image.cmd `
     --enable-all-security-services `
     --enable-url-protocols=http,https `
     --initialize-at-build-time=scala `
-    -H:ReflectionConfigurationFiles=graal\reflect-config.json `
-    -H:ResourceConfigurationFiles=graal\resource-config.json `
+    -H:ReflectionConfigurationFiles=graal/reflect-config.json `
+    -H:ResourceConfigurationFiles=graal/resource-config.json `
     -H:+ReportExceptionStackTraces `
     -H:+AddAllCharsets `
     --report-unsupported-elements-at-runtime `
