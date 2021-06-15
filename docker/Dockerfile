@@ -46,7 +46,7 @@ RUN native-image \
 
 RUN microdnf install xz && \
     curl -sL -o - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz | tar xJ && \
-    ./upx-3.96-amd64_linux/upx -o kinesis-mock kinesis-mock-native
+    ./upx-3.96-amd64_linux/upx --best -o kinesis-mock kinesis-mock-native
 
 FROM alpine:3
 RUN apk --no-cache add curl
