@@ -37,16 +37,16 @@ jobs:
         version: latest
         file: kinesis-mock.exe
         args: '-7'
-    - name: Upload to release
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./kinesis-mock.exe
-        asset_name: kinesis-mock.exe
-        asset_content_type: application/vnd.microsoft.portable-executable
+#    - name: Upload to release
+#      id: upload-release-asset 
+#      uses: actions/upload-release-asset@v1
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        upload_url: ${{ github.event.release.upload_url }}
+#        asset_path: ./kinesis-mock.exe
+#        asset_name: kinesis-mock.exe
+#        asset_content_type: application/vnd.microsoft.portable-executable
 
   buildLinuxExecutable:
     name: Build Native Image Exceutable for Linux
@@ -73,16 +73,16 @@ jobs:
         version: latest
         file: kinesis-mock-linux-amd64
         args: '-7'
-    - name: Upload to release
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./kinesis-mock-linux-amd64
-        asset_name: kinesis-mock-linux-amd64
-        asset_content_type: application/octet-stream
+#    - name: Upload to release
+#      id: upload-release-asset 
+#      uses: actions/upload-release-asset@v1
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        upload_url: ${{ github.event.release.upload_url }}
+#        asset_path: ./kinesis-mock-linux-amd64
+#        asset_name: kinesis-mock-linux-amd64
+#        asset_content_type: application/octet-stream
 
   buildMacOSExecutable:
     name: Build Native Image Exceutable for MacOS
@@ -116,11 +116,11 @@ jobs:
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./kinesis-mock-macos-amd64
-        asset_name: kinesis-mock-macos-amd64
-        asset_content_type: application/octet-stream
+#      with:
+#        upload_url: ${{ github.event.release.upload_url }}
+#        asset_path: ./kinesis-mock-macos-amd64
+#        asset_name: kinesis-mock-macos-amd64
+#        asset_content_type: application/octet-stream
         
   buildDockerImage:
     name: Push Docker image to Container Registry
@@ -136,15 +136,15 @@ jobs:
       run: sbt packageAndBuildDockerImage
     - name: Login to registry
       run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-    - name: Push to registry
-      run: docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}
-    - name: Upload JAR To Release
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./docker/image/lib/kinesis-mock.jar
-        asset_name: kinesis-mock.jar
-        asset_content_type: application/java-archive
+#    - name: Push to registry
+#      run: docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}
+#    - name: Upload JAR To Release
+#      id: upload-release-asset 
+#      uses: actions/upload-release-asset@v1
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        upload_url: ${{ github.event.release.upload_url }}
+#        asset_path: ./docker/image/lib/kinesis-mock.jar
+#        asset_name: kinesis-mock.jar
+#        asset_content_type: application/java-archive
