@@ -3,7 +3,6 @@ OUTPUT_FILE=${OUTPUT_FILE:-kinesis-mock-native}
 
 native-image \
     --no-server \
-    -H:+StaticExecutableWithDynamicLibC \
     -J-Xmx7G \
     --no-fallback \
     --verbose \
