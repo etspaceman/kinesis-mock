@@ -31,6 +31,7 @@ docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.10
 You can also leverage the following executable options in the release assets:
 
 | File | Description | Launching |
+| ---- | ----------- | --------- |
 | kinesis-mock.jar | Executable JAR file that can be run in any environment with JDK 11 | `java -jar ./kinesis-mock.jar` |
 | kinesis-mock-linux-amd64-dynamic | GraalVM Native Image executable for Linux. Loads dependencies like libc at runtime. | `./kinesis-mock-linux-amd64-dynamic` |
 | kinesis-mock-linux-amd64-static | GraalVM Native Image executable for Linux. All dependencies are statically provided. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
