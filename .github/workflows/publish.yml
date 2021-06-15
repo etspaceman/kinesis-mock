@@ -28,7 +28,7 @@ jobs:
       run: graal\buildNativeImage.ps1
       env:
         JAR_FILE: docker\image\lib\kinesis-mock.jar
-        OUTPUT_FILE: kinesis-mock.exe
+        OUTPUT_FILE: kinesis-mock
       shell: powershell
     - name: List files
       run: dir
