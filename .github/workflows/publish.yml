@@ -30,6 +30,9 @@ jobs:
         JAR_FILE: docker\image\lib\kinesis-mock.jar
         OUTPUT_FILE: kinesis-mock.exe
       shell: powershell
+    - name: List files
+      run: dir
+      shell: cmd
     - name: Run UPX
       uses: svenstaro/upx-action@v2
       with:
