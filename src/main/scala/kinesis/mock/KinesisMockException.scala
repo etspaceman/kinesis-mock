@@ -17,6 +17,8 @@ object KinesisMockException {
 
 final case class InvalidArgumentException(msg: String)
     extends KinesisMockException
+final case class ExpiredIteratorException(msg: String)
+    extends KinesisMockException
 final case class LimitExceededException(msg: String)
     extends KinesisMockException
 final case class ResourceInUseException(msg: String)
