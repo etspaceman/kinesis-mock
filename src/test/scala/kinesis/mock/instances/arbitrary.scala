@@ -85,8 +85,13 @@ object arbitrary {
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
-      consumerStatus
+      consumerStatus,
+      streamArn
     )
+  )
+
+  implicit val consumerSummaryArb: Arbitrary[ConsumerSummary] = Arbitrary(
+    consumerArbitrary.arbitrary.map(ConsumerSummary.fromConsumer)
   )
 
   implicit val hashKeyRangeArbitrary: Arbitrary[HashKeyRange] = Arbitrary(
@@ -638,7 +643,7 @@ object arbitrary {
       : Arbitrary[ListStreamConsumersResponse] = Arbitrary(
     for {
       size <- Gen.choose(0, 20)
-      consumers <- Gen.listOfN(size, consumerArbitrary.arbitrary)
+      consumers <- Gen.listOfN(size, consumerSummaryArb.arbitrary)
       nextToken = consumers.lastOption.map(_.consumerName)
     } yield ListStreamConsumersResponse(consumers, nextToken)
   )
@@ -779,7 +784,7 @@ object arbitrary {
 
   implicit val registerStreamConsumerResponseArb
       : Arbitrary[RegisterStreamConsumerResponse] = Arbitrary(
-    consumerArbitrary.arbitrary.map(RegisterStreamConsumerResponse.apply)
+    consumerSummaryArb.arbitrary.map(RegisterStreamConsumerResponse.apply)
   )
 
   implicit val shardIteratorArbitrary: Arbitrary[ShardIterator] = Arbitrary(

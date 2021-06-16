@@ -61,7 +61,9 @@ class DescribeStreamConsumerTests
             )
             .rethrow
         } yield assert(
-          res.consumerDescription == registerRes.consumer,
+          ConsumerSummary.fromConsumer(
+            res.consumerDescription
+          ) === registerRes.consumer && res.consumerDescription.streamArn == streamArn,
           s"$registerRes\n$res"
         )
       )

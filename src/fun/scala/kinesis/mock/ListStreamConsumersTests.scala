@@ -42,7 +42,7 @@ class ListStreamConsumersTests
         .toList
         .sortBy(_.consumerName())
         .map(x =>
-          models.Consumer(
+          models.ConsumerSummary(
             x.consumerARN(),
             x.consumerCreationTimestamp(),
             models.ConsumerName(x.consumerName()),
@@ -52,7 +52,7 @@ class ListStreamConsumersTests
         .map(_.consumer())
         .sortBy(_.consumerName())
         .map(x =>
-          models.Consumer(
+          models.ConsumerSummary(
             x.consumerARN(),
             x.consumerCreationTimestamp(),
             models.ConsumerName(x.consumerName()),

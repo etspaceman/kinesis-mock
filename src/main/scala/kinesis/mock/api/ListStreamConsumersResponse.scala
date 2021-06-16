@@ -8,36 +8,44 @@ import io.circe
 import kinesis.mock.models._
 
 final case class ListStreamConsumersResponse(
-    consumers: List[Consumer],
+    consumers: List[ConsumerSummary],
     nextToken: Option[ConsumerName]
 )
 
 object ListStreamConsumersResponse {
   def listStreamConsumersResponseCirceEncoder(implicit
-      EC: circe.Encoder[Consumer]
+      EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[ListStreamConsumersResponse] =
     circe.Encoder.forProduct2("Consumers", "NextToken")(x =>
       (x.consumers, x.nextToken)
     )
 
   def listStreamConsumersResponseCirceDecoder(implicit
-      DC: circe.Decoder[Consumer]
+      DC: circe.Decoder[ConsumerSummary]
   ): circe.Decoder[ListStreamConsumersResponse] =
     x =>
       for {
-        consumers <- x.downField("Consumers").as[List[Consumer]]
+        consumers <- x.downField("Consumers").as[List[ConsumerSummary]]
         nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       } yield ListStreamConsumersResponse(consumers, nextToken)
 
   implicit val listStreamConsumersResponseEncoder
       : Encoder[ListStreamConsumersResponse] = Encoder.instance(
-    listStreamConsumersResponseCirceEncoder(Encoder[Consumer].circeEncoder),
-    listStreamConsumersResponseCirceEncoder(Encoder[Consumer].circeCborEncoder)
+    listStreamConsumersResponseCirceEncoder(
+      Encoder[ConsumerSummary].circeEncoder
+    ),
+    listStreamConsumersResponseCirceEncoder(
+      Encoder[ConsumerSummary].circeCborEncoder
+    )
   )
   implicit val listStreamConsumersResponseDecoder
       : Decoder[ListStreamConsumersResponse] = Decoder.instance(
-    listStreamConsumersResponseCirceDecoder(Decoder[Consumer].circeDecoder),
-    listStreamConsumersResponseCirceDecoder(Decoder[Consumer].circeCborDecoder)
+    listStreamConsumersResponseCirceDecoder(
+      Decoder[ConsumerSummary].circeDecoder
+    ),
+    listStreamConsumersResponseCirceDecoder(
+      Decoder[ConsumerSummary].circeCborDecoder
+    )
   )
   implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
     (x, y) => x.consumers === y.consumers && x.nextToken == y.nextToken

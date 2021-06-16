@@ -61,7 +61,11 @@ final case class RegisterStreamConsumerRequest(
                   )
               )
             )
-            .as(RegisterStreamConsumerResponse(consumer))
+            .as(
+              RegisterStreamConsumerResponse(
+                ConsumerSummary.fromConsumer(consumer)
+              )
+            )
         }
     }
 }
