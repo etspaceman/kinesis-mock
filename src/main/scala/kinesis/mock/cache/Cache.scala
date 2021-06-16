@@ -441,10 +441,13 @@ class Cache private (
                               x.updateStream(
                                 stream.copy(consumers =
                                   stream.consumers ++ List(
-                                    r.consumer.consumerName -> r.consumer
-                                      .copy(consumerStatus =
-                                        ConsumerStatus.ACTIVE
-                                      )
+                                    r.consumer.consumerName -> Consumer(
+                                      r.consumer.consumerArn,
+                                      r.consumer.consumerCreationTimestamp,
+                                      r.consumer.consumerName,
+                                      ConsumerStatus.ACTIVE,
+                                      req.streamArn
+                                    )
                                   )
                                 )
                               )

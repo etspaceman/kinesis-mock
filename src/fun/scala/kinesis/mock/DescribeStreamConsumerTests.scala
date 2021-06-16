@@ -38,7 +38,8 @@ class DescribeStreamConsumerTests
           .consumerCreationTimestamp() &&
         res
           .consumerDescription()
-          .consumerStatus == registerRes.consumer().consumerStatus(),
+          .consumerStatus == registerRes.consumer().consumerStatus() &&
+        res.consumerDescription().streamARN() == streamArn,
       s"$res\n$registerRes"
     )
   }

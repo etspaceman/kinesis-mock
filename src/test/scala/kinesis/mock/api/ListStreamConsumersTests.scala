@@ -5,6 +5,7 @@ import scala.collection.SortedMap
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
+import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
@@ -50,7 +51,8 @@ class ListStreamConsumersTests
 
       } yield assert(
         res.isValid && res.exists { response =>
-          consumers.values.toList == response.consumers
+          consumers.values.toList
+            .map(ConsumerSummary.fromConsumer) === response.consumers
         },
         s"req: $req\nres: $res"
       )
@@ -122,9 +124,15 @@ class ListStreamConsumersTests
 
       } yield assert(
         res.isValid && paginatedRes.isValid && res.exists { response =>
-          consumers.values.take(5) == response.consumers
+          consumers.values
+            .take(5)
+            .toList
+            .map(ConsumerSummary.fromConsumer) === response.consumers
         } && paginatedRes.exists { response =>
-          consumers.values.takeRight(5) == response.consumers
+          consumers.values
+            .takeRight(5)
+            .toList
+            .map(ConsumerSummary.fromConsumer) === response.consumers
         },
         s"req: $req\n" +
           s"resCount: ${res.map(_.consumers.length)}\n" +

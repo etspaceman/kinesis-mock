@@ -56,7 +56,10 @@ final case class ListStreamConsumersRequest(
                       if (lastConsumerIndex == lastIndex || consumers.isEmpty)
                         None
                       else Some(consumers.last.consumerName)
-                    ListStreamConsumersResponse(consumers, ntUpdated)
+                    ListStreamConsumersResponse(
+                      consumers.map(ConsumerSummary.fromConsumer),
+                      ntUpdated
+                    )
 
                   case None =>
                     val allConsumers = stream.consumers.values.toList
@@ -70,7 +73,10 @@ final case class ListStreamConsumersRequest(
                       if (lastConsumerIndex == lastIndex || consumers.isEmpty)
                         None
                       else Some(consumers.last.consumerName)
-                    ListStreamConsumersResponse(consumers, nextToken)
+                    ListStreamConsumersResponse(
+                      consumers.map(ConsumerSummary.fromConsumer),
+                      nextToken
+                    )
                 }
               )
             )
