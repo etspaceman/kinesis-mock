@@ -56,7 +56,7 @@ final case class ShardIterator(value: String) {
         else Valid(()),
         if (now.toEpochMilli - iteratorTimeMillis.toLong > 300000)
           InvalidArgumentException(
-            "The shard iterator has expired. Shard iterators are only avlid for 300 seconds"
+            "The shard iterator has expired. Shard iterators are only valid for 300 seconds"
           ).invalidNel
         else Valid(())
       ).mapN((_, _, _, _, _, _) =>
