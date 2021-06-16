@@ -56,6 +56,28 @@ class ListStreamConsumersTests
       )
   })
 
+  test("It should list consumers when consumers are empty")(PropF.forAllF {
+    (
+        streamName: StreamName,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val (streams, _) =
+        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+
+      val streamArn = streams.streams(streamName).streamArn
+
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListStreamConsumersRequest(None, None, streamArn, None)
+        res <- req.listStreamConsumers(streamsRef)
+
+      } yield assert(
+        res.isValid && res.exists(_.consumers.isEmpty),
+        s"req: $req\nres: $res"
+      )
+  })
+
   test("It should paginate properly")(PropF.forAllF {
     (
         streamName: StreamName,
