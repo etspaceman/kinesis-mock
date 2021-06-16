@@ -53,7 +53,8 @@ final case class ListStreamConsumersRequest(
                       Math.min(firstIndex + limit, lastConsumerIndex + 1)
                     val consumers = allConsumers.slice(firstIndex, lastIndex)
                     val ntUpdated =
-                      if (lastConsumerIndex == lastIndex) None
+                      if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                        None
                       else Some(consumers.last.consumerName)
                     ListStreamConsumersResponse(consumers, ntUpdated)
 
@@ -66,7 +67,8 @@ final case class ListStreamConsumersRequest(
                       Math.min(limit, lastConsumerIndex + 1)
                     val consumers = allConsumers.take(limit)
                     val nextToken =
-                      if (lastConsumerIndex == lastIndex) None
+                      if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                        None
                       else Some(consumers.last.consumerName)
                     ListStreamConsumersResponse(consumers, nextToken)
                 }
