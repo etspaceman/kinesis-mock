@@ -454,7 +454,7 @@ object KinesisMockRoutes {
       entityEncoder: EntityEncoder[IO, ErrorResponse]
   ): IO[Response[IO]] =
     BadRequest(
-      ErrorResponse(err.getClass.getName, err.getMessage),
+      ErrorResponse(err.getClass.getSimpleName, err.getMessage),
       responseHeaders: _*
     )
 
