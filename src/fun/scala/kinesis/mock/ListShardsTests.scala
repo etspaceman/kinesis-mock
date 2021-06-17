@@ -34,7 +34,7 @@ class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         )
         .toIO
     } yield assert(
-      res.shards().size() == 3,
+      res.shards().size() == 5,
       s"$res"
     )
   }
