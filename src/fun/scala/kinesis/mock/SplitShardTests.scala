@@ -50,7 +50,7 @@ class SplitShardTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           )
         )
     } yield assert(
-      openShards.length == 2,
+      openShards.length == 4,
       s"$openShards"
     )
   }

@@ -3,6 +3,7 @@ package kinesis.mock
 import scala.jdk.CollectionConverters._
 
 import cats.effect.IO
+import cats.syntax.all._
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.kinesis.model._
 
@@ -36,7 +37,7 @@ class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           .build()
       )
       _ <- resources.kinesisClient.putRecords(req).toIO
-      shard <- resources.kinesisClient
+      shards <- resources.kinesisClient
         .listShards(
           ListShardsRequest
             .builder()
@@ -44,31 +45,36 @@ class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
             .build()
         )
         .toIO
-        .map(_.shards().asScala.head)
-      shardIterator <- resources.kinesisClient
-        .getShardIterator(
-          GetShardIteratorRequest
-            .builder()
-            .shardId(shard.shardId())
-            .streamName(resources.streamName.streamName)
-            .shardIteratorType(ShardIteratorType.TRIM_HORIZON)
-            .build()
-        )
-        .toIO
-        .map(_.shardIterator())
-      res <- resources.kinesisClient
-        .getRecords(
-          GetRecordsRequest.builder().shardIterator(shardIterator).build()
-        )
-        .toIO
+        .map(_.shards().asScala.toList)
+      shardIterators <- shards.traverse(shard =>
+        resources.kinesisClient
+          .getShardIterator(
+            GetShardIteratorRequest
+              .builder()
+              .shardId(shard.shardId())
+              .streamName(resources.streamName.streamName)
+              .shardIteratorType(ShardIteratorType.TRIM_HORIZON)
+              .build()
+          )
+          .toIO
+          .map(_.shardIterator())
+      )
+      gets <- shardIterators.traverse(shardIterator =>
+        resources.kinesisClient
+          .getRecords(
+            GetRecordsRequest.builder().shardIterator(shardIterator).build()
+          )
+          .toIO
+      )
+      res = gets.flatMap(_.records().asScala.toList)
     } yield assert(
-      res.records.asScala.length == 5 && res.records.asScala.forall(rec =>
+      res.length == 5 && res.forall(rec =>
         req.records.asScala.toList.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
             && req.partitionKey == rec.partitionKey
         )
       ),
-      s"${res.records}\n${req.records()}"
+      s"$res\n${req.records()}"
     )
   }
 }
