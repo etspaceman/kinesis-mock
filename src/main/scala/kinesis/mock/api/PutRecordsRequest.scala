@@ -92,47 +92,38 @@ final case class PutRecordsRequest(
             .toList
 
           shardSemaphoresRef.get.flatMap { shardSemaphores =>
-            val keys = grouped.map { case ((shard, _), _) =>
-              ShardSemaphoresKey(streamName, shard)
-            }
-
-            val semaphores = shardSemaphores.toList.filter { case (key, _) =>
-              keys.contains(key)
-            }
-
-            for {
-              _ <- semaphores.parTraverse { case (_, semaphore) =>
-                semaphore.acquire
-              }
-              newShards = grouped.map {
-                case ((shard, currentRecords), recordsToAdd) =>
+            val newShards = grouped.map {
+              case ((shard, currentRecords), recordsToAdd) =>
+                (
+                  shard,
                   (
-                    shard,
-                    (
-                      currentRecords ++ recordsToAdd.map(_._1),
-                      recordsToAdd.map(_._2)
+                    currentRecords ++ recordsToAdd.map(_._1),
+                    recordsToAdd.map(_._2)
+                  )
+                )
+            }
+
+            newShards
+              .parTraverse { case (shard, (records, _)) =>
+                shardSemaphores(ShardSemaphoresKey(streamName, shard))
+                  .withPermit(
+                    streamsRef.update(x =>
+                      x.updateStream(
+                        stream
+                          .copy(shards = stream.shards ++ Seq(shard -> records))
+                      )
                     )
                   )
               }
-              _ <- streamsRef.update(x =>
-                x.updateStream(
-                  stream.copy(
-                    shards = stream.shards ++ newShards.map {
-                      case (shard, (records, _)) => shard -> records
-                    }
-                  )
+              .as(
+                PutRecordsResponse(
+                  stream.encryptionType,
+                  0,
+                  newShards.flatMap { case (_, (_, resultEntries)) =>
+                    resultEntries
+                  }
                 )
               )
-              _ <- semaphores.parTraverse { case (_, semaphore) =>
-                semaphore.release
-              }
-            } yield PutRecordsResponse(
-              stream.encryptionType,
-              0,
-              newShards.flatMap { case (_, (_, resultEntries)) =>
-                resultEntries
-              }
-            )
           }
         }
     }
