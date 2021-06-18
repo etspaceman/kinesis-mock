@@ -1,7 +1,8 @@
 <configuration>
+  <property name="timestamp" value="yyyy-MM-dd HH:mm:ss" />
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>[%thread] %highlight(%-5level) %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
+      <pattern>[%thread] %highlight(%-5level) %d{${timestamp}} %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
     </encoder>
   </appender>
   <logger name="kinesis.mock" level="${LOG_LEVEL:-INFO}"/>
