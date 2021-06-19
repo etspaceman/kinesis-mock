@@ -18,7 +18,7 @@ class DescribeStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {
@@ -42,7 +42,7 @@ class DescribeStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(2, streamName, awsRegion, awsAccountId)
 
       val limit = Some(1)
@@ -70,7 +70,7 @@ class DescribeStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(4, streamName, awsRegion, awsAccountId)
 
       val exclusiveStartShardId = streams.streams

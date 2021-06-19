@@ -19,7 +19,7 @@ class EnableEnhancedMonitoringTests
         awsAccountId: AwsAccountId,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {

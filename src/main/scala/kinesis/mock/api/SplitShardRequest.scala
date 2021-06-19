@@ -4,7 +4,7 @@ package api
 import java.time.Instant
 
 import cats.Eq
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
@@ -20,7 +20,6 @@ final case class SplitShardRequest(
 ) {
   def splitShard(
       streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
   )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
@@ -110,29 +109,16 @@ final case class SplitShardRequest(
             )
           ) -> shardData
 
-          shardSemaphoresRef.get.flatMap { shardSemaphores =>
-            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
-              streamsRef.update(x =>
-                x.updateStream(
-                  stream.copy(
-                    shards = stream.shards.filterNot { case (shard, _) =>
-                      shard.shardId == oldShard._1.shardId
-                    } ++ (newShards :+ oldShard),
-                    streamStatus = StreamStatus.UPDATING
-                  )
-                )
+          streamsRef.update(x =>
+            x.updateStream(
+              stream.copy(
+                shards = stream.shards.filterNot { case (shard, _) =>
+                  shard.shardId == oldShard._1.shardId
+                } ++ (newShards :+ oldShard),
+                streamStatus = StreamStatus.UPDATING
               )
-            ) *> Semaphore[IO](1)
-              .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
-              .flatMap(semaphores =>
-                shardSemaphoresRef.update(shardsSemaphore =>
-                  shardsSemaphore ++ List(
-                    ShardSemaphoresKey(streamName, newShard1._1),
-                    ShardSemaphoresKey(streamName, newShard2._1)
-                  ).zip(semaphores)
-                )
-              )
-          }
+            )
+          )
         }
     }
 }

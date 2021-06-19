@@ -2,7 +2,7 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
@@ -13,7 +13,6 @@ import kinesis.mock.validations.CommonValidations
 final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   def createStream(
       streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
@@ -38,16 +37,13 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         else Right(()),
         CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
       ).traverseN { (_, _, _, _, _) =>
-        val (newStream, shardSemaphoreKeys) =
+        val newStream =
           StreamData.create(shardCount, streamName, awsRegion, awsAccountId)
         for {
-          _ <- streamsRef
+          res <- streamsRef
             .update(x =>
               x.copy(streams = x.streams ++ List(streamName -> newStream))
             )
-          shardSemaphores <- shardSemaphoreKeys
-            .traverse(key => Semaphore[IO](1).map(s => key -> s))
-          res <- shardSemaphoresRef.update(x => x ++ shardSemaphores)
         } yield res
       }
     }

@@ -22,7 +22,7 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
@@ -75,7 +75,7 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
@@ -128,7 +128,7 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
@@ -197,7 +197,7 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1

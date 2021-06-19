@@ -23,7 +23,7 @@ class ListStreamConsumersTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val consumers = SortedMap.from(
@@ -64,7 +64,7 @@ class ListStreamConsumersTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams(streamName).streamArn
@@ -86,7 +86,7 @@ class ListStreamConsumersTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val consumers = SortedMap.from(

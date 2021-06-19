@@ -19,7 +19,7 @@ class DecreaseStreamRetentionPeriodTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val withIncreasedRetention =
         streams.findAndUpdateStream(streamName)(stream =>
@@ -49,7 +49,7 @@ class DecreaseStreamRetentionPeriodTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {

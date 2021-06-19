@@ -7,7 +7,7 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
@@ -23,8 +23,7 @@ final case class PutRecordRequest(
     streamName: StreamName
 ) {
   def putRecord(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
+      streamsRef: Ref[IO, Streams]
   ): IO[Response[PutRecordResponse]] = streamsRef.get.flatMap { streams =>
     val now = Instant.now()
     CommonValidations
@@ -75,34 +74,29 @@ final case class PutRecordRequest(
           Some(records.length),
           Some(now)
         )
-        // Use a semaphore to ensure synchronous operations on the shard
-        shardSemaphoresRef.get.flatMap(shardSemaphores =>
-          shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
-            streamsRef
-              .update(x =>
-                x.updateStream {
-                  stream.copy(
-                    shards = stream.shards ++ SortedMap(
-                      shard -> (records :+ KinesisRecord(
-                        now,
-                        data,
-                        stream.encryptionType,
-                        partitionKey,
-                        seqNo
-                      ))
-                    )
-                  )
-                }
-              )
-              .as(
-                PutRecordResponse(
-                  stream.encryptionType,
-                  seqNo,
-                  shard.shardId.shardId
+        streamsRef
+          .update(x =>
+            x.updateStream {
+              stream.copy(
+                shards = stream.shards ++ SortedMap(
+                  shard -> (records :+ KinesisRecord(
+                    now,
+                    data,
+                    stream.encryptionType,
+                    partitionKey,
+                    seqNo
+                  ))
                 )
               )
+            }
           )
-        )
+          .as(
+            PutRecordResponse(
+              stream.encryptionType,
+              seqNo,
+              shard.shardId.shardId
+            )
+          )
       }
   }
 }

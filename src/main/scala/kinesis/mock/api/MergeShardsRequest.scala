@@ -4,7 +4,7 @@ package api
 import java.time.Instant
 
 import cats.Eq
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
@@ -19,8 +19,7 @@ final case class MergeShardsRequest(
     streamName: StreamName
 ) {
   def mergeShards(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
+      streamsRef: Ref[IO, Streams]
   )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap(streams =>
       CommonValidations
@@ -117,36 +116,15 @@ final case class MergeShardsRequest(
                   .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
               ) -> shardData
             )
-            shardSemaphoresRef.get.flatMap(shardSemaphores =>
-              shardSemaphores(
-                ShardSemaphoresKey(streamName, adjacentShard)
-              ).withPermit(
-                shardSemaphores(ShardSemaphoresKey(streamName, shard))
-                  .withPermit(
-                    for {
-                      _ <- streamsRef.update(x =>
-                        x.updateStream(
-                          stream.copy(
-                            shards = stream.shards.filterNot { case (s, _) =>
-                              s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
-                            }
-                              ++ (oldShards :+ newShard),
-                            streamStatus = StreamStatus.UPDATING
-                          )
-                        )
-                      )
-                      newSemaphore <- Semaphore[IO](1)
-                      newShardsSemaphoreKey = ShardSemaphoresKey(
-                        streamName,
-                        newShard._1
-                      )
-                      res <- shardSemaphoresRef.update(shardsSemaphore =>
-                        shardsSemaphore ++ List(
-                          newShardsSemaphoreKey -> newSemaphore
-                        )
-                      )
-                    } yield res
-                  )
+            streamsRef.update(x =>
+              x.updateStream(
+                stream.copy(
+                  shards = stream.shards.filterNot { case (s, _) =>
+                    s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
+                  }
+                    ++ (oldShards :+ newShard),
+                  streamStatus = StreamStatus.UPDATING
+                )
               )
             )
         }
