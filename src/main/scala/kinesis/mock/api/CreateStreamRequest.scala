@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -18,15 +17,15 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
+  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       (
         CommonValidations.validateStreamName(streamName),
         if (streams.streams.contains(streamName))
           ResourceInUseException(
             s"Stream $streamName already exists"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         CommonValidations.validateShardCount(shardCount),
         if (
           streams.streams.count { case (_, stream) =>
@@ -35,8 +34,8 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         )
           LimitExceededException(
             "Limit for streams being created concurrently exceeded"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
       ).traverseN { (_, _, _, _, _) =>
         val (newStream, shardSemaphoreKeys) =

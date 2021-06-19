@@ -6,8 +6,7 @@ import scala.util.Try
 import java.time.Instant
 import java.util.Base64
 
-import cats.data.Validated._
-import cats.kernel.Eq
+import cats.Eq
 import cats.syntax.all._
 import io.circe._
 import javax.crypto.Cipher
@@ -17,7 +16,7 @@ import javax.xml.bind.DatatypeConverter
 import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
-  def parse: ValidatedResponse[ShardIteratorParts] = {
+  def parse: Response[ShardIteratorParts] = {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     val decoded = Base64.getDecoder.decode(value)
 
@@ -30,7 +29,7 @@ final case class ShardIterator(value: String) {
     val decrypted = new String(cipher.doFinal(decoded.drop(8)), "UTF-8")
     val split = decrypted.split("/")
     if (split.length != 5)
-      InvalidArgumentException("Invalid shard iterator").invalidNel
+      InvalidArgumentException("Invalid shard iterator").asLeft
     else {
       val iteratorTimeMillis = split.head
       val streamName = StreamName(split(1))
@@ -44,21 +43,21 @@ final case class ShardIterator(value: String) {
         if (Try(iteratorTimeMillis.toLong).isFailure)
           InvalidArgumentException(
             "Invalid ShardIterator, the time argument is not numeric"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         if (
           Try(iteratorTimeMillis.toLong)
             .exists(x => x <= 0 || x > now.toEpochMilli)
         )
           InvalidArgumentException(
             "Invalid ShardIterator, the the time argument must be between 0 and now"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         if (now.toEpochMilli - iteratorTimeMillis.toLong > 300000)
           ExpiredIteratorException(
             "The shard iterator has expired. Shard iterators are only valid for 300 seconds"
-          ).invalidNel
-        else Valid(())
+          ).asLeft
+        else Right(())
       ).mapN((_, _, _, _, _, _) =>
         ShardIteratorParts(streamName, shardId, sequenceNumber)
       )

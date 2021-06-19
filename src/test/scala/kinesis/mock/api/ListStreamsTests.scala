@@ -39,7 +39,7 @@ class ListStreamsTests
         req = ListStreamsRequest(None, None)
         res <- req.listStreams(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streamNames == response.streamNames
         },
         s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
@@ -73,7 +73,7 @@ class ListStreamsTests
         req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
         res <- req.listStreams(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streamNames.takeRight(6) == response.streamNames
         },
         s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
@@ -105,7 +105,7 @@ class ListStreamsTests
         req = ListStreamsRequest(None, Some(5))
         res <- req.listStreams(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streamNames.take(5) == response.streamNames &&
           response.hasMoreStreams
         },

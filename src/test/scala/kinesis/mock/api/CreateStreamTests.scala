@@ -34,7 +34,7 @@ class CreateStreamTests
         s <- streamsRef.get
         shardSemaphores <- shardSemaphoresRef.get
       } yield assert(
-        res.isValid && s.streams.get(req.streamName).exists { stream =>
+        res.isRight && s.streams.get(req.streamName).exists { stream =>
           stream.shards.size == req.shardCount
         } && shardSemaphores.size == req.shardCount,
         s"req: $req\nres: $res"
@@ -61,7 +61,7 @@ class CreateStreamTests
             awsRegion,
             awsAccountId
           )
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 }

@@ -43,7 +43,7 @@ class DescribeStreamConsumerTests
         req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
         s"req: $req\nres: $res"
@@ -82,7 +82,7 @@ class DescribeStreamConsumerTests
         req = DescribeStreamConsumerRequest(consumerArn, None, None)
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
         s"req: $req\nres: $res"
@@ -105,7 +105,7 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -134,7 +134,7 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(None, Some(consumerName), None)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -165,6 +165,6 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(None, None, streamArn)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

@@ -3,10 +3,9 @@ package api
 
 import scala.collection.SortedMap
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -20,23 +19,23 @@ final case class ListTagsForStreamRequest(
 ) {
   def listTagsForStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[ListTagsForStreamResponse]] =
+  ): IO[Response[ListTagsForStreamResponse]] =
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 exclusiveStartTagKey match {
                   case Some(tagKey) =>
                     CommonValidations.validateTagKeys(List(tagKey))
-                  case None => Valid(())
+                  case None => Right(())
                 },
                 limit match {
                   case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Valid(())
+                  case None    => Right(())
                 }
               ).mapN((_, _) => {
                 val allTags = stream.tags.toList

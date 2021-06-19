@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -20,21 +19,21 @@ final case class RemoveTagsFromStreamRequest(
   // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
   def removeTagsFromStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] = streamsRef.get.flatMap(streams =>
     CommonValidations
       .validateStreamName(streamName)
-      .andThen(_ =>
+      .flatMap(_ =>
         CommonValidations
           .findStream(streamName, streams)
-          .andThen(stream =>
+          .flatMap(stream =>
             (
               CommonValidations.validateTagKeys(tagKeys), {
                 val numberOfTags = tagKeys.length
                 if (numberOfTags > 10)
                   InvalidArgumentException(
                     s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
-                  ).invalidNel
-                else Valid(())
+                  ).asLeft
+                else Right(())
               }
             ).mapN((_, _) => stream)
           )

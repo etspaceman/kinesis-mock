@@ -37,7 +37,7 @@ class StartStreamEncryptionTests
         res <- req.startStreamEncryption(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams
+        res.isRight && s.streams
           .get(streamName)
           .exists { s =>
             s.keyId.contains(keyId) &&
@@ -73,7 +73,7 @@ class StartStreamEncryptionTests
           )
           res <- req.startStreamEncryption(streamsRef)
         } yield assert(
-          res.isInvalid,
+          res.isLeft,
           s"req: $req\nres: $res\nstreams: $asActive"
         )
     }
@@ -98,6 +98,6 @@ class StartStreamEncryptionTests
           streamName
         )
         res <- req.startStreamEncryption(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res\nstreams: $streams")
+      } yield assert(res.isLeft, s"req: $req\nres: $res\nstreams: $streams")
   })
 }

@@ -1,9 +1,10 @@
 package kinesis.mock
 package api
 
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
+import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
@@ -16,11 +17,11 @@ final case class EnableEnhancedMonitoringRequest(
 ) {
   def enableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[EnableEnhancedMonitoringResponse]] =
+  ): IO[Response[EnableEnhancedMonitoringResponse]] =
     streamsRef.get.flatMap { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ => CommonValidations.findStream(streamName, streams))
+        .flatMap(_ => CommonValidations.findStream(streamName, streams))
         .traverse { stream =>
           val current = stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =

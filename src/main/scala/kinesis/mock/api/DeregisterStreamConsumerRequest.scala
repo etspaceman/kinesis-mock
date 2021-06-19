@@ -1,9 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -36,19 +36,19 @@ final case class DeregisterStreamConsumerRequest(
 
   def deregisterStreamConsumer(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[Consumer]] = streamsRef.get.flatMap { streams =>
+  ): IO[Response[Consumer]] = streamsRef.get.flatMap { streams =>
     (consumerArn, consumerName, streamArn) match {
       case (Some(cArn), _, _) =>
         CommonValidations
           .findStreamByConsumerArn(cArn, streams)
-          .andThen {
+          .flatMap {
             case (consumer, stream)
                 if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
-              (consumer, stream).validNel
+              (consumer, stream).asRight
             case _ =>
               ResourceInUseException(
                 s"Consumer $consumerName is not in an ACTIVE state"
-              ).invalidNel
+              ).asLeft
           }
           .traverse { case (consumer, stream) =>
             deregister(streamsRef, consumer, stream)
@@ -56,15 +56,15 @@ final case class DeregisterStreamConsumerRequest(
       case (None, Some(cName), Some(sArn)) =>
         CommonValidations
           .findStreamByArn(sArn, streams)
-          .andThen { stream =>
-            CommonValidations.findConsumer(cName, stream).andThen {
+          .flatMap { stream =>
+            CommonValidations.findConsumer(cName, stream).flatMap {
               case consumer
                   if consumer.consumerStatus == ConsumerStatus.ACTIVE =>
-                (consumer, stream).validNel
+                (consumer, stream).asRight
               case _ =>
                 ResourceInUseException(
                   s"Consumer $consumerName is not in an ACTIVE state"
-                ).invalidNel
+                ).asLeft
 
             }
           }
@@ -75,7 +75,7 @@ final case class DeregisterStreamConsumerRequest(
         IO(
           InvalidArgumentException(
             "ConsumerArn or both ConsumerName and StreamARN are required for this request."
-          ).invalidNel
+          ).asLeft
         )
     }
   }

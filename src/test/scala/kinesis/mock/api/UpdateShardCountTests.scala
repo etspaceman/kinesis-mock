@@ -45,7 +45,7 @@ class UpdateShardCountTests
         res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           val shards = stream.shards.keys.toList
           shards.count(_.isOpen) == 10 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
@@ -95,7 +95,7 @@ class UpdateShardCountTests
         res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           val shards = stream.shards.keys.toList
           shards.count(_.isOpen) == 5 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
@@ -144,7 +144,7 @@ class UpdateShardCountTests
               shardSemaphores
             )
           res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -179,7 +179,7 @@ class UpdateShardCountTests
               shardSemaphores
             )
           res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -213,7 +213,7 @@ class UpdateShardCountTests
             shardSemaphores
           )
         res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 9)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the stream is not active")(PropF.forAllF {
@@ -242,6 +242,6 @@ class UpdateShardCountTests
             shardSemaphores
           )
         res <- req.updateShardCount(streamsRef, shardSemaphoresRef, 50)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

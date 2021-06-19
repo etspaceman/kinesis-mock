@@ -59,7 +59,7 @@ class GetRecordsTests
         req = GetRecordsRequest(None, shardIterator)
         res <- req.getRecords(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           response.records === records
         },
         s"req: $req\n" +
@@ -112,7 +112,7 @@ class GetRecordsTests
         req = GetRecordsRequest(Some(50), shardIterator)
         res <- req.getRecords(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           response.records === records.take(50)
         },
         s"req: $req\n" +
@@ -169,10 +169,10 @@ class GetRecordsTests
             GetRecordsRequest(Some(50), r.nextShardIterator)
               .getRecords(streamsRef)
           )
-          .map(_.andThen(identity))
-        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+          .map(_.flatMap(identity))
+        res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
       } yield assert(
-        res.isValid && res.exists { case (r1, r2) =>
+        res.isRight && res.exists { case (r1, r2) =>
           r1.records === records
             .take(50) && r2.records === records
             .takeRight(50)
@@ -238,10 +238,10 @@ class GetRecordsTests
             GetRecordsRequest(Some(50), r.nextShardIterator)
               .getRecords(streamsRef)
           )
-          .map(_.andThen(identity))
-        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+          .map(_.flatMap(identity))
+        res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
       } yield assert(
-        res.isValid && res.exists { case (r1, r2) =>
+        res.isRight && res.exists { case (r1, r2) =>
           r1.records === records
             .take(50) && r2.records.isEmpty
         },

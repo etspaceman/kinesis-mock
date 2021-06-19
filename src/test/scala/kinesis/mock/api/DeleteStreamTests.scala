@@ -39,7 +39,7 @@ class DeleteStreamTests
         s <- streamsRef.get
         sems <- shardSemaphoresRef.get
       } yield assert(
-        res.isValid && s.streams
+        res.isRight && s.streams
           .get(streamName)
           .exists(_.streamStatus == StreamStatus.DELETING) && sems.isEmpty,
         s"req: $req\nres: $res\nstreams: $asActive"
@@ -57,7 +57,7 @@ class DeleteStreamTests
         req = DeleteStreamRequest(streamName, None)
         res <- req.deleteStream(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })
@@ -81,7 +81,7 @@ class DeleteStreamTests
         req = DeleteStreamRequest(streamName, None)
         res <- req.deleteStream(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })
@@ -114,7 +114,7 @@ class DeleteStreamTests
         req = DeleteStreamRequest(streamName, None)
         res <- req.deleteStream(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })

@@ -33,7 +33,7 @@ class StopStreamEncryptionTests
         res <- req.stopStreamEncryption(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams
+        res.isRight && s.streams
           .get(streamName)
           .exists { s =>
             s.keyId.isEmpty &&
@@ -69,7 +69,7 @@ class StopStreamEncryptionTests
           )
           res <- req.stopStreamEncryption(streamsRef)
         } yield assert(
-          res.isInvalid,
+          res.isLeft,
           s"req: $req\nres: $res\nstreams: $asActive"
         )
     }
@@ -95,7 +95,7 @@ class StopStreamEncryptionTests
         )
         res <- req.stopStreamEncryption(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })

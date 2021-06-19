@@ -50,7 +50,7 @@ class ListStreamConsumersTests
         res <- req.listStreamConsumers(streamsRef)
 
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           consumers.values.toList
             .map(ConsumerSummary.fromConsumer) === response.consumers
         },
@@ -75,7 +75,7 @@ class ListStreamConsumersTests
         res <- req.listStreamConsumers(streamsRef)
 
       } yield assert(
-        res.isValid && res.exists(_.consumers.isEmpty),
+        res.isRight && res.exists(_.consumers.isEmpty),
         s"req: $req\nres: $res"
       )
   })
@@ -120,10 +120,10 @@ class ListStreamConsumersTests
               None
             ).listStreamConsumers(streamsRef)
           )
-          .map(_.andThen(identity))
+          .map(_.flatMap(identity))
 
       } yield assert(
-        res.isValid && paginatedRes.isValid && res.exists { response =>
+        res.isRight && paginatedRes.isRight && res.exists { response =>
           consumers.values
             .take(5)
             .toList

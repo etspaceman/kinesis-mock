@@ -3,10 +3,9 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -25,7 +24,7 @@ final case class ListShardsRequest(
 ) {
   def listShards(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[ListShardsResponse]] = streamsRef.get.map { streams =>
+  ): IO[Response[ListShardsResponse]] = streamsRef.get.map { streams =>
     (
       exclusiveStartShardId,
       nextToken,
@@ -36,19 +35,19 @@ final case class ListShardsRequest(
       case (None, Some(nt), None, None, None) =>
         CommonValidations
           .validateNextToken(nt)
-          .andThen(ListShardsRequest.parseNextToken)
-          .andThen { case (streamName, shardId) =>
+          .flatMap(ListShardsRequest.parseNextToken)
+          .flatMap { case (streamName, shardId) =>
             (
               CommonValidations.validateStreamName(streamName),
               CommonValidations.validateShardId(shardId),
               CommonValidations.findStream(streamName, streams),
               maxResults match {
                 case Some(l) => CommonValidations.validateMaxResults(l)
-                case _       => Valid(())
+                case _       => Right(())
               },
               shardFilter match {
                 case Some(sf) => ListShardsRequest.validateShardFilter(sf)
-                case None     => Valid(())
+                case None     => Right(())
               }
             ).mapN((_, _, stream, _, _) => {
               val allShards = stream.shards.keys.toList
@@ -71,17 +70,17 @@ final case class ListShardsRequest(
       case (_, None, _, _, Some(sName)) =>
         CommonValidations
           .findStream(sName, streams)
-          .andThen(stream =>
+          .flatMap(stream =>
             (
               CommonValidations.validateStreamName(sName),
               exclusiveStartShardId match {
                 case Some(eShardId) =>
                   CommonValidations.validateShardId(eShardId)
-                case None => Valid(())
+                case None => Right(())
               },
               shardFilter match {
                 case Some(sf) => ListShardsRequest.validateShardFilter(sf)
-                case None     => Valid(())
+                case None     => Right(())
               }
             ).mapN((_, _, _) => {
               val allShards: List[Shard] = stream.shards.keys.toList
@@ -157,11 +156,11 @@ final case class ListShardsRequest(
       case (_, None, _, _, None) =>
         InvalidArgumentException(
           "StreamName is required if NextToken is not provided"
-        ).invalidNel
+        ).asLeft
       case _ =>
         InvalidArgumentException(
           "Cannot define ExclusiveStartShardId, StreamCreationTimestamp or StreamName if NextToken is defined"
-        ).invalidNel
+        ).asLeft
     }
   }
 }
@@ -250,25 +249,25 @@ object ListShardsRequest {
     s"$streamName::$shardId"
   def parseNextToken(
       nextToken: String
-  ): ValidatedResponse[(StreamName, String)] = {
+  ): Response[(StreamName, String)] = {
     val split = nextToken.split("::")
     if (split.length != 2)
-      InvalidArgumentException(s"NextToken is improperly formatted").invalidNel
-    else Valid((StreamName(split.head), split(1)))
+      InvalidArgumentException(s"NextToken is improperly formatted").asLeft
+    else Right((StreamName(split.head), split(1)))
   }
   def validateShardFilter(
       shardFilter: ShardFilter
-  ): ValidatedResponse[ShardFilter] =
+  ): Response[ShardFilter] =
     shardFilter.`type` match {
       case ShardFilterType.AFTER_SHARD_ID if shardFilter.shardId.isEmpty =>
         InvalidArgumentException(
           "ShardId must be supplied in a ShardFilter with a Type of AFTER_SHARD_ID"
-        ).invalidNel
+        ).asLeft
       case ShardFilterType.AT_TIMESTAMP | ShardFilterType.FROM_TIMESTAMP
           if shardFilter.timestamp.isEmpty =>
         InvalidArgumentException(
           "Timestamp must be supplied in a ShardFilter with a Type of FROM_TIMESTAMP or AT_TIMESTAMP"
-        ).invalidNel
-      case _ => Valid(shardFilter)
+        ).asLeft
+      case _ => Right(shardFilter)
     }
 }

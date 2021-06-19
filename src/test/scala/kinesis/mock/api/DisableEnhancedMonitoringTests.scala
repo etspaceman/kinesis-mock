@@ -53,7 +53,7 @@ class DisableEnhancedMonitoringTests
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
 
       } yield assert(
-        res.isValid && res.exists { case response =>
+        res.isRight && res.exists { case response =>
           updatedMetrics.contains(response.desiredShardLevelMetrics)
         },
         s"req: $req\nres: $res\nupdatedMetrics: $updatedMetrics"

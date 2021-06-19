@@ -5,7 +5,7 @@ import scala.collection.SortedMap
 
 import java.time.Instant
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 import io.circe.parser._
 import io.circe.syntax._

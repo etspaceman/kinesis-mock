@@ -31,7 +31,7 @@ class AddTagsToStreamTests
         res <- req.addTagsToStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"
@@ -62,7 +62,7 @@ class AddTagsToStreamTests
         res <- req.addTagsToStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"

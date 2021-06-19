@@ -5,8 +5,7 @@ import scala.util.{Success, Try}
 
 import java.time.Instant
 
-import cats.data.Validated._
-import cats.kernel.Eq
+import cats.Eq
 import cats.syntax.all._
 import io.circe._
 
@@ -21,10 +20,10 @@ final case class SequenceNumber(value: String) {
         SequenceNumber.shardEndNumber
     }
 
-  def parse: ValidatedResponse[SequenceNumberParseResult] = {
+  def parse: Response[SequenceNumberParseResult] = {
     value match {
       case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
-        Valid(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))
+        Right(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))
       case x =>
         val seqNum =
           if (BigInt(x) < BigInt(2).pow(124))
@@ -56,7 +55,7 @@ final case class SequenceNumber(value: String) {
               if seqIndexHex.headOption
                 .map(x => BigInt(x.toString, 16))
                 .exists(_ > 7) =>
-            InvalidArgumentException("Sequence index too high").invalidNel
+            InvalidArgumentException("Sequence index too high").asLeft
           case (
                 _,
                 Success(shardCreatedSecs),
@@ -65,14 +64,14 @@ final case class SequenceNumber(value: String) {
               ) if shardCreatedSecs.toLong >= 16025175000L =>
             InvalidArgumentException(
               s"Date too large: $shardCreatedSecs"
-            ).invalidNel
+            ).asLeft
           case (
                 Success(seqIndex),
                 Success(shardCreateSecs),
                 Success(seqTime),
                 Success(shardIndex)
               ) =>
-            Valid(
+            Right(
               SequenceNumberParts(
                 Instant.ofEpochSecond(shardCreateSecs.toLong),
                 shardIndex.toInt,
@@ -84,7 +83,7 @@ final case class SequenceNumber(value: String) {
           case _ =>
             InvalidArgumentException(
               "SequenceNumber could not be parsed"
-            ).invalidNel
+            ).asLeft
         }
 
     }

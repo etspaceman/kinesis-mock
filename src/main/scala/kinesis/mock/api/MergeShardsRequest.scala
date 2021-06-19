@@ -3,10 +3,9 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -22,31 +21,31 @@ final case class MergeShardsRequest(
   def mergeShards(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
+  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 CommonValidations.validateShardId(shardToMerge),
                 CommonValidations.validateShardId(adjacentShardToMerge),
                 CommonValidations
                   .findShard(adjacentShardToMerge, stream)
-                  .andThen { case (adjacentShard, adjacentData) =>
-                    CommonValidations.isShardOpen(adjacentShard).andThen { _ =>
+                  .flatMap { case (adjacentShard, adjacentData) =>
+                    CommonValidations.isShardOpen(adjacentShard).flatMap { _ =>
                       CommonValidations
                         .findShard(shardToMerge, stream)
-                        .andThen { case (shard, shardData) =>
-                          CommonValidations.isShardOpen(shard).andThen { _ =>
+                        .flatMap { case (shard, shardData) =>
+                          CommonValidations.isShardOpen(shard).flatMap { _ =>
                             if (
                               adjacentShard.hashKeyRange
                                 .isAdjacent(shard.hashKeyRange)
                             )
-                              Valid(
+                              Right(
                                 (
                                   (adjacentShard, adjacentData),
                                   (shard, shardData)
@@ -55,7 +54,7 @@ final case class MergeShardsRequest(
                             else
                               InvalidArgumentException(
                                 "Provided shards are not adjacent"
-                              ).invalidNel
+                              ).asLeft
                           }
                         }
                     }

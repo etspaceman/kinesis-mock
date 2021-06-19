@@ -3,10 +3,9 @@ package api
 
 import scala.annotation.tailrec
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -19,22 +18,22 @@ final case class GetRecordsRequest(
 ) {
   def getRecords(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[GetRecordsResponse]] = streamsRef.get.map { streams =>
-    shardIterator.parse.andThen { parts =>
+  ): IO[Response[GetRecordsResponse]] = streamsRef.get.map { streams =>
+    shardIterator.parse.flatMap { parts =>
       CommonValidations
         .isStreamActiveOrUpdating(parts.streamName, streams)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(parts.streamName, streams)
-            .andThen(stream =>
-              CommonValidations.findShard(parts.shardId, stream).andThen { case (shard, data) =>
+            .flatMap(stream =>
+              CommonValidations.findShard(parts.shardId, stream).flatMap { case (shard, data) =>
                 (limit match {
                   case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Valid(())
-                }).andThen { _ =>
+                  case None    => Right(())
+                }).flatMap { _ =>
                   CommonValidations
                     .isShardOpen(shard)
-                    .andThen { _ =>
+                    .flatMap { _ =>
                       val allShards = stream.shards.keys.toList
                       val childShards = allShards
                         .filter(_.parentShardId.contains(shard.shardId.shardId))
@@ -48,7 +47,7 @@ final case class GetRecordsRequest(
                           )
                         )
                       if (data.isEmpty) {
-                        Valid(
+                        Right(
                           GetRecordsResponse(
                             childShards,
                             0L,
@@ -81,7 +80,7 @@ final case class GetRecordsRequest(
                             data.last.approximateArrivalTimestamp.toEpochMilli -
                               records.head.approximateArrivalTimestamp.toEpochMilli
 
-                          Valid(
+                          Right(
                             GetRecordsResponse(
                               childShards,
                               millisBehindLatest,
@@ -99,7 +98,7 @@ final case class GetRecordsRequest(
                               _.sequenceNumber == parts.sequenceNumber
                             ) match {
                             case Some(record) if record == data.last =>
-                              Valid(
+                              Right(
                                 GetRecordsResponse(
                                   childShards,
                                   0L,
@@ -130,7 +129,7 @@ final case class GetRecordsRequest(
                                 data.last.approximateArrivalTimestamp.toEpochMilli -
                                   record.approximateArrivalTimestamp.toEpochMilli
 
-                              Valid(
+                              Right(
                                 GetRecordsResponse(
                                   childShards,
                                   millisBehindLatest,
@@ -146,7 +145,7 @@ final case class GetRecordsRequest(
                             case None =>
                               ResourceNotFoundException(
                                 s"Record for provided SequenceNumber not found"
-                              ).invalidNel
+                              ).asLeft
                           }
                         }
                       }

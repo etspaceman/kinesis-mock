@@ -57,7 +57,7 @@ class SplitShardTests
         res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.shards.keys.toList.count(shard =>
             shard.parentShardId.contains(shardToSplit.shardId.shardId)
           ) == 2 && stream.streamStatus == StreamStatus.UPDATING
@@ -104,7 +104,7 @@ class SplitShardTests
             shardSemaphores
           )
         res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the shard is not found")(PropF.forAllF {
@@ -146,7 +146,7 @@ class SplitShardTests
             shardSemaphores
           )
         res <- req.splitShard(streamsRef, shardSemaphoresRef, 50)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the operation would exceed the shard limit")(
@@ -190,7 +190,7 @@ class SplitShardTests
               shardSemaphores
             )
           res <- req.splitShard(streamsRef, shardSemaphoresRef, 5)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 }

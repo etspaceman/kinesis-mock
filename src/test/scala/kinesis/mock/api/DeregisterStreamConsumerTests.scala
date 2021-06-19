@@ -45,7 +45,7 @@ class DeregisterStreamConsumerTests
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
@@ -85,7 +85,7 @@ class DeregisterStreamConsumerTests
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
@@ -123,7 +123,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(consumerArn, None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -149,7 +149,7 @@ class DeregisterStreamConsumerTests
         )
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -181,7 +181,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(None, Some(consumerName), None)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -215,7 +215,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(None, None, streamArn)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
