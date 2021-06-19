@@ -65,27 +65,24 @@ object StreamData {
       streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): (StreamData, List[ShardSemaphoresKey]) = {
+  ): StreamData = {
 
     val createTime = Instant.now()
     val shards: SortedMap[Shard, List[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
-    (
-      StreamData(
-        SortedMap.empty,
-        EncryptionType.NONE,
-        List(ShardLevelMetrics(List.empty)),
-        None,
-        minRetentionPeriod,
-        shards,
-        s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
-        Instant.now(),
-        streamName,
-        StreamStatus.CREATING,
-        Tags.empty,
-        List.empty
-      ),
-      shards.keys.toList.map(shard => ShardSemaphoresKey(streamName, shard))
+    StreamData(
+      SortedMap.empty,
+      EncryptionType.NONE,
+      List(ShardLevelMetrics(List.empty)),
+      None,
+      minRetentionPeriod,
+      shards,
+      s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
+      Instant.now(),
+      streamName,
+      StreamStatus.CREATING,
+      Tags.empty,
+      List.empty
     )
   }
 }

@@ -5,10 +5,10 @@ import scala.concurrent.duration._
 
 import java.time.Instant
 
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.Eq
+import cats.effect.concurrent.Ref
 import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
-import cats.{Eq, Parallel}
 import io.circe
 
 import kinesis.mock.models._
@@ -22,9 +22,8 @@ final case class UpdateShardCountRequest(
 ) {
   def updateShardCount(
       streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Response[Unit]] =
+  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       val now = Instant.now()
       CommonValidations
@@ -71,55 +70,30 @@ final case class UpdateShardCountRequest(
             }
         )
         .traverse { stream =>
-          shardSemaphoresRef.get.flatMap { shardSemaphores =>
-            val shards = stream.shards.toList
-            val semaphoreKeys = shards.map { case (shard, _) =>
-              ShardSemaphoresKey(streamName, shard)
-            }
-            val semaphores = shardSemaphores.toList.filter { case (key, _) =>
-              semaphoreKeys.contains(key)
-            }
-
-            for {
-              _ <- semaphores.parTraverse { case (_, semaphore) =>
-                semaphore.acquire
-              }
-              oldShards = shards.map { case (shard, data) =>
-                (
-                  shard.copy(
-                    closedTimestamp = Some(now),
-                    sequenceNumberRange = shard.sequenceNumberRange
-                      .copy(endingSequenceNumber =
-                        Some(SequenceNumber.shardEnd)
-                      )
-                  ),
-                  data
-                )
-              }
-              newShards = Shard.newShards(
-                targetShardCount,
-                now,
-                oldShards.map(_._1.shardId.index).max + 1
-              )
-              _ <- streamsRef.update(x =>
-                x.updateStream(
-                  stream.copy(
-                    shards = newShards ++ oldShards,
-                    streamStatus = StreamStatus.UPDATING
-                  )
-                )
-              )
-              newShardSemaphores <- newShards.keys.toList.traverse(shard =>
-                Semaphore[IO](1).map(semaphore =>
-                  ShardSemaphoresKey(streamName, shard) -> semaphore
-                )
-              )
-              _ <- shardSemaphoresRef.update(x => x ++ newShardSemaphores)
-              res <- semaphores.parTraverse_ { case (_, semaphore) =>
-                semaphore.release
-              }
-            } yield res
+          val shards = stream.shards.toList
+          val oldShards = shards.map { case (shard, data) =>
+            (
+              shard.copy(
+                closedTimestamp = Some(now),
+                sequenceNumberRange = shard.sequenceNumberRange
+                  .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
+              ),
+              data
+            )
           }
+          val newShards = Shard.newShards(
+            targetShardCount,
+            now,
+            oldShards.map(_._1.shardId.index).max + 1
+          )
+          streamsRef.update(x =>
+            x.updateStream(
+              stream.copy(
+                shards = newShards ++ oldShards,
+                streamStatus = StreamStatus.UPDATING
+              )
+            )
+          )
         }
     }
 }

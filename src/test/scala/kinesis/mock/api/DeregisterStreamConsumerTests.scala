@@ -21,7 +21,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
@@ -61,7 +61,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
@@ -101,7 +101,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
@@ -135,7 +135,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
@@ -163,7 +163,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
@@ -195,7 +195,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(

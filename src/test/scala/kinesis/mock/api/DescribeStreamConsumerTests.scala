@@ -21,7 +21,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
@@ -57,7 +57,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
@@ -96,7 +96,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
@@ -117,7 +117,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
@@ -146,7 +146,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(

@@ -21,7 +21,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -44,7 +44,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -99,7 +99,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val exclusiveStartShardId = ShardId.create(10)
@@ -133,7 +133,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { s =>
@@ -184,7 +184,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { s =>
@@ -234,7 +234,7 @@ class ListShardsTests
           awsRegion: AwsRegion,
           awsAccountId: AwsAccountId
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
         val updated = streams.findAndUpdateStream(streamName) { s =>
@@ -289,7 +289,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val shardId = streams.streams(streamName).shards.keys.toList(4).shardId
@@ -330,7 +330,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
@@ -401,7 +401,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
@@ -476,7 +476,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -501,7 +501,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -526,7 +526,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {

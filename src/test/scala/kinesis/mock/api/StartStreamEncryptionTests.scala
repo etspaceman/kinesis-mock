@@ -18,7 +18,7 @@ class StartStreamEncryptionTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val asActive = streams.findAndUpdateStream(streamName)(x =>
@@ -55,7 +55,7 @@ class StartStreamEncryptionTests
           awsRegion: AwsRegion,
           awsAccountId: AwsAccountId
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
         val asActive = streams.findAndUpdateStream(streamName)(x =>
@@ -85,7 +85,7 @@ class StartStreamEncryptionTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val keyId = keyIdGen.one

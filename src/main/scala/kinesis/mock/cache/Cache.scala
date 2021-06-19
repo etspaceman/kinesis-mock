@@ -5,7 +5,7 @@ import java.io.FileWriter
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
+import cats.effect.concurrent.{Ref, Supervisor}
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._
@@ -19,7 +19,6 @@ import kinesis.mock.syntax.semaphore._
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
-    shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
     semaphores: CacheSemaphores,
     config: CacheConfig,
     supervisor: Supervisor[IO]
@@ -118,7 +117,6 @@ class Cache private (
           createStreamsRes <- req
             .createStream(
               streamsRef,
-              shardSemaphoresRef,
               config.shardLimit,
               config.awsRegion,
               config.awsAccountId
@@ -175,9 +173,7 @@ class Cache private (
       ) *>
       semaphores.deleteStream.tryAcquireRelease(
         for {
-          deleteStreamRes <- req
-            .deleteStream(streamsRef, shardSemaphoresRef)
-
+          deleteStreamRes <- req.deleteStream(streamsRef)
           _ <- deleteStreamRes.fold(
             e =>
               logger.warn(ctx.context, e)(
@@ -994,9 +990,7 @@ class Cache private (
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
-      res <- req
-        .putRecord(streamsRef, shardSemaphoresRef)
-
+      res <- req.putRecord(streamsRef)
       _ <- res.fold(
         e =>
           logger
@@ -1018,8 +1012,6 @@ class Cache private (
       req: PutRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      P: Parallel[IO]
   ): IO[Response[PutRecordsResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
@@ -1027,9 +1019,7 @@ class Cache private (
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
-      res <- req
-        .putRecords(streamsRef, shardSemaphoresRef)
-
+      res <- req.putRecords(streamsRef)
       _ <- res.fold(
         e =>
           logger
@@ -1064,9 +1054,7 @@ class Cache private (
       ) *>
       semaphores.mergeShards.tryAcquireRelease(
         for {
-          result <- req
-            .mergeShards(streamsRef, shardSemaphoresRef)
-
+          result <- req.mergeShards(streamsRef)
           _ <- result.fold(
             e =>
               logger
@@ -1121,9 +1109,7 @@ class Cache private (
       ) *>
       semaphores.splitShard.tryAcquireRelease(
         for {
-          result <- req
-            .splitShard(streamsRef, shardSemaphoresRef, config.shardLimit)
-
+          result <- req.splitShard(streamsRef, config.shardLimit)
           _ <- result.fold(
             e =>
               logger
@@ -1176,9 +1162,7 @@ class Cache private (
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *> (for {
-        result <- req
-          .updateShardCount(streamsRef, shardSemaphoresRef, config.shardLimit)
-
+        result <- req.updateShardCount(streamsRef, config.shardLimit)
         _ <- result.fold(
           e =>
             logger
@@ -1246,13 +1230,10 @@ object Cache {
       streams: Streams = Streams.empty // scalafix:ok
   )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](streams)
-    shardSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-      Map.empty
-    )
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
     cache <- supervisorResource.use(supervisor =>
-      IO(new Cache(ref, shardSemaphoresRef, semaphores, config, supervisor))
+      IO(new Cache(ref, semaphores, config, supervisor))
     )
   } yield cache
 

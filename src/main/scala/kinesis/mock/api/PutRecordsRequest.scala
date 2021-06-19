@@ -3,10 +3,10 @@ package api
 
 import java.time.Instant
 
+import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
-import cats.{Eq, Parallel}
 import io.circe
 
 import kinesis.mock.models._
@@ -17,10 +17,7 @@ final case class PutRecordsRequest(
     streamName: StreamName
 ) {
   def putRecords(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  )(implicit
-      P: Parallel[IO]
+      streamsRef: Ref[IO, Streams]
   ): IO[Response[PutRecordsResponse]] =
     streamsRef.get.flatMap { streams =>
       val now = Instant.now()
@@ -89,49 +86,36 @@ final case class PutRecordsRequest(
             }
             .toList
 
-          shardSemaphoresRef.get.flatMap { shardSemaphores =>
-            val keys = grouped.map { case ((shard, _), _) =>
-              ShardSemaphoresKey(streamName, shard)
-            }
-
-            val semaphores = shardSemaphores.toList.filter { case (key, _) =>
-              keys.contains(key)
-            }
-
-            for {
-              _ <- semaphores.parTraverse { case (_, semaphore) =>
-                semaphore.acquire
-              }
-              newShards = grouped.map {
-                case ((shard, currentRecords), recordsToAdd) =>
-                  (
-                    shard,
-                    (
-                      currentRecords ++ recordsToAdd.map(_._1),
-                      recordsToAdd.map(_._2)
-                    )
-                  )
-              }
-              _ <- streamsRef.update(x =>
-                x.updateStream(
-                  stream.copy(
-                    shards = stream.shards ++ newShards.map {
-                      case (shard, (records, _)) => shard -> records
-                    }
-                  )
+          val newShards = grouped.map {
+            case ((shard, currentRecords), recordsToAdd) =>
+              (
+                shard,
+                (
+                  currentRecords ++ recordsToAdd.map(_._1),
+                  recordsToAdd.map(_._2)
                 )
               )
-              _ <- semaphores.parTraverse { case (_, semaphore) =>
-                semaphore.release
-              }
-            } yield PutRecordsResponse(
-              stream.encryptionType,
-              0,
-              newShards.flatMap { case (_, (_, resultEntries)) =>
-                resultEntries
-              }
-            )
           }
+
+          streamsRef
+            .update(x =>
+              x.updateStream(
+                stream.copy(
+                  shards = stream.shards ++ newShards.map {
+                    case (shard, (records, _)) => shard -> records
+                  }
+                )
+              )
+            )
+            .as(
+              PutRecordsResponse(
+                stream.encryptionType,
+                0,
+                newShards.flatMap { case (_, (_, resultEntries)) =>
+                  resultEntries
+                }
+              )
+            )
         }
     }
 }

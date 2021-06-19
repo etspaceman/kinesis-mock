@@ -23,7 +23,7 @@ class RegisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams(streamName).streamArn
@@ -48,7 +48,7 @@ class RegisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val consumers = SortedMap.from(
@@ -84,7 +84,7 @@ class RegisterStreamConsumerTests
           awsAccountId: AwsAccountId,
           consumerName: ConsumerName
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
         val consumers = SortedMap.from(

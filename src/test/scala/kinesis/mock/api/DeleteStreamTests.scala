@@ -3,8 +3,7 @@ package kinesis.mock.api
 import scala.collection.SortedMap
 
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.syntax.all._
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -20,7 +19,7 @@ class DeleteStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoresKeys) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val asActive = streams.findAndUpdateStream(streamName)(x =>
@@ -29,19 +28,13 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](asActive)
-        semaphores <- shardSemaphoresKeys
-          .traverse(key => Semaphore[IO](1).map(s => key -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](semaphores)
         req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef, shardSemaphoresRef)
+        res <- req.deleteStream(streamsRef)
         s <- streamsRef.get
-        sems <- shardSemaphoresRef.get
       } yield assert(
         res.isRight && s.streams
           .get(streamName)
-          .exists(_.streamStatus == StreamStatus.DELETING) && sems.isEmpty,
+          .exists(_.streamStatus == StreamStatus.DELETING),
         s"req: $req\nres: $res\nstreams: $asActive"
       )
   })
@@ -52,10 +45,8 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](Map.empty)
         req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef, shardSemaphoresRef)
+        res <- req.deleteStream(streamsRef)
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
@@ -68,18 +59,13 @@ class DeleteStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoresKeys) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        semaphores <- shardSemaphoresKeys
-          .traverse(key => Semaphore[IO](1).map(s => key -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](semaphores)
         req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef, shardSemaphoresRef)
+        res <- req.deleteStream(streamsRef)
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
@@ -95,7 +81,7 @@ class DeleteStreamTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, shardSemaphoresKeys) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
@@ -106,13 +92,8 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
-        semaphores <- shardSemaphoresKeys
-          .traverse(key => Semaphore[IO](1).map(s => key -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](semaphores)
         req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef, shardSemaphoresRef)
+        res <- req.deleteStream(streamsRef)
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"

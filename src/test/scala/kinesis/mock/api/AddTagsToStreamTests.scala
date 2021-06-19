@@ -22,7 +22,7 @@ class AddTagsToStreamTests
         awsAccountId: AwsAccountId,
         tags: Tags
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {
@@ -44,7 +44,7 @@ class AddTagsToStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val tagKey = tagKeyGen.one

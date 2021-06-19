@@ -26,7 +26,7 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
       streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): (Streams, List[ShardSemaphoresKey]) = {
+  ): Streams = {
     val created = StreamData.create(
       shardCount,
       streamName,
@@ -34,35 +34,25 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
       awsAccountId
     )
 
-    (copy(streams = streams ++ List(streamName -> created._1)), created._2)
+    copy(streams = streams ++ List(streamName -> created))
   }
 
   def deleteStream(
       streamName: StreamName
-  ): (Streams, List[ShardSemaphoresKey]) =
-    (
-      copy(streams =
-        streams ++ streams
-          .get(streamName)
-          .map(stream =>
-            streamName -> stream.copy(
-              shards = SortedMap.empty,
-              streamStatus = StreamStatus.DELETING,
-              tags = Tags.empty,
-              enhancedMonitoring = List.empty,
-              consumers = SortedMap.empty
-            )
-          )
-          .toMap
-      ),
-      streams
+  ): Streams =
+    copy(streams =
+      streams ++ streams
         .get(streamName)
-        .toList
-        .flatMap(x =>
-          x.shards.keys.toList.map(shard =>
-            ShardSemaphoresKey(x.streamName, shard)
+        .map(stream =>
+          streamName -> stream.copy(
+            shards = SortedMap.empty,
+            streamStatus = StreamStatus.DELETING,
+            tags = Tags.empty,
+            enhancedMonitoring = List.empty,
+            consumers = SortedMap.empty
           )
         )
+        .toMap
     )
 
   def removeStream(streamName: StreamName): Streams =

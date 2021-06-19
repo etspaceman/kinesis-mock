@@ -5,7 +5,7 @@ import scala.collection.SortedMap
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
@@ -17,8 +17,7 @@ final case class DeleteStreamRequest(
     enforceConsumerDeletion: Option[Boolean]
 ) {
   def deleteStream(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
+      streamsRef: Ref[IO, Streams]
   ): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       CommonValidations
@@ -51,18 +50,13 @@ final case class DeleteStreamRequest(
             )
           )
 
-          val shardSemaphoreKeys = stream.shards.keys.toList
-            .map(shard => ShardSemaphoresKey(stream.streamName, shard))
-
           for {
-            _ <- streamsRef
+            res <- streamsRef
               .update(streams =>
                 streams.copy(
                   streams = streams.streams ++ deletingStream
                 )
               )
-            res <- shardSemaphoresRef
-              .update(shardSemaphores => shardSemaphores -- shardSemaphoreKeys)
           } yield res
         }
     }

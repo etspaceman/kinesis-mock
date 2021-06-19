@@ -23,7 +23,7 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val withTags =
@@ -47,7 +47,7 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val tags: Tags = Gen
@@ -85,7 +85,7 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val tags: Tags = Gen
