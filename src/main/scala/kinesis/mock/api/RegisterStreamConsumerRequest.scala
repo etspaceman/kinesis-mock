@@ -56,7 +56,7 @@ final case class RegisterStreamConsumerRequest(
               x.updateStream(
                 stream
                   .copy(consumers =
-                    stream.consumers ++ Vector(consumerName -> consumer)
+                    stream.consumers + (consumerName -> consumer)
                   )
               )
             )
