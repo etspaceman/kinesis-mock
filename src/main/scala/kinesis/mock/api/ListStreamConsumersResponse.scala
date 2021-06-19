@@ -8,7 +8,7 @@ import io.circe
 import kinesis.mock.models._
 
 final case class ListStreamConsumersResponse(
-    consumers: List[ConsumerSummary],
+    consumers: Vector[ConsumerSummary],
     nextToken: Option[ConsumerName]
 )
 
@@ -25,7 +25,7 @@ object ListStreamConsumersResponse {
   ): circe.Decoder[ListStreamConsumersResponse] =
     x =>
       for {
-        consumers <- x.downField("Consumers").as[List[ConsumerSummary]]
+        consumers <- x.downField("Consumers").as[Vector[ConsumerSummary]]
         nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       } yield ListStreamConsumersResponse(consumers, nextToken)
 

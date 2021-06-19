@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -52,11 +50,11 @@ class ListTagsForStreamTests
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
         .map(Tags.apply)
         .one
 
-      val exclusiveStartTagKey = tags.tags.keys.toList(3)
+      val exclusiveStartTagKey = tags.tags.keys.toVector(3)
 
       val withTags =
         streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
@@ -90,7 +88,7 @@ class ListTagsForStreamTests
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
         .map(Tags.apply)
         .one
 

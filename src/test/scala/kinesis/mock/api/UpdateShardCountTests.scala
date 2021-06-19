@@ -38,20 +38,21 @@ class UpdateShardCountTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          val shards = stream.shards.keys.toList
+          val shards = stream.shards.keys.toVector.sorted
           shards.count(_.isOpen) == 10 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
             .streams(streamName)
             .shards
             .keys
-            .toList
+            .toVector
+            .sorted
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING
         },
         s"req: $req\n" +
-          s"resOpenShards: ${s.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)}\n" +
-          s"resClosedShards: ${s.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)}\n" +
-          s"inputShards: ${active.streams(streamName).shards.keys.toList.map(_.shardId)}"
+          s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
+          s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
       )
   })
 
@@ -81,20 +82,21 @@ class UpdateShardCountTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          val shards = stream.shards.keys.toList
+          val shards = stream.shards.keys.toVector.sorted
           shards.count(_.isOpen) == 5 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
             .streams(streamName)
             .shards
             .keys
-            .toList
+            .toVector
+            .sorted
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING
         },
         s"req: $req\n" +
-          s"resOpenShards: ${s.streams(streamName).shards.keys.toList.filter(_.isOpen).map(_.shardId)}\n" +
-          s"resClosedShards: ${s.streams(streamName).shards.keys.toList.filterNot(_.isOpen).map(_.shardId)}\n" +
-          s"inputShards: ${active.streams(streamName).shards.keys.toList.map(_.shardId)}"
+          s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
+          s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
       )
   })
 

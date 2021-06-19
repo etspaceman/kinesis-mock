@@ -70,7 +70,7 @@ final case class UpdateShardCountRequest(
             }
         )
         .traverse { stream =>
-          val shards = stream.shards.toList
+          val shards = stream.shards.toVector
           val oldShards = shards.map { case (shard, data) =>
             (
               shard.copy(

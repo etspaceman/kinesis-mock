@@ -23,7 +23,7 @@ class CacheConfigTests
       val res = CacheConfig.initializeStreamsReader.from(
         ConfigValueFactory.fromAnyRef(s"$streamName:3")
       )
-      val expected = List(
+      val expected = Vector(
         CreateStreamRequest(3, streamName)
       )
 
@@ -43,7 +43,7 @@ class CacheConfigTests
           s"$streamName1:3,$streamName2:2,$streamName3:1"
         )
       )
-      val expected = List(
+      val expected = Vector(
         CreateStreamRequest(3, streamName1),
         CreateStreamRequest(2, streamName2),
         CreateStreamRequest(1, streamName3)
@@ -89,7 +89,7 @@ class CacheConfigTests
           streamName1: StreamName,
           streamName2: StreamName
       ) =>
-        val res = List(
+        val res = Vector(
           CacheConfig.initializeStreamsReader.from(
             ConfigValueFactory.fromAnyRef(s":$streamName1")
           ),

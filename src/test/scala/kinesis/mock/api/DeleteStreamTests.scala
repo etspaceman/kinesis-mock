@@ -1,7 +1,5 @@
 package kinesis.mock.api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -86,7 +84,7 @@ class DeleteStreamTests
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
         x.copy(consumers =
-          SortedMap(consumerName -> Consumer.create(x.streamArn, consumerName))
+          Map(consumerName -> Consumer.create(x.streamArn, consumerName))
         )
       )
 

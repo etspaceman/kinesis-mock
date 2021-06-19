@@ -2,6 +2,7 @@ package kinesis.mock
 package api
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 
 import cats.Eq
 import cats.effect.IO
@@ -34,7 +35,7 @@ final case class GetRecordsRequest(
                   CommonValidations
                     .isShardOpen(shard)
                     .flatMap { _ =>
-                      val allShards = stream.shards.keys.toList
+                      val allShards = stream.shards.keys.toVector
                       val childShards = allShards
                         .filter(_.parentShardId.contains(shard.shardId.shardId))
                         .map(s =>
@@ -52,7 +53,7 @@ final case class GetRecordsRequest(
                             childShards,
                             0L,
                             shardIterator,
-                            data
+                            Queue.empty
                           )
                         )
                       } else {
@@ -60,25 +61,18 @@ final case class GetRecordsRequest(
                           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber
                         ) {
                           val maxRecords = limit.getOrElse(10000)
-                          val firstIndex = 0
-                          val lastIndex =
-                            Math.min(
-                              firstIndex + maxRecords,
-                              data.length
-                            )
 
-                          val records = GetRecordsRequest
+                          val (head, records) = GetRecordsRequest
                             .getRecords(
-                              data.slice(firstIndex, lastIndex),
-                              maxRecords,
-                              List.empty,
-                              0,
+                              data.take(maxRecords),
+                              Queue.empty,
+                              data.head,
                               0
                             )
 
                           val millisBehindLatest =
                             data.last.approximateArrivalTimestamp.toEpochMilli -
-                              records.head.approximateArrivalTimestamp.toEpochMilli
+                              head.approximateArrivalTimestamp.toEpochMilli
 
                           Right(
                             GetRecordsResponse(
@@ -94,40 +88,43 @@ final case class GetRecordsRequest(
                           )
                         } else {
                           data
-                            .find(
+                            .indexWhere(
                               _.sequenceNumber == parts.sequenceNumber
                             ) match {
-                            case Some(record) if record == data.last =>
+                            case -1 =>
+                              ResourceNotFoundException(
+                                s"Record for provided SequenceNumber not found"
+                              ).asLeft
+                            case index if index == data.length - 1 =>
                               Right(
                                 GetRecordsResponse(
                                   childShards,
                                   0L,
                                   shardIterator,
-                                  List.empty
+                                  Queue.empty
                                 )
                               )
 
-                            case Some(record) =>
+                            case index =>
                               val maxRecords = limit.getOrElse(10000)
-                              val firstIndex = data.indexOf(record) + 1
+                              val firstIndex = index + 1
                               val lastIndex =
                                 Math.min(
                                   firstIndex + maxRecords,
                                   data.length
                                 )
 
-                              val records = GetRecordsRequest
+                              val (head, records) = GetRecordsRequest
                                 .getRecords(
                                   data.slice(firstIndex, lastIndex),
-                                  maxRecords,
-                                  List.empty,
-                                  0,
+                                  Queue.empty,
+                                  data(firstIndex),
                                   0
                                 )
 
                               val millisBehindLatest =
                                 data.last.approximateArrivalTimestamp.toEpochMilli -
-                                  record.approximateArrivalTimestamp.toEpochMilli
+                                  head.approximateArrivalTimestamp.toEpochMilli
 
                               Right(
                                 GetRecordsResponse(
@@ -141,11 +138,6 @@ final case class GetRecordsRequest(
                                   records
                                 )
                               )
-
-                            case None =>
-                              ResourceNotFoundException(
-                                s"Record for provided SequenceNumber not found"
-                              ).asLeft
                           }
                         }
                       }
@@ -163,24 +155,20 @@ object GetRecordsRequest {
 
   @tailrec
   def getRecords(
-      data: List[KinesisRecord],
-      maxRecords: Int,
-      results: List[KinesisRecord],
-      totalSize: Int,
-      totalRecords: Int
-  ): List[KinesisRecord] = data match {
-    case Nil =>
-      results
-    case head :: _
-        if head.size + totalSize > maxReturnSize || totalRecords + 1 > maxRecords =>
-      results
-    case head :: tail =>
+      data: Vector[KinesisRecord],
+      results: Queue[KinesisRecord],
+      headResult: KinesisRecord,
+      totalSize: Int
+  ): (KinesisRecord, Queue[KinesisRecord]) = data.headOption match {
+    case None => (headResult, results)
+    case Some(head) if head.size + totalSize > maxReturnSize =>
+      (headResult, results)
+    case Some(head) =>
       getRecords(
-        tail,
-        maxRecords,
-        results :+ head,
-        totalSize + head.size,
-        totalRecords + 1
+        data.tail,
+        results.enqueue(head),
+        head,
+        totalSize + head.size
       )
   }
 

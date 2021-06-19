@@ -12,7 +12,7 @@ import kinesis.mock.validations.CommonValidations
 
 final case class RemoveTagsFromStreamRequest(
     streamName: StreamName,
-    tagKeys: List[String]
+    tagKeys: Vector[String]
 ) {
   // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RemoveTagsFromStream.html
   // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
@@ -56,7 +56,7 @@ object RemoveTagsFromStreamRequest {
       : circe.Decoder[RemoveTagsFromStreamRequest] = { x =>
     for {
       streamName <- x.downField("StreamName").as[StreamName]
-      tagKeys <- x.downField("TagKeys").as[List[String]]
+      tagKeys <- x.downField("TagKeys").as[Vector[String]]
     } yield RemoveTagsFromStreamRequest(streamName, tagKeys)
   }
   implicit val removeTagsFromStreamRequestEncoder

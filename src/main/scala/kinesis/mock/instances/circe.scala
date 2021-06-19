@@ -1,6 +1,5 @@
 package kinesis.mock.instances
 
-import scala.collection.SortedMap
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
@@ -9,7 +8,7 @@ import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, JsonObject, KeyDecoder, KeyEncoder}
+import io.circe.{Decoder, Encoder, JsonObject}
 import os.Path
 
 object circe {
@@ -71,13 +70,6 @@ object circe {
 
   implicit val arrayBytesCirceDecoder: Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))
-
-  implicit def sortedMapCirceEncoder[K: KeyEncoder, V: Encoder]
-      : Encoder[SortedMap[K, V]] = Encoder[Map[K, V]].contramap(_.toMap)
-
-  implicit def sortedMapCirceDecoder[K: KeyDecoder: Ordering, V: Decoder]
-      : Decoder[SortedMap[K, V]] =
-    Decoder[Map[K, V]].map(x => SortedMap.from(x))
 
   implicit val pathCirceEncoder: Encoder[Path] =
     Encoder[String].contramap(_.toString())

@@ -50,7 +50,7 @@ class SplitShardTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          stream.shards.keys.toList.count(shard =>
+          stream.shards.keys.toVector.count(shard =>
             shard.parentShardId.contains(shardToSplit.shardId.shardId)
           ) == 2 && stream.streamStatus == StreamStatus.UPDATING
         },
@@ -109,7 +109,7 @@ class SplitShardTests
             .streams(streamName)
             .shards
             .keys
-            .toList
+            .toVector
             .map(_.shardId.index)
             .max + 1
         )

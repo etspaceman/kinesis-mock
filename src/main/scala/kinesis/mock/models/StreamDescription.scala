@@ -11,11 +11,11 @@ import kinesis.mock.instances.circe._
 
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
-    enhancedMonitoring: List[ShardLevelMetrics],
+    enhancedMonitoring: Vector[ShardLevelMetrics],
     hasMoreShards: Boolean,
     keyId: Option[String],
     retentionPeriodHours: Int,
-    shards: List[ShardSummary],
+    shards: Vector[ShardSummary],
     streamArn: String,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
@@ -28,10 +28,10 @@ object StreamDescription {
       exclusiveStartShardId: Option[String],
       limit: Option[Int]
   ): StreamDescription = {
-    val allShards = streamData.shards.keys.toList
+    val allShards = streamData.shards.keys.toVector
     val lim = Math.min(limit.getOrElse(100), 100)
 
-    val (shards: List[Shard], hasMoreShards: Boolean) =
+    val (shards: Vector[Shard], hasMoreShards: Boolean) =
       exclusiveStartShardId match {
         case None =>
           val s = allShards.take(lim)
@@ -96,11 +96,11 @@ object StreamDescription {
         .as[Option[EncryptionType]]
       enhancedMonitoring <- x
         .downField("EnhancedMonitoring")
-        .as[List[ShardLevelMetrics]]
+        .as[Vector[ShardLevelMetrics]]
       hasMoreShards <- x.downField("HasMoreShards").as[Boolean]
       keyId <- x.downField("KeyId").as[Option[String]]
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
-      shards <- x.downField("Shards").as[List[ShardSummary]]
+      shards <- x.downField("Shards").as[Vector[ShardSummary]]
       streamArn <- x.downField("StreamARN").as[String]
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")

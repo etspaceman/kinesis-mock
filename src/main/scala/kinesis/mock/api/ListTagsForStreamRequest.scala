@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
@@ -30,7 +28,7 @@ final case class ListTagsForStreamRequest(
               (
                 exclusiveStartTagKey match {
                   case Some(tagKey) =>
-                    CommonValidations.validateTagKeys(List(tagKey))
+                    CommonValidations.validateTagKeys(Vector(tagKey))
                   case None => Right(())
                 },
                 limit match {
@@ -38,14 +36,14 @@ final case class ListTagsForStreamRequest(
                   case None    => Right(())
                 }
               ).mapN((_, _) => {
-                val allTags = stream.tags.toList
+                val allTags = stream.tags.toVector
                 val lastTagIndex = allTags.length - 1
                 val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
                 val firstIndex = exclusiveStartTagKey
                   .map(x => allTags.indexWhere(_._1 == x) + 1)
                   .getOrElse(0)
                 val lastIndex = Math.min(firstIndex + lim, lastTagIndex + 1)
-                val tags = SortedMap.from(allTags.slice(firstIndex, lastIndex))
+                val tags = Map.from(allTags.slice(firstIndex, lastIndex))
                 val hasMoreTags =
                   if (lastTagIndex + 1 == lastIndex) false
                   else true

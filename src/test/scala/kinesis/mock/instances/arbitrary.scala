@@ -1,6 +1,6 @@
 package kinesis.mock.instances
 
-import scala.collection.SortedMap
+import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
 import java.time.Instant
@@ -163,7 +163,7 @@ object arbitrary {
             ShardLevelMetric.IteratorAgeMilliseconds
           )
         )
-        .map(x => ShardLevelMetrics(x.toList))
+        .map(x => ShardLevelMetrics(x.toVector))
     )
 
   def shardGen(shardIndex: Int): Gen[Shard] = for {
@@ -214,7 +214,7 @@ object arbitrary {
   val tagsGen: Gen[Tags] = Gen
     .choose(0, 10)
     .flatMap(size => Gen.mapOfN(size, Gen.zip(tagKeyGen, tagValueGen)))
-    .map(x => SortedMap.from(x))
+    .map(x => Map.from(x))
     .map(Tags.apply)
 
   implicit val tagListArb: Arbitrary[TagList] = Arbitrary(
@@ -335,7 +335,10 @@ object arbitrary {
       enhancedMonitoring <- Gen
         .choose(0, 1)
         .flatMap(size =>
-          Gen.listOfN(size, shardLevelMetricsArbitrary.arbitrary)
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
+          )
         )
       hasMoreShards <- Arbitrary.arbitrary[Boolean]
       keyId <- Gen.option(keyIdGen)
@@ -344,7 +347,7 @@ object arbitrary {
       shardGens = List
         .range(1, shardCount)
         .map(index => shardGen(index).map(ShardSummary.fromShard))
-      shards <- Gen.sequence[List[ShardSummary], ShardSummary](shardGens)
+      shards <- Gen.sequence[Vector[ShardSummary], ShardSummary](shardGens)
       streamCreationTimestamp <- nowGen
       streamName <- streamNameGen
       streamArn <- arnGen("kinesis", "stream", streamName.streamName)
@@ -396,7 +399,10 @@ object arbitrary {
       enhancedMonitoring <- Gen
         .choose(0, 1)
         .flatMap(size =>
-          Gen.listOfN(size, shardLevelMetricsArbitrary.arbitrary)
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
+          )
         )
       keyId <- Gen.option(keyIdGen)
       openShardCount <- Gen.choose(1, 50)
@@ -496,19 +502,22 @@ object arbitrary {
   val childShardGen: Gen[ChildShard] = for {
     shardIndex <- Gen.choose(100, 1000)
     shardId = ShardId.create(shardIndex).shardId
-    parentShards = List.range(0, shardIndex).map(ShardId.create).map(_.shardId)
+    parentShards = Vector
+      .range(0, shardIndex)
+      .map(ShardId.create)
+      .map(_.shardId)
     hashKeyRange <- hashKeyRangeArbitrary.arbitrary
   } yield ChildShard(hashKeyRange, parentShards, shardId)
 
   implicit val getRecordsResponseArb: Arbitrary[GetRecordsResponse] = Arbitrary(
     for {
-      childShards <- Gen.listOf(childShardGen)
+      childShards <- Gen.containerOf[Vector, ChildShard](childShardGen)
       millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
       nextShardIterator <- shardIteratorGen
       records <- Gen
         .choose(0, 100)
         .flatMap(size =>
-          Gen.listOfN(
+          Gen.containerOfN[Queue, KinesisRecord](
             size,
             kinesisRecordArbitrary.arbitrary
           )
@@ -618,8 +627,8 @@ object arbitrary {
   implicit val listShardsResponseArb: Arbitrary[ListShardsResponse] = Arbitrary(
     for {
       nextToken <- Gen.option(nextTokenGen(None))
-      shards <- Gen.sequence[List[ShardSummary], ShardSummary](
-        List.range(0, 100).map(x => shardSummaryGen(x))
+      shards <- Gen.sequence[Vector[ShardSummary], ShardSummary](
+        Vector.range(0, 100).map(x => shardSummaryGen(x))
       )
     } yield ListShardsResponse(nextToken, shards)
   )
@@ -643,7 +652,10 @@ object arbitrary {
       : Arbitrary[ListStreamConsumersResponse] = Arbitrary(
     for {
       size <- Gen.choose(0, 20)
-      consumers <- Gen.listOfN(size, consumerSummaryArb.arbitrary)
+      consumers <- Gen.containerOfN[Vector, ConsumerSummary](
+        size,
+        consumerSummaryArb.arbitrary
+      )
       nextToken = consumers.lastOption.map(_.consumerName)
     } yield ListStreamConsumersResponse(consumers, nextToken)
   )
@@ -660,7 +672,7 @@ object arbitrary {
       for {
         hasMoreStreams <- Arbitrary.arbitrary[Boolean]
         size <- Gen.choose(0, 50)
-        streamNames <- Gen.listOfN(size, streamNameGen)
+        streamNames <- Gen.containerOfN[Vector, StreamName](size, streamNameGen)
       } yield ListStreamsResponse(hasMoreStreams, streamNames)
     )
 
@@ -736,7 +748,10 @@ object arbitrary {
   implicit val putRecordsRequestArb: Arbitrary[PutRecordsRequest] = Arbitrary(
     for {
       recordsSize <- Gen.choose(0, 500)
-      records <- Gen.listOfN(recordsSize, putRecordsRequestEntryArb.arbitrary)
+      records <- Gen.containerOfN[Vector, PutRecordsRequestEntry](
+        recordsSize,
+        putRecordsRequestEntryArb.arbitrary
+      )
       streamName <- streamNameGen
     } yield PutRecordsRequest(records, streamName)
   )
@@ -770,7 +785,10 @@ object arbitrary {
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       failedRecordCount <- Gen.choose(0, 500)
       recordsSize <- Gen.choose(failedRecordCount, 500)
-      records <- Gen.listOfN(recordsSize, putRecordsResultEntry.arbitrary)
+      records <- Gen.containerOfN[Vector, PutRecordsResultEntry](
+        recordsSize,
+        putRecordsResultEntry.arbitrary
+      )
     } yield PutRecordsResponse(encryptionType, failedRecordCount, records)
   )
 
@@ -836,27 +854,34 @@ object arbitrary {
           consumersSize,
           consumerArbitrary.arbitrary.map(x => x.consumerName -> x)
         )
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       enhancedMonitoring <- Gen
         .choose(0, 1)
         .flatMap(size =>
-          Gen.listOfN(size, shardLevelMetricsArbitrary.arbitrary)
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
+          )
         )
       keyId <- Gen.option(keyIdGen)
       retentionPeriod <- retentionPeriodHoursGen.map(_.hours)
       shardsSize <- Gen.choose(0, 50)
-      shardList <- Gen.listOfN(shardsSize, shardArbitrary.arbitrary)
-      shards <- Gen.sequence[SortedMap[
+      shardList <- Gen
+        .containerOfN[Vector, Shard](shardsSize, shardArbitrary.arbitrary)
+      shards <- Gen.sequence[Map[
         Shard,
-        List[KinesisRecord]
-      ], (Shard, List[KinesisRecord])](
+        Vector[KinesisRecord]
+      ], (Shard, Vector[KinesisRecord])](
         shardList.map(shard =>
           Gen
             .choose(0, 100)
             .flatMap(recordsSize =>
               Gen
-                .listOfN(recordsSize, kinesisRecordArbitrary.arbitrary)
+                .containerOfN[Vector, KinesisRecord](
+                  recordsSize,
+                  kinesisRecordArbitrary.arbitrary
+                )
                 .map(records => shard -> records)
             )
         )
@@ -868,7 +893,7 @@ object arbitrary {
       tags <- tagsGen
       shardCountUpdates <- Gen
         .choose(0, 10)
-        .flatMap(size => Gen.listOfN(size, nowGen))
+        .flatMap(size => Gen.containerOfN[Vector, Instant](size, nowGen))
     } yield StreamData(
       consumers,
       encryptionType,
@@ -892,7 +917,7 @@ object arbitrary {
       .suchThat(x =>
         x.groupBy(_.streamName).filter { case (_, x) => x.length > 1 }.isEmpty
       )
-      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamName -> sd))))
+      .map(x => Streams(Map.from(x.map(sd => sd.streamName -> sd))))
   }
 
 }

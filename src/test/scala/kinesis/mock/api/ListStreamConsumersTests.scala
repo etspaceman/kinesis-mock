@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.syntax.all._
@@ -26,7 +24,7 @@ class ListStreamConsumersTests
       val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val consumers = SortedMap.from(
+      val consumers = Map.from(
         Gen
           .listOfN(5, consumerArbitrary.arbitrary)
           .suchThat(x =>
@@ -51,7 +49,7 @@ class ListStreamConsumersTests
 
       } yield assert(
         res.isRight && res.exists { response =>
-          consumers.values.toList
+          consumers.values.toVector
             .map(ConsumerSummary.fromConsumer) === response.consumers
         },
         s"req: $req\nres: $res"
@@ -89,7 +87,7 @@ class ListStreamConsumersTests
       val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val consumers = SortedMap.from(
+      val consumers = Map.from(
         Gen
           .listOfN(10, consumerArbitrary.arbitrary)
           .suchThat(x =>
@@ -126,12 +124,12 @@ class ListStreamConsumersTests
         res.isRight && paginatedRes.isRight && res.exists { response =>
           consumers.values
             .take(5)
-            .toList
+            .toVector
             .map(ConsumerSummary.fromConsumer) === response.consumers
         } && paginatedRes.exists { response =>
           consumers.values
             .takeRight(5)
-            .toList
+            .toVector
             .map(ConsumerSummary.fromConsumer) === response.consumers
         },
         s"req: $req\n" +

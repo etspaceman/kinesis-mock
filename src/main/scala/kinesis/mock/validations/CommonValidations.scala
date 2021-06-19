@@ -298,7 +298,7 @@ object CommonValidations {
   def findShard(
       shardId: String,
       stream: StreamData
-  ): Response[(Shard, List[KinesisRecord])] =
+  ): Response[(Shard, Vector[KinesisRecord])] =
     stream.shards.find { case (shard, _) =>
       shard.shardId.shardId == shardId
     } match {
@@ -313,7 +313,7 @@ object CommonValidations {
       partitionKey: String,
       explicitHashKey: Option[String],
       stream: StreamData
-  ): Response[(Shard, List[KinesisRecord])] = {
+  ): Response[(Shard, Vector[KinesisRecord])] = {
     (explicitHashKey match {
       case Some(ehk) =>
         val hash = BigInt(ehk)

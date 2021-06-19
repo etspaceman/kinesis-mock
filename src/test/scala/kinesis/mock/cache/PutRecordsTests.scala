@@ -37,7 +37,7 @@ class PutRecordsTests
             PutRecordsRequest(
               putRecordsRequestEntryArb.arbitrary
                 .take(5)
-                .toList,
+                .toVector,
               streamName
             )
           )

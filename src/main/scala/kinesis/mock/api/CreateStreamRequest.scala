@@ -42,7 +42,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         for {
           res <- streamsRef
             .update(x =>
-              x.copy(streams = x.streams ++ List(streamName -> newStream))
+              x.copy(streams = x.streams + (streamName -> newStream))
             )
         } yield res
       }

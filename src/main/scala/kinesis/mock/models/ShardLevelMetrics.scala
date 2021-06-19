@@ -4,7 +4,7 @@ package models
 import cats.Eq
 import io.circe
 
-final case class ShardLevelMetrics(shardLevelMetrics: List[ShardLevelMetric])
+final case class ShardLevelMetrics(shardLevelMetrics: Vector[ShardLevelMetric])
 
 object ShardLevelMetrics {
   implicit val shardLevelMetricsCirceEncoder: circe.Encoder[ShardLevelMetrics] =
@@ -12,7 +12,7 @@ object ShardLevelMetrics {
   implicit val shardLevelMetricsCirceDecoder
       : circe.Decoder[ShardLevelMetrics] = {
     _.downField("ShardLevelMetrics")
-      .as[List[ShardLevelMetric]]
+      .as[Vector[ShardLevelMetric]]
       .map(ShardLevelMetrics.apply)
   }
   implicit val shardLevelMetricsEncoder: Encoder[ShardLevelMetrics] =
