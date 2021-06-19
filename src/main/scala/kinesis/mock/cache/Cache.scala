@@ -427,7 +427,7 @@ class Cache private (
                             .fold(x)(stream =>
                               x.updateStream(
                                 stream.copy(consumers =
-                                  stream.consumers ++ List(
+                                  stream.consumers ++ Vector(
                                     r.consumer.consumerName -> Consumer(
                                       r.consumer.consumerArn,
                                       r.consumer.consumerCreationTimestamp,
@@ -497,7 +497,7 @@ class Cache private (
                         streamsRef.update(x =>
                           x.streams.values
                             .find(s =>
-                              s.consumers.keys.toList
+                              s.consumers.keys.toVector
                                 .contains(consumer.consumerName)
                             )
                             .fold(x)(stream =>
@@ -1200,7 +1200,7 @@ class Cache private (
         semaphores.persistData.withPermit(
           for {
             streams <- streamsRef.get
-            ctx = context ++ List(
+            ctx = context ++ Vector(
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )

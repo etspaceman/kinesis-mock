@@ -13,7 +13,7 @@ import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordsRequest(
-    records: List[PutRecordsRequestEntry],
+    records: Vector[PutRecordsRequestEntry],
     streamName: StreamName
 ) {
   def putRecords(
@@ -84,7 +84,7 @@ final case class PutRecordsRequest(
                   )
                 }
             }
-            .toList
+            .toVector
 
           val newShards = grouped.map {
             case ((shard, currentRecords), recordsToAdd) =>
@@ -129,7 +129,7 @@ object PutRecordsRequest {
   implicit val putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
     x =>
       for {
-        records <- x.downField("Records").as[List[PutRecordsRequestEntry]]
+        records <- x.downField("Records").as[Vector[PutRecordsRequestEntry]]
         streamName <- x.downField("StreamName").as[StreamName]
       } yield PutRecordsRequest(records, streamName)
 

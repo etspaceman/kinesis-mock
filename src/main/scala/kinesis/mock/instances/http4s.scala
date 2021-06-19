@@ -15,7 +15,7 @@ object http4s {
   implicit def kinesisMockEntityDecoder[A: Decoder]: EntityDecoder[IO, A] =
     EntityDecoder.decodeBy[IO, A](
       KinesisMockMediaTypes.validContentTypes.head,
-      KinesisMockMediaTypes.validContentTypes.tail.toList: _*
+      KinesisMockMediaTypes.validContentTypes.tail.toVector: _*
     ) { msg =>
       msg.contentType match {
         case Some(ct)

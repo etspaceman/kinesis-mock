@@ -24,9 +24,9 @@ class DisableEnhancedMonitoringTests
 
       val updated = streams.findAndUpdateStream(streamName)(stream =>
         stream.copy(enhancedMonitoring =
-          List(
+          Vector(
             ShardLevelMetrics(
-              List(
+              Vector(
                 ShardLevelMetric.IncomingBytes,
                 ShardLevelMetric.IncomingRecords,
                 ShardLevelMetric.OutgoingBytes,

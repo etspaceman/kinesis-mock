@@ -90,12 +90,12 @@ object ShardIterator {
       sequenceNumber: SequenceNumber
   ): ShardIterator = {
     val encryptString =
-      (List.fill(14)("0").mkString + Instant.now().toEpochMilli)
+      (Vector.fill(14)("0").mkString + Instant.now().toEpochMilli)
         .takeRight(14) +
         s"/$streamName" +
         s"/$shardId" +
         s"/${sequenceNumber.value}/" +
-        List.fill(37)("0").mkString
+        Vector.fill(37)("0").mkString
 
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     cipher.init(Cipher.ENCRYPT_MODE, iteratorPwdKey, iteratorPwdIv)

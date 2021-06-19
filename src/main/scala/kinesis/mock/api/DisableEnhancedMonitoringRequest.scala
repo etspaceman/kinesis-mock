@@ -12,7 +12,7 @@ import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(
-    shardLevelMetrics: List[ShardLevelMetric],
+    shardLevelMetrics: Vector[ShardLevelMetric],
     streamName: StreamName
 ) {
   def disableEnhancedMonitoring(
@@ -27,14 +27,14 @@ final case class DisableEnhancedMonitoringRequest(
             stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =
             if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
-              List.empty
+              Vector.empty
             else current.diff(shardLevelMetrics)
 
           streamsRef
             .update(x =>
               x.updateStream(
                 stream
-                  .copy(enhancedMonitoring = List(ShardLevelMetrics(desired)))
+                  .copy(enhancedMonitoring = Vector(ShardLevelMetrics(desired)))
               )
             )
             .as(
@@ -59,7 +59,7 @@ object DisableEnhancedMonitoringRequest {
     for {
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
-        .as[List[ShardLevelMetric]]
+        .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
     } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
   }

@@ -17,7 +17,7 @@ case class KCLRecordProcessor(
   override def processRecords(x: ProcessRecordsInput): Unit = x
     .records()
     .asScala
-    .toList
+    .toVector
     .traverse_(record =>
       resultsQueue.enqueue1(record) *> IO(
         x.checkpointer()

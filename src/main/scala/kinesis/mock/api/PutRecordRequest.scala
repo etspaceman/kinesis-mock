@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import java.time.Instant
 
 import cats.Eq
@@ -78,7 +76,7 @@ final case class PutRecordRequest(
           .update(x =>
             x.updateStream {
               stream.copy(
-                shards = stream.shards ++ SortedMap(
+                shards = stream.shards ++ Map(
                   shard -> (records :+ KinesisRecord(
                     now,
                     data,

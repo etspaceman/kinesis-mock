@@ -39,7 +39,7 @@ class DescribeStreamSummaryTests
           expected = StreamDescriptionSummary(
             Some(0),
             Some(EncryptionType.NONE),
-            List(ShardLevelMetrics(List.empty)),
+            Vector(ShardLevelMetrics(Vector.empty)),
             None,
             1,
             24,

@@ -36,7 +36,7 @@ class PutRecordsTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          stream.shards.values.toList.flatten.count { rec =>
+          stream.shards.values.toVector.flatten.count { rec =>
             req.records.map(_.data).exists(_.sameElements(rec.data))
           } == initReq.records.length
         },

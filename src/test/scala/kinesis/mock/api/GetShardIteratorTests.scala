@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import java.time.Instant
 
 import cats.effect.IO
@@ -28,8 +26,8 @@ class GetShardIteratorTests
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -44,7 +42,7 @@ class GetShardIteratorTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -81,8 +79,8 @@ class GetShardIteratorTests
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -97,7 +95,7 @@ class GetShardIteratorTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -136,8 +134,8 @@ class GetShardIteratorTests
 
       val startingInstant = Instant.parse("2021-01-01T00:00:00.00Z")
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             val newTimestamp = startingInstant.plusSeconds(index.toLong)
             record.copy(
@@ -154,7 +152,7 @@ class GetShardIteratorTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -195,8 +193,8 @@ class GetShardIteratorTests
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -211,7 +209,7 @@ class GetShardIteratorTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -250,8 +248,8 @@ class GetShardIteratorTests
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -266,7 +264,7 @@ class GetShardIteratorTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -304,8 +302,8 @@ class GetShardIteratorTests
 
         val shard = streams.streams(streamName).shards.head._1
 
-        val records: List[KinesisRecord] =
-          kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+        val records: Vector[KinesisRecord] =
+          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
             case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
@@ -320,7 +318,7 @@ class GetShardIteratorTests
 
         val withRecords = streams.findAndUpdateStream(streamName) { s =>
           s.copy(
-            shards = SortedMap(s.shards.head._1 -> records),
+            shards = Map(s.shards.head._1 -> records),
             streamStatus = StreamStatus.ACTIVE
           )
         }
@@ -361,8 +359,8 @@ class GetShardIteratorTests
 
         val shard = streams.streams(streamName).shards.head._1
 
-        val records: List[KinesisRecord] =
-          kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+        val records: Vector[KinesisRecord] =
+          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
             case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
@@ -377,7 +375,7 @@ class GetShardIteratorTests
 
         val withRecords = streams.findAndUpdateStream(streamName) { s =>
           s.copy(
-            shards = SortedMap(s.shards.head._1 -> records),
+            shards = Map(s.shards.head._1 -> records),
             streamStatus = StreamStatus.ACTIVE
           )
         }

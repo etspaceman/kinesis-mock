@@ -119,7 +119,7 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         .records(
           putRecordsRequestEntryArb.arbitrary
             .take(5)
-            .toList
+            .toVector
             .map(x =>
               PutRecordsRequestEntry
                 .builder()
@@ -144,11 +144,11 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     )(
       resources.resultsQueue.getSize.map(_ == 5)
     )
-    resRecords <- resources.resultsQueue.dequeueChunk1(5).map(_.toList)
+    resRecords <- resources.resultsQueue.dequeueChunk1(5).map(_.toVector)
   } yield assert(
     gotAllRecords && resRecords
       .map(_.partitionKey())
-      .diff(req.records().asScala.toList.map(_.partitionKey()))
+      .diff(req.records().asScala.toVector.map(_.partitionKey()))
       .isEmpty,
     s"Got All Records: $gotAllRecords\nLength: ${resRecords.length}"
   )

@@ -34,7 +34,7 @@ class MergeShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         )
         .toIO
         .map(
-          _.shards().asScala.toList.filter(
+          _.shards().asScala.toVector.filter(
             _.sequenceNumberRange()
               .endingSequenceNumber() == null // scalafix:ok
           )
@@ -59,7 +59,7 @@ class MergeShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         )
         .toIO
         .map(
-          _.shards().asScala.toList.filter(
+          _.shards().asScala.toVector.filter(
             _.sequenceNumberRange()
               .endingSequenceNumber() == null // scalafix:ok
           )

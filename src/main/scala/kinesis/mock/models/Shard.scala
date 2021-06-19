@@ -1,8 +1,6 @@
 package kinesis.mock
 package models
 
-import scala.collection.SortedMap
-
 import java.time.Instant
 
 import cats.Eq
@@ -33,10 +31,10 @@ object Shard {
       shardCount: Int,
       createTime: Instant,
       startingIndex: Int
-  ): SortedMap[Shard, List[KinesisRecord]] = {
+  ): Map[Shard, Vector[KinesisRecord]] = {
     val shardHash = maxHashKey / BigInt(shardCount)
-    SortedMap.from(
-      List
+    Map.from(
+      Vector
         .range(startingIndex, shardCount + startingIndex, 1)
         .zipWithIndex
         .map { case (shardIndex, listIndex) =>
@@ -56,7 +54,7 @@ object Shard {
               SequenceNumber.create(createTime, shardIndex, None, None, None)
             ),
             ShardId.create(shardIndex)
-          ) -> List.empty
+          ) -> Vector.empty
         }
     )
   }

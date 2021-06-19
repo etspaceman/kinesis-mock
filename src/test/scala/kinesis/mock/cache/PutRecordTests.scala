@@ -36,7 +36,7 @@ class PutRecordTests
           recordRequests <- IO(
             putRecordRequestArb.arbitrary
               .take(5)
-              .toList
+              .toVector
               .map(_.copy(streamName = streamName))
           )
           _ <- recordRequests.traverse(req =>

@@ -51,7 +51,7 @@ class ListStreamConsumersTests
               )
               .one
           )
-          registerResults <- consumerNames.toList.traverse(consumerName =>
+          registerResults <- consumerNames.toVector.traverse(consumerName =>
             cache
               .registerStreamConsumer(
                 RegisterStreamConsumerRequest(consumerName, streamArn),

@@ -24,7 +24,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   protected val genStreamShardCount = 3
 
   // this must match env var INITIALIZE_STREAMS in docker-compose.yml
-  protected val initializedStreams = List(
+  protected val initializedStreams = Vector(
     "stream1" -> 3,
     "stream2" -> 2,
     "stream3" -> 1,

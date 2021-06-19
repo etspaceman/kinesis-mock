@@ -6,12 +6,12 @@ import io.circe
 
 final case class ChildShard(
     hashKeyRange: HashKeyRange,
-    parentShards: List[String],
+    parentShards: Vector[String],
     shardId: String
 )
 
 object ChildShard {
-  def fromShard(shard: Shard, parentShards: List[Shard]): ChildShard =
+  def fromShard(shard: Shard, parentShards: Vector[Shard]): ChildShard =
     ChildShard(
       shard.hashKeyRange,
       parentShards.map(_.shardId.shardId),
@@ -26,7 +26,7 @@ object ChildShard {
   implicit val childShardCirceDecoder: circe.Decoder[ChildShard] = x =>
     for {
       hashKeyRange <- x.downField("HashKeyRange").as[HashKeyRange]
-      parentShards <- x.downField("ParentShards").as[List[String]]
+      parentShards <- x.downField("ParentShards").as[Vector[String]]
       shardId <- x.downField("ShardId").as[String]
     } yield ChildShard(hashKeyRange, parentShards, shardId)
   implicit val childShardEncoder: Encoder[ChildShard] =

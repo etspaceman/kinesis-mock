@@ -50,7 +50,7 @@ final case class ListShardsRequest(
                 case None     => Right(())
               }
             ).mapN((_, _, stream, _, _) => {
-              val allShards = stream.shards.keys.toList
+              val allShards = stream.shards.keys.toVector.sorted
               val lastShardIndex = allShards.length - 1
               val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
               val firstIndex =
@@ -83,7 +83,7 @@ final case class ListShardsRequest(
                 case None     => Right(())
               }
             ).mapN((_, _, _) => {
-              val allShards: List[Shard] = stream.shards.keys.toList
+              val allShards: Vector[Shard] = stream.shards.keys.toVector.sorted
               val filteredShards = shardFilter match {
                 case Some(sf)
                     if sf.`type` == ShardFilterType.AT_TRIM_HORIZON ||

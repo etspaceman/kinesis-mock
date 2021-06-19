@@ -42,7 +42,7 @@ object KinesisMockService extends IOApp {
           cacheConfig.createStreamDuration,
           context,
           logger,
-          cacheConfig.initializeStreams.toList.flatten
+          cacheConfig.initializeStreams.toVector.flatten
         )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
@@ -92,7 +92,7 @@ object KinesisMockService extends IOApp {
       createStreamDuration: FiniteDuration,
       context: LoggingContext,
       logger: SelfAwareStructuredLogger[IO],
-      streams: List[CreateStreamRequest]
+      streams: Vector[CreateStreamRequest]
   ): IO[Unit] = {
     def isInitStreamDone(streamName: StreamName): IO[Boolean] = {
       val descReq = DescribeStreamSummaryRequest(streamName)

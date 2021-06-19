@@ -36,7 +36,7 @@ class UpdateShardCountTests
         )
         .toIO
         .map(
-          _.shards().asScala.toList.filter(
+          _.shards().asScala.toVector.filter(
             _.sequenceNumberRange()
               .endingSequenceNumber() == null // scalafix:ok
           )

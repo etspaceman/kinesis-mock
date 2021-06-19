@@ -1,7 +1,6 @@
 package kinesis.mock
 package models
 
-import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
@@ -14,18 +13,18 @@ import io.circe.derivation._
 import kinesis.mock.instances.circe._
 
 final case class StreamData(
-    consumers: SortedMap[ConsumerName, Consumer],
+    consumers: Map[ConsumerName, Consumer],
     encryptionType: EncryptionType,
-    enhancedMonitoring: List[ShardLevelMetrics],
+    enhancedMonitoring: Vector[ShardLevelMetrics],
     keyId: Option[String],
     retentionPeriod: FiniteDuration,
-    shards: SortedMap[Shard, List[KinesisRecord]],
+    shards: Map[Shard, Vector[KinesisRecord]],
     streamArn: String,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus,
     tags: Tags,
-    shardCountUpdates: List[Instant]
+    shardCountUpdates: Vector[Instant]
 )
 
 object StreamData {
@@ -68,12 +67,12 @@ object StreamData {
   ): StreamData = {
 
     val createTime = Instant.now()
-    val shards: SortedMap[Shard, List[KinesisRecord]] =
+    val shards: Map[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
     StreamData(
-      SortedMap.empty,
+      Map.empty,
       EncryptionType.NONE,
-      List(ShardLevelMetrics(List.empty)),
+      Vector(ShardLevelMetrics(Vector.empty)),
       None,
       minRetentionPeriod,
       shards,
@@ -82,7 +81,7 @@ object StreamData {
       streamName,
       StreamStatus.CREATING,
       Tags.empty,
-      List.empty
+      Vector.empty
     )
   }
 }

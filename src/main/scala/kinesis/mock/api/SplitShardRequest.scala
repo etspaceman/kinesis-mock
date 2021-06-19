@@ -68,7 +68,7 @@ final case class SplitShardRequest(
           val newStartingHashKeyNumber = BigInt(newStartingHashKey)
           val newShardIndex1 = stream.shards.keys.map(_.shardId.index).max + 1
           val newShardIndex2 = newShardIndex1 + 1
-          val newShard1: (Shard, List[KinesisRecord]) = Shard(
+          val newShard1: (Shard, Vector[KinesisRecord]) = Shard(
             None,
             None,
             now,
@@ -82,9 +82,9 @@ final case class SplitShardRequest(
               SequenceNumber.create(now, newShardIndex1, None, None, None)
             ),
             ShardId.create(newShardIndex1)
-          ) -> List.empty
+          ) -> Vector.empty
 
-          val newShard2: (Shard, List[KinesisRecord]) = Shard(
+          val newShard2: (Shard, Vector[KinesisRecord]) = Shard(
             None,
             None,
             now,
@@ -98,11 +98,11 @@ final case class SplitShardRequest(
               SequenceNumber.create(now, newShardIndex2, None, None, None)
             ),
             ShardId.create(newShardIndex2)
-          ) -> List.empty
+          ) -> Vector.empty
 
-          val newShards = List(newShard1, newShard2)
+          val newShards = Vector(newShard1, newShard2)
 
-          val oldShard: (Shard, List[KinesisRecord]) = shard.copy(
+          val oldShard: (Shard, Vector[KinesisRecord]) = shard.copy(
             closedTimestamp = Some(now),
             sequenceNumberRange = shard.sequenceNumberRange.copy(
               endingSequenceNumber = Some(SequenceNumber.shardEnd)

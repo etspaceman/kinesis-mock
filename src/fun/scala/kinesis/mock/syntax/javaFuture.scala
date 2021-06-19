@@ -20,7 +20,7 @@ trait JavaFutureSyntax {
   ): JavaFutureSyntax.JavaFutureOps[A] =
     new JavaFutureSyntax.JavaFutureOps(future)
 
-  implicit def toListenableFutureOps[A](
+  implicit def toVectorenableFutureOps[A](
       future: => ListenableFuture[A]
   ): JavaFutureSyntax.ListenableFutureOps[A] =
     new JavaFutureSyntax.ListenableFutureOps(future)

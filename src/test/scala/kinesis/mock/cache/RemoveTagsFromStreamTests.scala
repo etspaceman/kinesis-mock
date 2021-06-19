@@ -38,7 +38,7 @@ class RemoveTagsFromStreamTests
             )
             .rethrow
           _ <- cache.removeTagsFromStream(
-            RemoveTagsFromStreamRequest(streamName, tags.tags.keys.toList),
+            RemoveTagsFromStreamRequest(streamName, tags.tags.keys.toVector),
             context,
             false
           )
