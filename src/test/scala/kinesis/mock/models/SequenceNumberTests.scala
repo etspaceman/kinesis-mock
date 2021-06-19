@@ -39,7 +39,7 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
 
       val parsed = sequenceNumber.parse
 
-      (parsed.isValid && parsed.exists {
+      (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
@@ -78,7 +78,7 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
 
       val parsed = sequenceNumber.parse
 
-      (parsed.isValid && parsed.exists {
+      (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
@@ -121,7 +121,7 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
 
       val parsed = sequenceNumber.parse
 
-      (parsed.isValid && parsed.exists {
+      (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           x.seqIndex == 0 &&
             x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&

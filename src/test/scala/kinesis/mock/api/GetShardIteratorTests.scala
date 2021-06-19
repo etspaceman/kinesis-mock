@@ -59,9 +59,9 @@ class GetShardIteratorTests
           None
         )
         res <- req.getShardIterator(streamsRef)
-        parsed = res.andThen(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
-        parsed.isValid && parsed.exists { parts =>
+        parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
           parts.streamName == streamName
@@ -112,9 +112,9 @@ class GetShardIteratorTests
           None
         )
         res <- req.getShardIterator(streamsRef)
-        parsed = res.andThen(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
-        parsed.isValid && parsed.exists { parts =>
+        parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records.last.sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
           parts.streamName == streamName
@@ -169,9 +169,9 @@ class GetShardIteratorTests
           Some(startingInstant.plusSeconds(25L))
         )
         res <- req.getShardIterator(streamsRef)
-        parsed = res.andThen(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
-        parsed.isValid && parsed.exists { parts =>
+        parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
           parts.streamName == streamName
@@ -226,9 +226,9 @@ class GetShardIteratorTests
           None
         )
         res <- req.getShardIterator(streamsRef)
-        parsed = res.andThen(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
-        parsed.isValid && parsed.exists { parts =>
+        parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
           parts.streamName == streamName
@@ -281,9 +281,9 @@ class GetShardIteratorTests
           None
         )
         res <- req.getShardIterator(streamsRef)
-        parsed = res.andThen(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
-        parsed.isValid && parsed.exists { parts =>
+        parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
           parts.streamName == streamName
@@ -335,9 +335,9 @@ class GetShardIteratorTests
             None
           )
           res <- req.getShardIterator(streamsRef)
-          parsed = res.andThen(_.shardIterator.parse)
+          parsed = res.flatMap(_.shardIterator.parse)
         } yield assert(
-          parsed.isValid && parsed.exists { parts =>
+          parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == records(25).sequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
             parts.streamName == streamName
@@ -392,9 +392,9 @@ class GetShardIteratorTests
             None
           )
           res <- req.getShardIterator(streamsRef)
-          parsed = res.andThen(_.shardIterator.parse)
+          parsed = res.flatMap(_.shardIterator.parse)
         } yield assert(
-          parsed.isValid && parsed.exists { parts =>
+          parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
             parts.streamName == streamName
@@ -425,7 +425,7 @@ class GetShardIteratorTests
           None
         )
         res <- req.getShardIterator(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req")
+      } yield assert(res.isLeft, s"req: $req")
   })
 
   test("It should reject for AT_TIMESTAMP with a timestamp in the future")(
@@ -450,7 +450,7 @@ class GetShardIteratorTests
             Some(Instant.now().plusSeconds(30))
           )
           res <- req.getShardIterator(streamsRef)
-        } yield assert(res.isInvalid, s"req: $req")
+        } yield assert(res.isLeft, s"req: $req")
     }
   )
 
@@ -476,7 +476,7 @@ class GetShardIteratorTests
             None
           )
           res <- req.getShardIterator(streamsRef)
-        } yield assert(res.isInvalid, s"req: $req")
+        } yield assert(res.isLeft, s"req: $req")
     }
   )
 
@@ -502,7 +502,7 @@ class GetShardIteratorTests
             None
           )
           res <- req.getShardIterator(streamsRef)
-        } yield assert(res.isInvalid, s"req: $req")
+        } yield assert(res.isLeft, s"req: $req")
     }
   )
 

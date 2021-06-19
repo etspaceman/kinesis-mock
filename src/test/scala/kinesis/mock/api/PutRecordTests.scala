@@ -43,7 +43,7 @@ class PutRecordTests
         res <- req.putRecord(streamsRef, shardSemaphoresRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.shards.values.toList.flatten.exists { rec =>
             rec.data.sameElements(initReq.data)
           }
@@ -77,7 +77,7 @@ class PutRecordTests
               shardSemaphores
             )
           res <- req.putRecord(streamsRef, shardSemaphoresRef)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -116,7 +116,7 @@ class PutRecordTests
               shardSemaphores
             )
           res <- req.putRecord(streamsRef, shardSemaphoresRef)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 }

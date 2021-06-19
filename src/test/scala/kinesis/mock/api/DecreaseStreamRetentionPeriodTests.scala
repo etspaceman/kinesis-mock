@@ -34,7 +34,7 @@ class DecreaseStreamRetentionPeriodTests
         res <- req.decreaseStreamRetention(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.retentionPeriod == 24.hours
         },
         s"req: $req\nres: $res\nstreams: $withIncreasedRetention"
@@ -58,7 +58,7 @@ class DecreaseStreamRetentionPeriodTests
         res <- req.decreaseStreamRetention(streamsRef)
         streams <- streamsRef.get
       } yield assert(
-        res.isInvalid && streams.streams.get(streamName).exists { stream =>
+        res.isLeft && streams.streams.get(streamName).exists { stream =>
           stream.retentionPeriod == 24.hours
         },
         s"req: $req\nres: $res\nstreams: $streams"

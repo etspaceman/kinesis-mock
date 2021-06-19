@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -18,13 +17,13 @@ final case class StopStreamEncryptionRequest(
 ) {
   def stopStreamEncryption(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] = streamsRef.get.flatMap(streams =>
     CommonValidations
       .validateStreamName(streamName)
-      .andThen(_ =>
+      .flatMap(_ =>
         CommonValidations
           .findStream(streamName, streams)
-          .andThen(stream =>
+          .flatMap(stream =>
             (
               CommonValidations.validateKeyId(keyId),
               CommonValidations.isKmsEncryptionType(encryptionType),

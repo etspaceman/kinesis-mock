@@ -34,7 +34,7 @@ class ListTagsForStreamTests
         req = ListTagsForStreamRequest(None, None, streamName)
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags == Tags.fromTagList(response.tags)
         },
         s"req: $req\nres: $res"
@@ -70,7 +70,7 @@ class ListTagsForStreamTests
         )
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
             response.tags
           )
@@ -102,7 +102,7 @@ class ListTagsForStreamTests
         req = ListTagsForStreamRequest(None, Some(5), streamName)
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
             response.tags
           ) && response.hasMoreTags

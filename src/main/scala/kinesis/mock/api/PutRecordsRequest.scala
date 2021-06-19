@@ -3,12 +3,10 @@ package api
 
 import java.time.Instant
 
-import cats.Parallel
-import cats.data.Validated._
 import cats.effect.IO
 import cats.effect.concurrent.{Ref, Semaphore}
-import cats.kernel.Eq
 import cats.syntax.all._
+import cats.{Eq, Parallel}
 import io.circe
 
 import kinesis.mock.models._
@@ -23,15 +21,15 @@ final case class PutRecordsRequest(
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
   )(implicit
       P: Parallel[IO]
-  ): IO[ValidatedResponse[PutRecordsResponse]] =
+  ): IO[Response[PutRecordsResponse]] =
     streamsRef.get.flatMap { streams =>
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActiveOrUpdating(streamName, streams),
                 records.traverse(x =>
@@ -40,12 +38,12 @@ final case class PutRecordsRequest(
                     x.explicitHashKey match {
                       case Some(explHashKey) =>
                         CommonValidations.validateExplicitHashKey(explHashKey)
-                      case None => Valid(())
+                      case None => Right(())
                     },
                     CommonValidations.validateData(x.data),
                     CommonValidations
                       .computeShard(x.partitionKey, x.explicitHashKey, stream)
-                      .andThen { case (shard, records) =>
+                      .flatMap { case (shard, records) =>
                         CommonValidations
                           .isShardOpen(shard)
                           .map(_ => (shard, records))

@@ -29,7 +29,7 @@ class DescribeStreamSummaryTests
           .get(streamName)
           .map(s => StreamDescriptionSummary.fromStreamData(s))
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streamDescriptionSummary.contains(response.streamDescriptionSummary)
         },
         s"req: $req\nres: $res"
@@ -43,6 +43,6 @@ class DescribeStreamSummaryTests
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.describeStreamSummary(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

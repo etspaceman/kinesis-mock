@@ -3,10 +3,9 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -23,41 +22,41 @@ final case class SplitShardRequest(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
+  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 CommonValidations.validateShardId(shardToSplit),
                 if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
                   InvalidArgumentException(
                     "NewStartingHashKey contains invalid characters"
-                  ).invalidNel
-                } else Valid(newStartingHashKey),
+                  ).asLeft
+                } else Right(newStartingHashKey),
                 if (
                   streams.streams.values.map(_.shards.size).sum + 1 > shardLimit
                 )
                   LimitExceededException(
                     "Operation would exceed the configured shard limit for the account"
-                  ).invalidNel
-                else Valid(()),
-                CommonValidations.findShard(shardToSplit, stream).andThen {
+                  ).asLeft
+                else Right(()),
+                CommonValidations.findShard(shardToSplit, stream).flatMap {
                   case (shard, shardData) =>
-                    CommonValidations.isShardOpen(shard).andThen { _ =>
+                    CommonValidations.isShardOpen(shard).flatMap { _ =>
                       val newStartingHashKeyNumber = BigInt(newStartingHashKey)
                       if (
                         newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
                       )
-                        Valid((shard, shardData))
+                        Right((shard, shardData))
                       else
                         InvalidArgumentException(
                           s"NewStartingHashKey is not within the hash range shard ${shard.shardId}"
-                        ).invalidNel
+                        ).asLeft
                     }
                 }
               ).mapN { case (_, _, _, _, (shard, shardData)) =>

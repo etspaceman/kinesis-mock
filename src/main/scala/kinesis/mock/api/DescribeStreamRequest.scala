@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -19,23 +18,23 @@ final case class DescribeStreamRequest(
 ) {
   def describeStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[DescribeStreamResponse]] =
+  ): IO[Response[DescribeStreamResponse]] =
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 exclusiveStartShardId match {
                   case Some(shardId) =>
                     CommonValidations.validateShardId(shardId)
-                  case None => Valid(())
+                  case None => Right(())
                 },
                 limit match {
                   case Some(l) => CommonValidations.validateLimit(l)
-                  case _       => Valid(())
+                  case _       => Right(())
                 }
               ).mapN((_, _) =>
                 DescribeStreamResponse(

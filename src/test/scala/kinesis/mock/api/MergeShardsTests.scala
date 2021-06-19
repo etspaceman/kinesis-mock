@@ -47,7 +47,7 @@ class MergeShardsTests
         res <- req.mergeShards(streamsRef, shardSemaphoresRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.shards.keys.toList.exists(shard =>
             shard.adjacentParentShardId
               .contains(adjacentShardToMerge.shardId.shardId) &&
@@ -93,7 +93,7 @@ class MergeShardsTests
           )
         res <- req.mergeShards(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -140,7 +140,7 @@ class MergeShardsTests
           )
         res <- req.mergeShards(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -187,7 +187,7 @@ class MergeShardsTests
           )
         res <- req.mergeShards(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -226,7 +226,7 @@ class MergeShardsTests
           )
         res <- req.mergeShards(streamsRef, shardSemaphoresRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })

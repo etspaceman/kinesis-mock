@@ -1,9 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import io.circe
 
 import kinesis.mock.models._
@@ -15,11 +15,11 @@ final case class DescribeStreamSummaryRequest(
 ) {
   def describeStreamSummary(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[DescribeStreamSummaryResponse]] =
+  ): IO[Response[DescribeStreamSummaryResponse]] =
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
             .map(stream =>

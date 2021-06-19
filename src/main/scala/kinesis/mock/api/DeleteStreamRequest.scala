@@ -3,10 +3,9 @@ package api
 
 import scala.collection.SortedMap
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.{Ref, Semaphore}
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -20,14 +19,14 @@ final case class DeleteStreamRequest(
   def deleteStream(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  ): IO[ValidatedResponse[Unit]] =
+  ): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 if (
@@ -36,8 +35,8 @@ final case class DeleteStreamRequest(
                 )
                   ResourceInUseException(
                     s"Consumers exist in stream $streamName and enforceConsumerDeletion is true"
-                  ).invalidNel
-                else Valid(())
+                  ).asLeft
+                else Right(())
               ).mapN((_, _) => stream)
             )
         )

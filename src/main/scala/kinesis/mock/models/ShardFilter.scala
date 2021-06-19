@@ -3,7 +3,7 @@ package models
 
 import java.time.Instant
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.instances.circe._

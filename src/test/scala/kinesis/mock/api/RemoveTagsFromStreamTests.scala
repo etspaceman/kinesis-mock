@@ -42,7 +42,7 @@ class RemoveTagsFromStreamTests
         res <- req.removeTagsFromStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags.copy(tags = tags.tags.filterNot { case (k, _) =>
             removedTags.contains(k)
           })

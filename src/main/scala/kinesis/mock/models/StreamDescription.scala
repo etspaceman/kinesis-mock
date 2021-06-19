@@ -3,7 +3,7 @@ package models
 
 import java.time.Instant
 
-import cats.kernel.Eq
+import cats.Eq
 import cats.syntax.all._
 import io.circe
 

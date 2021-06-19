@@ -5,12 +5,10 @@ import scala.concurrent.duration._
 
 import java.time.Instant
 
-import cats.Parallel
-import cats.data.Validated._
 import cats.effect.concurrent.{Ref, Semaphore}
 import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
 import cats.syntax.all._
+import cats.{Eq, Parallel}
 import io.circe
 
 import kinesis.mock.models._
@@ -26,29 +24,29 @@ final case class UpdateShardCountRequest(
       streamsRef: Ref[IO, Streams],
       shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[ValidatedResponse[Unit]] =
+  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Response[Unit]] =
     streamsRef.get.flatMap { streams =>
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 if (targetShardCount > stream.shards.size * 2)
                   InvalidArgumentException(
                     "Cannot update shard count beyond 2x current shard count"
-                  ).invalidNel
+                  ).asLeft
                 else if (targetShardCount < stream.shards.size / 2)
                   InvalidArgumentException(
                     "Cannot update shard count below 50% of the current shard count"
-                  ).invalidNel
+                  ).asLeft
                 else if (targetShardCount > 10000)
                   InvalidArgumentException(
                     "Cannot scale a stream beyond 10000 shards"
-                  ).invalidNel
+                  ).asLeft
                 else if (
                   streams.streams.values
                     .map(_.shards.size)
@@ -56,8 +54,8 @@ final case class UpdateShardCountRequest(
                 )
                   LimitExceededException(
                     "Operation would result more shards than the configured shard limit for this account"
-                  ).invalidNel
-                else Valid(targetShardCount),
+                  ).asLeft
+                else Right(targetShardCount),
                 if (
                   stream.shardCountUpdates.count(ts =>
                     ts.toEpochMilli > now
@@ -67,8 +65,8 @@ final case class UpdateShardCountRequest(
                 )
                   LimitExceededException(
                     "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
-                  ).invalidNel
-                else Valid(())
+                  ).asLeft
+                else Right(())
               ).mapN((_, _, _) => stream)
             }
         )

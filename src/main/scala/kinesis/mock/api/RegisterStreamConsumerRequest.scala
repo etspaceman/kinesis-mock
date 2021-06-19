@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -18,34 +17,34 @@ final case class RegisterStreamConsumerRequest(
 ) {
   def registerStreamConsumer(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[RegisterStreamConsumerResponse]] =
+  ): IO[Response[RegisterStreamConsumerResponse]] =
     streamsRef.get.flatMap { streams =>
       CommonValidations
         .validateStreamArn(streamArn)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStreamByArn(streamArn, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 CommonValidations.validateConsumerName(consumerName),
                 if (stream.consumers.size >= 20)
                   LimitExceededException(
                     s"Only 20 consumers can be registered to a stream at once"
-                  ).invalidNel
-                else Valid(()),
+                  ).asLeft
+                else Right(()),
                 if (
                   stream.consumers.values
                     .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
                 )
                   LimitExceededException(
                     s"Only 5 consumers can be created at the same time"
-                  ).invalidNel
-                else Valid(()),
+                  ).asLeft
+                else Right(()),
                 if (stream.consumers.contains(consumerName))
                   ResourceInUseException(
                     s"Consumer $consumerName exists"
-                  ).invalidNel
-                else Valid(())
+                  ).asLeft
+                else Right(())
               ).mapN { (_, _, _, _) => (stream, streamArn, consumerName) }
             )
         )

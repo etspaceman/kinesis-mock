@@ -5,6 +5,7 @@ import java.time.Instant
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
+import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -28,7 +29,7 @@ class ListShardsTests
         req = ListShardsRequest(None, None, None, None, None, Some(streamName))
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
             s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
           }
@@ -69,9 +70,9 @@ class ListShardsTests
             )
               .listShards(streamsRef)
           )
-          .map(_.andThen(identity))
+          .map(_.flatMap(identity))
       } yield assert(
-        res.isValid && paginatedRes.isValid && res.exists { response =>
+        res.isRight && paginatedRes.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .take(50)
@@ -115,7 +116,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .takeRight(89)
@@ -164,7 +165,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .takeRight(95)
@@ -215,7 +216,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
             s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
           }
@@ -268,7 +269,7 @@ class ListShardsTests
           )
           res <- req.listShards(streamsRef)
         } yield assert(
-          res.isValid && res.exists { response =>
+          res.isRight && res.exists { response =>
             updated.streams.get(streamName).exists { s =>
               s.shards.keys.toList
                 .takeRight(95)
@@ -307,7 +308,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .takeRight(95)
@@ -381,7 +382,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .takeRight(95)
@@ -454,7 +455,7 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
             s.shards.keys.toList
               .takeRight(95)
@@ -489,7 +490,7 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -514,7 +515,7 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -539,6 +540,6 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }
