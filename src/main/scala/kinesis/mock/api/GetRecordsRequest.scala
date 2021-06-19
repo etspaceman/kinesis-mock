@@ -166,7 +166,7 @@ object GetRecordsRequest {
     case Some(head) =>
       getRecords(
         data.tail,
-        results :+ head,
+        results.enqueue(head),
         head,
         totalSize + head.size
       )
