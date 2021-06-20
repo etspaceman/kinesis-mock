@@ -5,7 +5,9 @@ import scala.concurrent.duration._
 import cats.effect.concurrent.Semaphore
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import cats.implicits._
+import fs2.io.tls.TLSContext
 import io.circe.syntax._
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -15,8 +17,6 @@ import retry._
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{StreamName, StreamStatus}
-import org.http4s.ember.server.EmberServerBuilder
-import fs2.io.tls.TLSContext
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
