@@ -2,8 +2,9 @@ package kinesis.mock
 
 import java.util.Collections
 
-import cats.implicits._
 import software.amazon.awssdk.services.kinesis.model._
+
+import kinesis.mock.syntax.javaFuture._
 
 class DescribeStreamTests
     extends munit.CatsEffectSuite
@@ -11,10 +12,16 @@ class DescribeStreamTests
 
   fixture.test("It should describe a stream") { resources =>
     for {
-      res <- describeStreamSummary(resources)
-      expected = StreamDescriptionSummary
+      res <- resources.kinesisClient
+        .describeStream(
+          DescribeStreamRequest
+            .builder()
+            .streamName(resources.streamName.streamName)
+            .build
+        )
+        .toIO
+      expected = StreamDescription
         .builder()
-        .consumerCount(0)
         .encryptionType(EncryptionType.NONE)
         .enhancedMonitoring(
           EnhancedMetrics
@@ -22,36 +29,21 @@ class DescribeStreamTests
             .shardLevelMetricsWithStrings(Collections.emptyList[String]())
             .build()
         )
-        .openShardCount(genStreamShardCount)
+        .hasMoreShards(false)
+        .shards(res.streamDescription().shards())
         .retentionPeriodHours(24)
         .streamARN(
           s"arn:aws:kinesis:${resources.cacheConfig.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
         )
         .streamCreationTimestamp(
-          res.streamDescriptionSummary().streamCreationTimestamp()
+          res.streamDescription().streamCreationTimestamp()
         )
         .streamName(resources.streamName.streamName)
         .streamStatus(StreamStatus.ACTIVE)
         .build()
     } yield assert(
-      res.streamDescriptionSummary == expected,
-      s"${res.streamDescriptionSummary()}\n$expected"
-    )
-  }
-
-  fixture.test("It should describe initialized streams") { resources =>
-    for {
-      res <- initializedStreams.parTraverse { case (name, _) =>
-        describeStreamSummary(resources.kinesisClient, name).map(
-          _.streamDescriptionSummary()
-        )
-      }
-    } yield assert(
-      res.map(s =>
-        s.streamName() -> s.openShardCount()
-      ) == initializedStreams &&
-        res.forall(s => s.streamStatus() == StreamStatus.ACTIVE),
-      s"$res"
+      res.streamDescription == expected,
+      s"${res.streamDescription()}\n$expected"
     )
   }
 }
