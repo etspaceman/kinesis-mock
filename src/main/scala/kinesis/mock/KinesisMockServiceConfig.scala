@@ -6,8 +6,8 @@ import pureconfig.module.catseffect.syntax._
 import pureconfig.{ConfigReader, ConfigSource}
 
 final case class KinesisMockServiceConfig(
-    http2Port: Int,
-    http1PlainPort: Int,
+    tlsPort: Int,
+    plainPort: Int,
     keyStorePassword: String,
     keyManagerPassword: String
 )

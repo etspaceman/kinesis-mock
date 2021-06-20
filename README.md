@@ -51,8 +51,8 @@ these ports to a local one).
 | Variable | Data Type | Default Value | Notes |
 | -------- | --------- | ------------- | ----- |
 | INITIALIZE_STREAMS | String | | A comma-delimited string of stream names and its corresponding shard count to initialize during startup. For example: "my-first-stream:1,my-other-stream:2,my-last-stream:1"|
-| KINESIS_MOCK_HTTP2_PORT | Int | 4567 | Https Only |
-| KINESIS_MOCK_HTTP1_PLAIN_PORT | Int | 4568 | Http Only |
+| KINESIS_MOCK_TLS_PORT | Int | 4567 | Https Only |
+| KINESIS_MOCK_PLAIN_PORT | Int | 4568 | Http Only |
 | CREATE_STREAM_DURATION | Duration | 500ms | |
 | DELETE_STREAM_DURATION | Duration | 500ms | |
 | REGISTER_STREAM_CONSUMER_DURATION | Duration | 500ms | |
