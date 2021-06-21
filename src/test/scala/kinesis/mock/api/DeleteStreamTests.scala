@@ -71,7 +71,7 @@ class DeleteStreamTests
   })
 
   test(
-    "It should reject when the stream has consumes and enforceConsumerDeletion is true"
+    "It should reject when the stream has consumes and enforceConsumerDeletion is not set"
   )(PropF.forAllF {
     (
         streamName: StreamName,
@@ -84,7 +84,8 @@ class DeleteStreamTests
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
         x.copy(consumers =
-          Map(consumerName -> Consumer.create(x.streamArn, consumerName))
+          Map(consumerName -> Consumer.create(x.streamArn, consumerName)),
+          streamStatus = StreamStatus.ACTIVE
         )
       )
 
