@@ -57,12 +57,14 @@ object KinesisMockService extends IOApp {
           .withPort(serviceConfig.tlsPort)
           .withHost("0.0.0.0")
           .withTLS(tlsContext)
+          .withShutdownTimeout(10.seconds)
           .withHttpApp(app)
           .build
         plainServer = EmberServerBuilder
           .default[IO]
           .withPort(serviceConfig.plainPort)
           .withHost("0.0.0.0")
+          .withShutdownTimeout(10.seconds)
           .withHttpApp(app)
           .build
         _ <- logger.info(
