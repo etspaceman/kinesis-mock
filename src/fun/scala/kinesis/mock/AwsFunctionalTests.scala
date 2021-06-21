@@ -115,6 +115,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
         DeleteStreamRequest
           .builder()
           .streamName(resources.streamName.streamName)
+          .enforceConsumerDeletion(true)
           .build()
       )
       .toIO
