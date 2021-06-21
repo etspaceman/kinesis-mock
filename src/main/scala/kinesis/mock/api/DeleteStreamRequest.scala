@@ -27,11 +27,11 @@ final case class DeleteStreamRequest(
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 if (
-                  enforceConsumerDeletion
-                    .exists(identity) && stream.consumers.nonEmpty
+                  !enforceConsumerDeletion
+                    .getOrElse(false) && stream.consumers.nonEmpty
                 )
                   ResourceInUseException(
-                    s"Consumers exist in stream $streamName and enforceConsumerDeletion is true"
+                    s"Consumers exist in stream $streamName and enforceConsumerDeletion is either not set or is false"
                   ).asLeft
                 else Right(())
               ).mapN((_, _) => stream)
