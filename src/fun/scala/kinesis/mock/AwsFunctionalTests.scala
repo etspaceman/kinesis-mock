@@ -19,7 +19,6 @@ import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
-import scala.concurrent.duration._
 
 trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   protected val genStreamShardCount = 3
