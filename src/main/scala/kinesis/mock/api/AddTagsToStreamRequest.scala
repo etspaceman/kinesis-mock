@@ -29,10 +29,10 @@ final case class AddTagsToStreamRequest(
             (
               CommonValidations.validateTagKeys(tags.tags.keys), {
                 val valuesTooLong =
-                  tags.tags.values.filter(x => x.length() > 255)
+                  tags.tags.values.filter(x => x.length() > 256)
                 if (valuesTooLong.nonEmpty)
                   InvalidArgumentException(
-                    s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+                    s"Values must be less than 256 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
                   ).asLeft
                 else Right(())
               }, {

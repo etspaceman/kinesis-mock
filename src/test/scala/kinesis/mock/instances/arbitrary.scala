@@ -206,7 +206,7 @@ object arbitrary {
     )
 
   val tagValueGen: Gen[String] = Gen
-    .choose(0, 255)
+    .choose(0, 256)
     .flatMap(size =>
       Gen.resize(size, RegexpGen.from("^([a-zA-Z0-9_.:/=+\\-]*)$"))
     )
