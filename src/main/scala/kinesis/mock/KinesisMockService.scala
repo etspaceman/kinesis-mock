@@ -1,6 +1,5 @@
 package kinesis.mock
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import cats.effect.concurrent.Semaphore
