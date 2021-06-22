@@ -11,7 +11,7 @@ object LibraryDependencies {
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.2"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
-  val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
+  val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.0.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
 
   object Borer {
@@ -21,7 +21,7 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "1.3.1"
+    val log4CatsVersion = "2.1.1"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
@@ -29,7 +29,7 @@ object LibraryDependencies {
     val munitVersion = "0.7.26"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.5"
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-3" % "1.0.5"
     val scalacheckEffect =
       "org.typelevel" %% "scalacheck-effect-munit" % "1.0.2"
   }
@@ -44,13 +44,13 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.6.1"
-    val catsEffectVersion = "2.5.0"
+    val catsEffectVersion = "3.1.1"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "0.21.24"
+    val http4sVersion = "0.23.0-RC1"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
@@ -65,7 +65,7 @@ object LibraryDependencies {
   }
 
   object PureConfig {
-    private val pureConfigVersion = "0.14.1"
+    private val pureConfigVersion = "0.16.0"
     val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
     val enumeratum =
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion

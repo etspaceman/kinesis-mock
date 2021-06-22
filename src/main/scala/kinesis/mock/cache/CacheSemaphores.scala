@@ -1,7 +1,7 @@
 package kinesis.mock.cache
 
 import cats.effect._
-import cats.effect.concurrent.Semaphore
+import cats.effect.std.Semaphore
 
 final case class CacheSemaphores private (
     addTagsToStream: Semaphore[IO],

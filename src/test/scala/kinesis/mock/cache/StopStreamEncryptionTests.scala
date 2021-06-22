@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -24,59 +24,57 @@ class StopStreamEncryptionTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          keyId <- IO(keyIdGen.one)
-          _ <- cache
-            .startStreamEncryption(
-              StartStreamEncryptionRequest(
-                EncryptionType.KMS,
-                keyId,
-                streamName
-              ),
-              context,
-              false
-            )
-            .rethrow
-          _ <- IO.sleep(
-            cacheConfig.startStreamEncryptionDuration.plus(200.millis)
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        keyId <- IO(keyIdGen.one)
+        _ <- cache
+          .startStreamEncryption(
+            StartStreamEncryptionRequest(
+              EncryptionType.KMS,
+              keyId,
+              streamName
+            ),
+            context,
+            false
           )
-          _ <- cache
-            .stopStreamEncryption(
-              StopStreamEncryptionRequest(
-                EncryptionType.KMS,
-                keyId,
-                streamName
-              ),
-              context,
-              false
-            )
-            .rethrow
-          describeReq = DescribeStreamSummaryRequest(streamName)
-          checkStream1 <- cache
-            .describeStreamSummary(describeReq, context, false)
-            .rethrow
-          _ <- IO.sleep(
-            cacheConfig.stopStreamEncryptionDuration.plus(200.millis)
-          )
-          checkStream2 <- cache
-            .describeStreamSummary(describeReq, context, false)
-            .rethrow
-        } yield assert(
-          checkStream1.streamDescriptionSummary.encryptionType.contains(
-            EncryptionType.NONE
-          ) &&
-            checkStream1.streamDescriptionSummary.keyId.isEmpty &&
-            checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
-            checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
+          .rethrow
+        _ <- IO.sleep(
+          cacheConfig.startStreamEncryptionDuration.plus(200.millis)
         )
+        _ <- cache
+          .stopStreamEncryption(
+            StopStreamEncryptionRequest(
+              EncryptionType.KMS,
+              keyId,
+              streamName
+            ),
+            context,
+            false
+          )
+          .rethrow
+        describeReq = DescribeStreamSummaryRequest(streamName)
+        checkStream1 <- cache
+          .describeStreamSummary(describeReq, context, false)
+          .rethrow
+        _ <- IO.sleep(
+          cacheConfig.stopStreamEncryptionDuration.plus(200.millis)
+        )
+        checkStream2 <- cache
+          .describeStreamSummary(describeReq, context, false)
+          .rethrow
+      } yield assert(
+        checkStream1.streamDescriptionSummary.encryptionType.contains(
+          EncryptionType.NONE
+        ) &&
+          checkStream1.streamDescriptionSummary.keyId.isEmpty &&
+          checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
+          checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
       )
   })
 }

@@ -1,6 +1,5 @@
 package kinesis.mock.cache
 
-import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -21,25 +20,23 @@ class ListShardsTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(5, streamName), context, false)
-            .rethrow
-          res <- cache
-            .listShards(
-              ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context,
-              false
-            )
-            .rethrow
-        } yield assert(
-          res.shards.length == 5,
-          s"$res"
-        )
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(5, streamName), context, false)
+          .rethrow
+        res <- cache
+          .listShards(
+            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            context,
+            false
+          )
+          .rethrow
+      } yield assert(
+        res.shards.length == 5,
+        s"$res"
       )
   })
 }

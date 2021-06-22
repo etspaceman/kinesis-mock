@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.effect.PropF
 import org.scalacheck.{Gen, Test}
@@ -24,56 +24,54 @@ class ListStreamConsumersTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          streamArn <- cache
-            .describeStreamSummary(
-              DescribeStreamSummaryRequest(streamName),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.streamDescriptionSummary.streamArn)
-          consumerNames <- IO(
-            Gen
-              .listOfN(3, consumerNameArb.arbitrary)
-              .suchThat(x =>
-                x.groupBy(identity)
-                  .collect { case (_, y) if y.length > 1 => x }
-                  .isEmpty
-              )
-              .one
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        streamArn <- cache
+          .describeStreamSummary(
+            DescribeStreamSummaryRequest(streamName),
+            context,
+            false
           )
-          registerResults <- consumerNames.toVector.traverse(consumerName =>
-            cache
-              .registerStreamConsumer(
-                RegisterStreamConsumerRequest(consumerName, streamArn),
-                context,
-                false
-              )
-              .rethrow
-          )
-          res <- cache
-            .listStreamConsumers(
-              ListStreamConsumersRequest(None, None, streamArn, None),
-              context,
-              false
+          .rethrow
+          .map(_.streamDescriptionSummary.streamArn)
+        consumerNames <- IO(
+          Gen
+            .listOfN(3, consumerNameArb.arbitrary)
+            .suchThat(x =>
+              x.groupBy(identity)
+                .collect { case (_, y) if y.length > 1 => x }
+                .isEmpty
             )
-            .rethrow
-        } yield assert(
-          res.consumers.sortBy(_.consumerName) == registerResults
-            .map(_.consumer)
-            .sortBy(_.consumerName),
-          s"${registerResults.map(_.consumer).sortBy(_.consumerName)}\n" +
-            s"${res.consumers.sortBy(_.consumerName)}"
+            .one
         )
+        registerResults <- consumerNames.toVector.traverse(consumerName =>
+          cache
+            .registerStreamConsumer(
+              RegisterStreamConsumerRequest(consumerName, streamArn),
+              context,
+              false
+            )
+            .rethrow
+        )
+        res <- cache
+          .listStreamConsumers(
+            ListStreamConsumersRequest(None, None, streamArn, None),
+            context,
+            false
+          )
+          .rethrow
+      } yield assert(
+        res.consumers.sortBy(_.consumerName) == registerResults
+          .map(_.consumer)
+          .sortBy(_.consumerName),
+        s"${registerResults.map(_.consumer).sortBy(_.consumerName)}\n" +
+          s"${res.consumers.sortBy(_.consumerName)}"
       )
   })
 }

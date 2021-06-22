@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -24,57 +24,55 @@ class RegisterStreamConsumerTests
         streamName: StreamName,
         consumerName: ConsumerName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          streamArn <- cache
-            .describeStreamSummary(
-              DescribeStreamSummaryRequest(streamName),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.streamDescriptionSummary.streamArn)
-          _ <- cache
-            .registerStreamConsumer(
-              RegisterStreamConsumerRequest(consumerName, streamArn),
-              context,
-              false
-            )
-            .rethrow
-          describeStreamConsumerReq = DescribeStreamConsumerRequest(
-            None,
-            Some(consumerName),
-            Some(streamArn)
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        streamArn <- cache
+          .describeStreamSummary(
+            DescribeStreamSummaryRequest(streamName),
+            context,
+            false
           )
-          checkStream1 <- cache
-            .describeStreamConsumer(
-              describeStreamConsumerReq,
-              context,
-              false
-            )
-            .rethrow
-          _ <- IO.sleep(
-            cacheConfig.registerStreamConsumerDuration.plus(200.millis)
+          .rethrow
+          .map(_.streamDescriptionSummary.streamArn)
+        _ <- cache
+          .registerStreamConsumer(
+            RegisterStreamConsumerRequest(consumerName, streamArn),
+            context,
+            false
           )
-          checkStream2 <- cache
-            .describeStreamConsumer(
-              describeStreamConsumerReq,
-              context,
-              false
-            )
-            .rethrow
-        } yield assert(
-          checkStream1.consumerDescription.consumerStatus == ConsumerStatus.CREATING &&
-            checkStream2.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE,
-          s"$checkStream1\n$checkStream2"
+          .rethrow
+        describeStreamConsumerReq = DescribeStreamConsumerRequest(
+          None,
+          Some(consumerName),
+          Some(streamArn)
         )
+        checkStream1 <- cache
+          .describeStreamConsumer(
+            describeStreamConsumerReq,
+            context,
+            false
+          )
+          .rethrow
+        _ <- IO.sleep(
+          cacheConfig.registerStreamConsumerDuration.plus(200.millis)
+        )
+        checkStream2 <- cache
+          .describeStreamConsumer(
+            describeStreamConsumerReq,
+            context,
+            false
+          )
+          .rethrow
+      } yield assert(
+        checkStream1.consumerDescription.consumerStatus == ConsumerStatus.CREATING &&
+          checkStream2.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE,
+        s"$checkStream1\n$checkStream2"
       )
   })
 }

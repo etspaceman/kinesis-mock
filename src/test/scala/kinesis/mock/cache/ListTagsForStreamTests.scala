@@ -1,6 +1,5 @@
 package kinesis.mock.cache
 
-import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -22,29 +21,27 @@ class ListTagsForStreamTests
         streamName: StreamName,
         tags: Tags
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- cache
-            .addTagsToStream(
-              AddTagsToStreamRequest(streamName, tags),
-              context,
-              false
-            )
-            .rethrow
-          res <- cache
-            .listTagsForStream(
-              ListTagsForStreamRequest(None, None, streamName),
-              context,
-              false
-            )
-            .rethrow
-        } yield assert(Tags.fromTagList(res.tags) == tags)
-      )
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- cache
+          .addTagsToStream(
+            AddTagsToStreamRequest(streamName, tags),
+            context,
+            false
+          )
+          .rethrow
+        res <- cache
+          .listTagsForStream(
+            ListTagsForStreamRequest(None, None, streamName),
+            context,
+            false
+          )
+          .rethrow
+      } yield assert(Tags.fromTagList(res.tags) == tags)
   })
 }

@@ -2,8 +2,7 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Ref}
 import io.circe
 
 import kinesis.mock.models.Streams

@@ -3,9 +3,8 @@ package cache
 
 import java.io.FileWriter
 
-import cats.Parallel
-import cats.effect._
-import cats.effect.concurrent.{Ref, Supervisor}
+import cats.effect.std.Supervisor
+import cats.effect.{Ref, _}
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._
@@ -103,9 +102,6 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
@@ -165,7 +161,7 @@ class Cache private (
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -385,8 +381,6 @@ class Cache private (
       req: RegisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO]
   ): IO[Response[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -463,7 +457,7 @@ class Cache private (
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -818,7 +812,7 @@ class Cache private (
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -865,7 +859,7 @@ class Cache private (
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -1041,9 +1035,6 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -1096,9 +1087,6 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -1151,9 +1139,6 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -1197,7 +1182,7 @@ class Cache private (
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
-        semaphores.persistData.withPermit(
+        semaphores.persistData.permit.use(_ =>
           for {
             streams <- streamsRef.get
             ctx = context ++ Vector(
@@ -1228,7 +1213,7 @@ object Cache {
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
+  )(implicit C: Concurrent[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](streams)
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
@@ -1239,7 +1224,7 @@ object Cache {
 
   def loadFromFile(
       config: CacheConfig
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = {
+  )(implicit C: Concurrent[IO]): IO[Cache] = {
     val om = new ObjectMapper()
 
     IO(os.exists(config.persistConfig.osPath)).ifM(

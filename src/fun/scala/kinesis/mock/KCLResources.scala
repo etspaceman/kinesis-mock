@@ -1,10 +1,10 @@
 package kinesis.mock
 
 import cats.effect.IO
-import fs2.concurrent.InspectableQueue
+import cats.effect.std.Queue
 import software.amazon.kinesis.retrieval.KinesisClientRecord
 
 final case class KCLResources(
     functionalTestResources: KinesisFunctionalTestResources,
-    resultsQueue: InspectableQueue[IO, KinesisClientRecord]
+    resultsQueue: Queue[IO, KinesisClientRecord]
 )

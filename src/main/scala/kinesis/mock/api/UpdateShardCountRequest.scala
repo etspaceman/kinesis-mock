@@ -6,8 +6,7 @@ import scala.concurrent.duration._
 import java.time.Instant
 
 import cats.Eq
-import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, IO}
+import cats.effect.{Concurrent, IO, Ref}
 import cats.syntax.all._
 import io.circe
 

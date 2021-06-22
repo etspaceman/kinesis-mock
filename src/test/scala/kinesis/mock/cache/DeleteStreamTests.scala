@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -23,41 +23,39 @@ class DeleteStreamTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          res <- cache
-            .deleteStream(
-              DeleteStreamRequest(streamName, None),
-              context,
-              false
-            )
-            .rethrow
-          describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
-          checkStream1 <- cache.describeStreamSummary(
-            describeStreamSummaryReq,
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        res <- cache
+          .deleteStream(
+            DeleteStreamRequest(streamName, None),
             context,
             false
           )
-          _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
-          checkStream2 <- cache.describeStreamSummary(
-            describeStreamSummaryReq,
-            context,
-            false
-          )
-        } yield assert(
-          checkStream1.exists(
-            _.streamDescriptionSummary.streamStatus == StreamStatus.DELETING
-          ) &&
-            checkStream2.isLeft,
-          s"$res\n$checkStream1\n$checkStream2"
+          .rethrow
+        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
+        checkStream1 <- cache.describeStreamSummary(
+          describeStreamSummaryReq,
+          context,
+          false
         )
+        _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
+        checkStream2 <- cache.describeStreamSummary(
+          describeStreamSummaryReq,
+          context,
+          false
+        )
+      } yield assert(
+        checkStream1.exists(
+          _.streamDescriptionSummary.streamStatus == StreamStatus.DELETING
+        ) &&
+          checkStream2.isLeft,
+        s"$res\n$checkStream1\n$checkStream2"
       )
   })
 }

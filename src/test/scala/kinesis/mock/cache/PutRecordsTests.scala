@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -24,58 +24,56 @@ class PutRecordsTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          req <- IO(
-            PutRecordsRequest(
-              putRecordsRequestEntryArb.arbitrary
-                .take(5)
-                .toVector,
-              streamName
-            )
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        req <- IO(
+          PutRecordsRequest(
+            putRecordsRequestEntryArb.arbitrary
+              .take(5)
+              .toVector,
+            streamName
           )
-          _ <- cache.putRecords(req, context, false).rethrow
-          shard <- cache
-            .listShards(
-              ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.shards.head)
-          shardIterator <- cache
-            .getShardIterator(
-              GetShardIteratorRequest(
-                shard.shardId,
-                ShardIteratorType.TRIM_HORIZON,
-                None,
-                streamName,
-                None
-              ),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.shardIterator)
-          res <- cache
-            .getRecords(GetRecordsRequest(None, shardIterator), context, false)
-            .rethrow
-        } yield assert(
-          res.records.length == 5 && res.records.forall(rec =>
-            req.records.exists(req =>
-              req.data.sameElements(rec.data)
-                && req.partitionKey == rec.partitionKey
-            )
-          ),
-          s"${res.records}\n$req"
         )
+        _ <- cache.putRecords(req, context, false).rethrow
+        shard <- cache
+          .listShards(
+            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            context,
+            false
+          )
+          .rethrow
+          .map(_.shards.head)
+        shardIterator <- cache
+          .getShardIterator(
+            GetShardIteratorRequest(
+              shard.shardId,
+              ShardIteratorType.TRIM_HORIZON,
+              None,
+              streamName,
+              None
+            ),
+            context,
+            false
+          )
+          .rethrow
+          .map(_.shardIterator)
+        res <- cache
+          .getRecords(GetRecordsRequest(None, shardIterator), context, false)
+          .rethrow
+      } yield assert(
+        res.records.length == 5 && res.records.forall(rec =>
+          req.records.exists(req =>
+            req.data.sameElements(rec.data)
+              && req.partitionKey == rec.partitionKey
+          )
+        ),
+        s"${res.records}\n$req"
       )
   })
 }

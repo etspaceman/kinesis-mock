@@ -5,13 +5,13 @@ import scala.util.Try
 import java.security.SecureRandom
 import java.util.Base64
 
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.util.CaseInsensitiveString
+import org.http4s.syntax.header._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -19,13 +19,9 @@ import kinesis.mock.api._
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s._
 
-class KinesisMockRoutes(cache: Cache)(implicit
-    T: Timer[IO],
-    CS: ContextShift[IO]
-) {
+class KinesisMockRoutes(cache: Cache) {
   val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
-  import KinesisMockHeaders._
   import KinesisMockRoutes._
   import KinesisMockMediaTypes._
   import KinesisMockQueryParams._
@@ -45,8 +41,8 @@ class KinesisMockRoutes(cache: Cache)(implicit
       val initLc: LoggingContext = LoggingContext.create
 
       logger.debug(initLc.context)("Received POST request") *>
-        logger.trace((initLc ++ request.headers.toList.map { h =>
-          h.name.value -> h.value
+        logger.trace((initLc ++ request.headers.headers.map { h =>
+          h.name.toString -> h.value
         }).context)(
           "Logging input headers"
         ) *>
@@ -64,59 +60,53 @@ class KinesisMockRoutes(cache: Cache)(implicit
           "Logging input query params"
         ) *> {
 
-          val requestIdHeader = Header(
-            amazonRequestId,
-            UuidCreator.toString(UuidCreator.getTimeBased)
-          )
+          val requestIdHeader = AmazonRequestId(UuidCreator.getTimeBased())
 
-          val amazonId2Header = request.headers
-            .get(Origin)
-            .fold {
+          val amazonId2Header: Vector[Header.ToRaw] = request.headers
+            .get[Origin]
+            .fold[Vector[Header.ToRaw]] {
               val bytes = new Array[Byte](72)
               new SecureRandom().nextBytes(bytes)
               Vector(
-                Header(
-                  amazonId2,
+                AmazonId2(
                   new String(Base64.getEncoder.encode(bytes), "UTF-8")
-                )
+                ).toRaw1
               )
             }(_ => Vector.empty)
 
-          val accessControlHeaders = request.headers
-            .get(Origin)
-            .fold(Vector.empty[Header])(_ =>
+          val accessControlHeaders: Vector[Header.ToRaw] = request.headers
+            .get[Origin]
+            .fold(Vector.empty[Header.ToRaw])(_ =>
               Vector(
-                Header(accessControlAllowOrigin, "*"),
-                Header(
-                  accessControlExposeHeaders,
+                AccessControlAllowOrigin("*").toRaw1,
+                AccessControlExposeHeaders(
                   "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-                )
+                ).toRaw1
               )
             )
 
-          val responseHeaders =
+          val responseHeaders: Vector[Header.ToRaw] =
             amazonId2Header ++ accessControlHeaders :+ requestIdHeader
 
           val authorizationHeader =
-            request.headers.get(CaseInsensitiveString("authorization"))
+            request.headers.get[AmazonAuthorization]
 
           val action: Option[KinesisAction] = queryAction.orElse {
-            request.headers.get(CaseInsensitiveString(amazonTarget)).flatMap {
-              h =>
-                val split =
-                  Try(h.value.split("\\.").toVector).toOption.toVector.flatten
-                (split.headOption, split.get(1L)) match {
-                  case (Some(service), Some(act))
-                      if service == "Kinesis_20131202" =>
-                    KinesisAction.withNameOption(act)
-                  case _ => None
-                }
+            request.headers.get[AmazonTarget].flatMap { h =>
+              val split =
+                Try(h.value.split("\\.").toVector).toOption.toVector.flatten
+              (split.headOption, split.get(1L)) match {
+                case (Some(service), Some(act))
+                    if service == "Kinesis_20131202" =>
+                  KinesisAction.withNameOption(act)
+                case _ => None
+              }
             }
           }
 
           val lcWithHeaders =
-            initLc ++ responseHeaders.map(h =>
-              h.name.value -> h.value
+            initLc ++ responseHeaders.flatMap(tr =>
+              tr.values.toVector.map(h => h.name.toString -> h.value)
             ) ++ action
               .map(x => "action" -> x.entryName)
               .toVector
@@ -219,8 +209,8 @@ class KinesisMockRoutes(cache: Cache)(implicit
                   val missingDateMsg =
                     if (
                       request.headers
-                        .get(CaseInsensitiveString(amazonDate))
-                        .isEmpty && request.headers.get(Date).isEmpty
+                        .get[AmazonDateHeader]
+                        .isEmpty && request.headers.get[Date].isEmpty
                     )
                       Some(
                         "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
@@ -240,7 +230,10 @@ class KinesisMockRoutes(cache: Cache)(implicit
                         "missingAuthKeys",
                         (missingKeys ++ missingDateMsg
                           .fold(Vector.empty[String])(_ =>
-                            Vector(amazonDate, Date.name.value)
+                            Vector(
+                              AmazonDateHeader.amazonDateHeaderInstance.name.toString,
+                              Date.headerInstance.name.toString
+                            )
                           )).mkString(", ")
                       )
 
@@ -312,7 +305,7 @@ class KinesisMockRoutes(cache: Cache)(implicit
                     )(_ => None),
                     queryAmazonDate.fold[Option[String]](
                       Some(
-                        s"AWS query-string parameters must include \\$amazonDate\\."
+                        s"AWS query-string parameters must include \\$amazonDateQuery\\."
                       )
                     )(_ => None)
                   ).flatMap {
@@ -379,14 +372,12 @@ class KinesisMockRoutes(cache: Cache)(implicit
         }
 
     case request @ OPTIONS -> Root =>
-      val requestIdHeader = Header(
-        amazonRequestId,
-        UuidCreator.toString(UuidCreator.getTimeBased)
-      )
+      val requestIdHeader = AmazonRequestId(UuidCreator.getTimeBased).toRaw1
+
       val initContext =
         LoggingContext.create + ("requestId" -> requestIdHeader.value)
       logger.debug(initContext.context)("Received OPTIONS request") *> {
-        if (request.headers.get(Origin).isEmpty)
+        if (request.headers.get[Origin].isEmpty)
           logger.warn(initContext.context)(
             "Missing required origin header for OPTIONS call"
           ) *>
@@ -400,29 +391,32 @@ class KinesisMockRoutes(cache: Cache)(implicit
               requestIdHeader
             )
         else {
-          val responseHeaders: Vector[Header] =
+          val responseHeaders: Vector[Header.ToRaw] =
             request.headers
-              .get(Origin)
-              .fold(Vector.empty[Header])(_ =>
-                Vector(
-                  Header(accessControlAllowOrigin, "*"),
-                  Header(
-                    accessControlExposeHeaders,
+              .get[Origin]
+              .fold[Vector[Header.ToRaw]](Vector.empty)(_ =>
+                Vector[Header.ToRaw](
+                  AccessControlAllowOrigin("*").toRaw1,
+                  AccessControlExposeHeaders(
                     "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-                  ),
-                  Header(accessControlMaxAge, "172800")
+                  ).toRaw1,
+                  AccessControlMaxAge("172800").toRaw1
                 ) ++ request.headers
-                  .get(CaseInsensitiveString(accessControlRequestHeaders))
-                  .map(h => Header(accessControlAllowHeaders, h.value))
+                  .get[AccessControlRequestHeaders]
+                  .map[Header.ToRaw](h =>
+                    AccessControlAllowHeaders(h.value).toRaw1
+                  )
                   .toVector ++ request.headers
-                  .get(CaseInsensitiveString(accessControlRequestMethod))
-                  .map(h => Header(accessControlAllowMethods, h.value))
+                  .get[AccessControlRequestMethod]
+                  .map[Header.ToRaw](h =>
+                    AccessControlAllowMethods(h.value).toRaw1
+                  )
                   .toVector
               ) :+ requestIdHeader
 
           logger.debug(
-            (initContext ++ responseHeaders.map(h =>
-              h.name.value -> h.value
+            (initContext ++ responseHeaders.flatMap(tr =>
+              tr.values.map(h => h.name.toString -> h.value)
             )).context
           )("Successfully processed OPTIONS call")
 
@@ -439,8 +433,11 @@ object KinesisMockRoutes {
       case None      => s"<${`type`}/>\n"
     }
 
-  def handleDecodeError(err: DecodeFailure, responseHeaders: Vector[Header])(
-      implicit entityEncoder: EntityEncoder[IO, ErrorResponse]
+  def handleDecodeError(
+      err: DecodeFailure,
+      responseHeaders: Vector[Header.ToRaw]
+  )(implicit
+      entityEncoder: EntityEncoder[IO, ErrorResponse]
   ): IO[Response[IO]] =
     BadRequest(
       ErrorResponse("SerializationException", err.getMessage),
@@ -449,7 +446,7 @@ object KinesisMockRoutes {
 
   def handleKinesisMockError(
       err: KinesisMockException,
-      responseHeaders: Vector[Header]
+      responseHeaders: Vector[Header.ToRaw]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
   ): IO[Response[IO]] =
@@ -465,12 +462,10 @@ object KinesisMockRoutes {
       request: Request[IO],
       action: KinesisAction,
       cache: Cache,
-      responseHeaders: Vector[Header],
+      responseHeaders: Vector[Header.ToRaw],
       loggingContext: LoggingContext,
       isCbor: Boolean
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO],
       errEE: EntityEncoder[IO, ErrorResponse],
       descLimitsEE: EntityEncoder[IO, DescribeLimitsResponse],
       descStreamEE: EntityEncoder[IO, DescribeStreamResponse],

@@ -19,8 +19,10 @@ object http4s {
     ) { msg =>
       msg.contentType match {
         case Some(ct)
-            if ct.mediaType == KinesisMockMediaTypes.amazonJson || ct.value
-              .startsWith("application/json") => {
+            if ct.mediaType == KinesisMockMediaTypes.amazonJson ||
+              (ct.mediaType.isApplication && ct.mediaType.subType.startsWith(
+                "json"
+              )) => {
           implicit val D = Decoder[A].circeDecoder
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
@@ -65,7 +67,7 @@ object http4s {
       case _ => {
         implicit val E = Encoder[A].borerEncoder
         EntityEncoder[IO, Chunk[Byte]]
-          .contramap[A](x => Chunk.Bytes.apply(Cbor.encode(x).toByteArray))
+          .contramap[A](x => Chunk.array(Cbor.encode(x).toByteArray))
           .withContentType(`Content-Type`(mediaType))
       }
     }

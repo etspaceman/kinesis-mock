@@ -1,7 +1,6 @@
 package kinesis.mock.api
 
-import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 

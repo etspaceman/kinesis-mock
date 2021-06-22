@@ -1,6 +1,5 @@
 package kinesis.mock.cache
 
-import cats.effect.{Blocker, IO}
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -21,52 +20,50 @@ class DescribeStreamTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          res <- cache
-            .describeStream(
-              DescribeStreamRequest(None, None, streamName),
-              context,
-              false
-            )
-            .rethrow
-          shardSummary <- cache
-            .listShards(
-              ListShardsRequest(
-                None,
-                None,
-                None,
-                None,
-                None,
-                Some(streamName)
-              ),
-              context,
-              false
-            )
-            .rethrow
-            .map(x => x.shards)
-          expected = StreamDescription(
-            Some(EncryptionType.NONE),
-            Vector(ShardLevelMetrics(Vector.empty)),
-            false,
-            None,
-            24,
-            shardSummary,
-            s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/$streamName",
-            res.streamDescription.streamCreationTimestamp,
-            streamName,
-            StreamStatus.CREATING
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        res <- cache
+          .describeStream(
+            DescribeStreamRequest(None, None, streamName),
+            context,
+            false
           )
-        } yield assert(
-          res.streamDescription == expected,
-          s"$res\n$expected"
+          .rethrow
+        shardSummary <- cache
+          .listShards(
+            ListShardsRequest(
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(streamName)
+            ),
+            context,
+            false
+          )
+          .rethrow
+          .map(x => x.shards)
+        expected = StreamDescription(
+          Some(EncryptionType.NONE),
+          Vector(ShardLevelMetrics(Vector.empty)),
+          false,
+          None,
+          24,
+          shardSummary,
+          s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/$streamName",
+          res.streamDescription.streamCreationTimestamp,
+          streamName,
+          StreamStatus.CREATING
         )
+      } yield assert(
+        res.streamDescription == expected,
+        s"$res\n$expected"
       )
   })
 }
