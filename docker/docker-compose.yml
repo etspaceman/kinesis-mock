@@ -27,6 +27,7 @@ services:
       # This must match 'initializedStreams' variable in AwsFunctionalTests
       - "INITIALIZE_STREAMS=stream1:3,stream2:2,stream3:1,stream4:2,stream5:3,stream6:5,stream7:5,stream8:3,stream9:1,stream10:3,stream11:2"
       - "SHOULD_PERSIST_DATA=true"
+      - "PERSIST_PATH=/tmp/datadir1"
     healthcheck:
       test: "curl --fail http://localhost:4568/healthcheck || exit 1"
       interval: 5s
