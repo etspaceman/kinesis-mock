@@ -18,7 +18,7 @@ class PutRecordTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     for {
       recordRequests <- IO(
         putRecordRequestArb.arbitrary
-          .take(5)
+          .take(20)
           .toVector
           .map(_.copy(streamName = resources.streamName))
           .map(x =>
@@ -34,7 +34,7 @@ class PutRecordTests extends munit.CatsEffectSuite with AwsFunctionalTests {
               .build()
           )
       )
-      _ <- recordRequests.traverse(x =>
+      _ <- recordRequests.parTraverse(x =>
         resources.kinesisClient.putRecord(x).toIO
       )
       shards <- resources.kinesisClient
@@ -68,7 +68,7 @@ class PutRecordTests extends munit.CatsEffectSuite with AwsFunctionalTests {
       )
       res = gets.flatMap(_.records().asScala.toVector)
     } yield assert(
-      res.length == 5 && res.forall(rec =>
+      res.length == 20 && res.forall(rec =>
         recordRequests.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
             && req.partitionKey == rec.partitionKey

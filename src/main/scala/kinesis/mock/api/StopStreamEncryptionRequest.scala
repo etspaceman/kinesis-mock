@@ -8,6 +8,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class StopStreamEncryptionRequest(
@@ -17,7 +18,7 @@ final case class StopStreamEncryptionRequest(
 ) {
   def stopStreamEncryption(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] = streamsRef.modify(streams =>
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
@@ -31,17 +32,19 @@ final case class StopStreamEncryptionRequest(
             ).mapN((_, _, _) => stream)
           )
       )
-      .traverse(stream =>
-        streamsRef.update(x =>
-          x.updateStream(
+      .map(stream =>
+        (
+          streams.updateStream(
             stream.copy(
               encryptionType = EncryptionType.NONE,
               streamStatus = StreamStatus.UPDATING,
               keyId = None
             )
-          )
+          ),
+          ()
         )
       )
+      .sequenceWithDefault(streams)
   )
 }
 

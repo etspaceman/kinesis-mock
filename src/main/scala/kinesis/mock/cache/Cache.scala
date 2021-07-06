@@ -103,10 +103,7 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[Response[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -1041,10 +1038,7 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[Response[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1096,10 +1090,7 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[Response[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1151,10 +1142,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[Response[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
