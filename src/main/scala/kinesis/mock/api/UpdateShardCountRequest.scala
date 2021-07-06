@@ -6,12 +6,13 @@ import scala.concurrent.duration._
 import java.time.Instant
 
 import cats.Eq
+import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateShardCount.html
@@ -23,8 +24,8 @@ final case class UpdateShardCountRequest(
   def updateShardCount(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int
-  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
@@ -69,7 +70,7 @@ final case class UpdateShardCountRequest(
               ).mapN((_, _, _) => stream)
             }
         )
-        .traverse { stream =>
+        .map { stream =>
           val shards = stream.shards.toVector
           val oldShards = shards.map { case (shard, data) =>
             (
@@ -86,15 +87,17 @@ final case class UpdateShardCountRequest(
             now,
             oldShards.map(_._1.shardId.index).max + 1
           )
-          streamsRef.update(x =>
-            x.updateStream(
+          (
+            streams.updateStream(
               stream.copy(
                 shards = newShards ++ oldShards,
                 streamStatus = StreamStatus.UPDATING
               )
-            )
+            ),
+            ()
           )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

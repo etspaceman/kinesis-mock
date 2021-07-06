@@ -10,6 +10,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DecreaseStreamRetention.html
@@ -19,7 +20,7 @@ final case class DecreaseStreamRetentionPeriodRequest(
 ) {
   def decreaseStreamRetention(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] = streamsRef.modify { streams =>
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
@@ -38,13 +39,15 @@ final case class DecreaseStreamRetentionPeriodRequest(
             ).mapN((_, _, _) => stream)
           )
       )
-      .traverse(stream =>
-        streamsRef.update(x =>
-          x.updateStream(
+      .map(stream =>
+        (
+          streams.updateStream(
             stream.copy(retentionPeriod = retentionPeriodHours.hours)
-          )
+          ),
+          ()
         )
       )
+      .sequenceWithDefault(streams)
   }
 }
 

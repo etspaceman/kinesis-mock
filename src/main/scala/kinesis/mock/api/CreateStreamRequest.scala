@@ -2,12 +2,13 @@ package kinesis.mock
 package api
 
 import cats.Eq
+import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
@@ -16,8 +17,8 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       (
         CommonValidations.validateStreamName(streamName),
         if (streams.streams.contains(streamName))
@@ -36,16 +37,14 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
           ).asLeft
         else Right(()),
         CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
-      ).traverseN { (_, _, _, _, _) =>
+      ).mapN { (_, _, _, _, _) =>
         val newStream =
           StreamData.create(shardCount, streamName, awsRegion, awsAccountId)
-        for {
-          res <- streamsRef
-            .update(x =>
-              x.copy(streams = x.streams + (streamName -> newStream))
-            )
-        } yield res
-      }
+        (
+          streams.copy(streams = streams.streams + (streamName -> newStream)),
+          ()
+        )
+      }.sequenceWithDefault(streams)
     }
 }
 
