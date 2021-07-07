@@ -139,7 +139,13 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     gotAllRecords <- retryingOnFailures[Boolean](
       policy,
       IO.pure,
-      noop[IO, Boolean]
+      { case (_, status) =>
+        IO(
+          println(
+            s"Results queue is not full, retrying. Retry Status: ${status.toString}"
+          )
+        )
+      }
     )(
       resources.resultsQueue.size.map(_ == 5)
     )
