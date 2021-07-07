@@ -55,7 +55,7 @@ object DockerImagePlugin extends AutoPlugin {
       dockerNamespace := "etspaceman",
       jarLocation := "docker/image/lib/",
       dockerfileLocation := "docker/",
-      dockerfile := "Dockerfile",
+      dockerfile := sys.env.getOrElse("KINESIS_MOCK_DOCKERFILE", "Dockerfile"),
       assembly / assemblyOutputPath := file(
         s"${jarLocation.value + name.value}.jar"
       ),
