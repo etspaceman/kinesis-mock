@@ -10,6 +10,7 @@ import io.circe
 
 import kinesis.mock.instances.circe._
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordRequest(
@@ -21,7 +22,7 @@ final case class PutRecordRequest(
 ) {
   def putRecord(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[PutRecordResponse]] = streamsRef.get.flatMap { streams =>
+  ): IO[Response[PutRecordResponse]] = streamsRef.modify { streams =>
     val now = Instant.now()
     CommonValidations
       .validateStreamName(streamName)
@@ -63,7 +64,7 @@ final case class PutRecordRequest(
             }
           }
       )
-      .traverse { case (stream, shard, records) =>
+      .map { case (stream, shard, records) =>
         val seqNo = SequenceNumber.create(
           shard.createdAtTimestamp,
           shard.shardId.index,
@@ -71,30 +72,28 @@ final case class PutRecordRequest(
           Some(records.length),
           Some(now)
         )
-        streamsRef
-          .update(x =>
-            x.updateStream {
-              stream.copy(
-                shards = stream.shards ++ Map(
-                  shard -> (records :+ KinesisRecord(
-                    now,
-                    data,
-                    stream.encryptionType,
-                    partitionKey,
-                    seqNo
-                  ))
-                )
+        (
+          streams.updateStream {
+            stream.copy(
+              shards = stream.shards ++ Map(
+                shard -> (records :+ KinesisRecord(
+                  now,
+                  data,
+                  stream.encryptionType,
+                  partitionKey,
+                  seqNo
+                ))
               )
-            }
-          )
-          .as(
-            PutRecordResponse(
-              stream.encryptionType,
-              seqNo,
-              shard.shardId.shardId
             )
+          },
+          PutRecordResponse(
+            stream.encryptionType,
+            seqNo,
+            shard.shardId.shardId
           )
+        )
       }
+      .sequenceWithDefault(streams)
   }
 }
 

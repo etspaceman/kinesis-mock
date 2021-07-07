@@ -4,11 +4,12 @@ package api
 import java.time.Instant
 
 import cats.Eq
-import cats.effect.{Concurrent, IO, Ref}
+import cats.effect.{IO, Ref}
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_SplitShard.html
@@ -20,8 +21,8 @@ final case class SplitShardRequest(
   def splitShard(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int
-  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
@@ -62,7 +63,7 @@ final case class SplitShardRequest(
               }
             }
         )
-        .traverse { case (shard, shardData, stream) =>
+        .map { case (shard, shardData, stream) =>
           val now = Instant.now()
           val newStartingHashKeyNumber = BigInt(newStartingHashKey)
           val newShardIndex1 = stream.shards.keys.map(_.shardId.index).max + 1
@@ -108,17 +109,19 @@ final case class SplitShardRequest(
             )
           ) -> shardData
 
-          streamsRef.update(x =>
-            x.updateStream(
+          (
+            streams.updateStream(
               stream.copy(
                 shards = stream.shards.filterNot { case (shard, _) =>
                   shard.shardId == oldShard._1.shardId
                 } ++ (newShards :+ oldShard),
                 streamStatus = StreamStatus.UPDATING
               )
-            )
+            ),
+            ()
           )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

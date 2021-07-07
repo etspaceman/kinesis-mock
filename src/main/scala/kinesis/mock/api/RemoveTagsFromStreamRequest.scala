@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class RemoveTagsFromStreamRequest(
@@ -18,7 +19,7 @@ final case class RemoveTagsFromStreamRequest(
   // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
   def removeTagsFromStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] = streamsRef.modify(streams =>
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
@@ -37,11 +38,13 @@ final case class RemoveTagsFromStreamRequest(
             ).mapN((_, _) => stream)
           )
       )
-      .traverse(stream =>
-        streamsRef.update(x =>
-          x.updateStream(stream.copy(tags = stream.tags -- tagKeys))
+      .map(stream =>
+        (
+          streams.updateStream(stream.copy(tags = stream.tags -- tagKeys)),
+          ()
         )
       )
+      .sequenceWithDefault(streams)
   )
 }
 

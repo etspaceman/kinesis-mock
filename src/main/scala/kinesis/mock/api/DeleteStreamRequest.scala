@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class DeleteStreamRequest(
@@ -16,7 +17,7 @@ final case class DeleteStreamRequest(
   def deleteStream(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[Unit]] =
-    streamsRef.get.flatMap { streams =>
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
@@ -36,7 +37,7 @@ final case class DeleteStreamRequest(
               ).mapN((_, _) => stream)
             )
         )
-        .traverse { stream =>
+        .map { stream =>
           val deletingStream = Map(
             streamName -> stream.copy(
               shards = Map.empty,
@@ -46,16 +47,14 @@ final case class DeleteStreamRequest(
               consumers = Map.empty
             )
           )
-
-          for {
-            res <- streamsRef
-              .update(streams =>
-                streams.copy(
-                  streams = streams.streams ++ deletingStream
-                )
-              )
-          } yield res
+          (
+            streams.copy(
+              streams = streams.streams ++ deletingStream
+            ),
+            ()
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

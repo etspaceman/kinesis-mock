@@ -16,27 +16,29 @@ class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
   fixture.test("It should put records") { resources =>
     for {
-      req <- IO(
-        PutRecordsRequest
-          .builder()
-          .records(
-            putRecordsRequestEntryArb.arbitrary
-              .take(5)
-              .toVector
-              .map(x =>
-                PutRecordsRequestEntry
-                  .builder()
-                  .data(SdkBytes.fromByteArray(x.data))
-                  .partitionKey(x.partitionKey)
-                  .maybeTransform(x.explicitHashKey)(_.explicitHashKey(_))
-                  .build()
-              )
-              .asJava
-          )
-          .streamName(resources.streamName.streamName)
-          .build()
+      reqs <- IO(
+        List.fill(10)(
+          PutRecordsRequest
+            .builder()
+            .records(
+              putRecordsRequestEntryArb.arbitrary
+                .take(5)
+                .toVector
+                .map(x =>
+                  PutRecordsRequestEntry
+                    .builder()
+                    .data(SdkBytes.fromByteArray(x.data))
+                    .partitionKey(x.partitionKey)
+                    .maybeTransform(x.explicitHashKey)(_.explicitHashKey(_))
+                    .build()
+                )
+                .asJava
+            )
+            .streamName(resources.streamName.streamName)
+            .build()
+        )
       )
-      _ <- resources.kinesisClient.putRecords(req).toIO
+      _ <- reqs.parTraverse(req => resources.kinesisClient.putRecords(req).toIO)
       shards <- resources.kinesisClient
         .listShards(
           ListShardsRequest
@@ -67,14 +69,15 @@ class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
           .toIO
       )
       res = gets.flatMap(_.records().asScala.toVector)
+      records = reqs.flatMap(_.records.asScala.toVector)
     } yield assert(
-      res.length == 5 && res.forall(rec =>
-        req.records.asScala.toVector.exists(req =>
+      res.length == 50 && res.forall(rec =>
+        records.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
             && req.partitionKey == rec.partitionKey
         )
       ),
-      s"$res\n${req.records()}"
+      s"$res\n$records"
     )
   }
 }

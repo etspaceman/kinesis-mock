@@ -1227,7 +1227,7 @@ object Cache {
   )(implicit C: Concurrent[IO]): IO[Cache] = {
     val om = new ObjectMapper()
 
-    IO(os.exists(config.persistConfig.osPath)).ifM(
+    IO(os.exists(config.persistConfig.osFile)).ifM(
       for {
         jn <- IO(om.readTree(config.persistConfig.osFile.toIO))
         streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])

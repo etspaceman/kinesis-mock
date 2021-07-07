@@ -9,7 +9,7 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.2"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.3"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.0.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
@@ -26,7 +26,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "0.7.26"
+    val munitVersion = "0.7.27"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
     val catsEffect2 = "org.typelevel" %% "munit-cats-effect-3" % "1.0.5"

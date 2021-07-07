@@ -9,6 +9,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordsRequest(
@@ -18,7 +19,7 @@ final case class PutRecordsRequest(
   def putRecords(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[PutRecordsResponse]] =
-    streamsRef.get.flatMap { streams =>
+    streamsRef.modify[Response[PutRecordsResponse]] { streams =>
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
@@ -51,7 +52,7 @@ final case class PutRecordsRequest(
               ).mapN((_, recs) => (stream, recs))
             }
         )
-        .traverse { case (stream, recs) =>
+        .map { case (stream, recs) =>
           val grouped = recs
             .groupBy { case (shard, records, _) =>
               (shard, records)
@@ -96,26 +97,24 @@ final case class PutRecordsRequest(
               )
           }
 
-          streamsRef
-            .update(x =>
-              x.updateStream(
-                stream.copy(
-                  shards = stream.shards ++ newShards.map {
-                    case (shard, (records, _)) => shard -> records
-                  }
-                )
-              )
-            )
-            .as(
-              PutRecordsResponse(
-                stream.encryptionType,
-                0,
-                newShards.flatMap { case (_, (_, resultEntries)) =>
-                  resultEntries
+          (
+            streams.updateStream(
+              stream.copy(
+                shards = stream.shards ++ newShards.map {
+                  case (shard, (records, _)) => shard -> records
                 }
               )
+            ),
+            PutRecordsResponse(
+              stream.encryptionType,
+              0,
+              newShards.flatMap { case (_, (_, resultEntries)) =>
+                resultEntries
+              }
             )
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

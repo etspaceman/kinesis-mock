@@ -3,10 +3,10 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_EnableEnhancedMonitoring.html
@@ -17,11 +17,11 @@ final case class EnableEnhancedMonitoringRequest(
   def enableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[EnableEnhancedMonitoringResponse]] =
-    streamsRef.get.flatMap { streams =>
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ => CommonValidations.findStream(streamName, streams))
-        .traverse { stream =>
+        .map { stream =>
           val current = stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =
             if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
@@ -29,22 +29,19 @@ final case class EnableEnhancedMonitoringRequest(
                 .filterNot(_ == ShardLevelMetric.ALL)
                 .toVector
             else (current ++ shardLevelMetrics).distinct
-
-          streamsRef
-            .update(x =>
-              x.updateStream(
-                stream
-                  .copy(enhancedMonitoring = Vector(ShardLevelMetrics(desired)))
-              )
+          (
+            streams.updateStream(
+              stream
+                .copy(enhancedMonitoring = Vector(ShardLevelMetrics(desired)))
+            ),
+            EnableEnhancedMonitoringResponse(
+              current,
+              desired,
+              streamName
             )
-            .as(
-              EnableEnhancedMonitoringResponse(
-                current,
-                desired,
-                streamName
-              )
-            )
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 
