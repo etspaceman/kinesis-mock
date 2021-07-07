@@ -10,6 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         cbor_enabled: [true, false]
         service_port: [4567, 4568]
