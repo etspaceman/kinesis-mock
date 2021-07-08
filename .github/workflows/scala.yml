@@ -26,7 +26,7 @@ jobs:
         CBOR_ENABLED: ${{ matrix.cbor_enabled }}
         SERVICE_PORT: ${{ matrix.service_port }}
         MUNIT_FLAKY_OK: true
-        KINESIS_MOCK_DOCKERFILE: Dockerfile.Simple
+        # KINESIS_MOCK_DOCKERFILE: Dockerfile.Simple
     - name: Print Docker Container Listing
       if: ${{ failure() }}
       run: sbt dockerComposePs
