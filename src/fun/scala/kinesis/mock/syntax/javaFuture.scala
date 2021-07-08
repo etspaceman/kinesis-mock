@@ -1,7 +1,6 @@
 package kinesis.mock.syntax
 
 import scala.concurrent.{Future, Promise}
-import scala.jdk.FutureConverters._
 
 import java.util.concurrent.{CompletableFuture, Executor}
 
@@ -29,7 +28,7 @@ trait JavaFutureSyntax {
 object JavaFutureSyntax {
   final class JavaFutureOps[A](future: => CompletableFuture[A]) {
     def toIO: IO[A] =
-      IO.fromFuture(IO(future.asScala))
+      IO.fromCompletableFuture(IO(future))
   }
 
   final class ListenableFutureOps[A](future: => ListenableFuture[A]) {
