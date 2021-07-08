@@ -9,9 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class ListTagsForStreamTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class ListTagsForStreamTests extends KinesisMockSuite with AwsFunctionalTests {
 
   fixture.test("It should list tags for a stream") { resources =>
     for {

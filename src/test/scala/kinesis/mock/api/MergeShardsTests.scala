@@ -8,9 +8,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class MergeShardsTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class MergeShardsTests extends KinesisMockSuite {
   test("It should merge shards")(PropF.forAllF {
     (
         streamName: StreamName,

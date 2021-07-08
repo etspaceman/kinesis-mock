@@ -1,4 +1,5 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
@@ -8,9 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class StopStreamEncryptionTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class StopStreamEncryptionTests extends KinesisMockSuite {
   test("It should stop stream encryption")(PropF.forAllF {
     (
         streamName: StreamName,

@@ -10,9 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class RegisterStreamConsumerTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class RegisterStreamConsumerTests extends KinesisMockSuite {
   test("It should register stream consumers")(PropF.forAllF {
     (
         streamName: StreamName,

@@ -8,9 +8,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DescribeStreamSummaryTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class DescribeStreamSummaryTests extends KinesisMockSuite {
   test("It should describe a stream summary")(PropF.forAllF {
     (
         streamName: StreamName,

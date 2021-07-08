@@ -8,9 +8,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class CreateStreamTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class CreateStreamTests extends KinesisMockSuite {
   test("It should create a stream")(PropF.forAllF {
     (
         req: CreateStreamRequest,

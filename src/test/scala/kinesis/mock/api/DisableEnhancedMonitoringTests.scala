@@ -8,9 +8,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DisableEnhancedMonitoringTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class DisableEnhancedMonitoringTests extends KinesisMockSuite {
   test("It should disable enhanced monitoring")(PropF.forAllF {
     (
         streamName: StreamName,

@@ -1,4 +1,5 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import com.typesafe.config.ConfigValueFactory
 import org.scalacheck.{Prop, Test}
@@ -7,9 +8,7 @@ import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models.StreamName
 
-class CacheConfigTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class CacheConfigTests extends KinesisMockSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

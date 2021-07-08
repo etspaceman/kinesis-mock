@@ -32,7 +32,7 @@ import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
+class KCLTests extends KinesisMockSuite with AwsFunctionalTests {
   override val munitTimeout = 2.minutes
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =

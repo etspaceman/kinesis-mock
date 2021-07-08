@@ -1,10 +1,11 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import cats.syntax.all._
 
 import kinesis.mock.LoggingContext
 
-class DescribeLimitsTests extends munit.CatsEffectSuite {
+class DescribeLimitsTests extends KinesisMockSuite {
   test("It should describe limits")(
     for {
       cacheConfig <- CacheConfig.read

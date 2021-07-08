@@ -14,7 +14,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class KPLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
+class KPLTests extends KinesisMockSuite with AwsFunctionalTests {
   implicit val E: ExecutionContextExecutor = ExecutionContext.global
 
   val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFixture(

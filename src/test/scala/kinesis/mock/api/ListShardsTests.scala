@@ -11,9 +11,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class ListShardsTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class ListShardsTests extends KinesisMockSuite {
   test("It should list shards when provided a streamName")(PropF.forAllF {
     (
         streamName: StreamName,

@@ -1,4 +1,5 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import scala.concurrent.duration._
 
@@ -13,9 +14,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class StopStreamEncryptionTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class StopStreamEncryptionTests extends KinesisMockSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

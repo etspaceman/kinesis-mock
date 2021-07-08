@@ -10,9 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class SplitShardTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class SplitShardTests extends KinesisMockSuite {
   test("It should split shards")(PropF.forAllF {
     (
         streamName: StreamName,

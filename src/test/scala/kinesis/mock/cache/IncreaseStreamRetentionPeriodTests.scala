@@ -1,4 +1,5 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import scala.concurrent.duration._
 
@@ -12,9 +13,7 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class IncreaseStreamRetentionPeriodTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class IncreaseStreamRetentionPeriodTests extends KinesisMockSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

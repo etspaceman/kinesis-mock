@@ -10,9 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListTagsForStreamTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class ListTagsForStreamTests extends KinesisMockSuite {
   test("It should list tags")(PropF.forAllF {
     (
         streamName: StreamName,

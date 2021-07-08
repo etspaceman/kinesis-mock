@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class SplitShardTests extends munit.CatsEffectSuite with AwsFunctionalTests {
+class SplitShardTests extends KinesisMockSuite with AwsFunctionalTests {
 
   fixture.test("It should split a shard") { resources =>
     for {

@@ -1,4 +1,5 @@
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
@@ -7,9 +8,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DeleteStreamTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class DeleteStreamTests extends KinesisMockSuite {
   test("It should delete a stream")(PropF.forAllF {
     (
         streamName: StreamName,

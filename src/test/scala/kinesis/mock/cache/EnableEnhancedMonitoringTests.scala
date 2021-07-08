@@ -1,4 +1,5 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import cats.syntax.all._
 import org.scalacheck.Test
@@ -9,9 +10,7 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class EnableEnhancedMonitoringTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class EnableEnhancedMonitoringTests extends KinesisMockSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

@@ -10,9 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamsTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class ListStreamsTests extends KinesisMockSuite {
   test("It should list streams")(PropF.forAllF {
     (
         awsRegion: AwsRegion,

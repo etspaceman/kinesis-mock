@@ -11,9 +11,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamConsumersTests
-    extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+class ListStreamConsumersTests extends KinesisMockSuite {
   test("It should list consumers")(PropF.forAllF {
     (
         streamName: StreamName,
