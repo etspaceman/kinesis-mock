@@ -53,7 +53,6 @@ object LibraryDependencies {
     val http4sVersion = "0.23.0-RC1"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
-    val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
     val jettyServer = "org.http4s" %% "http4s-jetty-server" % http4sVersion
   }
 
