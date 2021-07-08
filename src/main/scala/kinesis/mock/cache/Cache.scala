@@ -3,8 +3,8 @@ package cache
 
 import java.io.FileWriter
 
+import cats.effect._
 import cats.effect.std.Supervisor
-import cats.effect.{Ref, _}
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._

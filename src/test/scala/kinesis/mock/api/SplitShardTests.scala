@@ -1,7 +1,7 @@
 package kinesis.mock
 package api
 
-import cats.effect.{Ref, _}
+import cats.effect._
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
