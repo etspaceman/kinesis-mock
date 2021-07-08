@@ -168,11 +168,11 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     InitialPositionInStreamExtended.newInitialPosition(
       InitialPositionInStream.TRIM_HORIZON
     )
-  ).test("it should consume records")(kclTest)
+  ).test("it should consume records".flaky)(kclTest)
 
   kclFixture(
     InitialPositionInStreamExtended.newInitialPositionAtTimestamp(
       Date.from(Instant.now().minusSeconds(30))
     )
-  ).test("it should consume records using AT_TIMESTAMP")(kclTest)
+  ).test("it should consume records using AT_TIMESTAMP".flaky)(kclTest)
 }
