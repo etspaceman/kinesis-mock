@@ -13,6 +13,8 @@ native-image \
     -H:ResourceConfigurationFiles=graal/resource-config.json \
     -H:+ReportExceptionStackTraces \
     -H:+AddAllCharsets \
+    -H:IncludeResourceBundles=javax.servlet.LocalStrings \
+    -H:IncludeResourceBundles=javax.servlet.http.LocalStrings \
     --report-unsupported-elements-at-runtime \
     --allow-incomplete-classpath \
     --install-exit-handlers \

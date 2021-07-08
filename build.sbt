@@ -27,7 +27,7 @@ lazy val kinesisMock = project
       Enumeratum.cats,
       Enumeratum.core,
       Enumeratum.circe,
-      Http4s.emberServer,
+      Http4s.jettyServer,
       Http4s.circe,
       Http4s.dsl,
       JaxbApi,

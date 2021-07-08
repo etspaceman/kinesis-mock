@@ -5,11 +5,8 @@ import scala.concurrent.duration._
 import cats.effect.std.Semaphore
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
-import com.comcast.ip4s.Host
-import fs2.io.net.Network
 import io.circe.syntax._
-import org.http4s.ember.server.EmberServerBuilder
-import org.http4s.syntax.kleisli._
+import org.http4s.jetty.server._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicies.constantDelay
@@ -18,7 +15,6 @@ import retry._
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{StreamName, StreamStatus}
-
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
@@ -45,28 +41,22 @@ object KinesisMockService extends IOApp {
         cacheConfig.initializeStreams.toVector.flatten
       )
       serviceConfig <- KinesisMockServiceConfig.read
-      app = new KinesisMockRoutes(cache).routes.orNotFound
-      tlsContext <- Network[IO].tlsContext.fromKeyStoreResource(
-        "server.jks",
-        serviceConfig.keyStorePassword.toCharArray(),
-        serviceConfig.keyManagerPassword.toCharArray()
+      app = new KinesisMockRoutes(cache).routes
+      sslContext <- ssl.loadContextFromClasspath[IO](
+        serviceConfig.keyStorePassword,
+        serviceConfig.keyManagerPassword
       )
-      host <- IO.fromOption(Host.fromString("0.0.0.0"))(
-        new RuntimeException("Invalid hostname")
-      )
-      tlsServer = EmberServerBuilder
-        .default[IO]
-        .withPort(serviceConfig.tlsPort)
-        .withHost(host)
-        .withTLS(tlsContext)
-        .withHttpApp(app)
-        .build
-      plainServer = EmberServerBuilder
-        .default[IO]
-        .withPort(serviceConfig.plainPort)
-        .withHost(host)
-        .withHttpApp(app)
-        .build
+      tlsServer = JettyBuilder[IO]
+        .withThreadPoolResource(JettyThreadPools.default[IO])
+        .withSslContext(sslContext)
+        .bindHttp(serviceConfig.tlsPort, "0.0.0.0")
+        .mountService(app, "/")
+        .resource
+      plainServer = JettyBuilder[IO]
+        .withThreadPoolResource(JettyThreadPools.default[IO])
+        .bindHttp(serviceConfig.plainPort, "0.0.0.0")
+        .mountService(app, "/")
+        .resource
       _ <- logger.info(
         s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
       )
