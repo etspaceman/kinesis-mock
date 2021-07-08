@@ -10,7 +10,6 @@ lazy val kinesisMock = project
     organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
     scalaVersion := "2.13.6",
-    resolvers += Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
