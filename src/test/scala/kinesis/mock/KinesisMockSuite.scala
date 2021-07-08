@@ -19,7 +19,7 @@ trait KinesisMockSuite
     with munit.ScalaCheckEffectSuite {
   override val munitExecutionContext =
     ExecutionContext.fromExecutor(
-      newDaemonPool("http4s-munit", timeout = true)
+      newDaemonPool("http4s-munit", min = 1, timeout = true)
     )
 
   override implicit val ioRuntime: IORuntime = KinesisMockSuite.TestIORuntime
