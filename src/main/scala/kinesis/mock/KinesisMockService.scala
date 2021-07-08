@@ -9,6 +9,7 @@ import com.comcast.ip4s.Host
 import fs2.io.net.Network
 import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.middleware.Logger
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -45,7 +46,9 @@ object KinesisMockService extends IOApp {
         cacheConfig.initializeStreams.toVector.flatten
       )
       serviceConfig <- KinesisMockServiceConfig.read
-      app = new KinesisMockRoutes(cache).routes.orNotFound
+      app = Logger.httpApp(true, true, _ => false)(
+        new KinesisMockRoutes(cache).routes.orNotFound
+      )
       tlsContext <- Network[IO].tlsContext.fromKeyStoreResource(
         "server.jks",
         serviceConfig.keyStorePassword.toCharArray(),

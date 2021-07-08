@@ -8,7 +8,9 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class UpdateShardCountTests extends KinesisMockSuite with AwsFunctionalTests {
+class UpdateShardCountTests
+    extends munit.CatsEffectSuite
+    with AwsFunctionalTests {
 
   fixture.test("It should update the shard count") { resources =>
     for {

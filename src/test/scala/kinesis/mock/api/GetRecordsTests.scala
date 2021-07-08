@@ -10,7 +10,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class GetRecordsTests extends KinesisMockSuite {
+class GetRecordsTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should get records")(PropF.forAllF {
     (
         streamName: StreamName,

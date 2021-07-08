@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 class DeregisterStreamConsumerTests
-    extends KinesisMockSuite
+    extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
   fixture.test("It should deregister a stream consumer") { resources =>

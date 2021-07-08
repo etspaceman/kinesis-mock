@@ -1,5 +1,4 @@
-package kinesis.mock
-package cache
+package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
@@ -14,7 +13,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamConsumersTests extends KinesisMockSuite {
+class ListStreamConsumersTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

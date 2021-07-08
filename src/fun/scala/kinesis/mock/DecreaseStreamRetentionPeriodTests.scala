@@ -5,7 +5,7 @@ import software.amazon.awssdk.services.kinesis.model._
 import kinesis.mock.syntax.javaFuture._
 
 class DecreaseStreamRetentionPeriodTests
-    extends KinesisMockSuite
+    extends munit.CatsEffectSuite
     with AwsFunctionalTests {
 
   fixture.test("It should decrease the stream retention period") { resources =>

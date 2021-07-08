@@ -11,7 +11,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class GetShardIteratorTests extends KinesisMockSuite {
+class GetShardIteratorTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should get a shard iterator for TRIM_HORIZON")(PropF.forAllF {
     (
         streamName: StreamName,

@@ -12,7 +12,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.StreamName
 
-class KinesisMockServiceTests extends KinesisMockSuite {
+class KinesisMockServiceTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
 
   test("it should accept healthcheck requests") {
     for {

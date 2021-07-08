@@ -6,7 +6,9 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class GetShardIteratorTests extends KinesisMockSuite with AwsFunctionalTests {
+class GetShardIteratorTests
+    extends munit.CatsEffectSuite
+    with AwsFunctionalTests {
 
   fixture.test("It should get a shard iterator") { resources =>
     for {

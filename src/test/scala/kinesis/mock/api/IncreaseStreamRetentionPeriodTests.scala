@@ -1,5 +1,4 @@
-package kinesis.mock
-package api
+package kinesis.mock.api
 
 import scala.concurrent.duration._
 
@@ -10,7 +9,9 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class IncreaseStreamRetentionPeriodTests extends KinesisMockSuite {
+class IncreaseStreamRetentionPeriodTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should increase the stream retention period")(PropF.forAllF {
     (
         streamName: StreamName,

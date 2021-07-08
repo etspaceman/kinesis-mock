@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class ListShardsTests extends KinesisMockSuite with AwsFunctionalTests {
+class ListShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
   fixture.test("It should list shards") { resources =>
     for {

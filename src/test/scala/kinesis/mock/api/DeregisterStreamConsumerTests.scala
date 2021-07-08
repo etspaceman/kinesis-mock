@@ -8,7 +8,9 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class DeregisterStreamConsumerTests extends KinesisMockSuite {
+class DeregisterStreamConsumerTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should deregister stream consumers by consumerName")(PropF.forAllF {
     (
         streamName: StreamName,

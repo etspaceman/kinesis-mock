@@ -12,7 +12,7 @@ import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class PutRecordsTests extends KinesisMockSuite with AwsFunctionalTests {
+class PutRecordsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
   fixture.test("It should put records") { resources =>
     for {

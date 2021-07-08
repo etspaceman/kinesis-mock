@@ -10,7 +10,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class RemoveTagsFromStreamTests extends KinesisMockSuite {
+class RemoveTagsFromStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should remove tags to a stream")(PropF.forAllF {
     (
         streamName: StreamName,

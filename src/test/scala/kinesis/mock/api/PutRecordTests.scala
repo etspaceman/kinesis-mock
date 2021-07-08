@@ -8,7 +8,9 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class PutRecordTests extends KinesisMockSuite {
+class PutRecordTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should put a record")(PropF.forAllF {
     (
         streamName: StreamName,

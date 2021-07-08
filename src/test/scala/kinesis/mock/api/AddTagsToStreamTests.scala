@@ -9,7 +9,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class AddTagsToStreamTests extends KinesisMockSuite {
+class AddTagsToStreamTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should add tags to a stream")(PropF.forAllF {
     (
         streamName: StreamName,

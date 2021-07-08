@@ -1,5 +1,4 @@
-package kinesis.mock
-package cache
+package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
@@ -13,7 +12,9 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class GetShardIteratorTests extends KinesisMockSuite {
+class GetShardIteratorTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)

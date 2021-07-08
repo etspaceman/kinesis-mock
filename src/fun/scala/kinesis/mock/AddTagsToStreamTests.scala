@@ -9,7 +9,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class AddTagsToStreamTests extends KinesisMockSuite with AwsFunctionalTests {
+class AddTagsToStreamTests
+    extends munit.CatsEffectSuite
+    with AwsFunctionalTests {
 
   fixture.test("It should add tags to a stream") { resources =>
     for {

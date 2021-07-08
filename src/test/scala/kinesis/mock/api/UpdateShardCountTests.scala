@@ -8,7 +8,9 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
-class UpdateShardCountTests extends KinesisMockSuite {
+class UpdateShardCountTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
   test("It should increase the shard count")(PropF.forAllF {
     (
         streamName: StreamName,

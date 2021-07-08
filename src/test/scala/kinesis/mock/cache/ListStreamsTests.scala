@@ -1,16 +1,15 @@
-package kinesis.mock
-package cache
+package kinesis.mock.cache
 
 import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Gen
 
+import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.scalacheck._
-import kinesis.mock.{KinesisMockSuite, LoggingContext}
 
-class ListStreamsTests extends KinesisMockSuite {
+class ListStreamsTests extends munit.CatsEffectSuite {
   test("It should list streams")(
     for {
       cacheConfig <- CacheConfig.read

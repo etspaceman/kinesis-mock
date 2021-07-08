@@ -118,7 +118,7 @@ lazy val kinesisMock = project
       ),
       addCommandAlias(
         "validate",
-        ";cov;dockerComposeUp;Fun/test;dockerComposeDown;prettyCheck"
+        ";cov;dockerComposeUp;Fun / testOnly *KCLTests*;dockerComposeDown;prettyCheck"
       )
     ).flatten
   )

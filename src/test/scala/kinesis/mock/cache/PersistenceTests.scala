@@ -1,5 +1,4 @@
-package kinesis.mock
-package cache
+package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
@@ -15,7 +14,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 
-class PersistenceTests extends KinesisMockSuite {
+class PersistenceTests
+    extends munit.CatsEffectSuite
+    with munit.ScalaCheckEffectSuite {
 
   def persistConfig(uuid: String) = PersistConfig(
     true,
