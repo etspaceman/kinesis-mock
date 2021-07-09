@@ -26,6 +26,7 @@ object LibraryDependencies {
   object Log4Cats {
     val log4CatsVersion = "1.3.1"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
+    val old = "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1"
   }
 
   object Munit {
