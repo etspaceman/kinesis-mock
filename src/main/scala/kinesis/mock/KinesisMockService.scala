@@ -141,7 +141,8 @@ object KinesisMockService extends IOApp {
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
-      logger: SelfAwareStructuredLogger[IO]
+      logger: SelfAwareStructuredLogger[IO],
+      blocker: Blocker
   ): IO[Unit] = {
     val context = LoggingContext.create
     IO.pure(shouldPersist)
@@ -153,7 +154,7 @@ object KinesisMockService extends IOApp {
             noop[IO, Unit],
             (e: Throwable, _) =>
               logger.error(context.context, e)("Failed to persist data")
-          )(cache.persistToDisk(context)),
+          )(cache.persistToDisk(context, blocker)),
         logger.info(LoggingContext.create.context)(
           "Not configured to persist data, persist loop not started"
         )
