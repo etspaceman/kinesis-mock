@@ -34,7 +34,7 @@ object KinesisMockService extends IOApp {
         cache <- IO
           .pure(cacheConfig.persistConfig.loadIfExists)
           .ifM(
-            Cache.loadFromFile(cacheConfig),
+            Cache.loadFromFile(cacheConfig, blocker),
             Cache(cacheConfig)
           )
         _ <- initializeStreams(
@@ -78,12 +78,13 @@ object KinesisMockService extends IOApp {
               cacheConfig.persistConfig.shouldPersist,
               cacheConfig.persistConfig.interval,
               cache,
-              logger
+              logger,
+              blocker
             ).background
           )
           .onFinalize(
             IO.pure(cacheConfig.persistConfig.shouldPersist)
-              .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
+              .ifM(cache.persistToDisk(LoggingContext.create, blocker), IO.unit)
           )
           .use(_ => IO.never)
           .as(ExitCode.Success)
@@ -135,7 +136,8 @@ object KinesisMockService extends IOApp {
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
-      logger: SelfAwareStructuredLogger[IO]
+      logger: SelfAwareStructuredLogger[IO],
+      blocker: Blocker
   ): IO[Unit] = {
     val context = LoggingContext.create
     IO.pure(shouldPersist)
@@ -147,7 +149,7 @@ object KinesisMockService extends IOApp {
             noop[IO, Unit],
             (e: Throwable, _) =>
               logger.error(context.context, e)("Failed to persist data")
-          )(cache.persistToDisk(context)),
+          )(cache.persistToDisk(context, blocker)),
         logger.info(LoggingContext.create.context)(
           "Not configured to persist data, persist loop not started"
         )
