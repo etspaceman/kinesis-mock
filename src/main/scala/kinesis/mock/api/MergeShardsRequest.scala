@@ -4,12 +4,13 @@ package api
 import java.time.Instant
 
 import cats.Eq
+import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, IO}
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
@@ -20,8 +21,8 @@ final case class MergeShardsRequest(
 ) {
   def mergeShards(
       streamsRef: Ref[IO, Streams]
-  )(implicit C: Concurrent[IO]): IO[Response[Unit]] =
-    streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify(streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
@@ -69,7 +70,7 @@ final case class MergeShardsRequest(
               }
             }
         )
-        .traverse {
+        .map {
           case (
                 stream,
                 (adjacentShard, adjacentData),
@@ -116,8 +117,8 @@ final case class MergeShardsRequest(
                   .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
               ) -> shardData
             )
-            streamsRef.update(x =>
-              x.updateStream(
+            (
+              streams.updateStream(
                 stream.copy(
                   shards = stream.shards.filterNot { case (s, _) =>
                     s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
@@ -125,9 +126,11 @@ final case class MergeShardsRequest(
                     ++ (oldShards :+ newShard),
                   streamStatus = StreamStatus.UPDATING
                 )
-              )
+              ),
+              ()
             )
         }
+        .sequenceWithDefault(streams)
     )
 }
 

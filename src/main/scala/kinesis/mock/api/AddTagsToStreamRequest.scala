@@ -8,6 +8,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_AddTagsToStream.html
@@ -19,7 +20,7 @@ final case class AddTagsToStreamRequest(
 ) {
   def addTagsToStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] = streamsRef.modify { streams =>
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
@@ -29,10 +30,10 @@ final case class AddTagsToStreamRequest(
             (
               CommonValidations.validateTagKeys(tags.tags.keys), {
                 val valuesTooLong =
-                  tags.tags.values.filter(x => x.length() > 255)
+                  tags.tags.values.filter(x => x.length() > 256)
                 if (valuesTooLong.nonEmpty)
                   InvalidArgumentException(
-                    s"Values must be less than 255 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+                    s"Values must be less than 256 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
                   ).asLeft
                 else Right(())
               }, {
@@ -62,11 +63,10 @@ final case class AddTagsToStreamRequest(
             ).mapN((_, _, _, _, _) => stream)
           )
       )
-      .traverse(stream =>
-        streamsRef.update(x =>
-          x.updateStream(stream.copy(tags = stream.tags |+| tags))
-        )
+      .map(stream =>
+        (streams.updateStream(stream.copy(tags = stream.tags |+| tags)), ())
       )
+      .sequenceWithDefault(streams)
   }
 }
 

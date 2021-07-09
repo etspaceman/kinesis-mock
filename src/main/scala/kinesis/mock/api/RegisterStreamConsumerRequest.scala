@@ -8,6 +8,7 @@ import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
@@ -18,7 +19,7 @@ final case class RegisterStreamConsumerRequest(
   def registerStreamConsumer(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[RegisterStreamConsumerResponse]] =
-    streamsRef.get.flatMap { streams =>
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamArn(streamArn)
         .flatMap(_ =>
@@ -48,24 +49,20 @@ final case class RegisterStreamConsumerRequest(
               ).mapN { (_, _, _, _) => (stream, streamArn, consumerName) }
             )
         )
-        .traverse { case (stream, streamArn, consumerName) =>
+        .map { case (stream, streamArn, consumerName) =>
           val consumer = Consumer.create(streamArn, consumerName)
 
-          streamsRef
-            .update(x =>
-              x.updateStream(
-                stream
-                  .copy(consumers =
-                    stream.consumers + (consumerName -> consumer)
-                  )
-              )
+          (
+            streams.updateStream(
+              stream
+                .copy(consumers = stream.consumers + (consumerName -> consumer))
+            ),
+            RegisterStreamConsumerResponse(
+              ConsumerSummary.fromConsumer(consumer)
             )
-            .as(
-              RegisterStreamConsumerResponse(
-                ConsumerSummary.fromConsumer(consumer)
-              )
-            )
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

@@ -17,8 +17,8 @@ final case class PersistConfig(
     interval: FiniteDuration
 ) {
 
-  private def createPath(starting: os.Path): os.Path = {
-    val split = path.split("/").toList
+  private def createPath(starting: os.Path, p: String): os.Path = {
+    val split = p.split("/").toList
     split match {
       case Nil      => starting
       case h :: Nil => starting / h
@@ -29,9 +29,9 @@ final case class PersistConfig(
   def osPath: os.Path = if (path.isEmpty) os.pwd
   else {
     if (!path.startsWith("/")) {
-      createPath(os.pwd)
+      createPath(os.pwd, path)
     } else {
-      createPath(os.root)
+      createPath(os.root, path.drop(1))
     }
   }
   def osFile = osPath / fileName
