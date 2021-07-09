@@ -3,7 +3,6 @@ package kinesis.mock
 import scala.concurrent.duration._
 
 import cats.effect.std.Semaphore
-import cats.effect.unsafe.{IORuntime, IORuntimeConfig}
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
 import com.comcast.ip4s.Host
@@ -17,22 +16,12 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicies.constantDelay
 import retry._
 
-import kinesis.mock.PoolUtils._
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{StreamName, StreamStatus}
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
-
-  override protected def runtime: IORuntime = IORuntime(
-    computeContext,
-    blockingContext,
-    scheduler,
-    () => (),
-    IORuntimeConfig()
-  )
-
   override def run(args: List[String]): IO[ExitCode] =
     for {
       logger <- Slf4jLogger.create[IO]
