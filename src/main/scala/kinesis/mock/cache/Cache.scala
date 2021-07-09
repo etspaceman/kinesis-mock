@@ -1189,19 +1189,29 @@ class Cache private (
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )
-            _ <- IO(os.exists(config.persistConfig.osPath)).ifM(
-              IO.unit,
-              logger.info(ctx.context)("Creating directories") >> IO(
-                os.makeDir.all(config.persistConfig.osPath)
+            _ <- IO
+              .interruptible(false)(os.exists(config.persistConfig.osPath))
+              .ifM(
+                IO.unit,
+                logger.info(ctx.context)("Creating directories") >>
+                  IO.interruptible(false)(
+                    os.makeDir.all(config.persistConfig.osPath)
+                  )
               )
-            )
             js = streams.asJson
             jacksonJs = circeToJackson(js)
-            fw = new FileWriter(config.persistConfig.osFile.toIO, false)
-            om = new ObjectMapper()
-            _ <- logger.debug(ctx.context)("Persisting stream data to disk")
-            res <- IO(om.writer().writeValue(fw, jacksonJs))
-            _ <- logger.debug(ctx.context)("Successfully persisted stream data")
+            res <- IO(new FileWriter(config.persistConfig.osFile.toIO, false))
+              .bracket { fw =>
+                val om = new ObjectMapper()
+                for {
+                  _ <- logger
+                    .debug(ctx.context)("Persisting stream data to disk")
+                  r <- IO
+                    .interruptible(false)(om.writer().writeValue(fw, jacksonJs))
+                  _ <- logger
+                    .debug(ctx.context)("Successfully persisted stream data")
+                } yield r
+              }(fw => IO(fw.close()))
           } yield res
         ),
         logger
@@ -1227,13 +1237,15 @@ object Cache {
   )(implicit C: Concurrent[IO]): IO[Cache] = {
     val om = new ObjectMapper()
 
-    IO(os.exists(config.persistConfig.osFile)).ifM(
-      for {
-        jn <- IO(om.readTree(config.persistConfig.osFile.toIO))
-        streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
-        res <- apply(config, streams)
-      } yield res,
-      apply(config)
-    )
+    IO.interruptible(false)(os.exists(config.persistConfig.osFile))
+      .ifM(
+        for {
+          jn <- IO
+            .interruptible(false)(om.readTree(config.persistConfig.osFile.toIO))
+          streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
+          res <- apply(config, streams)
+        } yield res,
+        apply(config)
+      )
   }
 }
