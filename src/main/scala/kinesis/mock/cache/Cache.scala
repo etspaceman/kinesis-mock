@@ -1179,9 +1179,7 @@ class Cache private (
       } yield result)
   }
 
-  def persistToDisk(context: LoggingContext, blocker: Blocker)(implicit
-      CS: ContextShift[IO]
-  ): IO[Unit] =
+  def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
         semaphores.persistData.permit.use(_ =>
