@@ -164,19 +164,15 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
     s"Got All Records: $gotAllRecords\nLength: ${resRecords.length}"
   )
 
-  // For whatever reason, these tests seem to be flaky. Basically, a test will hit the timeout due to some
-  // sort of deadlock preventing a request from being sent. This can happen in a KCL request or the PutRecords
-  // call that is made. This seems to specifically happen on CI, likely due to the 1-CPU runners that are
-  // employed. For now, I'm marking these as flaky, and allow for flakiness in the CI execution.
   kclFixture(
     InitialPositionInStreamExtended.newInitialPosition(
       InitialPositionInStream.TRIM_HORIZON
     )
-  ).test("it should consume records".flaky)(kclTest)
+  ).test("it should consume records")(kclTest)
 
   kclFixture(
     InitialPositionInStreamExtended.newInitialPositionAtTimestamp(
       Date.from(Instant.now().minusSeconds(30))
     )
-  ).test("it should consume records using AT_TIMESTAMP".flaky)(kclTest)
+  ).test("it should consume records using AT_TIMESTAMP")(kclTest)
 }
