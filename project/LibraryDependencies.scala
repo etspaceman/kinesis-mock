@@ -38,7 +38,7 @@ object LibraryDependencies {
     val sdkVersion = "2.16.18"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.7"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.8"
     val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.6"
   }
 
