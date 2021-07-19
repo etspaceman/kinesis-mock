@@ -24,7 +24,7 @@ final case class UpdateShardCountRequest(
   def updateShardCount(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int
-  ): IO[Response[Unit]] =
+  ): IO[Response[UpdateShardCountResponse]] =
     streamsRef.modify { streams =>
       val now = Instant.now()
       CommonValidations
@@ -87,14 +87,19 @@ final case class UpdateShardCountRequest(
             now,
             oldShards.map(_._1.shardId.index).max + 1
           )
+          val combined = newShards ++ oldShards
           (
             streams.updateStream(
               stream.copy(
-                shards = newShards ++ oldShards,
+                shards = combined,
                 streamStatus = StreamStatus.UPDATING
               )
             ),
-            ()
+            UpdateShardCountResponse(
+              shards.length,
+              streamName,
+              targetShardCount
+            )
           )
         }
         .sequenceWithDefault(streams)
