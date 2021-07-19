@@ -1142,7 +1142,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[UpdateShardCountResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"

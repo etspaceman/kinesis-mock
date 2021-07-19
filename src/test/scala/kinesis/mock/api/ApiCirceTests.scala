@@ -37,4 +37,5 @@ class ApiCirceTests extends CirceTests {
   identityLawTest[StartStreamEncryptionRequest]
   identityLawTest[StopStreamEncryptionRequest]
   identityLawTest[UpdateShardCountRequest]
+  identityLawTest[UpdateShardCountResponse]
 }
