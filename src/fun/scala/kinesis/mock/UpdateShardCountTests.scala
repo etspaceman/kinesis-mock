@@ -45,7 +45,7 @@ class UpdateShardCountTests
       openShards.length == 2 &&
         res.currentShardCount() == 1 &&
         res.targetShardCount() == 2 &&
-        res.streamName() == resources.streamName,
+        res.streamName() == resources.streamName.streamName,
       s"$openShards"
     )
   }
