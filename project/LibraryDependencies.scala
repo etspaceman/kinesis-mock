@@ -13,9 +13,6 @@ object LibraryDependencies {
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
-  val JawnFs2 = "org.http4s" %% "jawn-fs2" % "1.0.0"
-  val JawnParser = "org.typelevel" %% "jawn-parser" % "1.0.1"
-  val Vault = "io.chrisdavenport" %% "vault" % "2.0.0"
 
   object Borer {
     val borerVersion = "1.7.2"
@@ -26,7 +23,6 @@ object LibraryDependencies {
   object Log4Cats {
     val log4CatsVersion = "1.3.1"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
-    val old = "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1"
   }
 
   object Munit {
@@ -54,11 +50,10 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.21.24"
+    val http4sVersion = "0.21.25"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
-    val parboiled = "org.http4s" %% "parboiled" % "2.0.1"
   }
 
   object Circe {
@@ -97,11 +92,5 @@ object LibraryDependencies {
   object Refined {
     val refinedVersion = "0.9.26"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
-  }
-
-  object Fs2 {
-    val fs2Version = "2.5-5-9970d71"
-    val core = "co.fs2" %% "fs2-core" % fs2Version
-    val io = "co.fs2" %% "fs2-io" % fs2Version
   }
 }
