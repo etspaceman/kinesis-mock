@@ -4,7 +4,7 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.0"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.5.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.4"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
@@ -38,8 +38,8 @@ object LibraryDependencies {
     val sdkVersion = "2.16.18"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.7"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.5"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.6"
   }
 
   object Cats {
@@ -83,7 +83,7 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.5"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.6"
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.3"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
