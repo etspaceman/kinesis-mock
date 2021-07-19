@@ -20,7 +20,7 @@ class UpdateShardCountTests
             .builder()
             .streamName(resources.streamName.streamName)
             .scalingType(ScalingType.UNIFORM_SCALING)
-            .targetShardCount(2)
+            .targetShardCount(6)
             .build()
         )
         .toIO
@@ -42,11 +42,11 @@ class UpdateShardCountTests
           )
         )
     } yield assert(
-      openShards.length == 2 &&
-        res.currentShardCount() == 1 &&
-        res.targetShardCount() == 2 &&
+      openShards.length == 6 &&
+        res.currentShardCount() == 3 &&
+        res.targetShardCount() == 6 &&
         res.streamName() == resources.streamName.streamName,
-      s"$openShards"
+      s"$openShards\n${res.currentShardCount()}\n${res.targetShardCount()}\n${res.streamName()}}"
     )
   }
 }
