@@ -1,13 +1,13 @@
 package kinesis.mock
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import cats.effect.concurrent.Semaphore
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import cats.implicits._
+import fs2.io.tls.TLSContext
 import io.circe.syntax._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -46,30 +46,33 @@ object KinesisMockService extends IOApp {
         )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
-        context <- ssl.loadContextFromClasspath[IO](
-          serviceConfig.keyStorePassword,
-          serviceConfig.keyManagerPassword
+        tlsContext <- TLSContext.fromKeyStoreResource[IO](
+          "server.jks",
+          serviceConfig.keyStorePassword.toCharArray(),
+          serviceConfig.keyManagerPassword.toCharArray(),
+          blocker
         )
-        http2Server = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.tlsPort, "0.0.0.0")
+        tlsServer = EmberServerBuilder
+          .default[IO]
+          .withPort(serviceConfig.tlsPort)
+          .withHost("0.0.0.0")
+          .withTLS(tlsContext)
           .withHttpApp(app)
-          .withSslContext(context)
-          .enableHttp2(
-            true
-          ) // This is bugged and HTTP2 unfortunately does not work correctly right now
-          .resource
-        http1PlainServer = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.plainPort, "0.0.0.0")
+          .build
+        plainServer = EmberServerBuilder
+          .default[IO]
+          .withPort(serviceConfig.plainPort)
+          .withHost("0.0.0.0")
           .withHttpApp(app)
-          .resource
+          .build
         _ <- logger.info(
           s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
         )
         _ <- logger.info(
           s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
         )
-        res <- http2Server
-          .parZip(http1PlainServer)
+        res <- tlsServer
+          .parZip(plainServer)
           .parZip(
             persistDataLoop(
               cacheConfig.persistConfig.shouldPersist,
