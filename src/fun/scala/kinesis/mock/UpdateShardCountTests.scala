@@ -14,13 +14,13 @@ class UpdateShardCountTests
 
   fixture.test("It should update the shard count") { resources =>
     for {
-      _ <- resources.kinesisClient
+      res <- resources.kinesisClient
         .updateShardCount(
           UpdateShardCountRequest
             .builder()
             .streamName(resources.streamName.streamName)
             .scalingType(ScalingType.UNIFORM_SCALING)
-            .targetShardCount(2)
+            .targetShardCount(6)
             .build()
         )
         .toIO
@@ -42,8 +42,11 @@ class UpdateShardCountTests
           )
         )
     } yield assert(
-      openShards.length == 2,
-      s"$openShards"
+      openShards.length == 6 &&
+        res.currentShardCount() == 3 &&
+        res.targetShardCount() == 6 &&
+        res.streamName() == resources.streamName.streamName,
+      s"$openShards\n${res.currentShardCount()}\n${res.targetShardCount()}\n${res.streamName()}}"
     )
   }
 }

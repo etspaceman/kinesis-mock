@@ -846,6 +846,20 @@ object arbitrary {
       } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
     )
 
+  implicit val updateShardCountResponseArb
+      : Arbitrary[UpdateShardCountResponse] =
+    Arbitrary(
+      for {
+        streamName <- streamNameGen
+        targetShardCount <- Gen.choose(1, 1000)
+        currentShardCount <- Gen.choose(1, 1000)
+      } yield UpdateShardCountResponse(
+        currentShardCount,
+        streamName,
+        targetShardCount
+      )
+    )
+
   implicit val streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
     for {
       consumersSize <- Gen.choose(0, 20)

@@ -481,7 +481,8 @@ object KinesisMockRoutes {
       listTagsEE: EntityEncoder[IO, ListTagsForStreamResponse],
       putRecordEE: EntityEncoder[IO, PutRecordResponse],
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
-      registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse]
+      registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
+      updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
   ): IO[Response[IO]] =
     action match {
       case KinesisAction.AddTagsToStream =>
@@ -887,7 +888,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    res => Ok(res, responseHeaders: _*)
                   )
                 )
           )

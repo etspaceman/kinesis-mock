@@ -5,8 +5,10 @@
     </encoder>
   </appender>
   <logger name="kinesis.mock" level="${LOG_LEVEL:-INFO}"/>
-  <logger name="org.http4s" level="TRACE"/>
-  <root level="${ROOT_LOG_LEVEL:-ERROR}">
+  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT" />
+  </appender>
+  <root level="${ROOT_LOG_LEVEL:-ERROR}">
+    <appender-ref ref="ASYNC" />
   </root>
 </configuration>

@@ -46,9 +46,15 @@ class UpdateShardCountTests
             .toVector
             .sorted
             .map(_.shardId) &&
-          stream.streamStatus == StreamStatus.UPDATING
+          stream.streamStatus == StreamStatus.UPDATING &&
+          res.exists { r =>
+            r.currentShardCount == 5 &&
+            r.targetShardCount == 10 &&
+            r.streamName == streamName
+          }
         },
         s"req: $req\n" +
+          s"res: $res\n" +
           s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
           s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
           s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
@@ -90,9 +96,15 @@ class UpdateShardCountTests
             .toVector
             .sorted
             .map(_.shardId) &&
-          stream.streamStatus == StreamStatus.UPDATING
+          stream.streamStatus == StreamStatus.UPDATING &&
+          res.exists { r =>
+            r.currentShardCount == 10 &&
+            r.targetShardCount == 5 &&
+            r.streamName == streamName
+          }
         },
         s"req: $req\n" +
+          s"res: $res\n" +
           s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
           s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
           s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
