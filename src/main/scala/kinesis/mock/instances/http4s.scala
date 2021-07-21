@@ -19,8 +19,10 @@ object http4s {
     ) { msg =>
       msg.contentType match {
         case Some(ct)
-            if ct.mediaType == KinesisMockMediaTypes.amazonJson || ct.value
-              .startsWith("application/json") => {
+            if ct.mediaType == KinesisMockMediaTypes.amazonJson ||
+              (ct.mediaType.isApplication && ct.mediaType.subType.startsWith(
+                "json"
+              )) => {
           implicit val D = Decoder[A].circeDecoder
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
