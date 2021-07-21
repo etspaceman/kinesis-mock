@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -21,12 +19,12 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -43,7 +41,7 @@ class DescribeStreamConsumerTests
         req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
         s"req: $req\nres: $res"
@@ -57,13 +55,13 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -82,7 +80,7 @@ class DescribeStreamConsumerTests
         req = DescribeStreamConsumerRequest(consumerArn, None, None)
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
         s"req: $req\nres: $res"
@@ -96,7 +94,7 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
@@ -105,7 +103,7 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -117,12 +115,12 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -134,7 +132,7 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(None, Some(consumerName), None)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -146,12 +144,12 @@ class DescribeStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -165,6 +163,6 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(None, None, streamArn)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

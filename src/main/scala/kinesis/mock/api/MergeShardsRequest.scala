@@ -3,14 +3,14 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
+import cats.Eq
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
@@ -20,33 +20,32 @@ final case class MergeShardsRequest(
     streamName: StreamName
 ) {
   def mergeShards(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
-    streamsRef.get.flatMap(streams =>
+      streamsRef: Ref[IO, Streams]
+  ): IO[Response[Unit]] =
+    streamsRef.modify(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 CommonValidations.validateShardId(shardToMerge),
                 CommonValidations.validateShardId(adjacentShardToMerge),
                 CommonValidations
                   .findShard(adjacentShardToMerge, stream)
-                  .andThen { case (adjacentShard, adjacentData) =>
-                    CommonValidations.isShardOpen(adjacentShard).andThen { _ =>
+                  .flatMap { case (adjacentShard, adjacentData) =>
+                    CommonValidations.isShardOpen(adjacentShard).flatMap { _ =>
                       CommonValidations
                         .findShard(shardToMerge, stream)
-                        .andThen { case (shard, shardData) =>
-                          CommonValidations.isShardOpen(shard).andThen { _ =>
+                        .flatMap { case (shard, shardData) =>
+                          CommonValidations.isShardOpen(shard).flatMap { _ =>
                             if (
                               adjacentShard.hashKeyRange
                                 .isAdjacent(shard.hashKeyRange)
                             )
-                              Valid(
+                              Right(
                                 (
                                   (adjacentShard, adjacentData),
                                   (shard, shardData)
@@ -55,7 +54,7 @@ final case class MergeShardsRequest(
                             else
                               InvalidArgumentException(
                                 "Provided shards are not adjacent"
-                              ).invalidNel
+                              ).asLeft
                           }
                         }
                     }
@@ -71,7 +70,7 @@ final case class MergeShardsRequest(
               }
             }
         )
-        .traverse {
+        .map {
           case (
                 stream,
                 (adjacentShard, adjacentData),
@@ -80,7 +79,7 @@ final case class MergeShardsRequest(
             val now = Instant.now()
             val newShardIndex =
               stream.shards.keys.map(_.shardId.index).max + 1
-            val newShard: (Shard, List[KinesisRecord]) = Shard(
+            val newShard: (Shard, Vector[KinesisRecord]) = Shard(
               Some(adjacentShard.shardId.shardId),
               None,
               now,
@@ -104,9 +103,9 @@ final case class MergeShardsRequest(
                 else shard.sequenceNumberRange.startingSequenceNumber
               ),
               ShardId.create(newShardIndex)
-            ) -> List.empty
+            ) -> Vector.empty
 
-            val oldShards: List[(Shard, List[KinesisRecord])] = List(
+            val oldShards: Vector[(Shard, Vector[KinesisRecord])] = Vector(
               adjacentShard.copy(
                 closedTimestamp = Some(now),
                 sequenceNumberRange = adjacentShard.sequenceNumberRange
@@ -118,39 +117,20 @@ final case class MergeShardsRequest(
                   .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
               ) -> shardData
             )
-            shardSemaphoresRef.get.flatMap(shardSemaphores =>
-              shardSemaphores(
-                ShardSemaphoresKey(streamName, adjacentShard)
-              ).withPermit(
-                shardSemaphores(ShardSemaphoresKey(streamName, shard))
-                  .withPermit(
-                    for {
-                      _ <- streamsRef.update(x =>
-                        x.updateStream(
-                          stream.copy(
-                            shards = stream.shards.filterNot { case (s, _) =>
-                              s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
-                            }
-                              ++ (oldShards :+ newShard),
-                            streamStatus = StreamStatus.UPDATING
-                          )
-                        )
-                      )
-                      newSemaphore <- Semaphore[IO](1)
-                      newShardsSemaphoreKey = ShardSemaphoresKey(
-                        streamName,
-                        newShard._1
-                      )
-                      res <- shardSemaphoresRef.update(shardsSemaphore =>
-                        shardsSemaphore ++ List(
-                          newShardsSemaphoreKey -> newSemaphore
-                        )
-                      )
-                    } yield res
-                  )
-              )
+            (
+              streams.updateStream(
+                stream.copy(
+                  shards = stream.shards.filterNot { case (s, _) =>
+                    s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
+                  }
+                    ++ (oldShards :+ newShard),
+                  streamStatus = StreamStatus.UPDATING
+                )
+              ),
+              ()
             )
         }
+        .sequenceWithDefault(streams)
     )
 }
 

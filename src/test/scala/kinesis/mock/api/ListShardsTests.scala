@@ -5,6 +5,7 @@ import java.time.Instant
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
+import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -20,7 +21,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -28,9 +29,10 @@ class ListShardsTests
         req = ListShardsRequest(None, None, None, None, None, Some(streamName))
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
-            s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
+            s.shards.keys.toVector.sorted
+              .map(ShardSummary.fromShard) == response.shards
           }
         },
         s"req: $req\nres: $res"
@@ -43,7 +45,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -69,17 +71,17 @@ class ListShardsTests
             )
               .listShards(streamsRef)
           )
-          .map(_.andThen(identity))
+          .map(_.flatMap(identity))
       } yield assert(
-        res.isValid && paginatedRes.isValid && res.exists { response =>
+        res.isRight && paginatedRes.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .take(50)
               .map(ShardSummary.fromShard) == response.shards
           }
         } && paginatedRes.exists { response =>
           streams.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(50)
               .map(ShardSummary.fromShard) == response.shards
           }
@@ -98,7 +100,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val exclusiveStartShardId = ShardId.create(10)
@@ -115,9 +117,9 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(89)
               .map(ShardSummary.fromShard) == response.shards
           }
@@ -132,21 +134,21 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { s =>
+        val shards = s.shards.toList.sortBy(_._1)
         s.copy(
-          shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
-            case (shard, recs) =>
+          shards =
+            (shards.takeRight(95) ++ shards.take(5).map { case (shard, recs) =>
               shard.copy(sequenceNumberRange =
                 shard.sequenceNumberRange.copy(
                   Some(SequenceNumber.shardEnd),
                   shard.sequenceNumberRange.startingSequenceNumber
                 )
               ) -> recs
-
-          }
+            }).toMap
         )
       }
 
@@ -164,15 +166,16 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(95)
               .map(ShardSummary.fromShard) == response.shards
           }
         },
         s"req: $req\n" +
-          s"res: ${res.map(_.shards.length)}\n" +
+          s"res: ${res.map(_.shards.map(_.shardId))}\n" +
+          s"current: ${updated.streams(streamName).shards.keys.toVector.sorted.takeRight(5).map(_.shardId)}\n" +
           s"closedShardsLen: ${updated.streams.get(streamName).map(_.shards.keys.filterNot(_.isOpen).size)}"
       )
   })
@@ -183,21 +186,21 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { s =>
+        val shards = s.shards.toList.sortBy(_._1)
         s.copy(
-          shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
-            case (shard, recs) =>
+          shards =
+            (shards.takeRight(95) ++ shards.take(5).map { case (shard, recs) =>
               shard.copy(sequenceNumberRange =
                 shard.sequenceNumberRange.copy(
                   Some(SequenceNumber.shardEnd),
                   shard.sequenceNumberRange.startingSequenceNumber
                 )
               ) -> recs
-
-          }
+            }).toMap
         )
       }
 
@@ -215,9 +218,10 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
-            s.shards.keys.toList.map(ShardSummary.fromShard) == response.shards
+            s.shards.keys.toVector.sorted
+              .map(ShardSummary.fromShard) == response.shards
           }
         },
         s"req: $req\n" +
@@ -233,25 +237,23 @@ class ListShardsTests
           awsRegion: AwsRegion,
           awsAccountId: AwsAccountId
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
         val updated = streams.findAndUpdateStream(streamName) { s =>
-          s.copy(
-            shards = s.shards.takeRight(95) ++ s.shards.take(5).map {
-              case (shard, recs) =>
-                shard.copy(
-                  sequenceNumberRange = shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  ),
-                  closedTimestamp = Some(
-                    Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
-                  )
-                ) -> recs
-
-            }
-          )
+          val shards = s.shards.toList.sortBy(_._1)
+          s.copy(shards = (shards.takeRight(95) ++ shards.take(5).map {
+            case (shard, recs) =>
+              shard.copy(
+                sequenceNumberRange = shard.sequenceNumberRange.copy(
+                  Some(SequenceNumber.shardEnd),
+                  shard.sequenceNumberRange.startingSequenceNumber
+                ),
+                closedTimestamp = Some(
+                  Instant.now().minusSeconds(s.retentionPeriod.toSeconds + 2)
+                )
+              ) -> recs
+          }).toMap)
         }
 
         val filter = ShardFilter(None, None, ShardFilterType.FROM_TRIM_HORIZON)
@@ -268,9 +270,9 @@ class ListShardsTests
           )
           res <- req.listShards(streamsRef)
         } yield assert(
-          res.isValid && res.exists { response =>
+          res.isRight && res.exists { response =>
             updated.streams.get(streamName).exists { s =>
-              s.shards.keys.toList
+              s.shards.keys.toVector.sorted
                 .takeRight(95)
                 .map(ShardSummary.fromShard) == response.shards
             }
@@ -288,10 +290,11 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
-      val shardId = streams.streams(streamName).shards.keys.toList(4).shardId
+      val shards = streams.streams(streamName).shards.keys.toVector.sorted
+      val shardId = shards(4).shardId
       val filter =
         ShardFilter(Some(shardId.shardId), None, ShardFilterType.AFTER_SHARD_ID)
 
@@ -307,9 +310,9 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           streams.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(95)
               .map(ShardSummary.fromShard) == response.shards
           }
@@ -317,9 +320,9 @@ class ListShardsTests
         s"req: $req\n" +
           s"resLen: ${res.map(_.shards.length)}\n" +
           s"resultingHead: ${res.map(_.shards.head).fold(_.toString, _.toString)}\n" +
-          s"expectResHead: ${streams.streams.get(streamName).map(_.shards.keys.toList(45)).get}\n" +
+          s"expectResHead: ${streams.streams.get(streamName).map(_.shards.keys.toVector(45)).get}\n" +
           s"resultingLast: ${res.map(_.shards.last).fold(_.toString, _.toString)}\n" +
-          s"expectResLast: ${streams.streams.get(streamName).map(_.shards.keys.toList.last).get}"
+          s"expectResLast: ${streams.streams.get(streamName).map(_.shards.keys.toVector.last).get}"
       )
   })
 
@@ -329,15 +332,16 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
       val updated = streams.findAndUpdateStream(streamName) { s =>
+        val shards = s.shards.toVector.sortBy(_._1)
         s.copy(
           streamCreationTimestamp = requestTimestamp.minusSeconds(600),
-          shards = s.shards.takeRight(90) ++ s.shards.take(5).map {
-            case (shard, recs) =>
+          shards =
+            (shards.takeRight(90) ++ shards.take(5).map { case (shard, recs) =>
               shard.copy(
                 sequenceNumberRange = shard.sequenceNumberRange.copy(
                   Some(SequenceNumber.shardEnd),
@@ -347,19 +351,17 @@ class ListShardsTests
                   requestTimestamp.minusSeconds(5)
                 )
               ) -> recs
-
-          } ++ s.shards.slice(5, 10).map { case (shard, recs) =>
-            shard.copy(
-              sequenceNumberRange = shard.sequenceNumberRange.copy(
-                Some(SequenceNumber.shardEnd),
-                shard.sequenceNumberRange.startingSequenceNumber
-              ),
-              closedTimestamp = Some(
-                requestTimestamp.plusSeconds(5)
-              )
-            ) -> recs
-
-          }
+            } ++ shards.slice(5, 10).map { case (shard, recs) =>
+              shard.copy(
+                sequenceNumberRange = shard.sequenceNumberRange.copy(
+                  Some(SequenceNumber.shardEnd),
+                  shard.sequenceNumberRange.startingSequenceNumber
+                ),
+                closedTimestamp = Some(
+                  requestTimestamp.plusSeconds(5)
+                )
+              ) -> recs
+            }).toMap
         )
       }
 
@@ -381,9 +383,9 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(95)
               .map(ShardSummary.fromShard) == response.shards
           }
@@ -400,16 +402,17 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
       val updated = streams.findAndUpdateStream(streamName) { s =>
+        val shards = s.shards.toVector.sortBy(_._1)
         s.copy(
           streamCreationTimestamp = requestTimestamp.minusSeconds(600),
-          shards = s.shards.takeRight(90).map { case (shard, data) =>
+          shards = (shards.takeRight(90).map { case (shard, data) =>
             shard.copy(createdAtTimestamp = requestTimestamp) -> data
-          } ++ s.shards.take(5).map { case (shard, recs) =>
+          } ++ shards.take(5).map { case (shard, recs) =>
             shard.copy(
               sequenceNumberRange = shard.sequenceNumberRange.copy(
                 Some(SequenceNumber.shardEnd),
@@ -420,7 +423,7 @@ class ListShardsTests
               )
             ) -> recs
 
-          } ++ s.shards.slice(5, 10).map { case (shard, recs) =>
+          } ++ shards.slice(5, 10).map { case (shard, recs) =>
             shard.copy(
               sequenceNumberRange = shard.sequenceNumberRange.copy(
                 Some(SequenceNumber.shardEnd),
@@ -431,8 +434,7 @@ class ListShardsTests
               ),
               createdAtTimestamp = requestTimestamp
             ) -> recs
-
-          }
+          }).toMap
         )
       }
 
@@ -454,9 +456,9 @@ class ListShardsTests
         )
         res <- req.listShards(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           updated.streams.get(streamName).exists { s =>
-            s.shards.keys.toList
+            s.shards.keys.toVector.sorted
               .takeRight(95)
               .map(ShardSummary.fromShard) == response.shards
           }
@@ -475,7 +477,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -489,7 +491,7 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -500,7 +502,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -514,7 +516,7 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -525,7 +527,7 @@ class ListShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       for {
@@ -539,6 +541,6 @@ class ListShardsTests
           Some(streamName)
         )
         res <- req.listShards(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

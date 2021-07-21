@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -22,19 +20,19 @@ class RemoveTagsFromStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
         .map(Tags.apply)
         .one
 
       val withTags =
         streams.findAndUpdateStream(streamName)(_.copy(tags = tags))
 
-      val removedTags = tags.tags.keys.take(3).toList
+      val removedTags = tags.tags.keys.take(3).toVector
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
@@ -42,7 +40,7 @@ class RemoveTagsFromStreamTests
         res <- req.removeTagsFromStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags.copy(tags = tags.tags.filterNot { case (k, _) =>
             removedTags.contains(k)
           })

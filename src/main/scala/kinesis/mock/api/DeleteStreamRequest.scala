@@ -1,16 +1,14 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.kernel.Eq
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class DeleteStreamRequest(
@@ -18,54 +16,46 @@ final case class DeleteStreamRequest(
     enforceConsumerDeletion: Option[Boolean]
 ) {
   def deleteStream(
-      streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]]
-  ): IO[ValidatedResponse[Unit]] =
-    streamsRef.get.flatMap { streams =>
+      streamsRef: Ref[IO, Streams]
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 if (
-                  enforceConsumerDeletion
-                    .exists(identity) && stream.consumers.nonEmpty
+                  !enforceConsumerDeletion
+                    .getOrElse(false) && stream.consumers.nonEmpty
                 )
                   ResourceInUseException(
-                    s"Consumers exist in stream $streamName and enforceConsumerDeletion is true"
-                  ).invalidNel
-                else Valid(())
+                    s"Consumers exist in stream $streamName and enforceConsumerDeletion is either not set or is false"
+                  ).asLeft
+                else Right(())
               ).mapN((_, _) => stream)
             )
         )
-        .traverse { stream =>
-          val deletingStream = SortedMap(
+        .map { stream =>
+          val deletingStream = Map(
             streamName -> stream.copy(
-              shards = SortedMap.empty,
+              shards = Map.empty,
               streamStatus = StreamStatus.DELETING,
               tags = Tags.empty,
-              enhancedMonitoring = List.empty,
-              consumers = SortedMap.empty
+              enhancedMonitoring = Vector.empty,
+              consumers = Map.empty
             )
           )
-
-          val shardSemaphoreKeys = stream.shards.keys.toList
-            .map(shard => ShardSemaphoresKey(stream.streamName, shard))
-
-          for {
-            _ <- streamsRef
-              .update(streams =>
-                streams.copy(
-                  streams = streams.streams ++ deletingStream
-                )
-              )
-            res <- shardSemaphoresRef
-              .update(shardSemaphores => shardSemaphores -- shardSemaphoreKeys)
-          } yield res
+          (
+            streams.copy(
+              streams = streams.streams ++ deletingStream
+            ),
+            ()
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

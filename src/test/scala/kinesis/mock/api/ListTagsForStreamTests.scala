@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -23,7 +21,7 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val withTags =
@@ -34,7 +32,7 @@ class ListTagsForStreamTests
         req = ListTagsForStreamRequest(None, None, streamName)
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags == Tags.fromTagList(response.tags)
         },
         s"req: $req\nres: $res"
@@ -47,16 +45,16 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
         .map(Tags.apply)
         .one
 
-      val exclusiveStartTagKey = tags.tags.keys.toList(3)
+      val exclusiveStartTagKey = tags.tags.keys.toVector(3)
 
       val withTags =
         streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
@@ -70,7 +68,7 @@ class ListTagsForStreamTests
         )
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
             response.tags
           )
@@ -85,12 +83,12 @@ class ListTagsForStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
+        .map(x => Map.from(x))
         .map(Tags.apply)
         .one
 
@@ -102,7 +100,7 @@ class ListTagsForStreamTests
         req = ListTagsForStreamRequest(None, Some(5), streamName)
         res <- req.listTagsForStream(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
+        res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
             response.tags
           ) && response.hasMoreTags

@@ -3,7 +3,7 @@ package models
 
 import java.time.Instant
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.instances.circe._
@@ -11,7 +11,7 @@ import kinesis.mock.instances.circe._
 final case class StreamDescriptionSummary(
     consumerCount: Option[Int],
     encryptionType: Option[EncryptionType],
-    enhancedMonitoring: List[ShardLevelMetrics],
+    enhancedMonitoring: Vector[ShardLevelMetrics],
     keyId: Option[String],
     openShardCount: Int,
     retentionPeriodHours: Int,
@@ -72,7 +72,7 @@ object StreamDescriptionSummary {
       encryptionType <- x.downField("EncryptionType").as[Option[EncryptionType]]
       enhancedMonitoring <- x
         .downField("EnhancedMonitoring")
-        .as[List[ShardLevelMetrics]]
+        .as[Vector[ShardLevelMetrics]]
       keyId <- x.downField("KeyId").as[Option[String]]
       openShardCount <- x.downField("OpenShardCount").as[Int]
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]

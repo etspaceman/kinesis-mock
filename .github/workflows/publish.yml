@@ -5,7 +5,117 @@ on:
     types: [published]
 
 jobs:
-  build:
+  buildWindowsExecutable:
+    name: Build Native Image Exceutables for Windows
+    strategy:
+      matrix:
+        static_type: ["mostly-static", "dynamic"]
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1.5.0
+    - uses: microsoft/setup-msbuild@v1
+    - uses: ayltai/setup-graalvm@v1
+      with:
+        java-version: 11
+        graalvm-version: 21.0.0.2
+        native-image: true
+    - name: Install sbt
+      run: choco install sbt 
+    - name: Build assembly jar
+      run: sbt assembly
+      shell: powershell
+    - name: Build native image
+      run: graal\buildNativeImage.ps1
+      env:
+        JAR_FILE: docker\image\lib\kinesis-mock.jar
+        OUTPUT_FILE: kinesis-mock
+        STATIC_TYPE: ${{ matrix.static_type }}
+      shell: powershell
+    - name: Run UPX
+      uses: svenstaro/upx-action@v2
+      with:
+        file: ./kinesis-mock.exe
+        args: '--best'
+        strip: false
+    - name: Upload to release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./kinesis-mock.exe
+        asset_name: kinesis-mock-${{ matrix.static_type }}.exe
+        asset_content_type: application/vnd.microsoft.portable-executable
+
+  buildLinuxExecutable:
+    name: Build Native Image Exceutables for Linux
+    strategy:
+      matrix:
+        static_type: ["static", "mostly-static", "dynamic"]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Set up JDK 1.11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.11
+    - name: Build docker image
+      run: sbt packageAndBuildDockerImage
+      env:
+        STATIC_TYPE: ${{ matrix.static_type }}
+    - name: Run container
+      run: graal/buildLinuxImage.sh
+    - name: Upload to release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./shared/kinesis-mock
+        asset_name: kinesis-mock-linux-amd64-${{ matrix.static_type }}
+        asset_content_type: application/octet-stream
+
+  buildMacOSExecutable:
+    name: Build Native Image Exceutables for MacOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ayltai/setup-graalvm@v1
+      with:
+        java-version: 11
+        graalvm-version: 21.0.0.2
+        native-image: true
+    - name: Install sbt
+      run: brew install sbt
+    - name: Build assembly jar
+      run: sbt assembly
+    - name: Build native image
+      run: graal/buildNativeImageMac.sh
+      env:
+        JAR_FILE: docker/image/lib/kinesis-mock.jar
+        OUTPUT_FILE: kinesis-mock-macos-amd64
+    - name: Run UPX
+      uses: svenstaro/upx-action@v2
+      with:
+        file: ./kinesis-mock-macos-amd64
+        args: '--best'
+        strip: false
+    - name: Upload to release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./kinesis-mock-macos-amd64
+        asset_name: kinesis-mock-macos-amd64-dynamic
+        asset_content_type: application/octet-stream
+        
+  buildDockerImage:
     name: Push Docker image to Container Registry
     runs-on: ubuntu-latest
     steps:

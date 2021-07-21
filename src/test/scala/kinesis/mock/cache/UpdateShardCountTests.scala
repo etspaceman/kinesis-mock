@@ -32,7 +32,7 @@ class UpdateShardCountTests
             .createStream(CreateStreamRequest(5, streamName), context, false)
             .rethrow
           _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          _ <- cache
+          res <- cache
             .updateShardCount(
               UpdateShardCountRequest(
                 ScalingType.UNIFORM_SCALING,
@@ -63,7 +63,10 @@ class UpdateShardCountTests
             checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
             checkShards.shards.count(!_.isOpen) == 5 &&
             checkShards.shards.count(_.isOpen) == 10 &&
-            checkShards.shards.length == 15,
+            checkShards.shards.length == 15 &&
+            res.currentShardCount == 5 &&
+            res.streamName == streamName &&
+            res.targetShardCount == 10,
           s"${checkShards.shards.mkString("\n\t")}\n" +
             s"$checkStream1\n" +
             s"$checkStream2"

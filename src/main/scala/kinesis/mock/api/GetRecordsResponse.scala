@@ -1,17 +1,19 @@
 package kinesis.mock
 package api
 
-import cats.kernel.Eq
+import scala.collection.immutable.Queue
+
+import cats.Eq
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
 
 final case class GetRecordsResponse(
-    childShards: List[ChildShard],
+    childShards: Vector[ChildShard],
     millisBehindLatest: Long,
     nextShardIterator: ShardIterator,
-    records: List[KinesisRecord]
+    records: Queue[KinesisRecord]
 )
 
 object GetRecordsResponse {
@@ -32,10 +34,10 @@ object GetRecordsResponse {
   ): circe.Decoder[GetRecordsResponse] =
     x =>
       for {
-        childShards <- x.downField("ChildShards").as[List[ChildShard]]
+        childShards <- x.downField("ChildShards").as[Vector[ChildShard]]
         millisBehindLatest <- x.downField("MillisBehindLatest").as[Long]
         nextShardIterator <- x.downField("NextShardIterator").as[ShardIterator]
-        records <- x.downField("Records").as[List[KinesisRecord]]
+        records <- x.downField("Records").as[Queue[KinesisRecord]]
       } yield GetRecordsResponse(
         childShards,
         millisBehindLatest,

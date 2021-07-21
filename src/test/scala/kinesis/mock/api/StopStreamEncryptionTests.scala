@@ -18,7 +18,7 @@ class StopStreamEncryptionTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val asActive = streams.findAndUpdateStream(streamName)(x =>
@@ -33,7 +33,7 @@ class StopStreamEncryptionTests
         res <- req.stopStreamEncryption(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams
+        res.isRight && s.streams
           .get(streamName)
           .exists { s =>
             s.keyId.isEmpty &&
@@ -51,7 +51,7 @@ class StopStreamEncryptionTests
           awsRegion: AwsRegion,
           awsAccountId: AwsAccountId
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
         val asActive = streams.findAndUpdateStream(streamName)(x =>
@@ -69,7 +69,7 @@ class StopStreamEncryptionTests
           )
           res <- req.stopStreamEncryption(streamsRef)
         } yield assert(
-          res.isInvalid,
+          res.isLeft,
           s"req: $req\nres: $res\nstreams: $asActive"
         )
     }
@@ -81,7 +81,7 @@ class StopStreamEncryptionTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val keyId = keyIdGen.one
@@ -95,7 +95,7 @@ class StopStreamEncryptionTests
         )
         res <- req.stopStreamEncryption(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })

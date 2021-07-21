@@ -5,7 +5,7 @@ import java.io.FileWriter
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore, Supervisor}
+import cats.effect.concurrent.{Ref, Supervisor}
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._
@@ -15,12 +15,10 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
 import kinesis.mock.models._
-import kinesis.mock.syntax.io._
 import kinesis.mock.syntax.semaphore._
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
-    shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
     semaphores: CacheSemaphores,
     config: CacheConfig,
     supervisor: Supervisor[IO]
@@ -32,7 +30,7 @@ class Cache private (
       req: AddTagsToStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing AddTagsToStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -41,7 +39,6 @@ class Cache private (
       semaphores.addTagsToStream.tryAcquireRelease(
         req
           .addTagsToStream(streamsRef)
-          .aggregateErrors
           .flatTap(
             _.fold(
               e =>
@@ -69,7 +66,7 @@ class Cache private (
       req: RemoveTagsFromStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing RemoveTagsFromStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -78,7 +75,6 @@ class Cache private (
       semaphores.removeTagsFromStream.tryAcquireRelease(
         req
           .removeTagsFromStream(streamsRef)
-          .aggregateErrors
           .flatTap(
             _.fold(
               e =>
@@ -107,10 +103,7 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -121,12 +114,10 @@ class Cache private (
           createStreamsRes <- req
             .createStream(
               streamsRef,
-              shardSemaphoresRef,
               config.shardLimit,
               config.awsRegion,
               config.awsAccountId
             )
-            .aggregateErrors
           _ <- createStreamsRes.fold(
             e =>
               logger.warn(ctx.context, e)(
@@ -171,7 +162,7 @@ class Cache private (
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -179,9 +170,7 @@ class Cache private (
       ) *>
       semaphores.deleteStream.tryAcquireRelease(
         for {
-          deleteStreamRes <- req
-            .deleteStream(streamsRef, shardSemaphoresRef)
-            .aggregateErrors
+          deleteStreamRes <- req.deleteStream(streamsRef)
           _ <- deleteStreamRes.fold(
             e =>
               logger.warn(ctx.context, e)(
@@ -221,7 +210,7 @@ class Cache private (
       req: DecreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DecreaseStreamRetentionPeriod request"
@@ -231,7 +220,6 @@ class Cache private (
       ) *>
       req
         .decreaseStreamRetention(streamsRef)
-        .aggregateErrors
         .flatTap(
           _.fold(
             e =>
@@ -250,7 +238,7 @@ class Cache private (
       req: IncreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing IncreaseStreamRetentionPeriod request"
@@ -260,7 +248,6 @@ class Cache private (
       ) *>
       req
         .increaseStreamRetention(streamsRef)
-        .aggregateErrors
         .flatTap(
           _.fold(
             e =>
@@ -277,7 +264,7 @@ class Cache private (
 
   def describeLimits(
       context: LoggingContext
-  ): IO[EitherResponse[DescribeLimitsResponse]] =
+  ): IO[Response[DescribeLimitsResponse]] =
     logger.debug(context.context)("Processing DescribeLimits request") *>
       semaphores.describeLimits.tryAcquireRelease(
         {
@@ -305,7 +292,7 @@ class Cache private (
       req: DescribeStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[DescribeStreamResponse]] = {
+  ): IO[Response[DescribeStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStream request"
@@ -316,7 +303,6 @@ class Cache private (
       semaphores.describeStream.tryAcquireRelease(
         req
           .describeStream(streamsRef)
-          .aggregateErrors
           .flatMap { response =>
             response.fold(
               e =>
@@ -349,7 +335,7 @@ class Cache private (
       req: DescribeStreamSummaryRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[DescribeStreamSummaryResponse]] = {
+  ): IO[Response[DescribeStreamSummaryResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DescribeStreamSummary request"
@@ -360,7 +346,6 @@ class Cache private (
       semaphores.describeStreamSummary.tryAcquireRelease(
         req
           .describeStreamSummary(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -399,7 +384,7 @@ class Cache private (
       isCbor: Boolean
   )(implicit
       T: Timer[IO]
-  ): IO[EitherResponse[RegisterStreamConsumerResponse]] = {
+  ): IO[Response[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
       "Processing RegisterStreamConsumer request"
@@ -410,7 +395,6 @@ class Cache private (
       semaphores.registerStreamConsumer.tryAcquireRelease(
         req
           .registerStreamConsumer(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response
               .fold(
@@ -440,11 +424,14 @@ class Cache private (
                             .fold(x)(stream =>
                               x.updateStream(
                                 stream.copy(consumers =
-                                  stream.consumers ++ List(
-                                    r.consumer.consumerName -> r.consumer
-                                      .copy(consumerStatus =
-                                        ConsumerStatus.ACTIVE
-                                      )
+                                  stream.consumers ++ Vector(
+                                    r.consumer.consumerName -> Consumer(
+                                      r.consumer.consumerArn,
+                                      r.consumer.consumerCreationTimestamp,
+                                      r.consumer.consumerName,
+                                      ConsumerStatus.ACTIVE,
+                                      req.streamArn
+                                    )
                                   )
                                 )
                               )
@@ -473,7 +460,7 @@ class Cache private (
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -483,7 +470,6 @@ class Cache private (
       semaphores.deregisterStreamConsumer.tryAcquireRelease(
         req
           .deregisterStreamConsumer(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response
               .fold(
@@ -508,7 +494,7 @@ class Cache private (
                         streamsRef.update(x =>
                           x.streams.values
                             .find(s =>
-                              s.consumers.keys.toList
+                              s.consumers.keys.toVector
                                 .contains(consumer.consumerName)
                             )
                             .fold(x)(stream =>
@@ -544,7 +530,7 @@ class Cache private (
       req: DescribeStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[DescribeStreamConsumerResponse]] =
+  ): IO[Response[DescribeStreamConsumerResponse]] =
     logger.debug(context.context)(
       "Processing DescribeStreamConsumer request"
     ) *>
@@ -554,7 +540,6 @@ class Cache private (
       semaphores.describeStreamConsumer.tryAcquireRelease(
         req
           .describeStreamConsumer(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -590,7 +575,7 @@ class Cache private (
       req: DisableEnhancedMonitoringRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[DisableEnhancedMonitoringResponse]] = {
+  ): IO[Response[DisableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing DisableEnhancedMonitoring request"
@@ -600,7 +585,6 @@ class Cache private (
       ) *>
       req
         .disableEnhancedMonitoring(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response.fold(
             e =>
@@ -625,7 +609,7 @@ class Cache private (
       req: EnableEnhancedMonitoringRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[EnableEnhancedMonitoringResponse]] = {
+  ): IO[Response[EnableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing EnableEnhancedMonitoring request"
@@ -635,7 +619,6 @@ class Cache private (
       ) *>
       req
         .enableEnhancedMonitoring(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response.fold(
             e =>
@@ -660,7 +643,7 @@ class Cache private (
       req: ListShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[ListShardsResponse]] =
+  ): IO[Response[ListShardsResponse]] =
     logger.debug(context.context)(
       "Processing ListShards request"
     ) *>
@@ -670,7 +653,6 @@ class Cache private (
       semaphores.listShards.tryAcquireRelease(
         req
           .listShards(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -700,7 +682,7 @@ class Cache private (
       req: ListStreamConsumersRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[ListStreamConsumersResponse]] = {
+  ): IO[Response[ListStreamConsumersResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
       "Processing ListStreamConsumers request"
@@ -711,7 +693,6 @@ class Cache private (
       semaphores.listStreamConsumers.tryAcquireRelease(
         req
           .listStreamConsumers(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -746,7 +727,7 @@ class Cache private (
       req: ListStreamsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[ListStreamsResponse]] =
+  ): IO[Response[ListStreamsResponse]] =
     logger.debug(context.context)(
       "Processing ListStreams request"
     ) *>
@@ -756,7 +737,6 @@ class Cache private (
       semaphores.listStreams.tryAcquireRelease(
         req
           .listStreams(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -790,7 +770,7 @@ class Cache private (
       req: ListTagsForStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[ListTagsForStreamResponse]] = {
+  ): IO[Response[ListTagsForStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing ListTagsForStream request"
@@ -801,7 +781,6 @@ class Cache private (
       semaphores.listTagsForStream.tryAcquireRelease(
         req
           .listTagsForStream(streamsRef)
-          .aggregateErrors
           .flatMap(response =>
             response.fold(
               e =>
@@ -836,7 +815,7 @@ class Cache private (
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -846,7 +825,6 @@ class Cache private (
       ) *>
       req
         .startStreamEncryption(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response
             .fold(
@@ -884,7 +862,7 @@ class Cache private (
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -894,7 +872,6 @@ class Cache private (
       ) *>
       req
         .stopStreamEncryption(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response
             .fold(
@@ -935,7 +912,7 @@ class Cache private (
       req: GetShardIteratorRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[GetShardIteratorResponse]] = {
+  ): IO[Response[GetShardIteratorResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing GetShardIterator request"
@@ -945,7 +922,6 @@ class Cache private (
       ) *>
       req
         .getShardIterator(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response
             .fold(
@@ -971,7 +947,7 @@ class Cache private (
       req: GetRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[GetRecordsResponse]] =
+  ): IO[Response[GetRecordsResponse]] =
     logger.debug(context.context)(
       "Processing GetRecords request"
     ) *>
@@ -980,7 +956,6 @@ class Cache private (
       ) *>
       req
         .getRecords(streamsRef)
-        .aggregateErrors
         .flatMap(response =>
           response
             .fold(
@@ -1005,16 +980,14 @@ class Cache private (
       req: PutRecordRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[EitherResponse[PutRecordResponse]] = {
+  ): IO[Response[PutRecordResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecord request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
-      res <- req
-        .putRecord(streamsRef, shardSemaphoresRef)
-        .aggregateErrors
+      res <- req.putRecord(streamsRef)
       _ <- res.fold(
         e =>
           logger
@@ -1036,18 +1009,14 @@ class Cache private (
       req: PutRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      P: Parallel[IO]
-  ): IO[EitherResponse[PutRecordsResponse]] = {
+  ): IO[Response[PutRecordsResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecords request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
       )
-      res <- req
-        .putRecords(streamsRef, shardSemaphoresRef)
-        .aggregateErrors
+      res <- req.putRecords(streamsRef)
       _ <- res.fold(
         e =>
           logger
@@ -1069,10 +1038,7 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1082,9 +1048,7 @@ class Cache private (
       ) *>
       semaphores.mergeShards.tryAcquireRelease(
         for {
-          result <- req
-            .mergeShards(streamsRef, shardSemaphoresRef)
-            .aggregateErrors
+          result <- req.mergeShards(streamsRef)
           _ <- result.fold(
             e =>
               logger
@@ -1126,10 +1090,7 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1139,9 +1100,7 @@ class Cache private (
       ) *>
       semaphores.splitShard.tryAcquireRelease(
         for {
-          result <- req
-            .splitShard(streamsRef, shardSemaphoresRef, config.shardLimit)
-            .aggregateErrors
+          result <- req.splitShard(streamsRef, config.shardLimit)
           _ <- result.fold(
             e =>
               logger
@@ -1183,10 +1142,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO]
-  ): IO[EitherResponse[Unit]] = {
+  )(implicit T: Timer[IO]): IO[Response[UpdateShardCountResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
@@ -1194,9 +1150,7 @@ class Cache private (
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
       ) *> (for {
-        result <- req
-          .updateShardCount(streamsRef, shardSemaphoresRef, config.shardLimit)
-          .aggregateErrors
+        result <- req.updateShardCount(streamsRef, config.shardLimit)
         _ <- result.fold(
           e =>
             logger
@@ -1228,29 +1182,40 @@ class Cache private (
       } yield result)
   }
 
-  def persistToDisk(context: LoggingContext): IO[Unit] =
+  def persistToDisk(context: LoggingContext, blocker: Blocker)(implicit
+      CS: ContextShift[IO]
+  ): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
         semaphores.persistData.withPermit(
           for {
             streams <- streamsRef.get
-            ctx = context ++ List(
+            ctx = context ++ Vector(
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )
-            _ <- IO(os.exists(config.persistConfig.osPath)).ifM(
-              IO.unit,
-              logger.info(ctx.context)("Creating directories") >> IO(
-                os.makeDir.all(config.persistConfig.osPath)
+            _ <- blocker
+              .blockOn(IO(os.exists(config.persistConfig.osPath)))
+              .ifM(
+                IO.unit,
+                logger.info(ctx.context)("Creating directories") >>
+                  blocker
+                    .blockOn(IO(os.makeDir.all(config.persistConfig.osPath)))
               )
-            )
             js = streams.asJson
             jacksonJs = circeToJackson(js)
-            fw = new FileWriter(config.persistConfig.osFile.toIO, false)
-            om = new ObjectMapper()
-            _ <- logger.debug(ctx.context)("Persisting stream data to disk")
-            res <- IO(om.writer().writeValue(fw, jacksonJs))
-            _ <- logger.debug(ctx.context)("Successfully persisted stream data")
+            res <- IO(new FileWriter(config.persistConfig.osFile.toIO, false))
+              .bracket { fw =>
+                val om = new ObjectMapper()
+                for {
+                  _ <- logger
+                    .debug(ctx.context)("Persisting stream data to disk")
+                  r <- blocker
+                    .blockOn(IO(om.writer().writeValue(fw, jacksonJs)))
+                  _ <- logger
+                    .debug(ctx.context)("Successfully persisted stream data")
+                } yield r
+              }(fw => IO(fw.close()))
           } yield res
         ),
         logger
@@ -1264,28 +1229,33 @@ object Cache {
       streams: Streams = Streams.empty // scalafix:ok
   )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](streams)
-    shardSemaphoresRef <- Ref.of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-      Map.empty
-    )
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
     cache <- supervisorResource.use(supervisor =>
-      IO(new Cache(ref, shardSemaphoresRef, semaphores, config, supervisor))
+      IO(new Cache(ref, semaphores, config, supervisor))
     )
   } yield cache
 
   def loadFromFile(
-      config: CacheConfig
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = {
+      config: CacheConfig,
+      blocker: Blocker
+  )(implicit
+      C: Concurrent[IO],
+      P: Parallel[IO],
+      CS: ContextShift[IO]
+  ): IO[Cache] = {
     val om = new ObjectMapper()
 
-    IO(os.exists(config.persistConfig.osPath)).ifM(
-      for {
-        jn <- IO(om.readTree(config.persistConfig.osFile.toIO))
-        streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
-        res <- apply(config, streams)
-      } yield res,
-      apply(config)
-    )
+    blocker
+      .blockOn(IO(os.exists(config.persistConfig.osFile)))
+      .ifM(
+        for {
+          jn <- blocker
+            .blockOn(IO(om.readTree(config.persistConfig.osFile.toIO)))
+          streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
+          res <- apply(config, streams)
+        } yield res,
+        apply(config)
+      )
   }
 }

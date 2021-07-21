@@ -1,11 +1,14 @@
 <configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>[%thread] %highlight(%-5level) %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
+      <pattern>[%thread] %highlight(%-5level) %d{ISO8601} %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
     </encoder>
   </appender>
   <logger name="kinesis.mock" level="${LOG_LEVEL:-INFO}"/>
-  <root level="${ROOT_LOG_LEVEL:-ERROR}">
+  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT" />
+  </appender>
+  <root level="${ROOT_LOG_LEVEL:-ERROR}">
+    <appender-ref ref="ASYNC" />
   </root>
 </configuration>

@@ -51,7 +51,7 @@ object CacheConfig {
         .toRight(
           CannotConvert(
             s,
-            "List[CreateStreamRequest]",
+            "Vector[CreateStreamRequest]",
             "Invalid format. Expected: \"<String>:<Int>,<String>:<Int>,...\""
           )
         )

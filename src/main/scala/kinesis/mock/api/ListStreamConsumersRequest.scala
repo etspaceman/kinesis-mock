@@ -3,10 +3,9 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -22,57 +21,64 @@ final case class ListStreamConsumersRequest(
 ) {
   def listStreamConsumers(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[ListStreamConsumersResponse]] = streamsRef.get.map {
-    streams =>
-      CommonValidations
-        .validateStreamArn(streamArn)
-        .andThen(_ =>
-          CommonValidations
-            .findStreamByArn(streamArn, streams)
-            .andThen(stream =>
-              (
-                maxResults match {
-                  case Some(mr) => CommonValidations.validateMaxResults(mr)
-                  case None     => Valid(())
-                },
-                nextToken match {
-                  case Some(nt) =>
-                    CommonValidations.validateNextToken(nt.consumerName)
-                  case None => Valid(())
-                }
-              ).mapN((_, _) =>
-                nextToken match {
-                  case Some(nt) =>
-                    val allConsumers = stream.consumers.values.toList
-                    val lastConsumerIndex = allConsumers.length - 1
-                    val limit =
-                      maxResults.map(l => Math.min(l, 100)).getOrElse(100)
-                    val firstIndex =
-                      allConsumers.indexWhere(_.consumerName == nt) + 1
-                    val lastIndex =
-                      Math.min(firstIndex + limit, lastConsumerIndex + 1)
-                    val consumers = allConsumers.slice(firstIndex, lastIndex)
-                    val ntUpdated =
-                      if (lastConsumerIndex == lastIndex) None
-                      else Some(consumers.last.consumerName)
-                    ListStreamConsumersResponse(consumers, ntUpdated)
+  ): IO[Response[ListStreamConsumersResponse]] = streamsRef.get.map { streams =>
+    CommonValidations
+      .validateStreamArn(streamArn)
+      .flatMap(_ =>
+        CommonValidations
+          .findStreamByArn(streamArn, streams)
+          .flatMap(stream =>
+            (
+              maxResults match {
+                case Some(mr) => CommonValidations.validateMaxResults(mr)
+                case None     => Right(())
+              },
+              nextToken match {
+                case Some(nt) =>
+                  CommonValidations.validateNextToken(nt.consumerName)
+                case None => Right(())
+              }
+            ).mapN((_, _) =>
+              nextToken match {
+                case Some(nt) =>
+                  val allConsumers = stream.consumers.values.toVector
+                  val lastConsumerIndex = allConsumers.length - 1
+                  val limit =
+                    maxResults.map(l => Math.min(l, 100)).getOrElse(100)
+                  val firstIndex =
+                    allConsumers.indexWhere(_.consumerName == nt) + 1
+                  val lastIndex =
+                    Math.min(firstIndex + limit, lastConsumerIndex + 1)
+                  val consumers = allConsumers.slice(firstIndex, lastIndex)
+                  val ntUpdated =
+                    if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                      None
+                    else Some(consumers.last.consumerName)
+                  ListStreamConsumersResponse(
+                    consumers.map(ConsumerSummary.fromConsumer),
+                    ntUpdated
+                  )
 
-                  case None =>
-                    val allConsumers = stream.consumers.values.toList
-                    val lastConsumerIndex = allConsumers.length - 1
-                    val limit =
-                      maxResults.map(l => Math.min(l, 100)).getOrElse(100)
-                    val lastIndex =
-                      Math.min(limit, lastConsumerIndex + 1)
-                    val consumers = allConsumers.take(limit)
-                    val nextToken =
-                      if (lastConsumerIndex == lastIndex) None
-                      else Some(consumers.last.consumerName)
-                    ListStreamConsumersResponse(consumers, nextToken)
-                }
-              )
+                case None =>
+                  val allConsumers = stream.consumers.values.toVector
+                  val lastConsumerIndex = allConsumers.length - 1
+                  val limit =
+                    maxResults.map(l => Math.min(l, 100)).getOrElse(100)
+                  val lastIndex =
+                    Math.min(limit, lastConsumerIndex + 1)
+                  val consumers = allConsumers.take(limit)
+                  val nextToken =
+                    if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                      None
+                    else Some(consumers.last.consumerName)
+                  ListStreamConsumersResponse(
+                    consumers.map(ConsumerSummary.fromConsumer),
+                    nextToken
+                  )
+              }
             )
-        )
+          )
+      )
   }
 }
 

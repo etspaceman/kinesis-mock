@@ -2,7 +2,7 @@ package kinesis.mock
 
 import scala.reflect.ClassTag
 
-import cats.kernel.Eq
+import cats.Eq
 import cats.syntax.all._
 import io.bullet.borer
 import io.bullet.borer.Cbor

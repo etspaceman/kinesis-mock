@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/etspaceman/kinesis-mock/branch/main/graph/badge.svg?token=XH58VN2O49)](https://codecov.io/gh/etspaceman/kinesis-mock)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 [![Join the chat at https://gitter.im/etspaceman/kinesis-mock](https://badges.gitter.im/etspaceman/kinesis-mock.svg)](https://gitter.im/etspaceman/kinesis-mock?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![](https://img.shields.io/github/downloads/etspaceman/kinesis-mock/total)
 
 - [Kinesis Mock](#kinesis-mock)
 - [Overview](#overview)
@@ -24,15 +25,23 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.0.8
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.0.8
+docker pull ghcr.io/etspaceman/kinesis-mock:0.1.4
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.1.4
 ```
 
-You can also leverage the `kinesis-mock.jar` executable in the release assets:
+You can also leverage the following executable options in the release assets:
 
-```shell
-java -jar ./kinesis-mock.jar
-```
+| File | Description | Launching |
+| ---- | ----------- | --------- |
+| kinesis-mock.jar | Executable JAR file that can be run in any environment with JDK 11 | `java -jar ./kinesis-mock.jar` |
+| kinesis-mock-linux-amd64-dynamic | GraalVM Native Image executable for Linux. Loads dependencies like libc at runtime. Best for non-docker runtimes. | `./kinesis-mock-linux-amd64-dynamic` |
+| kinesis-mock-linux-amd64-static | GraalVM Native Image executable for Linux. All dependencies are statically provided. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
+| kinesis-mock-linux-amd64-mostly-static | GraalVM Native Image executable for Linux. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
+| kinesis-mock-macos-amd64-dynamic | GraalVM Native Image executable for MacOS. Loads dependencies like libc at runtime. Best for non-docker runtimes.  | `./kinesis-mock-macos-amd64-dynamic` |
+| kinesis-mock-dynamic.exe | GraalVM Native Image executable for Windows. Loads dependencies like libc at runtime. Best for non-docker runtimes. | `./kinesis-mock-dynamic.exe` |
+| kinesis-mock-mostly-static.exe | GraalVM Native Image executable for Windows. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-mostly-static.exe` |
+
+See [the GraalVM documentation](https://www.graalvm.org/reference-manual/native-image/StaticImages/) for more information about static vs non-static Native Image distributions.
 
 # Service Configuration
 
@@ -42,8 +51,8 @@ these ports to a local one).
 | Variable | Data Type | Default Value | Notes |
 | -------- | --------- | ------------- | ----- |
 | INITIALIZE_STREAMS | String | | A comma-delimited string of stream names and its corresponding shard count to initialize during startup. For example: "my-first-stream:1,my-other-stream:2,my-last-stream:1"|
-| KINESIS_MOCK_HTTP2_PORT | Int | 4567 | Https Only |
-| KINESIS_MOCK_HTTP1_PLAIN_PORT | Int | 4568 | Http Only |
+| KINESIS_MOCK_TLS_PORT | Int | 4567 | Https Only |
+| KINESIS_MOCK_PLAIN_PORT | Int | 4568 | Http Only |
 | CREATE_STREAM_DURATION | Duration | 500ms | |
 | DELETE_STREAM_DURATION | Duration | 500ms | |
 | REGISTER_STREAM_CONSUMER_DURATION | Duration | 500ms | |

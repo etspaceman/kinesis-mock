@@ -44,13 +44,13 @@ class SplitShardTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         )
         .toIO
         .map(
-          _.shards().asScala.toList.filter(
+          _.shards().asScala.toVector.filter(
             _.sequenceNumberRange()
               .endingSequenceNumber() == null // scalafix:ok
           )
         )
     } yield assert(
-      openShards.length == 2,
+      openShards.length == 4,
       s"$openShards"
     )
   }

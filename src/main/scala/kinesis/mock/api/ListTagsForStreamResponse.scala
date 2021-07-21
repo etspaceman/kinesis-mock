@@ -1,7 +1,7 @@
 package kinesis.mock
 package api
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.models.TagList

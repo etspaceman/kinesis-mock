@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -21,12 +19,12 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -45,7 +43,7 @@ class DeregisterStreamConsumerTests
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
@@ -61,13 +59,13 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -85,7 +83,7 @@ class DeregisterStreamConsumerTests
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.consumers
             .get(consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
@@ -101,13 +99,13 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
           )
@@ -123,7 +121,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(consumerArn, None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -135,7 +133,7 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams.get(streamName).map(_.streamArn)
@@ -149,7 +147,7 @@ class DeregisterStreamConsumerTests
         )
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -163,12 +161,12 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -181,7 +179,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(None, Some(consumerName), None)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -195,12 +193,12 @@ class DeregisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val updated = streams.findAndUpdateStream(streamName) { stream =>
         stream.copy(
           streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
+          consumers = Map(
             consumerName -> Consumer
               .create(stream.streamArn, consumerName)
               .copy(consumerStatus = ConsumerStatus.ACTIVE)
@@ -215,7 +213,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(None, None, streamArn)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })

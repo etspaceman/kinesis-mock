@@ -1,13 +1,13 @@
 package kinesis.mock
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import cats.effect.concurrent.Semaphore
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import cats.implicits._
+import fs2.io.tls.TLSContext
 import io.circe.syntax._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -34,7 +34,7 @@ object KinesisMockService extends IOApp {
         cache <- IO
           .pure(cacheConfig.persistConfig.loadIfExists)
           .ifM(
-            Cache.loadFromFile(cacheConfig),
+            Cache.loadFromFile(cacheConfig, blocker),
             Cache(cacheConfig)
           )
         _ <- initializeStreams(
@@ -42,45 +42,49 @@ object KinesisMockService extends IOApp {
           cacheConfig.createStreamDuration,
           context,
           logger,
-          cacheConfig.initializeStreams.toList.flatten
+          cacheConfig.initializeStreams.toVector.flatten
         )
         serviceConfig <- KinesisMockServiceConfig.read(blocker)
         app = new KinesisMockRoutes(cache).routes.orNotFound
-        context <- ssl.loadContextFromClasspath[IO](
-          serviceConfig.keyStorePassword,
-          serviceConfig.keyManagerPassword
+        tlsContext <- TLSContext.fromKeyStoreResource[IO](
+          "server.jks",
+          serviceConfig.keyStorePassword.toCharArray(),
+          serviceConfig.keyManagerPassword.toCharArray(),
+          blocker
         )
-        http2Server = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http2Port, "0.0.0.0")
+        tlsServer = EmberServerBuilder
+          .default[IO]
+          .withPort(serviceConfig.tlsPort)
+          .withHost("0.0.0.0")
+          .withTLS(tlsContext)
           .withHttpApp(app)
-          .withSslContext(context)
-          .enableHttp2(
-            true
-          ) // This is bugged and HTTP2 unfortunately does not work correctly right now
-          .resource
-        http1PlainServer = BlazeServerBuilder[IO](ExecutionContext.global)
-          .bindHttp(serviceConfig.http1PlainPort, "0.0.0.0")
+          .build
+        plainServer = EmberServerBuilder
+          .default[IO]
+          .withPort(serviceConfig.plainPort)
+          .withHost("0.0.0.0")
           .withHttpApp(app)
-          .resource
+          .build
         _ <- logger.info(
-          s"Starting Kinesis Http2 Mock Service on port ${serviceConfig.http2Port}"
+          s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
         )
         _ <- logger.info(
-          s"Starting Kinesis Http1 Plain Mock Service on port ${serviceConfig.http1PlainPort}"
+          s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
         )
-        res <- http2Server
-          .parZip(http1PlainServer)
+        res <- tlsServer
+          .parZip(plainServer)
           .parZip(
             persistDataLoop(
               cacheConfig.persistConfig.shouldPersist,
               cacheConfig.persistConfig.interval,
               cache,
-              logger
+              logger,
+              blocker
             ).background
           )
           .onFinalize(
             IO.pure(cacheConfig.persistConfig.shouldPersist)
-              .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
+              .ifM(cache.persistToDisk(LoggingContext.create, blocker), IO.unit)
           )
           .use(_ => IO.never)
           .as(ExitCode.Success)
@@ -92,7 +96,7 @@ object KinesisMockService extends IOApp {
       createStreamDuration: FiniteDuration,
       context: LoggingContext,
       logger: SelfAwareStructuredLogger[IO],
-      streams: List[CreateStreamRequest]
+      streams: Vector[CreateStreamRequest]
   ): IO[Unit] = {
     def isInitStreamDone(streamName: StreamName): IO[Boolean] = {
       val descReq = DescribeStreamSummaryRequest(streamName)
@@ -132,7 +136,8 @@ object KinesisMockService extends IOApp {
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
-      logger: SelfAwareStructuredLogger[IO]
+      logger: SelfAwareStructuredLogger[IO],
+      blocker: Blocker
   ): IO[Unit] = {
     val context = LoggingContext.create
     IO.pure(shouldPersist)
@@ -144,7 +149,7 @@ object KinesisMockService extends IOApp {
             noop[IO, Unit],
             (e: Throwable, _) =>
               logger.error(context.context, e)("Failed to persist data")
-          )(cache.persistToDisk(context)),
+          )(cache.persistToDisk(context, blocker)),
         logger.info(LoggingContext.create.context)(
           "Not configured to persist data, persist loop not started"
         )

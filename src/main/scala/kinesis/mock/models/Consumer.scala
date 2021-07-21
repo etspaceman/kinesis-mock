@@ -3,7 +3,7 @@ package models
 
 import java.time.Instant
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.instances.circe._
@@ -12,7 +12,8 @@ final case class Consumer(
     consumerArn: String,
     consumerCreationTimestamp: Instant,
     consumerName: ConsumerName,
-    consumerStatus: ConsumerStatus
+    consumerStatus: ConsumerStatus,
+    streamArn: String
 )
 
 object Consumer {
@@ -22,22 +23,25 @@ object Consumer {
       s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}",
       consumerCreationTimestamp,
       consumerName,
-      ConsumerStatus.CREATING
+      ConsumerStatus.CREATING,
+      streamArn
     )
   }
   def consumerCirceEncoder(implicit
       EI: circe.Encoder[Instant]
-  ): circe.Encoder[Consumer] = circe.Encoder.forProduct4(
+  ): circe.Encoder[Consumer] = circe.Encoder.forProduct5(
     "ConsumerARN",
     "ConsumerCreationTimestamp",
     "ConsumerName",
-    "ConsumerStatus"
+    "ConsumerStatus",
+    "StreamARN"
   )(x =>
     (
       x.consumerArn,
       x.consumerCreationTimestamp,
       x.consumerName,
-      x.consumerStatus
+      x.consumerStatus,
+      x.streamArn
     )
   )
 
@@ -51,11 +55,13 @@ object Consumer {
         .as[Instant]
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
+      streamArn <- x.downField("StreamARN").as[String]
     } yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
-      consumerStatus
+      consumerStatus,
+      streamArn
     )
   }
 
@@ -73,5 +79,6 @@ object Consumer {
     x.consumerArn == y.consumerArn &&
       x.consumerCreationTimestamp.getEpochSecond == y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName == y.consumerName &&
-      x.consumerStatus == y.consumerStatus
+      x.consumerStatus == y.consumerStatus &&
+      x.streamArn == y.streamArn
 }

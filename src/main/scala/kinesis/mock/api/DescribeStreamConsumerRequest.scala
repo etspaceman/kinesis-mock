@@ -1,9 +1,9 @@
 package kinesis.mock
 package api
 
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -18,7 +18,7 @@ final case class DescribeStreamConsumerRequest(
 ) {
   def describeStreamConsumer(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[DescribeStreamConsumerResponse]] =
+  ): IO[Response[DescribeStreamConsumerResponse]] =
     streamsRef.get.map { streams =>
       (consumerArn, consumerName, streamArn) match {
         case (Some(cArn), _, _) =>
@@ -26,7 +26,7 @@ final case class DescribeStreamConsumerRequest(
             case (consumer, _) => DescribeStreamConsumerResponse(consumer)
           }
         case (None, Some(cName), Some(sArn)) =>
-          CommonValidations.findStreamByArn(sArn, streams).andThen { stream =>
+          CommonValidations.findStreamByArn(sArn, streams).flatMap { stream =>
             CommonValidations
               .findConsumer(cName, stream)
               .map(DescribeStreamConsumerResponse.apply)
@@ -34,7 +34,7 @@ final case class DescribeStreamConsumerRequest(
         case _ =>
           InvalidArgumentException(
             "ConsumerArn or both ConsumerName and StreamARN are required for this request."
-          ).invalidNel
+          ).asLeft
       }
     }
 }

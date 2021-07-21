@@ -1,7 +1,7 @@
 package kinesis.mock
 package api
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.models.EncryptionType
@@ -9,7 +9,7 @@ import kinesis.mock.models.EncryptionType
 final case class PutRecordsResponse(
     encryptionType: EncryptionType,
     failedRecordCount: Int,
-    records: List[PutRecordsResultEntry]
+    records: Vector[PutRecordsResultEntry]
 )
 
 object PutRecordsResponse {
@@ -27,7 +27,7 @@ object PutRecordsResponse {
       for {
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
         failedRecordCount <- x.downField("FailedRecordCount").as[Int]
-        records <- x.downField("Records").as[List[PutRecordsResultEntry]]
+        records <- x.downField("Records").as[Vector[PutRecordsResultEntry]]
       } yield PutRecordsResponse(encryptionType, failedRecordCount, records)
 
   implicit val putRecordsResponseEncoder: Encoder[PutRecordsResponse] =

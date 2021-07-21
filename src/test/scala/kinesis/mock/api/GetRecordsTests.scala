@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.syntax.all._
@@ -22,13 +20,13 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(100).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -43,7 +41,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -59,8 +57,8 @@ class GetRecordsTests
         req = GetRecordsRequest(None, shardIterator)
         res <- req.getRecords(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
-          response.records === records
+        res.isRight && res.exists { response =>
+          response.records.toVector === records
         },
         s"req: $req\n" +
           s"resCount: ${res.map(_.records.length)}\n" +
@@ -75,13 +73,13 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(100).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -96,7 +94,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -112,8 +110,8 @@ class GetRecordsTests
         req = GetRecordsRequest(Some(50), shardIterator)
         res <- req.getRecords(streamsRef)
       } yield assert(
-        res.isValid && res.exists { response =>
-          response.records === records.take(50)
+        res.isRight && res.exists { response =>
+          response.records.toVector === records.take(50)
         },
         s"req: $req\n" +
           s"resCount: ${res.map(_.records.length)}\n" +
@@ -128,13 +126,13 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(100).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -149,7 +147,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -169,12 +167,12 @@ class GetRecordsTests
             GetRecordsRequest(Some(50), r.nextShardIterator)
               .getRecords(streamsRef)
           )
-          .map(_.andThen(identity))
-        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+          .map(_.flatMap(identity))
+        res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
       } yield assert(
-        res.isValid && res.exists { case (r1, r2) =>
-          r1.records === records
-            .take(50) && r2.records === records
+        res.isRight && res.exists { case (r1, r2) =>
+          r1.records.toVector === records
+            .take(50) && r2.records.toVector === records
             .takeRight(50)
         },
         s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +
@@ -197,13 +195,13 @@ class GetRecordsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val shard = streams.streams(streamName).shards.head._1
 
-      val records: List[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toList.zipWithIndex.map {
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
           case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
@@ -218,7 +216,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
+          shards = Map(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -238,11 +236,11 @@ class GetRecordsTests
             GetRecordsRequest(Some(50), r.nextShardIterator)
               .getRecords(streamsRef)
           )
-          .map(_.andThen(identity))
-        res = res1.andThen(r1 => res2.map(r2 => (r1, r2)))
+          .map(_.flatMap(identity))
+        res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
       } yield assert(
-        res.isValid && res.exists { case (r1, r2) =>
-          r1.records === records
+        res.isRight && res.exists { case (r1, r2) =>
+          r1.records.toVector === records
             .take(50) && r2.records.isEmpty
         },
         s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +

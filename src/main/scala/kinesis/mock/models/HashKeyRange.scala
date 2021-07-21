@@ -1,7 +1,7 @@
 package kinesis.mock
 package models
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 import io.circe.syntax._
 

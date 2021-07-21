@@ -1,32 +1,31 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
+import cats.Eq
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   def createStream(
       streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       (
         CommonValidations.validateStreamName(streamName),
         if (streams.streams.contains(streamName))
           ResourceInUseException(
             s"Stream $streamName already exists"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         CommonValidations.validateShardCount(shardCount),
         if (
           streams.streams.count { case (_, stream) =>
@@ -35,22 +34,17 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         )
           LimitExceededException(
             "Limit for streams being created concurrently exceeded"
-          ).invalidNel
-        else Valid(()),
+          ).asLeft
+        else Right(()),
         CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
-      ).traverseN { (_, _, _, _, _) =>
-        val (newStream, shardSemaphoreKeys) =
+      ).mapN { (_, _, _, _, _) =>
+        val newStream =
           StreamData.create(shardCount, streamName, awsRegion, awsAccountId)
-        for {
-          _ <- streamsRef
-            .update(x =>
-              x.copy(streams = x.streams ++ List(streamName -> newStream))
-            )
-          shardSemaphores <- shardSemaphoreKeys
-            .traverse(key => Semaphore[IO](1).map(s => key -> s))
-          res <- shardSemaphoresRef.update(x => x ++ shardSemaphores)
-        } yield res
-      }
+        (
+          streams.copy(streams = streams.streams + (streamName -> newStream)),
+          ()
+        )
+      }.sequenceWithDefault(streams)
     }
 }
 

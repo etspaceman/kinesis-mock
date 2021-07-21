@@ -1,6 +1,5 @@
 package kinesis.mock
 
-import scala.collection.SortedMap
 import scala.jdk.CollectionConverters._
 
 import cats.effect.IO
@@ -28,7 +27,7 @@ class ListTagsForStreamTests
         .toIO
       res <- listTagsForStream(resources)
     } yield assert(
-      SortedMap.from(
+      Map.from(
         res.tags().asScala.map(tag => tag.key() -> tag.value())
       ) == tags.tags,
       res

@@ -1,7 +1,7 @@
 package kinesis.mock
 package api
 
-import cats.kernel.Eq
+import cats.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -9,7 +9,7 @@ import kinesis.mock.models._
 
 final case class ListShardsResponse(
     nextToken: Option[String],
-    shards: List[ShardSummary]
+    shards: Vector[ShardSummary]
 )
 
 object ListShardsResponse {
@@ -23,7 +23,7 @@ object ListShardsResponse {
     x =>
       for {
         nextToken <- x.downField("NextToken").as[Option[String]]
-        shards <- x.downField("Shards").as[List[ShardSummary]]
+        shards <- x.downField("Shards").as[Vector[ShardSummary]]
       } yield ListShardsResponse(nextToken, shards)
   implicit val listShardsResponseEncoder: Encoder[ListShardsResponse] =
     Encoder.derive

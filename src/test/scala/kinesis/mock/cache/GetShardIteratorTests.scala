@@ -55,7 +55,7 @@ class GetShardIteratorTests
             .rethrow
             .map(_.shardIterator)
         } yield assert(
-          res.parse.isValid,
+          res.parse.isRight,
           s"$res"
         )
       )

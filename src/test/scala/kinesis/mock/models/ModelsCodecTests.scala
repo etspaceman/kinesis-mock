@@ -7,6 +7,7 @@ import kinesis.mock.instances.arbitrary._
 
 class ModelsCodecTests extends CodecTests {
   identityLawTest[Consumer]
+  identityLawTest[ConsumerSummary]
   identityLawTest[HashKeyRange]
   identityLawTest[KinesisRecord]
   identityLawTest[Shard]

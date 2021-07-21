@@ -2,11 +2,11 @@ package kinesis.mock
 package api
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -19,23 +19,23 @@ final case class GetRecordsRequest(
 ) {
   def getRecords(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[GetRecordsResponse]] = streamsRef.get.map { streams =>
-    shardIterator.parse.andThen { parts =>
+  ): IO[Response[GetRecordsResponse]] = streamsRef.get.map { streams =>
+    shardIterator.parse.flatMap { parts =>
       CommonValidations
         .isStreamActiveOrUpdating(parts.streamName, streams)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(parts.streamName, streams)
-            .andThen(stream =>
-              CommonValidations.findShard(parts.shardId, stream).andThen { case (shard, data) =>
+            .flatMap(stream =>
+              CommonValidations.findShard(parts.shardId, stream).flatMap { case (shard, data) =>
                 (limit match {
                   case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Valid(())
-                }).andThen { _ =>
+                  case None    => Right(())
+                }).flatMap { _ =>
                   CommonValidations
                     .isShardOpen(shard)
-                    .andThen { _ =>
-                      val allShards = stream.shards.keys.toList
+                    .flatMap { _ =>
+                      val allShards = stream.shards.keys.toVector
                       val childShards = allShards
                         .filter(_.parentShardId.contains(shard.shardId.shardId))
                         .map(s =>
@@ -48,12 +48,12 @@ final case class GetRecordsRequest(
                           )
                         )
                       if (data.isEmpty) {
-                        Valid(
+                        Right(
                           GetRecordsResponse(
                             childShards,
                             0L,
                             shardIterator,
-                            data
+                            Queue.empty
                           )
                         )
                       } else {
@@ -61,27 +61,20 @@ final case class GetRecordsRequest(
                           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber
                         ) {
                           val maxRecords = limit.getOrElse(10000)
-                          val firstIndex = 0
-                          val lastIndex =
-                            Math.min(
-                              firstIndex + maxRecords,
-                              data.length
-                            )
 
-                          val records = GetRecordsRequest
+                          val (head, records) = GetRecordsRequest
                             .getRecords(
-                              data.slice(firstIndex, lastIndex),
-                              maxRecords,
-                              List.empty,
-                              0,
+                              data.take(maxRecords),
+                              Queue.empty,
+                              data.head,
                               0
                             )
 
                           val millisBehindLatest =
                             data.last.approximateArrivalTimestamp.toEpochMilli -
-                              records.head.approximateArrivalTimestamp.toEpochMilli
+                              head.approximateArrivalTimestamp.toEpochMilli
 
-                          Valid(
+                          Right(
                             GetRecordsResponse(
                               childShards,
                               millisBehindLatest,
@@ -95,42 +88,45 @@ final case class GetRecordsRequest(
                           )
                         } else {
                           data
-                            .find(
+                            .indexWhere(
                               _.sequenceNumber == parts.sequenceNumber
                             ) match {
-                            case Some(record) if record == data.last =>
-                              Valid(
+                            case -1 =>
+                              ResourceNotFoundException(
+                                s"Record for provided SequenceNumber not found"
+                              ).asLeft
+                            case index if index == data.length - 1 =>
+                              Right(
                                 GetRecordsResponse(
                                   childShards,
                                   0L,
                                   shardIterator,
-                                  List.empty
+                                  Queue.empty
                                 )
                               )
 
-                            case Some(record) =>
+                            case index =>
                               val maxRecords = limit.getOrElse(10000)
-                              val firstIndex = data.indexOf(record) + 1
+                              val firstIndex = index + 1
                               val lastIndex =
                                 Math.min(
                                   firstIndex + maxRecords,
                                   data.length
                                 )
 
-                              val records = GetRecordsRequest
+                              val (head, records) = GetRecordsRequest
                                 .getRecords(
                                   data.slice(firstIndex, lastIndex),
-                                  maxRecords,
-                                  List.empty,
-                                  0,
+                                  Queue.empty,
+                                  data(firstIndex),
                                   0
                                 )
 
                               val millisBehindLatest =
                                 data.last.approximateArrivalTimestamp.toEpochMilli -
-                                  record.approximateArrivalTimestamp.toEpochMilli
+                                  head.approximateArrivalTimestamp.toEpochMilli
 
-                              Valid(
+                              Right(
                                 GetRecordsResponse(
                                   childShards,
                                   millisBehindLatest,
@@ -142,11 +138,6 @@ final case class GetRecordsRequest(
                                   records
                                 )
                               )
-
-                            case None =>
-                              ResourceNotFoundException(
-                                s"Record for provided SequenceNumber not found"
-                              ).invalidNel
                           }
                         }
                       }
@@ -164,24 +155,20 @@ object GetRecordsRequest {
 
   @tailrec
   def getRecords(
-      data: List[KinesisRecord],
-      maxRecords: Int,
-      results: List[KinesisRecord],
-      totalSize: Int,
-      totalRecords: Int
-  ): List[KinesisRecord] = data match {
-    case Nil =>
-      results
-    case head :: _
-        if head.size + totalSize > maxReturnSize || totalRecords + 1 > maxRecords =>
-      results
-    case head :: tail =>
+      data: Vector[KinesisRecord],
+      results: Queue[KinesisRecord],
+      headResult: KinesisRecord,
+      totalSize: Int
+  ): (KinesisRecord, Queue[KinesisRecord]) = data.headOption match {
+    case None => (headResult, results)
+    case Some(head) if head.size + totalSize > maxReturnSize =>
+      (headResult, results)
+    case Some(head) =>
       getRecords(
-        tail,
-        maxRecords,
-        results :+ head,
-        totalSize + head.size,
-        totalRecords + 1
+        data.tail,
+        results.enqueue(head),
+        head,
+        totalSize + head.size
       )
   }
 

@@ -19,7 +19,7 @@ class IncreaseStreamRetentionPeriodTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val active = streams.findAndUpdateStream(streamName)(
@@ -32,7 +32,7 @@ class IncreaseStreamRetentionPeriodTests
         res <- req.increaseStreamRetention(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid &&
+        res.isRight &&
           s.streams.get(streamName).exists { stream =>
             stream.retentionPeriod == 48.hours
           },
@@ -48,7 +48,7 @@ class IncreaseStreamRetentionPeriodTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val withUpdatedRetention = streams.findAndUpdateStream(streamName)(s =>
@@ -59,6 +59,6 @@ class IncreaseStreamRetentionPeriodTests
         streamsRef <- Ref.of[IO, Streams](withUpdatedRetention)
         req = IncreaseStreamRetentionPeriodRequest(48, streamName)
         res <- req.increaseStreamRetention(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res\nstreams: $streams")
+      } yield assert(res.isLeft, s"req: $req\nres: $res\nstreams: $streams")
   })
 }

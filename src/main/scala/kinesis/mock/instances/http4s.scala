@@ -15,12 +15,14 @@ object http4s {
   implicit def kinesisMockEntityDecoder[A: Decoder]: EntityDecoder[IO, A] =
     EntityDecoder.decodeBy[IO, A](
       KinesisMockMediaTypes.validContentTypes.head,
-      KinesisMockMediaTypes.validContentTypes.tail.toList: _*
+      KinesisMockMediaTypes.validContentTypes.tail.toVector: _*
     ) { msg =>
       msg.contentType match {
         case Some(ct)
-            if ct.mediaType == KinesisMockMediaTypes.amazonJson || ct.value
-              .startsWith("application/json") => {
+            if ct.mediaType == KinesisMockMediaTypes.amazonJson ||
+              (ct.mediaType.isApplication && ct.mediaType.subType.startsWith(
+                "json"
+              )) => {
           implicit val D = Decoder[A].circeDecoder
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,

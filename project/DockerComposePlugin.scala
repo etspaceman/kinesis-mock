@@ -160,17 +160,15 @@ object DockerComposePluginKeys {
 
   val composeFileLocation =
     settingKey[String]("Path to docker-compose files, e.g. docker/")
-
   val networkName = settingKey[String]("Name of network to create")
   val composeProjectName =
     settingKey[String]("Name of project for docker-compose.")
-
   val buildImage = settingKey[Boolean](
     "Determines if dockerComposeUp should also build a docker image via the DockerImagePlugin"
   )
+
   val createNetwork = taskKey[Unit]("Creates a docker network")
   val removeNetwork = taskKey[Unit]("Removes a docker network")
-
   val dockerComposeTestQuick =
     taskKey[Unit]("Brings up docker, runs 'test', brings down docker")
   val dockerComposeUp =

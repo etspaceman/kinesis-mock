@@ -1,7 +1,6 @@
 package kinesis.mock
 package models
 
-import scala.collection.SortedMap
 import scala.concurrent.duration._
 
 import java.time.Instant
@@ -14,18 +13,18 @@ import io.circe.derivation._
 import kinesis.mock.instances.circe._
 
 final case class StreamData(
-    consumers: SortedMap[ConsumerName, Consumer],
+    consumers: Map[ConsumerName, Consumer],
     encryptionType: EncryptionType,
-    enhancedMonitoring: List[ShardLevelMetrics],
+    enhancedMonitoring: Vector[ShardLevelMetrics],
     keyId: Option[String],
     retentionPeriod: FiniteDuration,
-    shards: SortedMap[Shard, List[KinesisRecord]],
+    shards: Map[Shard, Vector[KinesisRecord]],
     streamArn: String,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus,
     tags: Tags,
-    shardCountUpdates: List[Instant]
+    shardCountUpdates: Vector[Instant]
 )
 
 object StreamData {
@@ -65,27 +64,24 @@ object StreamData {
       streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): (StreamData, List[ShardSemaphoresKey]) = {
+  ): StreamData = {
 
     val createTime = Instant.now()
-    val shards: SortedMap[Shard, List[KinesisRecord]] =
+    val shards: Map[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
-    (
-      StreamData(
-        SortedMap.empty,
-        EncryptionType.NONE,
-        List(ShardLevelMetrics(List.empty)),
-        None,
-        minRetentionPeriod,
-        shards,
-        s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
-        Instant.now(),
-        streamName,
-        StreamStatus.CREATING,
-        Tags.empty,
-        List.empty
-      ),
-      shards.keys.toList.map(shard => ShardSemaphoresKey(streamName, shard))
+    StreamData(
+      Map.empty,
+      EncryptionType.NONE,
+      Vector(ShardLevelMetrics(Vector.empty)),
+      None,
+      minRetentionPeriod,
+      shards,
+      s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
+      Instant.now(),
+      streamName,
+      StreamStatus.CREATING,
+      Tags.empty,
+      Vector.empty
     )
   }
 }

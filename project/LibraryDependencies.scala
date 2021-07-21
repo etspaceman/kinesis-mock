@@ -4,14 +4,14 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.0"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.5.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.4"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.2"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
-  val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.0.0"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.3"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.2.0"
+  val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
 
   object Borer {
@@ -26,7 +26,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "0.7.26"
+    val munitVersion = "0.7.27"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
     val catsEffect2 = "org.typelevel" %% "munit-cats-effect-2" % "1.0.5"
@@ -38,8 +38,8 @@ object LibraryDependencies {
     val sdkVersion = "2.16.18"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.7"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.4"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.6"
   }
 
   object Cats {
@@ -50,10 +50,10 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.21.22"
-    val blazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVersion
+    val http4sVersion = "0.22.0"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
+    val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   }
 
   object Circe {
@@ -74,7 +74,7 @@ object LibraryDependencies {
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.6.1"
+    val enumeratumVersion = "1.7.0"
     val cats = "com.beachape" %% "enumeratum-cats" % enumeratumVersion
     val core = "com.beachape" %% "enumeratum" % enumeratumVersion
     val circe = "com.beachape" %% "enumeratum-circe" % enumeratumVersion
@@ -83,14 +83,14 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.4"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.6"
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.3"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
   }
 
   object Refined {
-    val refinedVersion = "0.9.26"
+    val refinedVersion = "0.9.27"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }

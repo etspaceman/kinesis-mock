@@ -32,7 +32,7 @@ class EnableEnhancedMonitoringTests
           res <- cache
             .enableEnhancedMonitoring(
               EnableEnhancedMonitoringRequest(
-                List(ShardLevelMetric.IncomingBytes),
+                Vector(ShardLevelMetric.IncomingBytes),
                 streamName
               ),
               context,

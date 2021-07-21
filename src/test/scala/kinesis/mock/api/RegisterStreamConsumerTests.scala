@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -23,7 +21,7 @@ class RegisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val streamArn = streams.streams(streamName).streamArn
@@ -34,7 +32,7 @@ class RegisterStreamConsumerTests
         res <- req.registerStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.consumers.contains(consumerName)
         },
         s"req: $req\nres: $res"
@@ -48,10 +46,10 @@ class RegisterStreamConsumerTests
         awsAccountId: AwsAccountId,
         consumerName: ConsumerName
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val consumers = SortedMap.from(
+      val consumers = Map.from(
         Gen
           .listOfN(20, consumerArbitrary.arbitrary)
           .suchThat(x =>
@@ -73,7 +71,7 @@ class RegisterStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = RegisterStreamConsumerRequest(consumerName, streamArn)
         res <- req.registerStreamConsumer(streamsRef)
-      } yield assert(res.isInvalid, s"req: $req\nres: $res")
+      } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject when there are 5 consumers being created")(
@@ -84,10 +82,10 @@ class RegisterStreamConsumerTests
           awsAccountId: AwsAccountId,
           consumerName: ConsumerName
       ) =>
-        val (streams, _) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-        val consumers = SortedMap.from(
+        val consumers = Map.from(
           Gen
             .listOfN(5, consumerArbitrary.arbitrary)
             .suchThat(x =>
@@ -110,7 +108,7 @@ class RegisterStreamConsumerTests
           streamsRef <- Ref.of[IO, Streams](updated)
           req = RegisterStreamConsumerRequest(consumerName, streamArn)
           res <- req.registerStreamConsumer(streamsRef)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 }

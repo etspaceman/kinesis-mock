@@ -16,7 +16,7 @@ class ListStreamConsumersTests
 
   fixture.test("It should list stream consumers") { resources =>
     for {
-      consumerNames <- IO(consumerNameGen.take(3).toList.map(_.consumerName))
+      consumerNames <- IO(consumerNameGen.take(3).toVector.map(_.consumerName))
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
       registerRes <- consumerNames.traverse(consumerName =>
@@ -39,10 +39,10 @@ class ListStreamConsumersTests
       res
         .consumers()
         .asScala
-        .toList
+        .toVector
         .sortBy(_.consumerName())
         .map(x =>
-          models.Consumer(
+          models.ConsumerSummary(
             x.consumerARN(),
             x.consumerCreationTimestamp(),
             models.ConsumerName(x.consumerName()),
@@ -52,7 +52,7 @@ class ListStreamConsumersTests
         .map(_.consumer())
         .sortBy(_.consumerName())
         .map(x =>
-          models.Consumer(
+          models.ConsumerSummary(
             x.consumerARN(),
             x.consumerCreationTimestamp(),
             models.ConsumerName(x.consumerName()),

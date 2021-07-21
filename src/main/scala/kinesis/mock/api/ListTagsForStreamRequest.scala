@@ -1,12 +1,9 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -20,33 +17,33 @@ final case class ListTagsForStreamRequest(
 ) {
   def listTagsForStream(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[ListTagsForStreamResponse]] =
+  ): IO[Response[ListTagsForStreamResponse]] =
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 exclusiveStartTagKey match {
                   case Some(tagKey) =>
-                    CommonValidations.validateTagKeys(List(tagKey))
-                  case None => Valid(())
+                    CommonValidations.validateTagKeys(Vector(tagKey))
+                  case None => Right(())
                 },
                 limit match {
                   case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Valid(())
+                  case None    => Right(())
                 }
               ).mapN((_, _) => {
-                val allTags = stream.tags.toList
+                val allTags = stream.tags.toVector
                 val lastTagIndex = allTags.length - 1
                 val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
                 val firstIndex = exclusiveStartTagKey
                   .map(x => allTags.indexWhere(_._1 == x) + 1)
                   .getOrElse(0)
                 val lastIndex = Math.min(firstIndex + lim, lastTagIndex + 1)
-                val tags = SortedMap.from(allTags.slice(firstIndex, lastIndex))
+                val tags = Map.from(allTags.slice(firstIndex, lastIndex))
                 val hasMoreTags =
                   if (lastTagIndex + 1 == lastIndex) false
                   else true

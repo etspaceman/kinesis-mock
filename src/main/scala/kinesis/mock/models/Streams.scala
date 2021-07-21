@@ -1,76 +1,60 @@
 package kinesis.mock
 package models
 
-import scala.collection.SortedMap
-
 import cats.Eq
 import cats.syntax.all._
 import io.circe._
 import io.circe.derivation._
 
-final case class Streams(streams: SortedMap[StreamName, StreamData]) {
+final case class Streams(streams: Map[StreamName, StreamData]) {
   def updateStream(stream: StreamData): Streams =
-    copy(streams = streams ++ List(stream.streamName -> stream))
+    copy(streams = streams + (stream.streamName -> stream))
   def findAndUpdateStream(
       streamName: StreamName
   )(f: StreamData => StreamData): Streams =
-    copy(
-      streams = streams ++
-        streams
-          .get(streamName)
-          .map(stream => (stream.streamName, f(stream)))
-          .toMap
-    )
+    streams
+      .get(streamName)
+      .map(stream => copy(streams = streams + (stream.streamName -> f(stream))))
+      .getOrElse(this)
+
   def addStream(
       shardCount: Int,
       streamName: StreamName,
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): (Streams, List[ShardSemaphoresKey]) = {
-    val created = StreamData.create(
-      shardCount,
-      streamName,
-      awsRegion,
-      awsAccountId
+  ): Streams =
+    copy(streams =
+      streams + (streamName -> StreamData.create(
+        shardCount,
+        streamName,
+        awsRegion,
+        awsAccountId
+      ))
     )
-
-    (copy(streams = streams ++ List(streamName -> created._1)), created._2)
-  }
 
   def deleteStream(
       streamName: StreamName
-  ): (Streams, List[ShardSemaphoresKey]) =
-    (
+  ): Streams = streams
+    .get(streamName)
+    .map(stream =>
       copy(streams =
-        streams ++ streams
-          .get(streamName)
-          .map(stream =>
-            streamName -> stream.copy(
-              shards = SortedMap.empty,
-              streamStatus = StreamStatus.DELETING,
-              tags = Tags.empty,
-              enhancedMonitoring = List.empty,
-              consumers = SortedMap.empty
-            )
-          )
-          .toMap
-      ),
-      streams
-        .get(streamName)
-        .toList
-        .flatMap(x =>
-          x.shards.keys.toList.map(shard =>
-            ShardSemaphoresKey(x.streamName, shard)
-          )
-        )
+        streams + (streamName -> stream.copy(
+          shards = Map.empty,
+          streamStatus = StreamStatus.DELETING,
+          tags = Tags.empty,
+          enhancedMonitoring = Vector.empty,
+          consumers = Map.empty
+        ))
+      )
     )
+    .getOrElse(this)
 
   def removeStream(streamName: StreamName): Streams =
-    copy(streams = streams.filterNot { case (sName, _) => sName == streamName })
+    copy(streams = streams - streamName)
 }
 
 object Streams {
-  val empty: Streams = Streams(SortedMap.empty)
+  val empty: Streams = Streams(Map.empty)
   implicit val streamsCirceEncoder: Encoder[Streams] = deriveEncoder
   implicit val streamsCirceDecoder: Decoder[Streams] = deriveDecoder
   implicit val streamsEq: Eq[Streams] = (x, y) =>

@@ -1,14 +1,14 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
@@ -18,51 +18,51 @@ final case class RegisterStreamConsumerRequest(
 ) {
   def registerStreamConsumer(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[RegisterStreamConsumerResponse]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[RegisterStreamConsumerResponse]] =
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamArn(streamArn)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStreamByArn(streamArn, streams)
-            .andThen(stream =>
+            .flatMap(stream =>
               (
                 CommonValidations.validateConsumerName(consumerName),
                 if (stream.consumers.size >= 20)
                   LimitExceededException(
                     s"Only 20 consumers can be registered to a stream at once"
-                  ).invalidNel
-                else Valid(()),
+                  ).asLeft
+                else Right(()),
                 if (
                   stream.consumers.values
                     .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
                 )
                   LimitExceededException(
                     s"Only 5 consumers can be created at the same time"
-                  ).invalidNel
-                else Valid(()),
+                  ).asLeft
+                else Right(()),
                 if (stream.consumers.contains(consumerName))
                   ResourceInUseException(
                     s"Consumer $consumerName exists"
-                  ).invalidNel
-                else Valid(())
+                  ).asLeft
+                else Right(())
               ).mapN { (_, _, _, _) => (stream, streamArn, consumerName) }
             )
         )
-        .traverse { case (stream, streamArn, consumerName) =>
+        .map { case (stream, streamArn, consumerName) =>
           val consumer = Consumer.create(streamArn, consumerName)
 
-          streamsRef
-            .update(x =>
-              x.updateStream(
-                stream
-                  .copy(consumers =
-                    stream.consumers ++ List(consumerName -> consumer)
-                  )
-              )
+          (
+            streams.updateStream(
+              stream
+                .copy(consumers = stream.consumers + (consumerName -> consumer))
+            ),
+            RegisterStreamConsumerResponse(
+              ConsumerSummary.fromConsumer(consumer)
             )
-            .as(RegisterStreamConsumerResponse(consumer))
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

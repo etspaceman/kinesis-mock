@@ -2,8 +2,7 @@ package kinesis.mock
 package api
 
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.syntax.all._
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -20,7 +19,7 @@ class PutRecordsTests
         awsAccountId: AwsAccountId,
         initReq: PutRecordsRequest
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
       val active =
         streams.findAndUpdateStream(streamName)(s =>
@@ -33,18 +32,11 @@ class PutRecordsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.putRecords(streamsRef, shardSemaphoresRef)
+        res <- req.putRecords(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
-          stream.shards.values.toList.flatten.count { rec =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
+          stream.shards.values.toVector.flatten.count { rec =>
             req.records.map(_.data).exists(_.sameElements(rec.data))
           } == initReq.records.length
         },
@@ -60,7 +52,7 @@ class PutRecordsTests
           awsAccountId: AwsAccountId,
           initReq: PutRecordsRequest
       ) =>
-        val (streams, shardSemaphoreKeys) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
         val req = initReq.copy(
@@ -69,15 +61,8 @@ class PutRecordsTests
 
         for {
           streamsRef <- Ref.of[IO, Streams](streams)
-          shardSemaphores <- shardSemaphoreKeys
-            .traverse(k => Semaphore[IO](1).map(s => k -> s))
-            .map(_.toMap)
-          shardSemaphoresRef <- Ref
-            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-              shardSemaphores
-            )
-          res <- req.putRecords(streamsRef, shardSemaphoresRef)
-        } yield assert(res.isInvalid, s"req: $req\nres: $res")
+          res <- req.putRecords(streamsRef)
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -89,7 +74,7 @@ class PutRecordsTests
           awsAccountId: AwsAccountId,
           initReq: PutRecordsRequest
       ) =>
-        val (streams, shardSemaphoreKeys) =
+        val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
         val updated = streams.findAndUpdateStream(streamName)(s =>
@@ -108,16 +93,9 @@ class PutRecordsTests
 
         for {
           streamsRef <- Ref.of[IO, Streams](updated)
-          shardSemaphores <- shardSemaphoreKeys
-            .traverse(k => Semaphore[IO](1).map(s => k -> s))
-            .map(_.toMap)
-          shardSemaphoresRef <- Ref
-            .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-              shardSemaphores
-            )
-          res <- req.putRecords(streamsRef, shardSemaphoresRef)
+          res <- req.putRecords(streamsRef)
         } yield assert(
-          res.isInvalid,
+          res.isLeft,
           s"req: $req\nres: $res"
         )
     }

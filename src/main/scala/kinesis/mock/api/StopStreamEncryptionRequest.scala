@@ -1,14 +1,14 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 final case class StopStreamEncryptionRequest(
@@ -18,13 +18,13 @@ final case class StopStreamEncryptionRequest(
 ) {
   def stopStreamEncryption(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[Unit]] = streamsRef.get.flatMap(streams =>
+  ): IO[Response[Unit]] = streamsRef.modify(streams =>
     CommonValidations
       .validateStreamName(streamName)
-      .andThen(_ =>
+      .flatMap(_ =>
         CommonValidations
           .findStream(streamName, streams)
-          .andThen(stream =>
+          .flatMap(stream =>
             (
               CommonValidations.validateKeyId(keyId),
               CommonValidations.isKmsEncryptionType(encryptionType),
@@ -32,17 +32,19 @@ final case class StopStreamEncryptionRequest(
             ).mapN((_, _, _) => stream)
           )
       )
-      .traverse(stream =>
-        streamsRef.update(x =>
-          x.updateStream(
+      .map(stream =>
+        (
+          streams.updateStream(
             stream.copy(
               encryptionType = EncryptionType.NONE,
               streamStatus = StreamStatus.UPDATING,
               keyId = None
             )
-          )
+          ),
+          ()
         )
       )
+      .sequenceWithDefault(streams)
   )
 }
 

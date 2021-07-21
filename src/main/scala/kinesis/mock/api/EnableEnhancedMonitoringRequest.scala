@@ -1,50 +1,48 @@
 package kinesis.mock
 package api
 
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_EnableEnhancedMonitoring.html
 final case class EnableEnhancedMonitoringRequest(
-    shardLevelMetrics: List[ShardLevelMetric],
+    shardLevelMetrics: Vector[ShardLevelMetric],
     streamName: StreamName
 ) {
   def enableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[EnableEnhancedMonitoringResponse]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[EnableEnhancedMonitoringResponse]] =
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ => CommonValidations.findStream(streamName, streams))
-        .traverse { stream =>
+        .flatMap(_ => CommonValidations.findStream(streamName, streams))
+        .map { stream =>
           val current = stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =
             if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
               ShardLevelMetric.values
                 .filterNot(_ == ShardLevelMetric.ALL)
-                .toList
+                .toVector
             else (current ++ shardLevelMetrics).distinct
-
-          streamsRef
-            .update(x =>
-              x.updateStream(
-                stream
-                  .copy(enhancedMonitoring = List(ShardLevelMetrics(desired)))
-              )
+          (
+            streams.updateStream(
+              stream
+                .copy(enhancedMonitoring = Vector(ShardLevelMetrics(desired)))
+            ),
+            EnableEnhancedMonitoringResponse(
+              current,
+              desired,
+              streamName
             )
-            .as(
-              EnableEnhancedMonitoringResponse(
-                current,
-                desired,
-                streamName
-              )
-            )
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 
@@ -59,7 +57,7 @@ object EnableEnhancedMonitoringRequest {
     for {
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
-        .as[List[ShardLevelMetric]]
+        .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
     } yield EnableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
   }

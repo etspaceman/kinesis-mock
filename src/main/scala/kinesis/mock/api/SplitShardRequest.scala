@@ -3,14 +3,14 @@ package api
 
 import java.time.Instant
 
-import cats.data.Validated._
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.effect.{Concurrent, IO}
-import cats.kernel.Eq
+import cats.Eq
+import cats.effect.IO
+import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
+import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_SplitShard.html
@@ -21,43 +21,42 @@ final case class SplitShardRequest(
 ) {
   def splitShard(
       streamsRef: Ref[IO, Streams],
-      shardSemaphoresRef: Ref[IO, Map[ShardSemaphoresKey, Semaphore[IO]]],
       shardLimit: Int
-  )(implicit C: Concurrent[IO]): IO[ValidatedResponse[Unit]] =
-    streamsRef.get.flatMap { streams =>
+  ): IO[Response[Unit]] =
+    streamsRef.modify { streams =>
       CommonValidations
         .validateStreamName(streamName)
-        .andThen(_ =>
+        .flatMap(_ =>
           CommonValidations
             .findStream(streamName, streams)
-            .andThen { stream =>
+            .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamName, streams),
                 CommonValidations.validateShardId(shardToSplit),
                 if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
                   InvalidArgumentException(
                     "NewStartingHashKey contains invalid characters"
-                  ).invalidNel
-                } else Valid(newStartingHashKey),
+                  ).asLeft
+                } else Right(newStartingHashKey),
                 if (
                   streams.streams.values.map(_.shards.size).sum + 1 > shardLimit
                 )
                   LimitExceededException(
                     "Operation would exceed the configured shard limit for the account"
-                  ).invalidNel
-                else Valid(()),
-                CommonValidations.findShard(shardToSplit, stream).andThen {
+                  ).asLeft
+                else Right(()),
+                CommonValidations.findShard(shardToSplit, stream).flatMap {
                   case (shard, shardData) =>
-                    CommonValidations.isShardOpen(shard).andThen { _ =>
+                    CommonValidations.isShardOpen(shard).flatMap { _ =>
                       val newStartingHashKeyNumber = BigInt(newStartingHashKey)
                       if (
                         newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
                       )
-                        Valid((shard, shardData))
+                        Right((shard, shardData))
                       else
                         InvalidArgumentException(
                           s"NewStartingHashKey is not within the hash range shard ${shard.shardId}"
-                        ).invalidNel
+                        ).asLeft
                     }
                 }
               ).mapN { case (_, _, _, _, (shard, shardData)) =>
@@ -65,12 +64,12 @@ final case class SplitShardRequest(
               }
             }
         )
-        .traverse { case (shard, shardData, stream) =>
+        .map { case (shard, shardData, stream) =>
           val now = Instant.now()
           val newStartingHashKeyNumber = BigInt(newStartingHashKey)
           val newShardIndex1 = stream.shards.keys.map(_.shardId.index).max + 1
           val newShardIndex2 = newShardIndex1 + 1
-          val newShard1: (Shard, List[KinesisRecord]) = Shard(
+          val newShard1: (Shard, Vector[KinesisRecord]) = Shard(
             None,
             None,
             now,
@@ -84,9 +83,9 @@ final case class SplitShardRequest(
               SequenceNumber.create(now, newShardIndex1, None, None, None)
             ),
             ShardId.create(newShardIndex1)
-          ) -> List.empty
+          ) -> Vector.empty
 
-          val newShard2: (Shard, List[KinesisRecord]) = Shard(
+          val newShard2: (Shard, Vector[KinesisRecord]) = Shard(
             None,
             None,
             now,
@@ -100,41 +99,30 @@ final case class SplitShardRequest(
               SequenceNumber.create(now, newShardIndex2, None, None, None)
             ),
             ShardId.create(newShardIndex2)
-          ) -> List.empty
+          ) -> Vector.empty
 
-          val newShards = List(newShard1, newShard2)
+          val newShards = Vector(newShard1, newShard2)
 
-          val oldShard: (Shard, List[KinesisRecord]) = shard.copy(
+          val oldShard: (Shard, Vector[KinesisRecord]) = shard.copy(
             closedTimestamp = Some(now),
             sequenceNumberRange = shard.sequenceNumberRange.copy(
               endingSequenceNumber = Some(SequenceNumber.shardEnd)
             )
           ) -> shardData
 
-          shardSemaphoresRef.get.flatMap { shardSemaphores =>
-            shardSemaphores(ShardSemaphoresKey(streamName, shard)).withPermit(
-              streamsRef.update(x =>
-                x.updateStream(
-                  stream.copy(
-                    shards = stream.shards.filterNot { case (shard, _) =>
-                      shard.shardId == oldShard._1.shardId
-                    } ++ (newShards :+ oldShard),
-                    streamStatus = StreamStatus.UPDATING
-                  )
-                )
+          (
+            streams.updateStream(
+              stream.copy(
+                shards = stream.shards.filterNot { case (shard, _) =>
+                  shard.shardId == oldShard._1.shardId
+                } ++ (newShards :+ oldShard),
+                streamStatus = StreamStatus.UPDATING
               )
-            ) *> Semaphore[IO](1)
-              .flatMap(x => Semaphore[IO](1).map(y => List(x, y)))
-              .flatMap(semaphores =>
-                shardSemaphoresRef.update(shardsSemaphore =>
-                  shardsSemaphore ++ List(
-                    ShardSemaphoresKey(streamName, newShard1._1),
-                    ShardSemaphoresKey(streamName, newShard2._1)
-                  ).zip(semaphores)
-                )
-              )
-          }
+            ),
+            ()
+          )
         }
+        .sequenceWithDefault(streams)
     }
 }
 

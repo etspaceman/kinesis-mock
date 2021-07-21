@@ -2,8 +2,7 @@ package kinesis.mock
 package api
 
 import cats.effect._
-import cats.effect.concurrent.{Ref, Semaphore}
-import cats.syntax.all._
+import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -19,16 +18,16 @@ class MergeShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
       val active =
         streams.findAndUpdateStream(streamName)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-      val shardToMerge =
-        active.streams(streamName).shards.keys.head
-      val adjacentShardToMerge =
-        active.streams(streamName).shards.keys.toList(1)
+      val shards = active.streams(streamName).shards.keys.toVector.sorted
+
+      val shardToMerge = shards.head
+      val adjacentShardToMerge = shards(1)
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
@@ -37,18 +36,11 @@ class MergeShardsTests
           shardToMerge.shardId.shardId,
           streamName
         )
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.mergeShards(streamsRef, shardSemaphoresRef)
+        res <- req.mergeShards(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
-          stream.shards.keys.toList.exists(shard =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
+          stream.shards.keys.toVector.exists(shard =>
             shard.adjacentParentShardId
               .contains(adjacentShardToMerge.shardId.shardId) &&
               shard.parentShardId.contains(shardToMerge.shardId.shardId)
@@ -67,13 +59,13 @@ class MergeShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
 
-      val shardToMerge =
-        streams.streams(streamName).shards.keys.head
-      val adjacentShardToMerge =
-        streams.streams(streamName).shards.keys.toList(1)
+      val shards = streams.streams(streamName).shards.keys.toVector.sorted
+
+      val shardToMerge = shards.head
+      val adjacentShardToMerge = shards(1)
 
       val req =
         MergeShardsRequest(
@@ -84,16 +76,9 @@ class MergeShardsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.mergeShards(streamsRef, shardSemaphoresRef)
+        res <- req.mergeShards(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -104,23 +89,15 @@ class MergeShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
-      val shardToMerge =
-        active.streams(streamName).shards.keys.head
+      val shards = active.streams(streamName).shards.keys.toVector.sorted
+      val shardToMerge = shards.head
       val adjacentShardToMerge =
-        ShardId.create(
-          active
-            .streams(streamName)
-            .shards
-            .keys
-            .toList
-            .map(_.shardId.index)
-            .max + 1
-        )
+        ShardId.create(shards.map(_.shardId.index).max + 1)
 
       val req =
         MergeShardsRequest(
@@ -131,16 +108,9 @@ class MergeShardsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.mergeShards(streamsRef, shardSemaphoresRef)
+        res <- req.mergeShards(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -151,23 +121,16 @@ class MergeShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
+      val shards = active.streams(streamName).shards.keys.toVector.sorted
       val shardToMerge =
-        ShardId.create(
-          active
-            .streams(streamName)
-            .shards
-            .keys
-            .toList
-            .map(_.shardId.index)
-            .max + 1
-        )
-      val adjacentShardToMerge =
-        streams.streams(streamName).shards.keys.toList(1)
+        ShardId.create(shards.map(_.shardId.index).max + 1)
+
+      val adjacentShardToMerge = shards(1)
 
       val req =
         MergeShardsRequest(
@@ -178,16 +141,9 @@ class MergeShardsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.mergeShards(streamsRef, shardSemaphoresRef)
+        res <- req.mergeShards(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })
@@ -198,15 +154,14 @@ class MergeShardsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, shardSemaphoreKeys) =
+      val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
-      val shardToMerge =
-        streams.streams(streamName).shards.keys.head
-      val adjacentShardToMerge =
-        streams.streams(streamName).shards.keys.toList(2)
+      val shards = streams.streams(streamName).shards.keys.toVector.sorted
+      val shardToMerge = shards.head
+      val adjacentShardToMerge = shards(2)
 
       val req =
         MergeShardsRequest(
@@ -217,16 +172,9 @@ class MergeShardsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        shardSemaphores <- shardSemaphoreKeys
-          .traverse(k => Semaphore[IO](1).map(s => k -> s))
-          .map(_.toMap)
-        shardSemaphoresRef <- Ref
-          .of[IO, Map[ShardSemaphoresKey, Semaphore[IO]]](
-            shardSemaphores
-          )
-        res <- req.mergeShards(streamsRef, shardSemaphoresRef)
+        res <- req.mergeShards(streamsRef)
       } yield assert(
-        res.isInvalid,
+        res.isLeft,
         s"req: $req\nres: $res"
       )
   })

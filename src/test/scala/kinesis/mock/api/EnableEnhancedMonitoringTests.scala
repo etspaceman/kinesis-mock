@@ -19,7 +19,7 @@ class EnableEnhancedMonitoringTests
         awsAccountId: AwsAccountId,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {
@@ -35,7 +35,7 @@ class EnableEnhancedMonitoringTests
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
 
       } yield assert(
-        res.isValid && res.exists { case response =>
+        res.isRight && res.exists { case response =>
           updatedMetrics.contains(response.desiredShardLevelMetrics)
         },
         s"req: $req\nres: $res\nupdatedMetrics: $updatedMetrics"

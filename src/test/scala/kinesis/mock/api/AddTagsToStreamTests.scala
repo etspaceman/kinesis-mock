@@ -1,8 +1,6 @@
 package kinesis.mock
 package api
 
-import scala.collection.SortedMap
-
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -22,7 +20,7 @@ class AddTagsToStreamTests
         awsAccountId: AwsAccountId,
         tags: Tags
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       for {
@@ -31,7 +29,7 @@ class AddTagsToStreamTests
         res <- req.addTagsToStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"
@@ -44,13 +42,13 @@ class AddTagsToStreamTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val (streams, _) =
+      val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
       val tagKey = tagKeyGen.one
       val tagValue = tagValueGen.one
-      val tags = Tags(SortedMap(tagKey -> tagValue))
-      val initialTags = Tags(SortedMap(tagKey -> "initial"))
+      val tags = Tags(Map(tagKey -> tagValue))
+      val initialTags = Tags(Map(tagKey -> "initial"))
 
       val streamsWithTag = streams.findAndUpdateStream(streamName)(stream =>
         stream.copy(tags = initialTags)
@@ -62,7 +60,7 @@ class AddTagsToStreamTests
         res <- req.addTagsToStream(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isValid && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamName).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"

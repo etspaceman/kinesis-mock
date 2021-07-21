@@ -1,14 +1,14 @@
 package kinesis.mock
 package api
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe
 
 import kinesis.mock.models.StreamName
 
 final case class ListStreamsResponse(
     hasMoreStreams: Boolean,
-    streamNames: List[StreamName]
+    streamNames: Vector[StreamName]
 )
 
 object ListStreamsResponse {
@@ -23,7 +23,7 @@ object ListStreamsResponse {
     x =>
       for {
         hasMoreStreams <- x.downField("HasMoreStreams").as[Boolean]
-        streamNames <- x.downField("StreamNames").as[List[StreamName]]
+        streamNames <- x.downField("StreamNames").as[Vector[StreamName]]
       } yield ListStreamsResponse(hasMoreStreams, streamNames)
   implicit val listStreamsResponseEncoder: Encoder[ListStreamsResponse] =
     Encoder.derive

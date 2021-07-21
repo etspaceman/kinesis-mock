@@ -1,10 +1,9 @@
 package kinesis.mock
 package api
 
-import cats.data.Validated._
+import cats.Eq
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import cats.kernel.Eq
 import cats.syntax.all._
 import io.circe
 
@@ -17,23 +16,23 @@ final case class ListStreamsRequest(
 ) {
   def listStreams(
       streamsRef: Ref[IO, Streams]
-  ): IO[ValidatedResponse[ListStreamsResponse]] = streamsRef.get.map(streams =>
+  ): IO[Response[ListStreamsResponse]] = streamsRef.get.map(streams =>
     (
       exclusiveStartStreamName match {
         case Some(streamName) =>
           CommonValidations.validateStreamName(streamName)
-        case None => Valid(())
+        case None => Right(())
       },
       limit match {
         case Some(l) => CommonValidations.validateLimit(l)
-        case None    => Valid(())
+        case None    => Right(())
       }
     ).mapN((_, _) => {
-      val allStreams = streams.streams.keys.toList
+      val allStreams = streams.streams.keys.toVector.sorted
       val lastStreamIndex = allStreams.length - 1
       val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
       val firstIndex = exclusiveStartStreamName
-        .map(x => allStreams.indexWhere(_ == x) + 1)
+        .map(x => allStreams.indexOf(x) + 1)
         .getOrElse(0)
       val lastIndex = Math.min(firstIndex + lim, lastStreamIndex + 1)
       val streamNames = allStreams.slice(firstIndex, lastIndex)

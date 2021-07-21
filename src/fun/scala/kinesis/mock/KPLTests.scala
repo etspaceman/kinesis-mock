@@ -40,8 +40,8 @@ class KPLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
 
   kplFixture.test("it should produce records") { resources =>
     for {
-      dataRecords <- IO(dataGen.take(5).toList)
-      res <- dataRecords.traverse(data =>
+      dataRecords <- IO(dataGen.take(20).toVector)
+      res <- dataRecords.parTraverse(data =>
         resources.kpl
           .addUserRecord(
             new UserRecord(

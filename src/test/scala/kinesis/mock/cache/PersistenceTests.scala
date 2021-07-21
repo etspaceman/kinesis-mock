@@ -50,14 +50,14 @@ class PersistenceTests
           recordRequests <- IO(
             putRecordRequestArb.arbitrary
               .take(5)
-              .toList
+              .toVector
               .map(_.copy(streamName = streamName))
           )
           _ <- recordRequests.traverse(req =>
             cache.putRecord(req, context, false).rethrow
           )
-          _ <- cache.persistToDisk(context)
-          newCache <- Cache.loadFromFile(cacheConfig)
+          _ <- cache.persistToDisk(context, blocker)
+          newCache <- Cache.loadFromFile(cacheConfig, blocker)
           shard <- newCache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),

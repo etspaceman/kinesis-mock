@@ -1,6 +1,6 @@
 package kinesis.mock.models
 
-import cats.kernel.Eq
+import cats.Eq
 import io.circe._
 
 final case class StreamName(streamName: String) {
