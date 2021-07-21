@@ -10,7 +10,7 @@ object LibraryDependencies {
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "3.7.3"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.1.0"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.2.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
 
