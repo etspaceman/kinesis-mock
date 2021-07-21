@@ -1246,13 +1246,16 @@ object Cache {
   ): IO[Cache] = {
     val om = new ObjectMapper()
 
-    IO(os.exists(config.persistConfig.osFile)).ifM(
-      for {
-        jn <- blocker.blockOn(IO(om.readTree(config.persistConfig.osFile.toIO)))
-        streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
-        res <- apply(config, streams)
-      } yield res,
-      apply(config)
-    )
+    blocker
+      .blockOn(IO(os.exists(config.persistConfig.osFile)))
+      .ifM(
+        for {
+          jn <- blocker
+            .blockOn(IO(om.readTree(config.persistConfig.osFile.toIO)))
+          streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
+          res <- apply(config, streams)
+        } yield res,
+        apply(config)
+      )
   }
 }

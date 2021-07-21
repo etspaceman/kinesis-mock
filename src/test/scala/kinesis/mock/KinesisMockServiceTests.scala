@@ -3,8 +3,7 @@ package kinesis.mock
 import cats.effect.{Blocker, IO}
 import org.http4s._
 import org.http4s.headers._
-import org.http4s.syntax.kleisli._
-import org.http4s.util.CaseInsensitiveString
+import org.http4s.syntax.all._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.api.CreateStreamRequest
@@ -25,7 +24,7 @@ class KinesisMockServiceTests
         app = new KinesisMockRoutes(cache).routes.orNotFound
         request = Request[IO](
           method = Method.GET,
-          uri = Uri(path = "/healthcheck")
+          uri = Uri(path = path"/healthcheck")
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, res)
@@ -38,9 +37,10 @@ class KinesisMockServiceTests
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
         app = new KinesisMockRoutes(cache).routes.orNotFound
+        origin: Origin = Origin.Null
         request = Request[IO](
           method = Method.OPTIONS,
-          headers = Headers(List(Origin.Null))
+          headers = Headers.empty.put(origin.toRaw1)
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, res)
@@ -68,24 +68,21 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -105,24 +102,21 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonJson)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonJson).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -142,10 +136,11 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             uri = Uri(
-              path = "/",
+              path = path"/",
               query = Query(
                 (KinesisMockQueryParams.amazonAction -> Some("CreateStream")),
                 (KinesisMockQueryParams.amazonAuthAlgorithm -> Some(
@@ -167,8 +162,8 @@ class KinesisMockServiceTests
             ),
             headers = Headers(
               List(
-                Origin.Null,
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                origin.toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -188,10 +183,11 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             uri = Uri(
-              path = "/",
+              path = path"/",
               query = Query(
                 (KinesisMockQueryParams.amazonAction -> Some("CreateStream")),
                 (KinesisMockQueryParams.amazonAuthAlgorithm -> Some(
@@ -213,8 +209,8 @@ class KinesisMockServiceTests
             ),
             headers = Headers(
               List(
-                Origin.Null,
-                `Content-Type`(KinesisMockMediaTypes.amazonJson)
+                origin.toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonJson).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -238,19 +234,15 @@ class KinesisMockServiceTests
             method = Method.POST,
             headers = Headers(
               List(
-                Header(
-                  "Authorization",
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -259,9 +251,7 @@ class KinesisMockServiceTests
           )
           res <- app.run(request)
         } yield assert(
-          res.status.isSuccess && res.headers
-            .get(CaseInsensitiveString(KinesisMockHeaders.amazonId2))
-            .nonEmpty,
+          res.status.isSuccess && res.headers.get[AmazonId2].nonEmpty,
           res
         )
       )
@@ -275,17 +265,15 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                origin.toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -305,23 +293,20 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -341,22 +326,19 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -376,21 +358,18 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request"
-                ),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -410,10 +389,11 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             uri = Uri(
-              path = "/",
+              path = path"/",
               query = Query(
                 (KinesisMockQueryParams.amazonAction -> Some("CreateStream")),
                 (KinesisMockQueryParams.amazonAuthAlgorithm -> Some(
@@ -429,8 +409,8 @@ class KinesisMockServiceTests
             ),
             headers = Headers(
               List(
-                Origin.Null,
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                origin.toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -450,10 +430,11 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             uri = Uri(
-              path = "/",
+              path = path"/",
               query = Query(
                 (KinesisMockQueryParams.amazonAction -> Some("CreateStream")),
                 (KinesisMockQueryParams.amazonAuthAlgorithm -> Some(
@@ -466,8 +447,8 @@ class KinesisMockServiceTests
             ),
             headers = Headers(
               List(
-                Origin.Null,
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                origin.toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -487,20 +468,20 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -520,24 +501,21 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "thisisntright"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("thisisntright").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -557,23 +535,20 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                )
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -593,10 +568,11 @@ class KinesisMockServiceTests
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
           app = new KinesisMockRoutes(cache).routes.orNotFound
+          origin: Origin = Origin.Null
           request = Request(
             method = Method.POST,
             uri = Uri(
-              path = "/",
+              path = path"/",
               query = Query(
                 (KinesisMockQueryParams.amazonAction -> Some("CreateStream")),
                 (KinesisMockQueryParams.amazonAuthAlgorithm -> Some(
@@ -618,20 +594,16 @@ class KinesisMockServiceTests
             ),
             headers = Headers(
               List(
-                Origin.Null,
-                Header(
-                  "Authorization",
+                origin.toRaw1,
+                AmazonAuthorization(
                   "AWS4-HMAC-SHA256 " +
                     "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                     "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                     "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-                ),
-                Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-                Header(
-                  KinesisMockHeaders.amazonTarget,
-                  "Kinesis_20131202.CreateStream"
-                ),
-                `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+                ).toRaw1,
+                AmazonDateHeader("20150830T123600Z").toRaw1,
+                AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+                `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
               )
             ),
             body = kinesisMockEntityEncoder[CreateStreamRequest](
@@ -650,24 +622,21 @@ class KinesisMockServiceTests
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
         app = new KinesisMockRoutes(cache).routes.orNotFound
+        origin: Origin = Origin.Null
         request = Request(
           method = Method.POST,
           headers = Headers(
             List(
-              Origin.Null,
-              Header(
-                "Authorization",
+              origin.toRaw1,
+              AmazonAuthorization(
                 "AWS4-HMAC-SHA256 " +
                   "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                   "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                   "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-              ),
-              Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-              Header(
-                KinesisMockHeaders.amazonTarget,
-                "Kinesis_20131202.CreateStream"
-              ),
-              `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+              ).toRaw1,
+              AmazonDateHeader("20150830T123600Z").toRaw1,
+              AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+              `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
             )
           ),
           body = EntityEncoder[IO, String].toEntity("thisisn'tright").body
@@ -683,24 +652,21 @@ class KinesisMockServiceTests
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
         app = new KinesisMockRoutes(cache).routes.orNotFound
+        origin: Origin = Origin.Null
         request = Request(
           method = Method.POST,
           headers = Headers(
             List(
-              Origin.Null,
-              Header(
-                "Authorization",
+              origin.toRaw1,
+              AmazonAuthorization(
                 "AWS4-HMAC-SHA256 " +
                   "Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, " +
                   "SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, " +
                   "Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6"
-              ),
-              Header(KinesisMockHeaders.amazonDate, "20150830T123600Z"),
-              Header(
-                KinesisMockHeaders.amazonTarget,
-                "Kinesis_20131202.CreateStream"
-              ),
-              `Content-Type`(KinesisMockMediaTypes.amazonCbor)
+              ).toRaw1,
+              AmazonDateHeader("20150830T123600Z").toRaw1,
+              AmazonTarget("Kinesis_20131202.CreateStream").toRaw1,
+              `Content-Type`(KinesisMockMediaTypes.amazonCbor).toRaw1
             )
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
