@@ -40,7 +40,6 @@ class ListStreamConsumersTests
         .consumers()
         .asScala
         .toVector
-        .sortBy(_.consumerName())
         .map(x =>
           models.ConsumerSummary(
             x.consumerARN(),
@@ -50,7 +49,6 @@ class ListStreamConsumersTests
           )
         ) === registerRes
         .map(_.consumer())
-        .sortBy(_.consumerName())
         .map(x =>
           models.ConsumerSummary(
             x.consumerARN(),

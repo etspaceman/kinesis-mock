@@ -51,14 +51,15 @@ class ListStreamConsumersTests
               )
               .one
           )
-          registerResults <- consumerNames.toVector.traverse(consumerName =>
-            cache
-              .registerStreamConsumer(
-                RegisterStreamConsumerRequest(consumerName, streamArn),
-                context,
-                false
-              )
-              .rethrow
+          registerResults <- consumerNames.sorted.toVector.traverse(
+            consumerName =>
+              cache
+                .registerStreamConsumer(
+                  RegisterStreamConsumerRequest(consumerName, streamArn),
+                  context,
+                  false
+                )
+                .rethrow
           )
           res <- cache
             .listStreamConsumers(
@@ -68,11 +69,10 @@ class ListStreamConsumersTests
             )
             .rethrow
         } yield assert(
-          res.consumers.sortBy(_.consumerName) == registerResults
-            .map(_.consumer)
-            .sortBy(_.consumerName),
-          s"${registerResults.map(_.consumer).sortBy(_.consumerName)}\n" +
-            s"${res.consumers.sortBy(_.consumerName)}"
+          res.consumers == registerResults
+            .map(_.consumer),
+          s"${registerResults.map(_.consumer)}\n" +
+            s"${res.consumers}"
         )
       )
   })

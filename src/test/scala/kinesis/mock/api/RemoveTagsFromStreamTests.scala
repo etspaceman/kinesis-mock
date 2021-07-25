@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
@@ -25,7 +27,7 @@ class RemoveTagsFromStreamTests
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => Map.from(x))
+        .map(x => SortedMap.from(x))
         .map(Tags.apply)
         .one
 

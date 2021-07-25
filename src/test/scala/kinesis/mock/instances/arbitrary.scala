@@ -1,5 +1,6 @@
 package kinesis.mock.instances
 
+import scala.collection.SortedMap
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
@@ -214,7 +215,7 @@ object arbitrary {
   val tagsGen: Gen[Tags] = Gen
     .choose(0, 10)
     .flatMap(size => Gen.mapOfN(size, Gen.zip(tagKeyGen, tagValueGen)))
-    .map(x => Map.from(x))
+    .map(x => SortedMap.from(x))
     .map(Tags.apply)
 
   implicit val tagListArb: Arbitrary[TagList] = Arbitrary(
@@ -868,7 +869,7 @@ object arbitrary {
           consumersSize,
           consumerArbitrary.arbitrary.map(x => x.consumerName -> x)
         )
-        .map(x => Map.from(x))
+        .map(x => SortedMap.from(x))
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       enhancedMonitoring <- Gen
         .choose(0, 1)
@@ -883,7 +884,7 @@ object arbitrary {
       shardsSize <- Gen.choose(0, 50)
       shardList <- Gen
         .containerOfN[Vector, Shard](shardsSize, shardArbitrary.arbitrary)
-      shards <- Gen.sequence[Map[
+      shards <- Gen.sequence[SortedMap[
         Shard,
         Vector[KinesisRecord]
       ], (Shard, Vector[KinesisRecord])](
@@ -931,7 +932,7 @@ object arbitrary {
       .suchThat(x =>
         x.groupBy(_.streamName).filter { case (_, x) => x.length > 1 }.isEmpty
       )
-      .map(x => Streams(Map.from(x.map(sd => sd.streamName -> sd))))
+      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamName -> sd))))
   }
 
 }

@@ -26,6 +26,7 @@ class ListStreamsTests extends munit.CatsEffectSuite {
                 .isEmpty
             )
             .one
+            .sorted
         )
         _ <- streamNames.traverse(streamName =>
           cache
@@ -40,8 +41,8 @@ class ListStreamsTests extends munit.CatsEffectSuite {
           )
           .rethrow
       } yield assert(
-        res.streamNames == streamNames.sorted,
-        s"${res.streamNames}\n${streamNames.sorted}"
+        res.streamNames == streamNames,
+        s"${res.streamNames}\n${streamNames}"
       )
     )
   )
