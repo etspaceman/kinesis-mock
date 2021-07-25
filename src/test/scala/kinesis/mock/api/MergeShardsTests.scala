@@ -24,7 +24,7 @@ class MergeShardsTests
         streams.findAndUpdateStream(streamName)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-      val shards = active.streams(streamName).shards.keys.toVector.sorted
+      val shards = active.streams(streamName).shards.keys.toVector
 
       val shardToMerge = shards.head
       val adjacentShardToMerge = shards(1)
@@ -62,7 +62,7 @@ class MergeShardsTests
       val streams =
         Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
 
-      val shards = streams.streams(streamName).shards.keys.toVector.sorted
+      val shards = streams.streams(streamName).shards.keys.toVector
 
       val shardToMerge = shards.head
       val adjacentShardToMerge = shards(1)
@@ -94,7 +94,7 @@ class MergeShardsTests
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
-      val shards = active.streams(streamName).shards.keys.toVector.sorted
+      val shards = active.streams(streamName).shards.keys.toVector
       val shardToMerge = shards.head
       val adjacentShardToMerge =
         ShardId.create(shards.map(_.shardId.index).max + 1)
@@ -126,7 +126,7 @@ class MergeShardsTests
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
-      val shards = active.streams(streamName).shards.keys.toVector.sorted
+      val shards = active.streams(streamName).shards.keys.toVector
       val shardToMerge =
         ShardId.create(shards.map(_.shardId.index).max + 1)
 
@@ -159,7 +159,7 @@ class MergeShardsTests
       val active = streams.findAndUpdateStream(streamName)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
-      val shards = streams.streams(streamName).shards.keys.toVector.sorted
+      val shards = streams.streams(streamName).shards.keys.toVector
       val shardToMerge = shards.head
       val adjacentShardToMerge = shards(2)
 

@@ -28,7 +28,7 @@ final case class ListStreamsRequest(
         case None    => Right(())
       }
     ).mapN((_, _) => {
-      val allStreams = streams.streams.keys.toVector.sorted
+      val allStreams = streams.streams.keys.toVector
       val lastStreamIndex = allStreams.length - 1
       val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
       val firstIndex = exclusiveStartStreamName

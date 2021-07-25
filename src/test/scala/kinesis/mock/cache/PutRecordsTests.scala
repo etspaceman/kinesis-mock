@@ -41,7 +41,7 @@ class PutRecordsTests
               streamName
             )
           )
-          _ <- cache.putRecords(req, context, false).rethrow
+          putRecordsResponse <- cache.putRecords(req, context, false).rethrow
           shard <- cache
             .listShards(
               ListShardsRequest(None, None, None, None, None, Some(streamName)),
@@ -73,7 +73,9 @@ class PutRecordsTests
               req.data.sameElements(rec.data)
                 && req.partitionKey == rec.partitionKey
             )
-          ),
+          ) && putRecordsResponse.records.flatMap(
+            _.shardId.toVector
+          ) == putRecordsResponse.records.flatMap(_.shardId.toVector).sorted,
           s"${res.records}\n$req"
         )
       )

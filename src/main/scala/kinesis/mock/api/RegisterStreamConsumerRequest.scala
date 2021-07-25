@@ -55,7 +55,9 @@ final case class RegisterStreamConsumerRequest(
           (
             streams.updateStream(
               stream
-                .copy(consumers = stream.consumers + (consumerName -> consumer))
+                .copy(consumers =
+                  stream.consumers ++ Seq(consumerName -> consumer)
+                )
             ),
             RegisterStreamConsumerResponse(
               ConsumerSummary.fromConsumer(consumer)
