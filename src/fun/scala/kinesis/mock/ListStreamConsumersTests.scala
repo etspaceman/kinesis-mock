@@ -16,7 +16,7 @@ class ListStreamConsumersTests
 
   fixture.test("It should list stream consumers") { resources =>
     for {
-      consumerNames <- IO(consumerNameGen.take(3).toVector.map(_.consumerName))
+      consumerNames <- IO(consumerNameGen.take(3).toVector.sorted.map(_.consumerName))
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
       registerRes <- consumerNames.traverse(consumerName =>
