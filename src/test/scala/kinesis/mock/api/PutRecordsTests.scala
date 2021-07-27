@@ -8,6 +8,7 @@ import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
+import kinesis.mock.validations.CommonValidations
 
 class PutRecordsTests
     extends munit.CatsEffectSuite
@@ -30,6 +31,17 @@ class PutRecordsTests
         streamName = streamName
       )
 
+      val predictedShards = req.records.map(entry =>
+        CommonValidations
+          .computeShard(
+            entry.partitionKey,
+            entry.explicitHashKey,
+            active.streams(streamName)
+          )
+          .toOption
+          .map(_._1.shardId.shardId)
+      )
+
       for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.putRecords(streamsRef)
@@ -38,7 +50,10 @@ class PutRecordsTests
         res.isRight && s.streams.get(streamName).exists { stream =>
           stream.shards.values.toVector.flatten.count { rec =>
             req.records.map(_.data).exists(_.sameElements(rec.data))
-          } == initReq.records.length
+          } == initReq.records.length && res.exists { r =>
+            r.records.map(_.shardId) == predictedShards
+
+          }
         },
         s"req: $req\nres: $res"
       )
