@@ -1,4 +1,5 @@
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import scala.concurrent.duration._
 
@@ -68,12 +69,9 @@ class PutRecordTests
             .getRecords(GetRecordsRequest(None, shardIterator), context, false)
             .rethrow
         } yield assert(
-          res.records.length == 5 && res.records.forall(rec =>
-            recordRequests.exists(req =>
-              req.data.sameElements(rec.data)
-                && req.partitionKey == rec.partitionKey
-            )
-          ),
+          res.records.length == 5 && res.records.toVector.map(
+            PutRecordResults.fromKinesisRecord
+          ) === recordRequests.map(PutRecordResults.fromPutRecordRequest),
           s"${res.records}\n$recordRequests"
         )
       )
