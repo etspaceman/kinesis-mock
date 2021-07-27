@@ -52,7 +52,6 @@ class PutRecordsTests
             req.records.map(_.data).exists(_.sameElements(rec.data))
           } == initReq.records.length && res.exists { r =>
             r.records.map(_.shardId) == predictedShards
-
           }
         },
         s"req: $req\nres: $res"
