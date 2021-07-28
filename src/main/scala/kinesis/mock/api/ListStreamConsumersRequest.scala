@@ -5,13 +5,13 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 final case class ListStreamConsumersRequest(
     maxResults: Option[Int],

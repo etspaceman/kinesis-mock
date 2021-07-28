@@ -6,13 +6,13 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
+import cats.effect.Ref
 
 class GetShardIteratorTests
     extends munit.CatsEffectSuite

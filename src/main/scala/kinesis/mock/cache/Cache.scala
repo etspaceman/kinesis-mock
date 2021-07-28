@@ -5,7 +5,7 @@ import java.io.FileWriter
 
 import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Supervisor}
+import cats.effect.concurrent.Supervisor
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._
@@ -16,6 +16,8 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import kinesis.mock.api._
 import kinesis.mock.models._
 import kinesis.mock.syntax.semaphore._
+import cats.effect.{ Ref, Temporal }
+import cats.effect.implicits._
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
@@ -103,7 +105,7 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -162,7 +164,7 @@ class Cache private (
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -383,7 +385,7 @@ class Cache private (
       context: LoggingContext,
       isCbor: Boolean
   )(implicit
-      T: Timer[IO]
+      T: Temporal[IO]
   ): IO[Response[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -460,7 +462,7 @@ class Cache private (
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -815,7 +817,7 @@ class Cache private (
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -862,7 +864,7 @@ class Cache private (
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -1038,7 +1040,7 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1090,7 +1092,7 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  )(implicit T: Temporal[IO]): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1142,7 +1144,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[UpdateShardCountResponse]] = {
+  )(implicit T: Temporal[IO]): IO[Response[UpdateShardCountResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
@@ -1182,9 +1184,7 @@ class Cache private (
       } yield result)
   }
 
-  def persistToDisk(context: LoggingContext, blocker: Blocker)(implicit
-      CS: ContextShift[IO]
-  ): IO[Unit] =
+  def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
         semaphores.persistData.withPermit(
@@ -1227,7 +1227,7 @@ object Cache {
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
+  )(implicit): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](streams)
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
@@ -1237,13 +1237,7 @@ object Cache {
   } yield cache
 
   def loadFromFile(
-      config: CacheConfig,
-      blocker: Blocker
-  )(implicit
-      C: Concurrent[IO],
-      P: Parallel[IO],
-      CS: ContextShift[IO]
-  ): IO[Cache] = {
+      config: CacheConfig)(implicit): IO[Cache] = {
     val om = new ObjectMapper()
 
     blocker

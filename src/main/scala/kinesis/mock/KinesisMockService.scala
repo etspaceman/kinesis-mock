@@ -2,8 +2,7 @@ package kinesis.mock
 
 import scala.concurrent.duration._
 
-import cats.effect.concurrent.Semaphore
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
 import fs2.io.tls.TLSContext
 import io.circe.syntax._
@@ -17,11 +16,13 @@ import retry._
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{StreamName, StreamStatus}
+import cats.effect.Resource
+import cats.effect.std.Semaphore
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         logger <- Slf4jLogger.create[IO]
         cacheConfig <- CacheConfig.read(blocker)
@@ -72,8 +73,8 @@ object KinesisMockService extends IOApp {
           s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
         )
         res <- tlsServer
-          .parZip(plainServer)
-          .parZip(
+          .both(plainServer)
+          .both(
             persistDataLoop(
               cacheConfig.persistConfig.shouldPersist,
               cacheConfig.persistConfig.interval,
@@ -136,9 +137,7 @@ object KinesisMockService extends IOApp {
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
-      logger: SelfAwareStructuredLogger[IO],
-      blocker: Blocker
-  ): IO[Unit] = {
+      logger: SelfAwareStructuredLogger[IO]): IO[Unit] = {
     val context = LoggingContext.create
     IO.pure(shouldPersist)
       .ifM(

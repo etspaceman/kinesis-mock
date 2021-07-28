@@ -5,13 +5,13 @@ import scala.collection.SortedMap
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 final case class DeleteStreamRequest(
     streamName: StreamName,

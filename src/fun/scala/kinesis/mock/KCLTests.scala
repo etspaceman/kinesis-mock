@@ -7,7 +7,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 
-import cats.effect.concurrent.{Deferred, Supervisor}
+import cats.effect.concurrent.Supervisor
 import cats.effect.{IO, Resource}
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
@@ -32,6 +32,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
+import cats.effect.Deferred
 
 class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
   override val munitTimeout = 2.minutes

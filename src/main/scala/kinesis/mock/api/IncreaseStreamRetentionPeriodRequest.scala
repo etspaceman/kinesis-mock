@@ -5,13 +5,13 @@ import scala.concurrent.duration._
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_IncreaseStreamRetention.html
 final case class IncreaseStreamRetentionPeriodRequest(

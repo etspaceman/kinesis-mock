@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
 import org.scalacheck.Test
@@ -13,6 +13,7 @@ import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
+import cats.effect.Resource
 
 class PersistenceTests
     extends munit.CatsEffectSuite
@@ -35,7 +36,7 @@ class PersistenceTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           uuid <- IO(UuidCreator.getTimeBased().toString)
           cacheConfig <- CacheConfig
