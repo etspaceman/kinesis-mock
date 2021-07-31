@@ -5,7 +5,7 @@ import scala.jdk.FutureConverters._
 
 import java.util.concurrent.{CompletionStage, Executor}
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
 import com.google.common.util.concurrent.{
   FutureCallback,
   Futures,
@@ -28,7 +28,7 @@ trait JavaFutureSyntax {
 
 object JavaFutureSyntax {
   final class JavaFutureOps[A](future: => CompletionStage[A]) {
-    def toIO(implicit CS: ContextShift[IO]): IO[A] =
+    def toIO: IO[A] =
       IO.fromFuture(IO(future.asScala))
   }
 
@@ -51,7 +51,7 @@ object JavaFutureSyntax {
       p.future
     }
 
-    def toIO(implicit E: Executor, CS: ContextShift[IO]): IO[A] =
+    def toIO(implicit E: Executor): IO[A] =
       IO.fromFuture(IO(asScala))
   }
 }

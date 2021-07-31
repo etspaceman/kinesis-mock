@@ -3,10 +3,10 @@ package api
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import io.circe
 
 import kinesis.mock.models.Streams
+import cats.effect.Ref
 
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
 

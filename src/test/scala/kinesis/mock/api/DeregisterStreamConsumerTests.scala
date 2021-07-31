@@ -4,12 +4,12 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
+import cats.effect.Ref
 
 class DeregisterStreamConsumerTests
     extends munit.CatsEffectSuite

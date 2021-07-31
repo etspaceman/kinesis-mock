@@ -1,6 +1,6 @@
 package kinesis.mock
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import org.http4s._
 import org.http4s.headers._
 import org.http4s.syntax.all._
@@ -11,13 +11,14 @@ import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.StreamName
+import cats.effect.Resource
 
 class KinesisMockServiceTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
   test("it should accept healthcheck requests") {
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
@@ -32,7 +33,7 @@ class KinesisMockServiceTests
   }
 
   test("it should accept valid OPTIONS requests") {
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
@@ -48,7 +49,7 @@ class KinesisMockServiceTests
   }
 
   test("it should reject OPTIONS requests without an Origin header") {
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
@@ -63,7 +64,7 @@ class KinesisMockServiceTests
 
   test("it should accept valid CBOR requests using headers") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -97,7 +98,7 @@ class KinesisMockServiceTests
 
   test("it should accept valid JSON requests using headers") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -131,7 +132,7 @@ class KinesisMockServiceTests
 
   test("it should accept valid CBOR requests using query params") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -178,7 +179,7 @@ class KinesisMockServiceTests
 
   test("it should accept valid JSON requests using query params") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -225,7 +226,7 @@ class KinesisMockServiceTests
 
   test("it should return amazonId2 header if no Origin is supplied") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -260,7 +261,7 @@ class KinesisMockServiceTests
 
   test("it should reject if no authorization is found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -288,7 +289,7 @@ class KinesisMockServiceTests
 
   test("it should reject if no date is found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -321,7 +322,7 @@ class KinesisMockServiceTests
 
   test("it should reject if some auth headers aren't found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -353,7 +354,7 @@ class KinesisMockServiceTests
 
   test("it should reject if some auth headers and date aren't found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -384,7 +385,7 @@ class KinesisMockServiceTests
 
   test("it reject if some auth query params aren't found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -425,7 +426,7 @@ class KinesisMockServiceTests
 
   test("it reject if some auth query params and date aren't found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -463,7 +464,7 @@ class KinesisMockServiceTests
 
   test("it should reject if no action is found") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -496,7 +497,7 @@ class KinesisMockServiceTests
 
   test("it should reject if action is malformed") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -530,7 +531,7 @@ class KinesisMockServiceTests
 
   test("it should reject if content-type is not provided") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -563,7 +564,7 @@ class KinesisMockServiceTests
 
   test("it should reject if both auth headers and query strings are provided") {
     PropF.forAllF { (streamName: StreamName) =>
-      Blocker[IO].use(blocker =>
+      Resource.unit[IO].use(blocker =>
         for {
           cacheConfig <- CacheConfig.read(blocker)
           cache <- Cache(cacheConfig)
@@ -617,7 +618,7 @@ class KinesisMockServiceTests
   }
 
   test("it should reject requests with invalid bodies") {
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)
@@ -647,7 +648,7 @@ class KinesisMockServiceTests
   }
 
   test("it should reject requests with invalid API requests") {
-    Blocker[IO].use(blocker =>
+    Resource.unit[IO].use(blocker =>
       for {
         cacheConfig <- CacheConfig.read(blocker)
         cache <- Cache(cacheConfig)

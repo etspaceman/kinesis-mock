@@ -5,7 +5,7 @@ import scala.util.Try
 import java.security.SecureRandom
 import java.util.Base64
 
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
 import org.http4s._
@@ -18,9 +18,10 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import kinesis.mock.api._
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s._
+import cats.effect.Temporal
 
 class KinesisMockRoutes(cache: Cache)(implicit
-    T: Timer[IO],
+    T: Temporal[IO],
     CS: ContextShift[IO]
 ) {
   val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
@@ -469,8 +470,7 @@ object KinesisMockRoutes {
       loggingContext: LoggingContext,
       isCbor: Boolean
   )(implicit
-      T: Timer[IO],
-      CS: ContextShift[IO],
+      T: Temporal[IO],
       errEE: EntityEncoder[IO, ErrorResponse],
       descLimitsEE: EntityEncoder[IO, DescribeLimitsResponse],
       descStreamEE: EntityEncoder[IO, DescribeStreamResponse],

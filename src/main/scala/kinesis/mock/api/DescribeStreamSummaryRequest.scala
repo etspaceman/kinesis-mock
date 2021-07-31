@@ -3,11 +3,11 @@ package api
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import io.circe
 
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
+import cats.effect.Ref
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamSummary.html
 final case class DescribeStreamSummaryRequest(
