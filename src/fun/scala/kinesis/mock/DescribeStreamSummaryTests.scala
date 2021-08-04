@@ -5,9 +5,7 @@ import java.util.Collections
 import cats.syntax.all._
 import software.amazon.awssdk.services.kinesis.model._
 
-class DescribeStreamSummaryTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class DescribeStreamSummaryTests extends AwsFunctionalTests {
 
   fixture.test("It should describe a stream summary") { resources =>
     for {

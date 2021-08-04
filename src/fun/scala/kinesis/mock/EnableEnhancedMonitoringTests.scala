@@ -8,9 +8,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class EnableEnhancedMonitoringTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class EnableEnhancedMonitoringTests extends AwsFunctionalTests {
 
   fixture.test("It should enable enhanced monitoring") { resources =>
     for {

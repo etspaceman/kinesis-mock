@@ -1,5 +1,6 @@
 package kinesis.mock
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import java.net.URI
@@ -19,7 +20,9 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
+trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
+  override val munitExecutionContext = ExecutionContext.global
+
   protected val genStreamShardCount = 3
 
   // this must match env var INITIALIZE_STREAMS in docker-compose.yml
