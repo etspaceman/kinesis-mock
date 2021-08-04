@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class MergeShardsTests extends munit.CatsEffectSuite with AwsFunctionalTests {
+class MergeShardsTests extends AwsFunctionalTests {
 
   fixture.test("It should merge shards") { resources =>
     for {

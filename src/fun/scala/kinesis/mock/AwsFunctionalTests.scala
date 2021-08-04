@@ -88,6 +88,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   } yield res
 
   def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- IO.println(s"Creating stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .createStream(
         CreateStreamRequest
@@ -97,10 +98,13 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .build()
       )
       .toIO
+    _ <- IO.println(s"Created stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.createStreamDuration.plus(200.millis)
     )
+    _ <- IO.println(s"Describing stream summary for ${resources.streamName}")
     streamSummary <- describeStreamSummary(resources)
+    _ <- IO.println(s"Described stream summary for ${resources.streamName}")
     res <- IO.raiseWhen(
       streamSummary
         .streamDescriptionSummary()
@@ -111,6 +115,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   } yield res
 
   def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- IO.println(s"Deleting stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .deleteStream(
         DeleteStreamRequest
@@ -120,10 +125,13 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .build()
       )
       .toIO
+    _ <- IO.println(s"Deleted stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.deleteStreamDuration.plus(200.millis)
     )
+    _ <- IO.println(s"Describing stream summary for ${resources.streamName}")
     streamSummary <- describeStreamSummary(resources).attempt
+    _ <- IO.println(s"Described stream summary for ${resources.streamName}")
     res <- IO.raiseWhen(
       streamSummary.isRight
     )(

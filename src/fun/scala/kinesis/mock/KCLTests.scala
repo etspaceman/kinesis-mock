@@ -32,7 +32,7 @@ import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
+class KCLTests extends AwsFunctionalTests {
   override val munitTimeout = 2.minutes
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =
@@ -132,7 +132,13 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
         .streamName(resources.functionalTestResources.streamName.streamName)
         .build()
     )
+    _ <- IO.println(
+      s"Putting records to ${resources.functionalTestResources.streamName}"
+    )
     _ <- resources.functionalTestResources.kinesisClient.putRecords(req).toIO
+    _ <- IO.println(
+      s"Put records to ${resources.functionalTestResources.streamName}"
+    )
     policy = RetryPolicies
       .limitRetries[IO](30)
       .join(RetryPolicies.constantDelay(1.second))
