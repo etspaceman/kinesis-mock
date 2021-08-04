@@ -26,6 +26,7 @@ jobs:
         CBOR_ENABLED: ${{ matrix.cbor_enabled }}
         SERVICE_PORT: ${{ matrix.service_port }}
         KINESIS_MOCK_DOCKERFILE: Dockerfile.Simple
+        AWSV2_LOG_LEVEL: INFO
     - name: Print Docker Container Listing
       if: ${{ failure() }}
       run: sbt dockerComposePs
