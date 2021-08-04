@@ -104,9 +104,21 @@ class KCLTests extends AwsFunctionalTests {
           )
           _ <- Resource.make(
             supervisor
-              .supervise(IO(scheduler.run()))
-              .flatTap(_ => isStarted.get *> IO.sleep(2.seconds))
-          )(x => IO(scheduler.shutdown()) *> x.join.void)
+              .supervise(
+                IO.println("Starting KCL Scheduler") >> IO(scheduler.run())
+              )
+              .flatTap(_ =>
+                IO.println("Checking if KCL is started") *>
+                  isStarted.get *>
+                  IO.println("KCL has started") *>
+                  IO.sleep(2.seconds)
+              )
+          )(x =>
+            IO.println("Shutting down KCL Scheduler") *>
+              scheduler.startGracefulShutdown().toIO *>
+              x.join.void *>
+              IO.println("KCL Scheduler has been shut down")
+          )
         } yield KCLResources(resources, resultsQueue)
       }
     )
