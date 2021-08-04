@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
 import enumeratum.scalacheck._
@@ -40,7 +42,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = Map(s.shards.head._1 -> records),
+          shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -93,7 +95,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = Map(s.shards.head._1 -> records),
+          shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -146,7 +148,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = Map(s.shards.head._1 -> records),
+          shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }
@@ -215,7 +217,7 @@ class GetRecordsTests
 
       val withRecords = streams.findAndUpdateStream(streamName) { s =>
         s.copy(
-          shards = Map(s.shards.head._1 -> records),
+          shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
         )
       }

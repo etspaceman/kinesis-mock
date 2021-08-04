@@ -4,7 +4,7 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.0"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.5.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.4"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.5"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
@@ -44,13 +44,13 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.6.1"
-    val catsEffectVersion = "3.1.1"
+    val catsEffectVersion = "3.2.1"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "1.0-76-7c69a4e-SNAPSHOT"
+    val http4sVersion = "0.23.0"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion

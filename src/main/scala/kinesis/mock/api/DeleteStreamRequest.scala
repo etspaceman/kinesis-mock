@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -40,11 +42,11 @@ final case class DeleteStreamRequest(
         .map { stream =>
           val deletingStream = Map(
             streamName -> stream.copy(
-              shards = Map.empty,
+              shards = SortedMap.empty,
               streamStatus = StreamStatus.DELETING,
               tags = Tags.empty,
               enhancedMonitoring = Vector.empty,
-              consumers = Map.empty
+              consumers = SortedMap.empty
             )
           )
           (

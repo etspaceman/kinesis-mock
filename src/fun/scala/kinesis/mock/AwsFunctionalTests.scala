@@ -5,7 +5,6 @@ import scala.concurrent.duration._
 import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
-import cats.syntax.all._
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient

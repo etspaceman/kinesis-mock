@@ -27,7 +27,7 @@ final case class DeregisterStreamConsumerRequest(
     (
       streams.updateStream(
         stream.copy(consumers =
-          stream.consumers + (consumer.consumerName -> newConsumer)
+          stream.consumers ++ Seq(consumer.consumerName -> newConsumer)
         )
       ),
       newConsumer

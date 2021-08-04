@@ -37,14 +37,13 @@ class UpdateShardCountTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          val shards = stream.shards.keys.toVector.sorted
+          val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 10 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
             .streams(streamName)
             .shards
             .keys
             .toVector
-            .sorted
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>
@@ -87,14 +86,13 @@ class UpdateShardCountTests
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamName).exists { stream =>
-          val shards = stream.shards.keys.toVector.sorted
+          val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 5 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
             .streams(streamName)
             .shards
             .keys
             .toVector
-            .sorted
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>

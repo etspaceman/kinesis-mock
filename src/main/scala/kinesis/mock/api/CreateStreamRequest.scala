@@ -40,7 +40,8 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         val newStream =
           StreamData.create(shardCount, streamName, awsRegion, awsAccountId)
         (
-          streams.copy(streams = streams.streams + (streamName -> newStream)),
+          streams
+            .copy(streams = streams.streams ++ Seq(streamName -> newStream)),
           ()
         )
       }.sequenceWithDefault(streams)

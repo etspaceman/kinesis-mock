@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.mutable.HashMap
+
 import java.time.Instant
 
 import cats.Eq
@@ -53,63 +55,58 @@ final case class PutRecordsRequest(
             }
         )
         .map { case (stream, recs) =>
-          val grouped = recs
-            .groupBy { case (shard, records, _) =>
-              (shard, records)
-            }
-            .map { case ((shard, records), list) =>
-              (shard, records) ->
-                list.map(_._3).zipWithIndex.map { case (entry, index) =>
-                  val seqNo = SequenceNumber.create(
-                    shard.createdAtTimestamp,
-                    shard.shardId.index,
-                    None,
-                    Some(records.length + index),
-                    Some(now)
-                  )
-                  (
-                    KinesisRecord(
-                      now,
-                      entry.data,
-                      stream.encryptionType,
-                      entry.partitionKey,
-                      seqNo
-                    ),
-                    PutRecordsResultEntry(
-                      None,
-                      None,
-                      Some(seqNo),
-                      Some(shard.shardId.shardId)
-                    )
-                  )
-                }
-            }
-            .toVector
+          val asRecords = PutRecordsRequest
+            .getIndexByShard(recs)
+            .map { case (shard, records, entry, index) =>
+              val seqNo = SequenceNumber.create(
+                shard.createdAtTimestamp,
+                shard.shardId.index,
+                None,
+                Some(records.length + index),
+                Some(now)
+              )
 
-          val newShards = grouped.map {
-            case ((shard, currentRecords), recordsToAdd) =>
               (
                 shard,
-                (
-                  currentRecords ++ recordsToAdd.map(_._1),
-                  recordsToAdd.map(_._2)
+                records,
+                KinesisRecord(
+                  now,
+                  entry.data,
+                  stream.encryptionType,
+                  entry.partitionKey,
+                  seqNo
+                ),
+                PutRecordsResultEntry(
+                  None,
+                  None,
+                  Some(seqNo),
+                  Some(shard.shardId.shardId)
                 )
               )
-          }
+            }
+
+          val newShards = asRecords
+            .groupBy { case (shard, currentRecords, _, _) =>
+              (shard, currentRecords)
+            }
+            .map { case ((shard, currentRecords), recordsToAdd) =>
+              (
+                shard,
+                currentRecords ++ recordsToAdd.map(_._3)
+              )
+            }
 
           (
             streams.updateStream(
               stream.copy(
-                shards = stream.shards ++ newShards.map {
-                  case (shard, (records, _)) => shard -> records
-                }
+                shards = stream.shards ++ newShards
               )
             ),
             PutRecordsResponse(
               stream.encryptionType,
               0,
-              newShards.flatMap { case (_, (_, resultEntries)) =>
-                resultEntries
+              asRecords.map { case (_, _, _, entry) =>
+                entry
               }
             )
           )
@@ -119,6 +116,18 @@ final case class PutRecordsRequest(
 }
 
 object PutRecordsRequest {
+  private def getIndexByShard(
+      records: Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry)]
+  ): Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry, Int)] = {
+    val indexMap: HashMap[Shard, Int] = new HashMap()
+
+    records.map { case (shard, records, entry) =>
+      val i = indexMap.get(shard).fold(0)(_ + 1)
+      indexMap += shard -> i
+      (shard, records, entry, i)
+    }
+  }
+
   implicit val putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
     circe.Encoder.forProduct2("Records", "StreamName")(x =>
       (x.records, x.streamName)

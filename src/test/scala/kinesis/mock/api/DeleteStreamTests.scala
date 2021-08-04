@@ -1,5 +1,7 @@
 package kinesis.mock.api
 
+import scala.collection.SortedMap
+
 import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
@@ -83,8 +85,9 @@ class DeleteStreamTests
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
         x.copy(
-          consumers =
-            Map(consumerName -> Consumer.create(x.streamArn, consumerName)),
+          consumers = SortedMap(
+            consumerName -> Consumer.create(x.streamArn, consumerName)
+          ),
           streamStatus = StreamStatus.ACTIVE
         )
       )
@@ -113,8 +116,9 @@ class DeleteStreamTests
 
       val withConsumers = streams.findAndUpdateStream(streamName)(x =>
         x.copy(
-          consumers =
-            Map(consumerName -> Consumer.create(x.streamArn, consumerName)),
+          consumers = SortedMap(
+            consumerName -> Consumer.create(x.streamArn, consumerName)
+          ),
           streamStatus = StreamStatus.ACTIVE
         )
       )

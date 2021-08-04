@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -42,7 +44,7 @@ final case class ListTagsForStreamRequest(
                   .map(x => allTags.indexWhere(_._1 == x) + 1)
                   .getOrElse(0)
                 val lastIndex = Math.min(firstIndex + lim, lastTagIndex + 1)
-                val tags = Map.from(allTags.slice(firstIndex, lastIndex))
+                val tags = SortedMap.from(allTags.slice(firstIndex, lastIndex))
                 val hasMoreTags =
                   if (lastTagIndex + 1 == lastIndex) false
                   else true

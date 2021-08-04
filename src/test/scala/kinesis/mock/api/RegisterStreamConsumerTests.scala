@@ -1,6 +1,8 @@
 package kinesis.mock
 package api
 
+import scala.collection.SortedMap
+
 import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
 import org.scalacheck.Gen
@@ -48,7 +50,7 @@ class RegisterStreamConsumerTests
       val streams =
         Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-      val consumers = Map.from(
+      val consumers = SortedMap.from(
         Gen
           .listOfN(20, consumerArbitrary.arbitrary)
           .suchThat(x =>
@@ -84,7 +86,7 @@ class RegisterStreamConsumerTests
         val streams =
           Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
 
-        val consumers = Map.from(
+        val consumers = SortedMap.from(
           Gen
             .listOfN(5, consumerArbitrary.arbitrary)
             .suchThat(x =>
