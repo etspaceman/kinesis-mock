@@ -140,10 +140,8 @@ class KCLTests extends munit.CatsEffectSuite with AwsFunctionalTests {
       policy,
       IO.pure,
       { case (_, status) =>
-        IO(
-          println(
-            s"Results queue is not full, retrying. Retry Status: ${status.toString}"
-          )
+        IO.println(
+          s"Results queue is not full, retrying. Retry Status: ${status.toString}"
         )
       }
     )(
