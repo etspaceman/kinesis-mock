@@ -1,12 +1,12 @@
 package kinesis.mock
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
@@ -21,7 +21,6 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
-  override val munitExecutionContext = ExecutionContext.global
 
   protected val genStreamShardCount = 3
 
@@ -72,6 +71,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
         )
       }
     cacheConfig <- Resource.eval(CacheConfig.read)
+    logger <- Resource.eval(Slf4jLogger.create[IO])
     res <- Resource.make(
       IO(streamNameGen.one)
         .map(streamName =>
@@ -80,7 +80,8 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
             cacheConfig,
             streamName,
             testConfig,
-            protocol
+            protocol,
+            logger
           )
         )
         .flatTap(setup)
@@ -88,7 +89,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   } yield res
 
   def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
-    _ <- IO.println(s"Creating stream ${resources.streamName}")
+    _ <- resources.logger.debug(s"Creating stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .createStream(
         CreateStreamRequest
@@ -98,13 +99,17 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .build()
       )
       .toIO
-    _ <- IO.println(s"Created stream ${resources.streamName}")
+    _ <- resources.logger.debug(s"Created stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.createStreamDuration.plus(200.millis)
     )
-    _ <- IO.println(s"Describing stream summary for ${resources.streamName}")
+    _ <- resources.logger.debug(
+      s"Describing stream summary for ${resources.streamName}"
+    )
     streamSummary <- describeStreamSummary(resources)
-    _ <- IO.println(s"Described stream summary for ${resources.streamName}")
+    _ <- resources.logger.debug(
+      s"Described stream summary for ${resources.streamName}"
+    )
     res <- IO.raiseWhen(
       streamSummary
         .streamDescriptionSummary()
@@ -115,7 +120,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   } yield res
 
   def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for {
-    _ <- IO.println(s"Deleting stream ${resources.streamName}")
+    _ <- resources.logger.debug(s"Deleting stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .deleteStream(
         DeleteStreamRequest
@@ -125,13 +130,17 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .build()
       )
       .toIO
-    _ <- IO.println(s"Deleted stream ${resources.streamName}")
+    _ <- resources.logger.debug(s"Deleted stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.deleteStreamDuration.plus(200.millis)
     )
-    _ <- IO.println(s"Describing stream summary for ${resources.streamName}")
+    _ <- resources.logger.debug(
+      s"Describing stream summary for ${resources.streamName}"
+    )
     streamSummary <- describeStreamSummary(resources).attempt
-    _ <- IO.println(s"Described stream summary for ${resources.streamName}")
+    _ <- resources.logger.debug(
+      s"Described stream summary for ${resources.streamName}"
+    )
     res <- IO.raiseWhen(
       streamSummary.isRight
     )(

@@ -105,19 +105,20 @@ class KCLTests extends AwsFunctionalTests {
           _ <- Resource.make(
             supervisor
               .supervise(
-                IO.println("Starting KCL Scheduler") >> IO(scheduler.run())
+                resources.logger.debug("Starting KCL Scheduler") >>
+                  IO.interruptible(false)(scheduler.run())
               )
               .flatTap(_ =>
-                IO.println("Checking if KCL is started") *>
-                  isStarted.get *>
-                  IO.println("KCL has started") *>
+                resources.logger.debug("Checking if KCL is started") >>
+                  isStarted.get >>
+                  resources.logger.debug("KCL has started") >>
                   IO.sleep(2.seconds)
               )
           )(x =>
-            IO.println("Shutting down KCL Scheduler") *>
-              scheduler.startGracefulShutdown().toIO *>
-              x.join.void *>
-              IO.println("KCL Scheduler has been shut down")
+            resources.logger.debug("Shutting down KCL Scheduler") >>
+              scheduler.startGracefulShutdown().toIO >>
+              x.join.void >>
+              resources.logger.debug("KCL Scheduler has been shut down")
           )
         } yield KCLResources(resources, resultsQueue)
       }
@@ -144,11 +145,11 @@ class KCLTests extends AwsFunctionalTests {
         .streamName(resources.functionalTestResources.streamName.streamName)
         .build()
     )
-    _ <- IO.println(
+    _ <- resources.functionalTestResources.logger.debug(
       s"Putting records to ${resources.functionalTestResources.streamName}"
     )
     _ <- resources.functionalTestResources.kinesisClient.putRecords(req).toIO
-    _ <- IO.println(
+    _ <- resources.functionalTestResources.logger.debug(
       s"Put records to ${resources.functionalTestResources.streamName}"
     )
     policy = RetryPolicies
@@ -158,7 +159,7 @@ class KCLTests extends AwsFunctionalTests {
       policy,
       IO.pure,
       { case (_, status) =>
-        IO.println(
+        resources.functionalTestResources.logger.debug(
           s"Results queue is not full, retrying. Retry Status: ${status.toString}"
         )
       }
