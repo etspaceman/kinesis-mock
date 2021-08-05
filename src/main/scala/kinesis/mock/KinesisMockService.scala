@@ -2,12 +2,14 @@ package kinesis.mock
 
 import scala.concurrent.duration._
 
-import cats.effect.concurrent.Semaphore
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.effect.std.Semaphore
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
-import fs2.io.tls.TLSContext
+import com.comcast.ip4s.Host
+import fs2.io.net.Network
 import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.middleware.Logger
 import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -21,75 +23,76 @@ import kinesis.mock.models.{StreamName, StreamStatus}
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
-    Blocker[IO].use(blocker =>
-      for {
-        logger <- Slf4jLogger.create[IO]
-        cacheConfig <- CacheConfig.read(blocker)
-        context = LoggingContext.create
-        _ <- logger.info(
-          context.addJson("cacheConfig", cacheConfig.asJson).context
-        )(
-          "Logging Cache Config"
+    for {
+      logger <- Slf4jLogger.create[IO]
+      cacheConfig <- CacheConfig.read
+      context = LoggingContext.create
+      _ <- logger.info(
+        context.addJson("cacheConfig", cacheConfig.asJson).context
+      )(
+        "Logging Cache Config"
+      )
+      cache <- IO
+        .pure(cacheConfig.persistConfig.loadIfExists)
+        .ifM(
+          Cache.loadFromFile(cacheConfig),
+          Cache(cacheConfig)
         )
-        cache <- IO
-          .pure(cacheConfig.persistConfig.loadIfExists)
-          .ifM(
-            Cache.loadFromFile(cacheConfig, blocker),
-            Cache(cacheConfig)
-          )
-        _ <- initializeStreams(
-          cache,
-          cacheConfig.createStreamDuration,
-          context,
-          logger,
-          cacheConfig.initializeStreams.toVector.flatten
+      _ <- initializeStreams(
+        cache,
+        cacheConfig.createStreamDuration,
+        context,
+        logger,
+        cacheConfig.initializeStreams.toVector.flatten
+      )
+      serviceConfig <- KinesisMockServiceConfig.read
+      app = Logger.httpApp(true, true, _ => false)(
+        new KinesisMockRoutes(cache).routes.orNotFound
+      )
+      tlsContext <- Network[IO].tlsContext.fromKeyStoreResource(
+        "server.jks",
+        serviceConfig.keyStorePassword.toCharArray(),
+        serviceConfig.keyManagerPassword.toCharArray()
+      )
+      host <- IO.fromOption(Host.fromString("0.0.0.0"))(
+        new RuntimeException("Invalid hostname")
+      )
+      tlsServer = EmberServerBuilder
+        .default[IO]
+        .withPort(serviceConfig.tlsPort)
+        .withHost(host)
+        .withTLS(tlsContext)
+        .withHttpApp(app)
+        .build
+      plainServer = EmberServerBuilder
+        .default[IO]
+        .withPort(serviceConfig.plainPort)
+        .withHost(host)
+        .withHttpApp(app)
+        .build
+      _ <- logger.info(
+        s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
+      )
+      _ <- logger.info(
+        s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
+      )
+      res <- tlsServer
+        .both(plainServer)
+        .both(
+          persistDataLoop(
+            cacheConfig.persistConfig.shouldPersist,
+            cacheConfig.persistConfig.interval,
+            cache,
+            logger
+          ).background
         )
-        serviceConfig <- KinesisMockServiceConfig.read(blocker)
-        app = new KinesisMockRoutes(cache).routes.orNotFound
-        tlsContext <- TLSContext.fromKeyStoreResource[IO](
-          "server.jks",
-          serviceConfig.keyStorePassword.toCharArray(),
-          serviceConfig.keyManagerPassword.toCharArray(),
-          blocker
+        .onFinalize(
+          IO.pure(cacheConfig.persistConfig.shouldPersist)
+            .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
         )
-        tlsServer = EmberServerBuilder
-          .default[IO]
-          .withPort(serviceConfig.tlsPort)
-          .withHost("0.0.0.0")
-          .withTLS(tlsContext)
-          .withHttpApp(app)
-          .build
-        plainServer = EmberServerBuilder
-          .default[IO]
-          .withPort(serviceConfig.plainPort)
-          .withHost("0.0.0.0")
-          .withHttpApp(app)
-          .build
-        _ <- logger.info(
-          s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
-        )
-        _ <- logger.info(
-          s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
-        )
-        res <- tlsServer
-          .parZip(plainServer)
-          .parZip(
-            persistDataLoop(
-              cacheConfig.persistConfig.shouldPersist,
-              cacheConfig.persistConfig.interval,
-              cache,
-              logger,
-              blocker
-            ).background
-          )
-          .onFinalize(
-            IO.pure(cacheConfig.persistConfig.shouldPersist)
-              .ifM(cache.persistToDisk(LoggingContext.create, blocker), IO.unit)
-          )
-          .use(_ => IO.never)
-          .as(ExitCode.Success)
-      } yield res
-    )
+        .use(_ => IO.never)
+        .as(ExitCode.Success)
+    } yield res
 
   def initializeStreams(
       cache: Cache,
@@ -120,7 +123,7 @@ object KinesisMockService extends IOApp {
           RetryPolicies
             .limitRetries[IO](3)
             .join(constantDelay(createStreamDuration)),
-          identity,
+          IO.pure,
           noop[IO, Boolean]
         )(isInitStreamDone(req.streamName))
       } yield {}
@@ -128,7 +131,9 @@ object KinesisMockService extends IOApp {
     for {
       semaphore <- Semaphore[IO](5)
       _ <- streams
-        .parTraverse(stream => semaphore.withPermit(initStream(stream).void))
+        .parTraverse(stream =>
+          semaphore.permit.use(_ => initStream(stream).void)
+        )
     } yield {}
   }
 
@@ -136,8 +141,7 @@ object KinesisMockService extends IOApp {
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
-      logger: SelfAwareStructuredLogger[IO],
-      blocker: Blocker
+      logger: SelfAwareStructuredLogger[IO]
   ): IO[Unit] = {
     val context = LoggingContext.create
     IO.pure(shouldPersist)
@@ -145,11 +149,11 @@ object KinesisMockService extends IOApp {
         logger.info(context.context)("Starting persist data loop") >>
           retryingOnFailuresAndAllErrors[Unit](
             constantDelay[IO](interval),
-            _ => false,
+            _ => IO.pure(false),
             noop[IO, Unit],
             (e: Throwable, _) =>
               logger.error(context.context, e)("Failed to persist data")
-          )(cache.persistToDisk(context, blocker)),
+          )(cache.persistToDisk(context)),
         logger.info(LoggingContext.create.context)(
           "Not configured to persist data, persist loop not started"
         )

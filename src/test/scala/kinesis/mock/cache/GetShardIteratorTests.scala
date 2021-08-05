@@ -2,7 +2,7 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.syntax.all._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
@@ -23,41 +23,39 @@ class GetShardIteratorTests
     (
       streamName: StreamName
     ) =>
-      Blocker[IO].use(blocker =>
-        for {
-          cacheConfig <- CacheConfig.read(blocker)
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(CreateStreamRequest(1, streamName), context, false)
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-          shard <- cache
-            .listShards(
-              ListShardsRequest(None, None, None, None, None, Some(streamName)),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.shards.head)
-          res <- cache
-            .getShardIterator(
-              GetShardIteratorRequest(
-                shard.shardId,
-                ShardIteratorType.TRIM_HORIZON,
-                None,
-                streamName,
-                None
-              ),
-              context,
-              false
-            )
-            .rethrow
-            .map(_.shardIterator)
-        } yield assert(
-          res.parse.isRight,
-          s"$res"
-        )
+      for {
+        cacheConfig <- CacheConfig.read
+        cache <- Cache(cacheConfig)
+        context = LoggingContext.create
+        _ <- cache
+          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .rethrow
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        shard <- cache
+          .listShards(
+            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            context,
+            false
+          )
+          .rethrow
+          .map(_.shards.head)
+        res <- cache
+          .getShardIterator(
+            GetShardIteratorRequest(
+              shard.shardId,
+              ShardIteratorType.TRIM_HORIZON,
+              None,
+              streamName,
+              None
+            ),
+            context,
+            false
+          )
+          .rethrow
+          .map(_.shardIterator)
+      } yield assert(
+        res.parse.isRight,
+        s"$res"
       )
   })
 }

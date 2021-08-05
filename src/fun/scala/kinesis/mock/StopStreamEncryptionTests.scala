@@ -9,9 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class StopStreamEncryptionTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class StopStreamEncryptionTests extends AwsFunctionalTests {
 
   fixture.test("It should stop stream encryption") { resources =>
     for {

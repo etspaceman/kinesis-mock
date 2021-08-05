@@ -4,8 +4,7 @@ package api
 import scala.concurrent.duration._
 
 import cats.Eq
-import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Ref}
 import cats.syntax.all._
 import io.circe
 

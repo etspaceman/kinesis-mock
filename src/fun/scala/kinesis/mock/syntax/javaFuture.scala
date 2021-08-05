@@ -1,11 +1,10 @@
 package kinesis.mock.syntax
 
 import scala.concurrent.{Future, Promise}
-import scala.jdk.FutureConverters._
 
-import java.util.concurrent.{CompletionStage, Executor}
+import java.util.concurrent.{CompletableFuture, Executor}
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
 import com.google.common.util.concurrent.{
   FutureCallback,
   Futures,
@@ -16,7 +15,7 @@ object javaFuture extends JavaFutureSyntax
 
 trait JavaFutureSyntax {
   implicit def toJavaFutureOps[A](
-      future: => CompletionStage[A]
+      future: => CompletableFuture[A]
   ): JavaFutureSyntax.JavaFutureOps[A] =
     new JavaFutureSyntax.JavaFutureOps(future)
 
@@ -27,9 +26,9 @@ trait JavaFutureSyntax {
 }
 
 object JavaFutureSyntax {
-  final class JavaFutureOps[A](future: => CompletionStage[A]) {
-    def toIO(implicit CS: ContextShift[IO]): IO[A] =
-      IO.fromFuture(IO(future.asScala))
+  final class JavaFutureOps[A](future: => CompletableFuture[A]) {
+    def toIO: IO[A] =
+      IO.fromCompletableFuture(IO(future))
   }
 
   final class ListenableFutureOps[A](future: => ListenableFuture[A]) {
@@ -51,7 +50,7 @@ object JavaFutureSyntax {
       p.future
     }
 
-    def toIO(implicit E: Executor, CS: ContextShift[IO]): IO[A] =
+    def toIO(implicit E: Executor): IO[A] =
       IO.fromFuture(IO(asScala))
   }
 }

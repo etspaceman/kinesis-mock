@@ -4,9 +4,9 @@ import scala.concurrent.duration._
 
 import java.net.URI
 
-import cats.effect.{Blocker, IO, Resource, SyncIO}
-import cats.syntax.all._
+import cats.effect.{IO, Resource, SyncIO}
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
@@ -20,7 +20,8 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
+trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
+
   protected val genStreamShardCount = 3
 
   // this must match env var INITIALIZE_STREAMS in docker-compose.yml
@@ -53,8 +54,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
       .buildWithDefaults(trustAllCertificates)
 
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
-    blocker <- Blocker[IO]
-    testConfig <- Resource.eval(FunctionalTestConfig.read(blocker))
+    testConfig <- Resource.eval(FunctionalTestConfig.read)
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
     kinesisClient <- Resource
       .fromAutoCloseable {
@@ -70,7 +70,8 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             .build()
         )
       }
-    cacheConfig <- Resource.eval(CacheConfig.read(blocker))
+    cacheConfig <- Resource.eval(CacheConfig.read)
+    logger <- Resource.eval(Slf4jLogger.create[IO])
     res <- Resource.make(
       IO(streamNameGen.one)
         .map(streamName =>
@@ -79,7 +80,8 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
             cacheConfig,
             streamName,
             testConfig,
-            protocol
+            protocol,
+            logger
           )
         )
         .flatTap(setup)
@@ -87,6 +89,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   } yield res
 
   def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- resources.logger.debug(s"Creating stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .createStream(
         CreateStreamRequest
@@ -96,10 +99,17 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           .build()
       )
       .toIO
+    _ <- resources.logger.debug(s"Created stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.createStreamDuration.plus(200.millis)
     )
+    _ <- resources.logger.debug(
+      s"Describing stream summary for ${resources.streamName}"
+    )
     streamSummary <- describeStreamSummary(resources)
+    _ <- resources.logger.debug(
+      s"Described stream summary for ${resources.streamName}"
+    )
     res <- IO.raiseWhen(
       streamSummary
         .streamDescriptionSummary()
@@ -110,6 +120,7 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
   } yield res
 
   def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+    _ <- resources.logger.debug(s"Deleting stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .deleteStream(
         DeleteStreamRequest
@@ -119,10 +130,17 @@ trait AwsFunctionalTests extends CatsEffectFunFixtures { _: CatsEffectSuite =>
           .build()
       )
       .toIO
+    _ <- resources.logger.debug(s"Deleted stream ${resources.streamName}")
     _ <- IO.sleep(
       resources.cacheConfig.deleteStreamDuration.plus(200.millis)
     )
+    _ <- resources.logger.debug(
+      s"Describing stream summary for ${resources.streamName}"
+    )
     streamSummary <- describeStreamSummary(resources).attempt
+    _ <- resources.logger.debug(
+      s"Described stream summary for ${resources.streamName}"
+    )
     res <- IO.raiseWhen(
       streamSummary.isRight
     )(

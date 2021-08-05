@@ -9,7 +9,7 @@ lazy val kinesisMock = project
     name := "kinesis-mock",
     organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
-    scalaVersion := "2.13.5",
+    scalaVersion := "2.13.6",
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
@@ -50,7 +50,7 @@ lazy val kinesisMock = project
       Aws.kcl % FunctionalTest
     ),
     semanticdbEnabled := true,
-    semanticdbVersion := "4.4.10",
+    semanticdbVersion := scalafixSemanticdb.revision,
     ThisBuild / scalafixDependencies += OrganizeImports,
     javacOptions += "-XDignore.symbol.file",
     scalacOptions ++= ScalacSettings.settings,

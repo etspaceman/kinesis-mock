@@ -10,9 +10,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class ListStreamConsumersTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class ListStreamConsumersTests extends AwsFunctionalTests {
 
   fixture.test("It should list stream consumers") { resources =>
     for {

@@ -67,7 +67,7 @@ object http4s {
       case _ => {
         implicit val E = Encoder[A].borerEncoder
         EntityEncoder[IO, Chunk[Byte]]
-          .contramap[A](x => Chunk.Bytes.apply(Cbor.encode(x).toByteArray))
+          .contramap[A](x => Chunk.array(Cbor.encode(x).toByteArray))
           .withContentType(`Content-Type`(mediaType))
       }
     }

@@ -9,9 +9,7 @@ import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
-class RegisterStreamConsumerTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class RegisterStreamConsumerTests extends AwsFunctionalTests {
 
   fixture.test("It should register a stream consumer") { resources =>
     for {

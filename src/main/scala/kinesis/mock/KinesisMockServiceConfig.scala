@@ -1,13 +1,16 @@
 package kinesis.mock
 
-import cats.effect.{Blocker, ContextShift, IO}
+import cats.effect.IO
+import com.comcast.ip4s.Port
 import pureconfig.generic.semiauto._
 import pureconfig.module.catseffect.syntax._
 import pureconfig.{ConfigReader, ConfigSource}
 
+import kinesis.mock.instances.pureconfig._
+
 final case class KinesisMockServiceConfig(
-    tlsPort: Int,
-    plainPort: Int,
+    tlsPort: Port,
+    plainPort: Port,
     keyStorePassword: String,
     keyManagerPassword: String
 )
@@ -15,10 +18,8 @@ final case class KinesisMockServiceConfig(
 object KinesisMockServiceConfig {
   implicit val kinesisMockServiceConfigReader
       : ConfigReader[KinesisMockServiceConfig] = deriveReader
-  def read(
-      blocker: Blocker
-  )(implicit CS: ContextShift[IO]): IO[KinesisMockServiceConfig] =
+  def read: IO[KinesisMockServiceConfig] =
     ConfigSource
       .resources("service.conf")
-      .loadF[IO, KinesisMockServiceConfig](blocker)
+      .loadF[IO, KinesisMockServiceConfig]()
 }

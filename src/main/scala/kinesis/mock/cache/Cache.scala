@@ -3,9 +3,8 @@ package cache
 
 import java.io.FileWriter
 
-import cats.Parallel
 import cats.effect._
-import cats.effect.concurrent.{Ref, Supervisor}
+import cats.effect.std.Supervisor
 import cats.syntax.all._
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.circe.jackson._
@@ -103,7 +102,7 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -162,7 +161,7 @@ class Cache private (
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -382,8 +381,6 @@ class Cache private (
       req: RegisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit
-      T: Timer[IO]
   ): IO[Response[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -460,7 +457,7 @@ class Cache private (
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -815,7 +812,7 @@ class Cache private (
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
@@ -862,7 +859,7 @@ class Cache private (
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
@@ -1038,7 +1035,7 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing MergeShards request"
@@ -1090,7 +1087,7 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing SplitShard request"
@@ -1142,7 +1139,7 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean
-  )(implicit T: Timer[IO]): IO[Response[UpdateShardCountResponse]] = {
+  ): IO[Response[UpdateShardCountResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
@@ -1182,25 +1179,24 @@ class Cache private (
       } yield result)
   }
 
-  def persistToDisk(context: LoggingContext, blocker: Blocker)(implicit
-      CS: ContextShift[IO]
-  ): IO[Unit] =
+  def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
-        semaphores.persistData.withPermit(
+        semaphores.persistData.permit.use(_ =>
           for {
             streams <- streamsRef.get
             ctx = context ++ Vector(
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )
-            _ <- blocker
-              .blockOn(IO(os.exists(config.persistConfig.osPath)))
+            _ <- IO
+              .interruptible(false)(os.exists(config.persistConfig.osPath))
               .ifM(
                 IO.unit,
                 logger.info(ctx.context)("Creating directories") >>
-                  blocker
-                    .blockOn(IO(os.makeDir.all(config.persistConfig.osPath)))
+                  IO.interruptible(false)(
+                    os.makeDir.all(config.persistConfig.osPath)
+                  )
               )
             js = streams.asJson
             jacksonJs = circeToJackson(js)
@@ -1210,8 +1206,8 @@ class Cache private (
                 for {
                   _ <- logger
                     .debug(ctx.context)("Persisting stream data to disk")
-                  r <- blocker
-                    .blockOn(IO(om.writer().writeValue(fw, jacksonJs)))
+                  r <- IO
+                    .interruptible(false)(om.writer().writeValue(fw, jacksonJs))
                   _ <- logger
                     .debug(ctx.context)("Successfully persisted stream data")
                 } yield r
@@ -1227,7 +1223,7 @@ object Cache {
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO], P: Parallel[IO]): IO[Cache] = for {
+  )(implicit C: Concurrent[IO]): IO[Cache] = for {
     ref <- Ref.of[IO, Streams](streams)
     semaphores <- CacheSemaphores.create
     supervisorResource = Supervisor[IO]
@@ -1237,21 +1233,15 @@ object Cache {
   } yield cache
 
   def loadFromFile(
-      config: CacheConfig,
-      blocker: Blocker
-  )(implicit
-      C: Concurrent[IO],
-      P: Parallel[IO],
-      CS: ContextShift[IO]
-  ): IO[Cache] = {
+      config: CacheConfig
+  )(implicit C: Concurrent[IO]): IO[Cache] = {
     val om = new ObjectMapper()
 
-    blocker
-      .blockOn(IO(os.exists(config.persistConfig.osFile)))
+    IO.interruptible(false)(os.exists(config.persistConfig.osFile))
       .ifM(
         for {
-          jn <- blocker
-            .blockOn(IO(om.readTree(config.persistConfig.osFile.toIO)))
+          jn <- IO
+            .interruptible(false)(om.readTree(config.persistConfig.osFile.toIO))
           streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
           res <- apply(config, streams)
         } yield res,

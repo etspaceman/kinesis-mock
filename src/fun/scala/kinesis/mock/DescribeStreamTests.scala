@@ -6,9 +6,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
 
-class DescribeStreamTests
-    extends munit.CatsEffectSuite
-    with AwsFunctionalTests {
+class DescribeStreamTests extends AwsFunctionalTests {
 
   fixture.test("It should describe a stream") { resources =>
     for {
