@@ -89,7 +89,7 @@ object borer {
     r.dataItem() match {
       case DataItem.Long                        => r.readLong()
       case _ if r.tryReadTag(Tag.EpochDateTime) => r.readLong()
-      case _                                    => r.unexpectedDataItem(expected = "Long")
+      case _ => r.unexpectedDataItem(expected = "Long")
     }
   }
   implicit def defaultBorerDecoderFromCirceDecoder[T](implicit
