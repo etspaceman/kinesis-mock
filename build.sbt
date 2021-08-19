@@ -66,7 +66,7 @@ lazy val kinesisMock = project
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
-      case x                                    => MergeStrategy.defaultMergeStrategy(x)
+      case x => MergeStrategy.defaultMergeStrategy(x)
     },
     coverageExcludedPackages := "org\\.typelevel\\.log4cats.*"
   )
