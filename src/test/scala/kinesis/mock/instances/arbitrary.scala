@@ -202,14 +202,14 @@ object arbitrary {
     .choose(1, 128)
     .flatMap(size =>
       Gen
-        .resize(size, RegexpGen.from("^([a-zA-Z0-9_.:/=+\\-]*)$"))
+        .resize(size, RegexpGen.from("^([a-zA-Z0-9_./=+\\-%@ ]*)$"))
         .suchThat(x => !x.startsWith("aws:") && x.nonEmpty)
     )
 
   val tagValueGen: Gen[String] = Gen
     .choose(0, 256)
     .flatMap(size =>
-      Gen.resize(size, RegexpGen.from("^([a-zA-Z0-9_.:/=+\\-]*)$"))
+      Gen.resize(size, RegexpGen.from("^([a-zA-Z0-9_./=+\\-%@ ]*)$"))
     )
 
   val tagsGen: Gen[Tags] = Gen
