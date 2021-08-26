@@ -37,7 +37,7 @@ final case class AddTagsToStreamRequest(
                 else Right(())
               }, {
                 val invalidValues = tags.tags.values.filterNot(x =>
-                  x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-]*)$")
+                  x.matches("^([\\p{L}\\p{Z}\\p{N}_./=+\\-%@]*)$")
                 )
                 if (invalidValues.nonEmpty)
                   InvalidArgumentException(
