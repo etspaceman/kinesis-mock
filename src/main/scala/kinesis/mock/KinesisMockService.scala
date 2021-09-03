@@ -10,7 +10,6 @@ import fs2.io.net.Network
 import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.Logger
-import org.http4s.syntax.kleisli._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicies.constantDelay
