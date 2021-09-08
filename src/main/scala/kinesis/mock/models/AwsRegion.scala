@@ -1,6 +1,8 @@
 package kinesis.mock.models
 
 import enumeratum._
+import io.circe.KeyEncoder
+import io.circe.KeyDecoder
 
 sealed abstract class AwsRegion(override val entryName: String)
     extends EnumEntry
@@ -36,4 +38,9 @@ object AwsRegion
   case object US_ISO_EAST_1 extends AwsRegion("us-iso-east-1")
   case object US_ISOB_EAST_1 extends AwsRegion("us-isob-east-1")
   case object US_ISO_WEST_1 extends AwsRegion("us-iso-west-1")
+
+  implicit val awsRegionCirceKeyEncoder: KeyEncoder[AwsRegion] =
+    KeyEncoder.instance(_.entryName)
+  implicit val awsRegionCirceKeyDecoder: KeyDecoder[AwsRegion] =
+    KeyDecoder.instance(AwsRegion.withNameOption)
 }

@@ -17,7 +17,7 @@ import kinesis.mock.instances.circe._
 import kinesis.mock.models._
 
 final case class CacheConfig(
-    initializeStreams: Option[List[CreateStreamRequest]],
+    initializeStreams: Option[Map[AwsRegion, List[CreateStreamRequest]]],
     createStreamDuration: FiniteDuration,
     deleteStreamDuration: FiniteDuration,
     registerStreamConsumerDuration: FiniteDuration,
@@ -38,14 +38,19 @@ object CacheConfig {
   implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] = deriveEncoder
 
   implicit val initializeStreamsReader
-      : ConfigReader[List[CreateStreamRequest]] = {
+      : ConfigReader[Map[AwsRegion, List[CreateStreamRequest]]] =
     ConfigReader.fromString { s =>
       s.split(',')
         .toList
         .map(_.split(':').toList)
         .traverse {
-          case name :: count :: Nil if name.nonEmpty && count.nonEmpty =>
-            count.toIntOption.map(CreateStreamRequest(_, StreamName(name)))
+          case region :: name :: count :: Nil
+              if name.nonEmpty && count.nonEmpty &&
+                AwsRegion.withNameOption(region).nonEmpty =>
+            count.toIntOption.map(c =>
+              AwsRegion
+                .withName(region) -> CreateStreamRequest(c, StreamName(name))
+            )
           case _ => none
         }
         .toRight(
@@ -55,8 +60,8 @@ object CacheConfig {
             "Invalid format. Expected: \"<String>:<Int>,<String>:<Int>,...\""
           )
         )
+        .map(_.groupMap(_._1)(_._2))
     }
-  }
 
   def read: IO[CacheConfig] =
     ConfigSource.resources("cache.conf").loadF[IO, CacheConfig]()

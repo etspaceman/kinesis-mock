@@ -50,7 +50,7 @@ these ports to a local one).
 
 | Variable | Data Type | Default Value | Notes |
 | -------- | --------- | ------------- | ----- |
-| INITIALIZE_STREAMS | String | | A comma-delimited string of stream names and its corresponding shard count to initialize during startup. For example: "my-first-stream:1,my-other-stream:2,my-last-stream:1"|
+| INITIALIZE_STREAMS | String | | A comma-delimited string of regions, stream names and their corresponding shard count to initialize during startup. For example: "us-east-1:my-first-stream:1,us-west-2:my-other-stream:2,eu-west-1:my-last-stream:1"|
 | KINESIS_MOCK_TLS_PORT | Int | 4567 | Https Only |
 | KINESIS_MOCK_PLAIN_PORT | Int | 4568 | Http Only |
 | CREATE_STREAM_DURATION | Duration | 500ms | |

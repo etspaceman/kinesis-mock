@@ -28,7 +28,8 @@ class Cache private (
   def addTagsToStream(
       req: AddTagsToStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing AddTagsToStream request") *>
@@ -64,7 +65,8 @@ class Cache private (
   def removeTagsFromStream(
       req: RemoveTagsFromStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing RemoveTagsFromStream request") *>
@@ -101,7 +103,8 @@ class Cache private (
   def createStream(
       req: CreateStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
@@ -160,7 +163,8 @@ class Cache private (
   def deleteStream(
       req: DeleteStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing DeleteStream request") *>
@@ -208,7 +212,8 @@ class Cache private (
   def decreaseStreamRetention(
       req: DecreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -236,7 +241,8 @@ class Cache private (
   def increaseStreamRetention(
       req: IncreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -262,7 +268,8 @@ class Cache private (
   }
 
   def describeLimits(
-      context: LoggingContext
+      context: LoggingContext,
+      region: Option[AwsRegion]
   ): IO[Response[DescribeLimitsResponse]] =
     logger.debug(context.context)("Processing DescribeLimits request") *>
       semaphores.describeLimits.tryAcquireRelease(
@@ -290,7 +297,8 @@ class Cache private (
   def describeStream(
       req: DescribeStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[DescribeStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -333,7 +341,8 @@ class Cache private (
   def describeStreamSummary(
       req: DescribeStreamSummaryRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[DescribeStreamSummaryResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -380,7 +389,8 @@ class Cache private (
   def registerStreamConsumer(
       req: RegisterStreamConsumerRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[RegisterStreamConsumerResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -456,7 +466,8 @@ class Cache private (
   def deregisterStreamConsumer(
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
@@ -526,7 +537,8 @@ class Cache private (
   def describeStreamConsumer(
       req: DescribeStreamConsumerRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[DescribeStreamConsumerResponse]] =
     logger.debug(context.context)(
       "Processing DescribeStreamConsumer request"
@@ -571,7 +583,8 @@ class Cache private (
   def disableEnhancedMonitoring(
       req: DisableEnhancedMonitoringRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[DisableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -605,7 +618,8 @@ class Cache private (
   def enableEnhancedMonitoring(
       req: EnableEnhancedMonitoringRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[EnableEnhancedMonitoringResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -639,7 +653,8 @@ class Cache private (
   def listShards(
       req: ListShardsRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[ListShardsResponse]] =
     logger.debug(context.context)(
       "Processing ListShards request"
@@ -678,7 +693,8 @@ class Cache private (
   def listStreamConsumers(
       req: ListStreamConsumersRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[ListStreamConsumersResponse]] = {
     val ctx = context + ("streamArn" -> req.streamArn)
     logger.debug(ctx.context)(
@@ -723,7 +739,8 @@ class Cache private (
   def listStreams(
       req: ListStreamsRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[ListStreamsResponse]] =
     logger.debug(context.context)(
       "Processing ListStreams request"
@@ -766,7 +783,8 @@ class Cache private (
   def listTagsForStream(
       req: ListTagsForStreamRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[ListTagsForStreamResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -811,7 +829,8 @@ class Cache private (
   def startStreamEncryption(
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -858,7 +877,8 @@ class Cache private (
   def stopStreamEncryption(
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -908,7 +928,8 @@ class Cache private (
   def getShardIterator(
       req: GetShardIteratorRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[GetShardIteratorResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -943,7 +964,8 @@ class Cache private (
   def getRecords(
       req: GetRecordsRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[GetRecordsResponse]] =
     logger.debug(context.context)(
       "Processing GetRecords request"
@@ -976,7 +998,8 @@ class Cache private (
   def putRecord(
       req: PutRecordRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[PutRecordResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
@@ -1005,7 +1028,8 @@ class Cache private (
   def putRecords(
       req: PutRecordsRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[PutRecordsResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     for {
@@ -1034,7 +1058,8 @@ class Cache private (
   def mergeShards(
       req: MergeShardsRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -1086,7 +1111,8 @@ class Cache private (
   def splitShard(
       req: SplitShardRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
@@ -1138,7 +1164,8 @@ class Cache private (
   def updateShardCount(
       req: UpdateShardCountRequest,
       context: LoggingContext,
-      isCbor: Boolean
+      isCbor: Boolean,
+      region: Option[AwsRegion]
   ): IO[Response[UpdateShardCountResponse]] = {
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)(
