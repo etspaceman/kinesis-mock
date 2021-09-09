@@ -13,19 +13,21 @@ class DescribeStreamSummaryTests
     with munit.ScalaCheckEffectSuite {
   test("It should describe a stream summary")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DescribeStreamSummaryRequest(streamName)
-        res <- req.describeStreamSummary(streamsRef)
+        req = DescribeStreamSummaryRequest(streamArn.streamName)
+        res <- req.describeStreamSummary(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         streamDescriptionSummary = streams.streams
-          .get(streamName)
+          .get(streamArn)
           .map(s => StreamDescriptionSummary.fromStreamData(s))
       } yield assert(
         res.isRight && res.exists { response =>
@@ -36,12 +38,16 @@ class DescribeStreamSummaryTests
   })
 
   test("It should reject if the stream does not exist")(PropF.forAllF {
-    req: DescribeStreamSummaryRequest =>
+    (
+        req: DescribeStreamSummaryRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
       val streams = Streams.empty
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        res <- req.describeStreamSummary(streamsRef)
+        res <- req.describeStreamSummary(streamsRef, awsRegion, awsAccountId)
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

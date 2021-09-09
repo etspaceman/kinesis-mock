@@ -13,34 +13,37 @@ class UpdateShardCountTests
     with munit.ScalaCheckEffectSuite {
   test("It should increase the shard count")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(5, streamArn)
       val active =
-        streams.findAndUpdateStream(streamName)(s =>
+        streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamName,
+          streamArn.streamName,
           10
         )
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        res <- req.updateShardCount(streamsRef, 50)
+        res <- req.updateShardCount(
+          streamsRef,
+          50,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamArn).exists { stream =>
           val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 10 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
-            .streams(streamName)
+            .streams(streamArn)
             .shards
             .keys
             .toVector
@@ -49,47 +52,50 @@ class UpdateShardCountTests
           res.exists { r =>
             r.currentShardCount == 5 &&
             r.targetShardCount == 10 &&
-            r.streamName == streamName
+            r.streamName == streamArn.streamName
           }
         },
         s"req: $req\n" +
           s"res: $res\n" +
-          s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
-          s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
-          s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
+          s"resOpenShards: ${s.streams(streamArn).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamArn).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
+          s"inputShards: ${active.streams(streamArn).shards.keys.toVector.map(_.shardId)}"
       )
   })
 
   test("It should decrease the shard count")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(10, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(10, streamArn)
       val active =
-        streams.findAndUpdateStream(streamName)(s =>
+        streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamName,
+          streamArn.streamName,
           5
         )
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        res <- req.updateShardCount(streamsRef, 50)
+        res <- req.updateShardCount(
+          streamsRef,
+          50,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamArn).exists { stream =>
           val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 5 &&
           shards.filterNot(_.isOpen).map(_.shardId) == active
-            .streams(streamName)
+            .streams(streamArn)
             .shards
             .keys
             .toVector
@@ -98,41 +104,44 @@ class UpdateShardCountTests
           res.exists { r =>
             r.currentShardCount == 10 &&
             r.targetShardCount == 5 &&
-            r.streamName == streamName
+            r.streamName == streamArn.streamName
           }
         },
         s"req: $req\n" +
           s"res: $res\n" +
-          s"resOpenShards: ${s.streams(streamName).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
-          s"resClosedShards: ${s.streams(streamName).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
-          s"inputShards: ${active.streams(streamName).shards.keys.toVector.map(_.shardId)}"
+          s"resOpenShards: ${s.streams(streamArn).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
+          s"resClosedShards: ${s.streams(streamArn).shards.keys.toVector.filterNot(_.isOpen).map(_.shardId)}\n" +
+          s"inputShards: ${active.streams(streamArn).shards.keys.toVector.map(_.shardId)}"
       )
   })
 
   test("It should reject an increase > 2x the current shard count")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(5, streamArn)
         val active =
-          streams.findAndUpdateStream(streamName)(s =>
+          streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
 
         val req =
           UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
-            streamName,
+            streamArn.streamName,
             11
           )
 
         for {
           streamsRef <- Ref.of[IO, Streams](active)
-          res <- req.updateShardCount(streamsRef, 50)
+          res <- req.updateShardCount(
+            streamsRef,
+            50,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
@@ -140,76 +149,85 @@ class UpdateShardCountTests
   test("It should reject a decrease < 50% the current shard count")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(10, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(10, streamArn)
         val active =
-          streams.findAndUpdateStream(streamName)(s =>
+          streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
 
         val req =
           UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
-            streamName,
+            streamArn.streamName,
             4
           )
 
         for {
           streamsRef <- Ref.of[IO, Streams](active)
-          res <- req.updateShardCount(streamsRef, 50)
+          res <- req.updateShardCount(
+            streamsRef,
+            50,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
   test("It should reject an increase > the shard limit")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(5, streamArn)
       val active =
-        streams.findAndUpdateStream(streamName)(s =>
+        streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamName,
+          streamArn.streamName,
           10
         )
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        res <- req.updateShardCount(streamsRef, 9)
+        res <- req.updateShardCount(
+          streamsRef,
+          9,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the stream is not active")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(5, streamArn)
 
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamName,
+          streamArn.streamName,
           10
         )
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        res <- req.updateShardCount(streamsRef, 50)
+        res <- req.updateShardCount(
+          streamsRef,
+          50,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 }

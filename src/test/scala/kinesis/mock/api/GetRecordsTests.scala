@@ -17,14 +17,12 @@ class GetRecordsTests
     with munit.ScalaCheckEffectSuite {
   test("It should get records")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
@@ -40,7 +38,7 @@ class GetRecordsTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -48,7 +46,7 @@ class GetRecordsTests
       }
 
       val shardIterator = ShardIterator.create(
-        streamName,
+        streamArn.streamName,
         shard.shardId.shardId,
         shard.sequenceNumberRange.startingSequenceNumber
       )
@@ -56,7 +54,11 @@ class GetRecordsTests
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetRecordsRequest(None, shardIterator)
-        res <- req.getRecords(streamsRef)
+        res <- req.getRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(
         res.isRight && res.exists { response =>
           response.records.toVector === records
@@ -70,14 +72,12 @@ class GetRecordsTests
 
   test("It should get records with a limit")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
@@ -93,7 +93,7 @@ class GetRecordsTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -101,7 +101,7 @@ class GetRecordsTests
       }
 
       val shardIterator = ShardIterator.create(
-        streamName,
+        streamArn.streamName,
         shard.shardId.shardId,
         shard.sequenceNumberRange.startingSequenceNumber
       )
@@ -109,7 +109,11 @@ class GetRecordsTests
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetRecordsRequest(Some(50), shardIterator)
-        res <- req.getRecords(streamsRef)
+        res <- req.getRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(
         res.isRight && res.exists { response =>
           response.records.toVector === records.take(50)
@@ -123,14 +127,12 @@ class GetRecordsTests
 
   test("It should get records using the new shard-iterator")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
@@ -146,7 +148,7 @@ class GetRecordsTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -154,7 +156,7 @@ class GetRecordsTests
       }
 
       val shardIterator = ShardIterator.create(
-        streamName,
+        streamArn.streamName,
         shard.shardId.shardId,
         shard.sequenceNumberRange.startingSequenceNumber
       )
@@ -162,11 +164,19 @@ class GetRecordsTests
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req1 = GetRecordsRequest(Some(50), shardIterator)
-        res1 <- req1.getRecords(streamsRef)
+        res1 <- req1.getRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         res2 <- res1
           .traverse(r =>
             GetRecordsRequest(Some(50), r.nextShardIterator)
-              .getRecords(streamsRef)
+              .getRecords(
+                streamsRef,
+                streamArn.awsRegion,
+                streamArn.awsAccountId
+              )
           )
           .map(_.flatMap(identity))
         res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
@@ -192,14 +202,12 @@ class GetRecordsTests
     "It should return an empty list using the new shard-iterator if the stream is exhausted"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -215,7 +223,7 @@ class GetRecordsTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -223,7 +231,7 @@ class GetRecordsTests
       }
 
       val shardIterator = ShardIterator.create(
-        streamName,
+        streamArn.streamName,
         shard.shardId.shardId,
         shard.sequenceNumberRange.startingSequenceNumber
       )
@@ -231,11 +239,19 @@ class GetRecordsTests
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req1 = GetRecordsRequest(Some(50), shardIterator)
-        res1 <- req1.getRecords(streamsRef)
+        res1 <- req1.getRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         res2 <- res1
           .traverse(r =>
             GetRecordsRequest(Some(50), r.nextShardIterator)
-              .getRecords(streamsRef)
+              .getRecords(
+                streamsRef,
+                streamArn.awsRegion,
+                streamArn.awsAccountId
+              )
           )
           .map(_.flatMap(identity))
         res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))

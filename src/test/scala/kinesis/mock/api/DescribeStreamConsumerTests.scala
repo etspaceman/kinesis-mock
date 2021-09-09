@@ -15,31 +15,32 @@ class DescribeStreamConsumerTests
     with munit.ScalaCheckEffectSuite {
   test("It should describe stream consumers by consumerName")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
+        }
       val consumer = updated.streams
-        .get(streamName)
-        .flatMap(s => s.consumers.get(consumerName))
-      val streamArn = streams.streams.get(streamName).map(_.streamArn)
+        .get(consumerArn.streamArn)
+        .flatMap(s => s.consumers.get(consumerArn.consumerName))
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
+        req = DescribeStreamConsumerRequest(
+          None,
+          Some(consumerArn.consumerName),
+          Some(consumerArn.streamArn)
+        )
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
         res.isRight && res.exists { response =>
@@ -51,34 +52,30 @@ class DescribeStreamConsumerTests
 
   test("It should describe stream consumers by consumerArn")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
+        }
 
       val consumer = updated.streams
-        .get(streamName)
-        .flatMap(s => s.consumers.get(consumerName))
-
-      val consumerArn = consumer.map(_.consumerArn)
+        .get(consumerArn.streamArn)
+        .flatMap(s => s.consumers.get(consumerArn.consumerName))
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DescribeStreamConsumerRequest(consumerArn, None, None)
+        req = DescribeStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(
         res.isRight && res.exists { response =>
@@ -90,19 +87,21 @@ class DescribeStreamConsumerTests
 
   test("It should reject if consumer does not exist")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val streamArn = streams.streams.get(streamName).map(_.streamArn)
+      val streamArn =
+        streams.streams.get(consumerArn.streamArn).map(_.streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DescribeStreamConsumerRequest(None, Some(consumerName), streamArn)
+        req = DescribeStreamConsumerRequest(
+          None,
+          Some(consumerArn.consumerName),
+          streamArn
+        )
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
@@ -111,27 +110,29 @@ class DescribeStreamConsumerTests
     "It should reject if a consumerName is provided without a streamArn"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DescribeStreamConsumerRequest(None, Some(consumerName), None)
+        req = DescribeStreamConsumerRequest(
+          None,
+          Some(consumerArn.consumerName),
+          None
+        )
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
@@ -140,29 +141,29 @@ class DescribeStreamConsumerTests
     "It should reject if a streamArn is provided without a consumerName"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
-
-      val streamArn = updated.streams.get(streamName).map(_.streamArn)
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DescribeStreamConsumerRequest(None, None, streamArn)
+        req = DescribeStreamConsumerRequest(
+          None,
+          None,
+          Some(consumerArn.streamArn)
+        )
         res <- req.describeStreamConsumer(streamsRef)
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })

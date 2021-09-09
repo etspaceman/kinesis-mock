@@ -20,6 +20,7 @@ object arbitrary {
   implicit val awsAccountIdArb: Arbitrary[AwsAccountId] = Arbitrary(
     awsAccountIdGen
   )
+
   def arnPrefixGen(service: String, part: String): Gen[String] = for {
     accountId <- awsAccountIdGen
     region <- Arbitrary.arbitrary[AwsRegion].map(_.entryName)
@@ -38,10 +39,13 @@ object arbitrary {
     streamNameGen
   )
 
-  val streamArnGen: Gen[String] = for {
+  val streamArnGen: Gen[StreamArn] = for {
     streamName <- streamNameGen
-    arnPrefix <- arnGen("kinesis", "stream", streamName.streamName)
-  } yield s"$arnPrefix/$streamName"
+    awsAccountId <- awsAccountIdGen
+    awsRegion <- Arbitrary.arbitrary[AwsRegion]
+  } yield StreamArn(awsRegion, streamName, awsAccountId)
+
+  implicit val streamArnArb: Arbitrary[StreamArn] = Arbitrary(streamArnGen)
 
   val nowGen: Gen[Instant] = Gen.delay(Gen.const(Instant.now()))
 
@@ -68,19 +72,26 @@ object arbitrary {
     consumerNameGen
   )
 
-  val consumerArnGen: Gen[String] = for {
+  val consumerArnGen: Gen[ConsumerArn] = for {
     streamArn <- streamArnGen
     consumerName <- consumerNameGen
     consumerCreationTimestamp <- nowGen
-  } yield s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}"
+  } yield ConsumerArn(streamArn, consumerName, consumerCreationTimestamp)
+
+  implicit val consumerArnArbitrary: Arbitrary[ConsumerArn] = Arbitrary(
+    consumerArnGen
+  )
 
   implicit val consumerArbitrary: Arbitrary[Consumer] = Arbitrary(
     for {
       streamArn <- streamArnGen
       consumerCreationTimestamp <- nowGen
       consumerName <- consumerNameGen
-      consumerArn =
-        s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}"
+      consumerArn = ConsumerArn(
+        streamArn,
+        consumerName,
+        consumerCreationTimestamp
+      )
       consumerStatus <- Arbitrary.arbitrary[ConsumerStatus]
     } yield Consumer(
       consumerArn,
@@ -351,7 +362,9 @@ object arbitrary {
       shards <- Gen.sequence[Vector[ShardSummary], ShardSummary](shardGens)
       streamCreationTimestamp <- nowGen
       streamName <- streamNameGen
-      streamArn <- arnGen("kinesis", "stream", streamName.streamName)
+      awsRegion <- Arbitrary.arbitrary[AwsRegion]
+      awsAccountId <- awsAccountIdGen
+      streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       streamStatus <- Arbitrary.arbitrary[StreamStatus]
     } yield StreamDescription(
       encryptionType,
@@ -410,7 +423,9 @@ object arbitrary {
       retentionPeriodHours <- retentionPeriodHoursGen
       streamCreationTimestamp <- nowGen
       streamName <- streamNameGen
-      streamArn <- arnGen("kinesis", "stream", streamName.streamName)
+      awsRegion <- Arbitrary.arbitrary[AwsRegion]
+      awsAccountId <- awsAccountIdGen
+      streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       streamStatus <- Arbitrary.arbitrary[StreamStatus]
     } yield StreamDescriptionSummary(
       consumerCount,
@@ -902,7 +917,9 @@ object arbitrary {
         )
       )
       streamName <- streamNameGen
-      streamArn <- arnGen("kinesis", "stream", streamName.streamName)
+      awsRegion <- Arbitrary.arbitrary[AwsRegion]
+      awsAccountId <- awsAccountIdGen
+      streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       streamCreationTimestamp <- nowGen
       streamStatus <- Arbitrary.arbitrary[StreamStatus]
       tags <- tagsGen
@@ -930,9 +947,9 @@ object arbitrary {
       .choose(0, 2)
       .flatMap(size => Gen.listOfN(size, streamDataArbitrary.arbitrary))
       .suchThat(x =>
-        x.groupBy(_.streamName).filter { case (_, x) => x.length > 1 }.isEmpty
+        x.groupBy(_.streamArn).filter { case (_, x) => x.length > 1 }.isEmpty
       )
-      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamName -> sd))))
+      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamArn -> sd))))
   }
 
 }

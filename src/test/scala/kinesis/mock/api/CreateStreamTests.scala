@@ -18,7 +18,7 @@ class CreateStreamTests
         awsAccountId: AwsAccountId
     ) =>
       val streams = Streams.empty
-
+      val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.createStream(
@@ -29,7 +29,7 @@ class CreateStreamTests
         )
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(req.streamName).exists { stream =>
+              res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.size == req.shardCount
         },
         s"req: $req\nres: $res"

@@ -13,15 +13,13 @@ class DisableEnhancedMonitoringTests
     with munit.ScalaCheckEffectSuite {
   test("It should disable enhanced monitoring")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
+        streamArn: StreamArn,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val updated = streams.findAndUpdateStream(streamName)(stream =>
+      val updated = streams.findAndUpdateStream(streamArn)(stream =>
         stream.copy(enhancedMonitoring =
           Vector(
             ShardLevelMetrics(
@@ -43,12 +41,12 @@ class DisableEnhancedMonitoringTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DisableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
-          streamName
+          streamArn.streamName
         )
-        res <- req.disableEnhancedMonitoring(streamsRef)
+        res <- req.disableEnhancedMonitoring(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
         s <- streamsRef.get
         updatedMetrics = s.streams
-          .get(streamName)
+          .get(streamArn)
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
 
       } yield assert(

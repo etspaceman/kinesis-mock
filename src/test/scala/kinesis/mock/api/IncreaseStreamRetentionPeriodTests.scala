@@ -14,25 +14,27 @@ class IncreaseStreamRetentionPeriodTests
     with munit.ScalaCheckEffectSuite {
   test("It should increase the stream retention period")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val active = streams.findAndUpdateStream(streamName)(
+      val active = streams.findAndUpdateStream(streamArn)(
         _.copy(streamStatus = StreamStatus.ACTIVE)
       )
 
       for {
         streamsRef <- Ref.of[IO, Streams](active)
-        req = IncreaseStreamRetentionPeriodRequest(48, streamName)
-        res <- req.increaseStreamRetention(streamsRef)
+        req = IncreaseStreamRetentionPeriodRequest(48, streamArn.streamName)
+        res <- req.increaseStreamRetention(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
         res.isRight &&
-          s.streams.get(streamName).exists { stream =>
+          s.streams.get(streamArn).exists { stream =>
             stream.retentionPeriod == 48.hours
           },
         s"req: $req\nres: $res\nstreams: $streams"
@@ -43,21 +45,23 @@ class IncreaseStreamRetentionPeriodTests
     "It should reject when the stream retention period is greater than the request"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val withUpdatedRetention = streams.findAndUpdateStream(streamName)(s =>
+      val withUpdatedRetention = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
       )
 
       for {
         streamsRef <- Ref.of[IO, Streams](withUpdatedRetention)
-        req = IncreaseStreamRetentionPeriodRequest(48, streamName)
-        res <- req.increaseStreamRetention(streamsRef)
+        req = IncreaseStreamRetentionPeriodRequest(48, streamArn.streamName)
+        res <- req.increaseStreamRetention(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(res.isLeft, s"req: $req\nres: $res\nstreams: $streams")
   })
 }

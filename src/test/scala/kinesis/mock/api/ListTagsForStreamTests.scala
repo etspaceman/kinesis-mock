@@ -17,21 +17,23 @@ class ListTagsForStreamTests
     with munit.ScalaCheckEffectSuite {
   test("It should list tags")(PropF.forAllF {
     (
-        streamName: StreamName,
-        tags: Tags,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+        streamArn: StreamArn,
+        tags: Tags
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(100, streamArn)
 
       val withTags =
-        streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
+        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = ListTagsForStreamRequest(None, None, streamName)
-        res <- req.listTagsForStream(streamsRef)
+        req = ListTagsForStreamRequest(None, None, streamArn.streamName)
+        res <- req.listTagsForStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(
         res.isRight && res.exists { response =>
           tags == Tags.fromTagList(response.tags)
@@ -42,12 +44,10 @@ class ListTagsForStreamTests
 
   test("It should fliter the listing by exclusiveStartTagKey")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(100, streamArn)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
@@ -58,16 +58,20 @@ class ListTagsForStreamTests
       val exclusiveStartTagKey = tags.tags.keys.toVector(3)
 
       val withTags =
-        streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
+        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
         req = ListTagsForStreamRequest(
           Some(exclusiveStartTagKey),
           None,
-          streamName
+          streamArn.streamName
         )
-        res <- req.listTagsForStream(streamsRef)
+        res <- req.listTagsForStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(
         res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
@@ -80,12 +84,10 @@ class ListTagsForStreamTests
 
   test("It should limit the listing")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(100, streamArn)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
@@ -94,12 +96,16 @@ class ListTagsForStreamTests
         .one
 
       val withTags =
-        streams.findAndUpdateStream(streamName)(s => s.copy(tags = tags))
+        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = ListTagsForStreamRequest(None, Some(5), streamName)
-        res <- req.listTagsForStream(streamsRef)
+        req = ListTagsForStreamRequest(None, Some(5), streamArn.streamName)
+        res <- req.listTagsForStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(
         res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
