@@ -29,7 +29,7 @@ class CreateStreamTests
         )
         s <- streamsRef.get
       } yield assert(
-              res.isRight && s.streams.get(streamArn).exists { stream =>
+        res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.size == req.shardCount
         },
         s"req: $req\nres: $res"

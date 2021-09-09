@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -21,14 +22,20 @@ class MergeShardsTests
 
   test("It should merge shards")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(5, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(5, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         adjacentParentShardId = ShardId.create(1).shardId
@@ -41,16 +48,27 @@ class MergeShardsTests
               streamName
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
         checkStream1 <- cache
-          .describeStreamSummary(describeStreamSummaryReq, context, false)
+          .describeStreamSummary(
+            describeStreamSummaryReq,
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(200.millis))
         checkStream2 <- cache
-          .describeStreamSummary(describeStreamSummaryReq, context, false)
+          .describeStreamSummary(
+            describeStreamSummaryReq,
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         checkShards <- cache
           .listShards(
@@ -63,7 +81,8 @@ class MergeShardsTests
               Some(streamName)
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
       } yield assert(

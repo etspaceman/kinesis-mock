@@ -43,7 +43,11 @@ class DisableEnhancedMonitoringTests
           shardLevelMetrics.shardLevelMetrics,
           streamArn.streamName
         )
-        res <- req.disableEnhancedMonitoring(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
+        res <- req.disableEnhancedMonitoring(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
         updatedMetrics = s.streams
           .get(streamArn)

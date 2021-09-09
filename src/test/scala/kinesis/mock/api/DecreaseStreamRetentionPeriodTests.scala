@@ -46,7 +46,7 @@ class DecreaseStreamRetentionPeriodTests
     "It should reject when the stream retention period is less than the request"
   )(PropF.forAllF {
     (
-        streamArn: StreamArn
+      streamArn: StreamArn
     ) =>
       val streams =
         Streams.empty.addStream(1, streamArn)
@@ -54,7 +54,11 @@ class DecreaseStreamRetentionPeriodTests
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DecreaseStreamRetentionPeriodRequest(48, streamArn.streamName)
-        res <- req.decreaseStreamRetention(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
+        res <- req.decreaseStreamRetention(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         streams <- streamsRef.get
       } yield assert(
         res.isLeft && streams.streams.get(streamArn).exists { stream =>

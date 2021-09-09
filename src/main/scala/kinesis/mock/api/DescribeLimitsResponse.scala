@@ -4,6 +4,7 @@ package api
 import cats.Eq
 import cats.effect.{IO, Ref}
 import io.circe
+
 import kinesis.mock.models._
 
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)

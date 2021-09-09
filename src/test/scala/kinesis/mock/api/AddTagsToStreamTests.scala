@@ -58,10 +58,14 @@ class AddTagsToStreamTests
       for {
         streamsRef <- Ref.of[IO, Streams](streamsWithTag)
         req = AddTagsToStreamRequest(streamArn.streamName, tags)
-        res <- req.addTagsToStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
+        res <- req.addTagsToStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
-              res.isRight && s.streams.get(streamArn).exists { stream =>
+        res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"

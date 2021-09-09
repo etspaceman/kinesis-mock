@@ -1,8 +1,6 @@
 package kinesis.mock.models
 
 import enumeratum._
-import io.circe.KeyEncoder
-import io.circe.KeyDecoder
 
 sealed abstract class AwsRegion(override val entryName: String)
     extends EnumEntry

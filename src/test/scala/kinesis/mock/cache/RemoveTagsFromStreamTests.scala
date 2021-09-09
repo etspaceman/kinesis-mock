@@ -1,6 +1,7 @@
 package kinesis.mock.cache
 
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -19,32 +20,41 @@ class RemoveTagsFromStreamTests
   test("It should remove tags")(PropF.forAllF {
     (
         streamName: StreamName,
-        tags: Tags
+        tags: Tags,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- cache
           .addTagsToStream(
             AddTagsToStreamRequest(streamName, tags),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         _ <- cache.removeTagsFromStream(
           RemoveTagsFromStreamRequest(streamName, tags.tags.keys.toVector),
           context,
-          false
+          false,
+          Some(awsRegion)
         )
         res <- cache
           .listTagsForStream(
             ListTagsForStreamRequest(None, None, streamName),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
       } yield assert(res.tags.tags.isEmpty)

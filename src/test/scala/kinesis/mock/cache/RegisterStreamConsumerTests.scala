@@ -21,36 +21,35 @@ class RegisterStreamConsumerTests
 
   test("It should register a stream consumer")(PropF.forAllF {
     (
-        streamName: StreamName,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-        streamArn <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+          .createStream(
+            CreateStreamRequest(1, consumerArn.streamArn.streamName),
             context,
-            false
+            false,
+            Some(consumerArn.streamArn.awsRegion)
           )
           .rethrow
-          .map(_.streamDescriptionSummary.streamArn)
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         _ <- cache
           .registerStreamConsumer(
-            RegisterStreamConsumerRequest(consumerName, streamArn),
+            RegisterStreamConsumerRequest(
+              consumerArn.consumerName,
+              consumerArn.streamArn
+            ),
             context,
             false
           )
           .rethrow
         describeStreamConsumerReq = DescribeStreamConsumerRequest(
           None,
-          Some(consumerName),
-          Some(streamArn)
+          Some(consumerArn.consumerName),
+          Some(consumerArn.streamArn)
         )
         checkStream1 <- cache
           .describeStreamConsumer(

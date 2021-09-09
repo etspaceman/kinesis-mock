@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -22,14 +23,20 @@ class GetRecordsTests
 
   test("It should get records")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         recordRequests <- IO(
@@ -39,13 +46,14 @@ class GetRecordsTests
             .map(_.copy(streamName = streamName))
         )
         _ <- recordRequests.traverse(req =>
-          cache.putRecord(req, context, false).rethrow
+          cache.putRecord(req, context, false, Some(awsRegion)).rethrow
         )
         shard <- cache
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName)),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shards.head)
@@ -59,12 +67,18 @@ class GetRecordsTests
               None
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shardIterator)
         res <- cache
-          .getRecords(GetRecordsRequest(None, shardIterator), context, false)
+          .getRecords(
+            GetRecordsRequest(None, shardIterator),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
       } yield assert(
         res.records.length == 5 && res.records.forall(rec =>

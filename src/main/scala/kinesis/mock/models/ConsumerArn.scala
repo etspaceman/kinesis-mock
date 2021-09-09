@@ -1,8 +1,8 @@
 package kinesis.mock.models
 
-import java.time.Instant
-
 import scala.util.Try
+
+import java.time.Instant
 
 import cats.Eq
 import cats.syntax.all._

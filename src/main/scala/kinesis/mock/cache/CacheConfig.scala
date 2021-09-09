@@ -11,6 +11,7 @@ import pureconfig.error.CannotConvert
 import pureconfig.generic.semiauto._
 import pureconfig.module.catseffect.syntax._
 import pureconfig.module.enumeratum._
+
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.instances.circe._
 import kinesis.mock.models._
@@ -35,7 +36,9 @@ final case class CacheConfig(
       .resources("cache.conf")
       .loadOrThrow[Option[Map[AwsRegion, List[CreateStreamRequest]]]](
         implicitly,
-        ConfigReader.optionReader(CacheConfig.initializeStreamsReader(awsRegion))
+        ConfigReader.optionReader(
+          CacheConfig.initializeStreamsReader(awsRegion)
+        )
       )
 }
 

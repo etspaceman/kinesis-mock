@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 import cats.effect.IO
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -33,7 +34,8 @@ class PersistenceTests
 
   test("It should persist data and re-load it from disk")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         uuid <- IO(UuidCreator.getTimeBased().toString)
@@ -42,7 +44,12 @@ class PersistenceTests
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         recordRequests <- IO(
@@ -52,7 +59,7 @@ class PersistenceTests
             .map(_.copy(streamName = streamName))
         )
         _ <- recordRequests.traverse(req =>
-          cache.putRecord(req, context, false).rethrow
+          cache.putRecord(req, context, false, Some(awsRegion)).rethrow
         )
         _ <- cache.persistToDisk(context)
         newCache <- Cache.loadFromFile(cacheConfig)
@@ -60,7 +67,8 @@ class PersistenceTests
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName)),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shards.head)
@@ -74,12 +82,18 @@ class PersistenceTests
               None
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shardIterator)
         res <- newCache
-          .getRecords(GetRecordsRequest(None, shardIterator), context, false)
+          .getRecords(
+            GetRecordsRequest(None, shardIterator),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
       } yield assert(
         res.records.length == 5 && res.records.forall(rec =>

@@ -1,9 +1,10 @@
 package kinesis.mock.models
 
+import scala.util.Try
+
 import cats.Eq
 import cats.syntax.all._
 import io.circe._
-import scala.util.Try
 
 final case class StreamArn(
     awsRegion: AwsRegion,

@@ -1,6 +1,7 @@
 package kinesis.mock.cache
 
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -18,20 +19,27 @@ class DescribeStreamTests
 
   test("It should describe a stream")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         res <- cache
           .describeStream(
             DescribeStreamRequest(None, None, streamName),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         shardSummary <- cache
@@ -45,7 +53,8 @@ class DescribeStreamTests
               Some(streamName)
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(x => x.shards)
@@ -56,7 +65,7 @@ class DescribeStreamTests
           None,
           24,
           shardSummary,
-          s"arn:aws:kinesis:${cacheConfig.awsRegion.entryName}:${cacheConfig.awsAccountId}:stream/$streamName",
+          StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
           res.streamDescription.streamCreationTimestamp,
           streamName,
           StreamStatus.CREATING

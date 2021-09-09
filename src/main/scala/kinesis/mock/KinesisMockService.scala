@@ -17,8 +17,7 @@ import retry._
 
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
-import kinesis.mock.models.{StreamName, StreamStatus}
-import kinesis.mock.models.AwsRegion
+import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {

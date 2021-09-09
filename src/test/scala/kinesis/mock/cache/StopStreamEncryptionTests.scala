@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -22,14 +23,20 @@ class StopStreamEncryptionTests
 
   test("It should stop stream encryption")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         keyId <- IO(keyIdGen.one)
@@ -41,7 +48,8 @@ class StopStreamEncryptionTests
               streamName
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         _ <- IO.sleep(
@@ -55,18 +63,19 @@ class StopStreamEncryptionTests
               streamName
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         describeReq = DescribeStreamSummaryRequest(streamName)
         checkStream1 <- cache
-          .describeStreamSummary(describeReq, context, false)
+          .describeStreamSummary(describeReq, context, false, Some(awsRegion))
           .rethrow
         _ <- IO.sleep(
           cacheConfig.stopStreamEncryptionDuration.plus(200.millis)
         )
         checkStream2 <- cache
-          .describeStreamSummary(describeReq, context, false)
+          .describeStreamSummary(describeReq, context, false, Some(awsRegion))
           .rethrow
       } yield assert(
         checkStream1.streamDescriptionSummary.encryptionType.contains(

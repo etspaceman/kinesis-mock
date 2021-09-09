@@ -11,6 +11,7 @@ import io.circe.jackson._
 import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+
 import kinesis.mock.api._
 import kinesis.mock.models._
 import kinesis.mock.syntax.semaphore._

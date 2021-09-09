@@ -1,6 +1,7 @@
 package kinesis.mock.cache
 
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -19,6 +20,7 @@ class AddTagsToStreamTests
   test("It should add tags")(PropF.forAllF {
     (
         streamName: StreamName,
+        awsRegion: AwsRegion,
         tags: Tags
     ) =>
       for {
@@ -26,20 +28,27 @@ class AddTagsToStreamTests
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- cache
           .addTagsToStream(
             AddTagsToStreamRequest(streamName, tags),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         res <- cache
           .listTagsForStream(
             ListTagsForStreamRequest(None, None, streamName),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
       } yield assert(Tags.fromTagList(res.tags) == tags)
