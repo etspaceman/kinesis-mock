@@ -64,7 +64,7 @@ these ports to a local one).
 | UPDATE_SHARD_COUNT_DURATION | Duration | 500ms | |
 | SHARD_LIMIT | Int | 50 | |
 | AWS_ACCOUNT_ID | String | "000000000000" | |
-| AWS_REGION | String | "us-east-1" | |
+| AWS_REGION | String | "us-east-1" | Default region in use for operations. E.g. if a region is not provided by the INITIALIZE_STREAMS values. |
 | LOG_LEVEL| String | "INFO" | Sets the log-level for kinesis-mock specific logs |
 | ROOT_LOG_LEVEL | String | "ERROR" | Sets the log-level for all dependencies |
 | LOAD_DATA_IF_EXISTS | Boolean | true | Loads data from the configured persisted data file if it exists |
