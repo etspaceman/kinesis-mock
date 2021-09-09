@@ -4,19 +4,26 @@ package api
 import cats.Eq
 import cats.effect.{IO, Ref}
 import io.circe
-
-import kinesis.mock.models.Streams
+import kinesis.mock.models._
 
 final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
 
 object DescribeLimitsResponse {
   def get(
       shardLimit: Int,
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[DescribeLimitsResponse] =
     streamsRef.get.map { streams =>
       DescribeLimitsResponse(
-        streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum,
+        streams.streams
+          .filter { case (streamArn, _) =>
+            streamArn.awsRegion == awsRegion && streamArn.awsAccountId == awsAccountId
+          }
+          .values
+          .map(_.shards.keys.count(_.isOpen))
+          .sum,
         shardLimit
       )
     }

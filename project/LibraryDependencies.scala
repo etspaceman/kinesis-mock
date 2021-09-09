@@ -71,6 +71,8 @@ object LibraryDependencies {
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
     val catsEffect =
       "com.github.pureconfig" %% "pureconfig-cats-effect" % pureConfigVersion
+    val circe =
+      "com.github.pureconfig" %% "pureconfig-circe" % pureConfigVersion
   }
 
   object Enumeratum {

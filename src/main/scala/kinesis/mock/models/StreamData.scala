@@ -20,7 +20,7 @@ final case class StreamData(
     keyId: Option[String],
     retentionPeriod: FiniteDuration,
     shards: SortedMap[Shard, Vector[KinesisRecord]],
-    streamArn: String,
+    streamArn: StreamArn,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus,
@@ -62,11 +62,8 @@ object StreamData {
 
   def create(
       shardCount: Int,
-      streamName: StreamName,
-      awsRegion: AwsRegion,
-      awsAccountId: AwsAccountId
+      streamArn: StreamArn
   ): StreamData = {
-
     val createTime = Instant.now()
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
@@ -77,9 +74,9 @@ object StreamData {
       None,
       minRetentionPeriod,
       shards,
-      s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
+      streamArn,
       Instant.now(),
-      streamName,
+      streamArn.streamName,
       StreamStatus.CREATING,
       Tags.empty,
       Vector.empty

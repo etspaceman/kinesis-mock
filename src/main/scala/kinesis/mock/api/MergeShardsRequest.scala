@@ -19,17 +19,20 @@ final case class MergeShardsRequest(
     streamName: StreamName
 ) {
   def mergeShards(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] =
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[Unit]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.modify(streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap { stream =>
               (
-                CommonValidations.isStreamActive(streamName, streams),
+                CommonValidations.isStreamActive(streamArn, streams),
                 CommonValidations.validateShardId(shardToMerge),
                 CommonValidations.validateShardId(adjacentShardToMerge),
                 CommonValidations
@@ -131,6 +134,7 @@ final case class MergeShardsRequest(
         }
         .sequenceWithDefault(streams)
     )
+  }
 }
 
 object MergeShardsRequest {

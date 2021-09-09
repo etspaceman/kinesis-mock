@@ -14,7 +14,9 @@ final case class ListStreamsRequest(
     limit: Option[Int]
 ) {
   def listStreams(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[ListStreamsResponse]] = streamsRef.get.map(streams =>
     (
       exclusiveStartStreamName match {
@@ -28,6 +30,8 @@ final case class ListStreamsRequest(
       }
     ).mapN((_, _) => {
       val allStreams = streams.streams.keys.toVector
+        .filter(x => x.awsRegion == awsRegion && x.awsAccountId == awsAccountId)
+        .map(_.streamName)
       val lastStreamIndex = allStreams.length - 1
       val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
       val firstIndex = exclusiveStartStreamName

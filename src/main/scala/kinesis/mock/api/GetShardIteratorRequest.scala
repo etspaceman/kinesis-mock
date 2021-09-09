@@ -20,16 +20,19 @@ final case class GetShardIteratorRequest(
     timestamp: Option[Instant]
 ) {
   def getShardIterator(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[GetShardIteratorResponse]] = streamsRef.get.map { streams =>
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
         CommonValidations
-          .findStream(streamName, streams)
+          .findStream(streamArn, streams)
           .flatMap(stream =>
             (
-              CommonValidations.isStreamActiveOrUpdating(streamName, streams),
+              CommonValidations.isStreamActiveOrUpdating(streamArn, streams),
               startingSequenceNumber match {
                 case Some(sequenceNumber) =>
                   CommonValidations.validateSequenceNumber(sequenceNumber)

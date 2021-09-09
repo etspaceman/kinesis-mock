@@ -20,17 +20,20 @@ final case class SplitShardRequest(
 ) {
   def splitShard(
       streamsRef: Ref[IO, Streams],
-      shardLimit: Int
+      shardLimit: Int,
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
     streamsRef.modify { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap { stream =>
               (
-                CommonValidations.isStreamActive(streamName, streams),
+                CommonValidations.isStreamActive(streamArn, streams),
                 CommonValidations.validateShardId(shardToSplit),
                 if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
                   InvalidArgumentException(

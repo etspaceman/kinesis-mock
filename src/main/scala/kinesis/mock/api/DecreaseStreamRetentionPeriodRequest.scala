@@ -18,18 +18,21 @@ final case class DecreaseStreamRetentionPeriodRequest(
     streamName: StreamName
 ) {
   def decreaseStreamRetention(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
         CommonValidations
-          .findStream(streamName, streams)
+          .findStream(streamArn, streams)
           .flatMap(stream =>
             (
               CommonValidations
                 .validateRetentionPeriodHours(retentionPeriodHours),
-              CommonValidations.isStreamActive(streamName, streams),
+              CommonValidations.isStreamActive(streamArn, streams),
               if (stream.retentionPeriod.toHours < retentionPeriodHours)
                 InvalidArgumentException(
                   s"Provided RetentionPeriodHours $retentionPeriodHours is greater than the currently defined retention period ${stream.retentionPeriod.toHours}"

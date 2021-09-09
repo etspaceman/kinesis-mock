@@ -22,18 +22,21 @@ final case class UpdateShardCountRequest(
 ) {
   def updateShardCount(
       streamsRef: Ref[IO, Streams],
-      shardLimit: Int
+      shardLimit: Int,
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[UpdateShardCountResponse]] =
     streamsRef.modify { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap { stream =>
               (
-                CommonValidations.isStreamActive(streamName, streams),
+                CommonValidations.isStreamActive(streamArn, streams),
                 if (targetShardCount > stream.shards.size * 2)
                   InvalidArgumentException(
                     "Cannot update shard count beyond 2x current shard count"

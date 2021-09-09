@@ -17,14 +17,17 @@ final case class ListTagsForStreamRequest(
     streamName: StreamName
 ) {
   def listTagsForStream(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[ListTagsForStreamResponse]] =
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[ListTagsForStreamResponse]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap(stream =>
               (
                 exclusiveStartTagKey match {
@@ -56,6 +59,7 @@ final case class ListTagsForStreamRequest(
             )
         )
     )
+  }
 }
 
 object ListTagsForStreamRequest {

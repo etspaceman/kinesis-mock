@@ -12,9 +12,9 @@ import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DeregisterStreamConsumer.html
 final case class DeregisterStreamConsumerRequest(
-    consumerArn: Option[String],
+    consumerArn: Option[ConsumerArn],
     consumerName: Option[ConsumerName],
-    streamArn: Option[String]
+    streamArn: Option[StreamArn]
 ) {
   private def deregister(
       streams: Streams,
@@ -56,7 +56,7 @@ final case class DeregisterStreamConsumerRequest(
           .sequenceWithDefault(streams)
       case (None, Some(cName), Some(sArn)) =>
         CommonValidations
-          .findStreamByArn(sArn, streams)
+          .findStream(sArn, streams)
           .flatMap { stream =>
             CommonValidations.findConsumer(cName, stream).flatMap {
               case consumer
@@ -93,9 +93,9 @@ object DeregisterStreamConsumerRequest {
   implicit val deregisterStreamConsumerRequestCirceDecoder
       : circe.Decoder[DeregisterStreamConsumerRequest] = { x =>
     for {
-      consumerArn <- x.downField("ConsumerARN").as[Option[String]]
+      consumerArn <- x.downField("ConsumerARN").as[Option[ConsumerArn]]
       consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
-      streamArn <- x.downField("StreamARN").as[Option[String]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
     } yield DeregisterStreamConsumerRequest(
       consumerArn,
       consumerName,

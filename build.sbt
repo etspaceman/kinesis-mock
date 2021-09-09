@@ -21,6 +21,7 @@ lazy val kinesisMock = project
       Circe.derivation,
       Circe.parser,
       Circe.jackson,
+      PureConfig.circe,
       PureConfig.core,
       PureConfig.enumeratum,
       Enumeratum.cats,

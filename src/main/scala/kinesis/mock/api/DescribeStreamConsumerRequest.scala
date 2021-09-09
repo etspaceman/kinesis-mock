@@ -11,9 +11,9 @@ import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamConsumer.html
 final case class DescribeStreamConsumerRequest(
-    consumerArn: Option[String],
+    consumerArn: Option[ConsumerArn],
     consumerName: Option[ConsumerName],
-    streamArn: Option[String]
+    streamArn: Option[StreamArn]
 ) {
   def describeStreamConsumer(
       streamsRef: Ref[IO, Streams]
@@ -25,7 +25,7 @@ final case class DescribeStreamConsumerRequest(
             case (consumer, _) => DescribeStreamConsumerResponse(consumer)
           }
         case (None, Some(cName), Some(sArn)) =>
-          CommonValidations.findStreamByArn(sArn, streams).flatMap { stream =>
+          CommonValidations.findStream(sArn, streams).flatMap { stream =>
             CommonValidations
               .findConsumer(cName, stream)
               .map(DescribeStreamConsumerResponse.apply)
@@ -47,9 +47,9 @@ object DescribeStreamConsumerRequest {
   implicit val describeStreamConsumerRequestCirceDecoder
       : circe.Decoder[DescribeStreamConsumerRequest] = { x =>
     for {
-      consumerArn <- x.downField("ConsumerARN").as[Option[String]]
+      consumerArn <- x.downField("ConsumerARN").as[Option[ConsumerArn]]
       consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
-      streamArn <- x.downField("StreamARN").as[Option[String]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
     } yield DescribeStreamConsumerRequest(
       consumerArn,
       consumerName,

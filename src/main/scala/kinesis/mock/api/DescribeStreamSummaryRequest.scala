@@ -13,14 +13,17 @@ final case class DescribeStreamSummaryRequest(
     streamName: StreamName
 ) {
   def describeStreamSummary(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[DescribeStreamSummaryResponse]] =
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[DescribeStreamSummaryResponse]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .map(stream =>
               DescribeStreamSummaryResponse(
                 StreamDescriptionSummary.fromStreamData(stream)
@@ -28,6 +31,7 @@ final case class DescribeStreamSummaryRequest(
             )
         )
     )
+  }
 }
 
 object DescribeStreamSummaryRequest {

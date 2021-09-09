@@ -561,7 +561,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .deregisterStreamConsumer(req, loggingContext, isCbor, region)
+                .deregisterStreamConsumer(req, loggingContext, isCbor)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -600,7 +600,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStreamConsumer(req, loggingContext, isCbor, region)
+                .describeStreamConsumer(req, loggingContext, isCbor)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -720,7 +720,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listStreamConsumers(req, loggingContext, isCbor, region)
+                .listStreamConsumers(req, loggingContext, isCbor)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -810,7 +810,7 @@ object KinesisMockRoutes {
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .registerStreamConsumer(req, loggingContext, isCbor, region)
+                .registerStreamConsumer(req, loggingContext, isCbor)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),

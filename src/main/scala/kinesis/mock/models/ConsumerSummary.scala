@@ -9,7 +9,7 @@ import io.circe
 import kinesis.mock.instances.circe._
 
 final case class ConsumerSummary(
-    consumerArn: String,
+    consumerArn: ConsumerArn,
     consumerCreationTimestamp: Instant,
     consumerName: ConsumerName,
     consumerStatus: ConsumerStatus
@@ -42,7 +42,7 @@ object ConsumerSummary {
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ConsumerSummary] = { x =>
     for {
-      consumerArn <- x.downField("ConsumerARN").as[String]
+      consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
         .as[Instant]

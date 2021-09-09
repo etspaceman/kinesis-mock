@@ -16,35 +16,40 @@ final case class StopStreamEncryptionRequest(
     streamName: StreamName
 ) {
   def stopStreamEncryption(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.modify(streams =>
-    CommonValidations
-      .validateStreamName(streamName)
-      .flatMap(_ =>
-        CommonValidations
-          .findStream(streamName, streams)
-          .flatMap(stream =>
-            (
-              CommonValidations.validateKeyId(keyId),
-              CommonValidations.isKmsEncryptionType(encryptionType),
-              CommonValidations.isStreamActive(streamName, streams)
-            ).mapN((_, _, _) => stream)
-          )
-      )
-      .map(stream =>
-        (
-          streams.updateStream(
-            stream.copy(
-              encryptionType = EncryptionType.NONE,
-              streamStatus = StreamStatus.UPDATING,
-              keyId = None
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[Unit]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
+    streamsRef.modify(streams =>
+      CommonValidations
+        .validateStreamName(streamName)
+        .flatMap(_ =>
+          CommonValidations
+            .findStream(streamArn, streams)
+            .flatMap(stream =>
+              (
+                CommonValidations.validateKeyId(keyId),
+                CommonValidations.isKmsEncryptionType(encryptionType),
+                CommonValidations.isStreamActive(streamArn, streams)
+              ).mapN((_, _, _) => stream)
             )
-          ),
-          ()
         )
-      )
-      .sequenceWithDefault(streams)
-  )
+        .map(stream =>
+          (
+            streams.updateStream(
+              stream.copy(
+                encryptionType = EncryptionType.NONE,
+                streamStatus = StreamStatus.UPDATING,
+                keyId = None
+              )
+            ),
+            ()
+          )
+        )
+        .sequenceWithDefault(streams)
+    )
+  }
 }
 
 object StopStreamEncryptionRequest {
