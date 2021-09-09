@@ -25,7 +25,7 @@ class KPLTests extends AwsFunctionalTests {
             new KinesisProducer(
               new KinesisProducerConfiguration()
                 .setCredentialsProvider(AwsCreds.LocalCreds)
-                .setRegion(Regions.US_EAST_1.getName)
+                .setRegion(Regions.fromName(resources.awsRegion.id()).getName)
                 .setKinesisEndpoint("localhost")
                 .setKinesisPort(4567L) // KPL only supports TLS
                 .setCloudwatchEndpoint("localhost")

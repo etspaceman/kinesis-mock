@@ -6,6 +6,7 @@ import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
+import org.scalacheck.Gen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
@@ -17,6 +18,7 @@ import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
 import kinesis.mock.instances.arbitrary._
+import kinesis.mock.models.AwsRegion
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
@@ -56,7 +58,25 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
     testConfig <- Resource.eval(FunctionalTestConfig.read)
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
+    region <- Resource.eval(
+      IO(Gen.oneOf(AwsRegion.values.filterNot(_ == AwsRegion.US_EAST_1)).one)
+        .map(x => Region.of(x.entryName))
+    )
     kinesisClient <- Resource
+      .fromAutoCloseable {
+        IO(
+          KinesisAsyncClient
+            .builder()
+            .httpClient(nettyClient)
+            .region(region)
+            .credentialsProvider(AwsCreds.LocalCreds)
+            .endpointOverride(
+              URI.create(s"$protocol://localhost:${testConfig.servicePort}")
+            )
+            .build()
+        )
+      }
+    defaultRegionKinesisClient <- Resource
       .fromAutoCloseable {
         IO(
           KinesisAsyncClient
@@ -77,11 +97,13 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
         .map(streamName =>
           KinesisFunctionalTestResources(
             kinesisClient,
+            defaultRegionKinesisClient,
             cacheConfig,
             streamName,
             testConfig,
             protocol,
-            logger
+            logger,
+            region
           )
         )
         .flatTap(setup)

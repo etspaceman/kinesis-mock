@@ -42,7 +42,7 @@ class ListShardsTests extends AwsFunctionalTests {
   fixture.test("It should list shards for initialized streams") { resources =>
     for {
       res <- initializedStreams.map { case (name, _) =>
-        resources.kinesisClient
+        resources.defaultRegionKinesisClient
           .listShards(
             ListShardsRequest
               .builder()
