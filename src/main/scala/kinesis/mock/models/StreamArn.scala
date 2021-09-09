@@ -46,7 +46,11 @@ object StreamArn {
     KeyEncoder[String].contramap(_.streamArn)
   implicit val streamArnCirceKeyDecoder: KeyDecoder[StreamArn] =
     KeyDecoder.instance(StreamArn.fromArn(_).toOption)
-  implicit val streamArnEq: Eq[StreamArn] = Eq.fromUniversalEquals
+  implicit val streamArnEq: Eq[StreamArn] = (x, y) =>
+    x.awsRegion === y.awsRegion &&
+      x.streamName === y.streamName &&
+      x.awsAccountId === y.awsAccountId &&
+      x.streamArn === y.streamArn
   implicit val streamArnOrdering: Ordering[StreamArn] =
     (x: StreamArn, y: StreamArn) =>
       Ordering[String].compare(x.streamArn, y.streamArn)

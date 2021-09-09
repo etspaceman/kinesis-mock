@@ -1,6 +1,5 @@
 package kinesis.mock.cache
 
-import com.typesafe.config.ConfigValueFactory
 import enumeratum.scalacheck._
 import org.scalacheck.{Prop, Test}
 
@@ -23,10 +22,7 @@ class CacheConfigTests
         awsRegion: AwsRegion
     ) =>
       val res = CacheConfig
-        .initializeStreamsReader(awsRegion)
-        .from(
-          ConfigValueFactory.fromAnyRef(s"$streamName:3")
-        )
+        .initializeStreamsReader(awsRegion, s"$streamName:3")
       val expected = Map(
         awsRegion -> List(
           CreateStreamRequest(3, streamName)
@@ -46,12 +42,11 @@ class CacheConfigTests
         awsRegion: AwsRegion
     ) =>
       val res = CacheConfig
-        .initializeStreamsReader(awsRegion)
-        .from(
-          ConfigValueFactory.fromAnyRef(
-            s"$streamName1:3,$streamName2:2,$streamName3:1"
-          )
+        .initializeStreamsReader(
+          awsRegion,
+          s"$streamName1:3,$streamName2:2,$streamName3:1"
         )
+
       val expected = Map(
         awsRegion -> List(
           CreateStreamRequest(3, streamName1),
@@ -70,10 +65,8 @@ class CacheConfigTests
           awsRegion: AwsRegion
       ) =>
         val res = CacheConfig
-          .initializeStreamsReader(awsRegion)
-          .from(
-            ConfigValueFactory.fromAnyRef(streamName.toString)
-          )
+          .initializeStreamsReader(awsRegion, streamName.toString)
+
         assert(res.isLeft, s"$res")
     }
   )
@@ -85,20 +78,16 @@ class CacheConfigTests
           awsRegion: AwsRegion
       ) =>
         val res = CacheConfig
-          .initializeStreamsReader(awsRegion)
-          .from(
-            ConfigValueFactory.fromAnyRef(s"$streamName:badShard")
-          )
+          .initializeStreamsReader(awsRegion, s"$streamName:badShard")
+
         assert(res.isLeft, s"$res")
     }
   )
 
   test("It should not parse INITIALIZE_STREAMS with an empty string") {
     val res = CacheConfig
-      .initializeStreamsReader(AwsRegion.US_EAST_1)
-      .from(
-        ConfigValueFactory.fromAnyRef("")
-      )
+      .initializeStreamsReader(AwsRegion.US_EAST_1, "")
+
     assert(res.isLeft, s"$res")
   }
 
@@ -111,29 +100,20 @@ class CacheConfigTests
       ) =>
         val res = List(
           CacheConfig
-            .initializeStreamsReader(awsRegion)
-            .from(
-              ConfigValueFactory.fromAnyRef(s":$streamName1")
+            .initializeStreamsReader(awsRegion, s":$streamName1"),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s"$streamName1:"),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s",$streamName1:3"),
+          CacheConfig
+            .initializeStreamsReader(
+              awsRegion,
+              s"$streamName1:3,$streamName2::2"
             ),
           CacheConfig
-            .initializeStreamsReader(awsRegion)
-            .from(
-              ConfigValueFactory.fromAnyRef(s"$streamName1:")
-            ),
-          CacheConfig
-            .initializeStreamsReader(awsRegion)
-            .from(
-              ConfigValueFactory.fromAnyRef(s",$streamName1:3")
-            ),
-          CacheConfig
-            .initializeStreamsReader(awsRegion)
-            .from(
-              ConfigValueFactory.fromAnyRef(s"$streamName1:3,$streamName2::2")
-            ),
-          CacheConfig
-            .initializeStreamsReader(awsRegion)
-            .from(
-              ConfigValueFactory.fromAnyRef(s"$streamName1:3,,$streamName2:2")
+            .initializeStreamsReader(
+              awsRegion,
+              s"$streamName1:3,,$streamName2:2"
             )
         )
         assert(res.forall(_.isLeft), s"${res.map(_.isLeft)}")

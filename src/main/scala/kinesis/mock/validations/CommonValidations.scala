@@ -58,10 +58,10 @@ object CommonValidations {
       streams: Streams
   ): Response[(Consumer, StreamData)] =
     streams.streams.values
-      .find(_.consumers.values.exists(_.consumerArn == consumerArn))
+      .find(_.consumers.values.exists(_.consumerArn === consumerArn))
       .flatMap(stream =>
         stream.consumers.values
-          .find(_.consumerArn == consumerArn)
+          .find(_.consumerArn === consumerArn)
           .map(consumer => (consumer, stream))
       )
       .toRight(

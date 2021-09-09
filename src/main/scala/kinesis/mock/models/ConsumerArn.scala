@@ -26,10 +26,15 @@ object ConsumerArn {
           s"Could not get stream arn part from consumer arn: ${e.getMessage}"
         )
         .flatMap(StreamArn.fromArn)
-      consumerName <- Try(consumerArn.split("/")(3)).toEither.bimap(
-        e => s"Could not get consumer name from ARN: ${e.getMessage}",
-        ConsumerName.apply
-      )
+      consumerName <- Try(consumerArn.split("/")(3)).toEither
+        .leftMap(e => s"Could not get consumer name from ARN: ${e.getMessage}")
+        .flatMap(x =>
+          Try(x.split(":").head).toEither
+            .bimap(
+              e => s"Could not get consumer name from ARN: ${e.getMessage}",
+              ConsumerName.apply
+            )
+        )
       consumerParts = consumerArn.split(":")
       creationTimestamp <- Try(consumerParts.last).toEither
         .leftMap(_.getMessage)
@@ -55,7 +60,11 @@ object ConsumerArn {
     KeyEncoder[String].contramap(_.consumerArn)
   implicit val consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
     KeyDecoder.instance(ConsumerArn.fromArn(_).toOption)
-  implicit val consumerArnEq: Eq[ConsumerArn] = Eq.fromUniversalEquals
+  implicit val consumerArnEq: Eq[ConsumerArn] = (x, y) =>
+    x.consumerName === y.consumerName &&
+      x.streamArn === y.streamArn &&
+      x.creationTime.getEpochSecond() === y.creationTime.getEpochSecond() &&
+      x.consumerArn === y.consumerArn
   implicit val consumerArnOrdering: Ordering[ConsumerArn] =
     (x: ConsumerArn, y: ConsumerArn) =>
       Ordering[String].compare(x.consumerArn, y.consumerArn)

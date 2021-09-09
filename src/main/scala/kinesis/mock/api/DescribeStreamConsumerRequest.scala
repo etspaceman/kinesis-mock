@@ -63,5 +63,8 @@ object DescribeStreamConsumerRequest {
       : Decoder[DescribeStreamConsumerRequest] =
     Decoder.derive
   implicit val describeStreamConsumerEq: Eq[DescribeStreamConsumerRequest] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.consumerArn === y.consumerArn &&
+        x.consumerName === y.consumerName &&
+        x.streamArn === y.streamArn
 }

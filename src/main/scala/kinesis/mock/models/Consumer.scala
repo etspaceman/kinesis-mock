@@ -4,6 +4,7 @@ package models
 import java.time.Instant
 
 import cats.Eq
+import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.instances.circe._
@@ -76,9 +77,9 @@ object Consumer {
   )
 
   implicit val consumerEq: Eq[Consumer] = (x, y) =>
-    x.consumerArn == y.consumerArn &&
-      x.consumerCreationTimestamp.getEpochSecond == y.consumerCreationTimestamp.getEpochSecond &&
-      x.consumerName == y.consumerName &&
-      x.consumerStatus == y.consumerStatus &&
-      x.streamArn == y.streamArn
+    x.consumerArn === y.consumerArn &&
+      x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
+      x.consumerName === y.consumerName &&
+      x.consumerStatus === y.consumerStatus &&
+      x.streamArn === y.streamArn
 }

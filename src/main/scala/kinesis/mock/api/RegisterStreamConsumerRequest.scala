@@ -85,5 +85,6 @@ object RegisterStreamConsumerRequest {
   implicit val registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
   implicit val registerStreamConsumerRequestEq
-      : Eq[RegisterStreamConsumerRequest] = Eq.fromUniversalEquals
+      : Eq[RegisterStreamConsumerRequest] = (x, y) =>
+    x.consumerName === y.consumerName && x.streamArn === y.streamArn
 }

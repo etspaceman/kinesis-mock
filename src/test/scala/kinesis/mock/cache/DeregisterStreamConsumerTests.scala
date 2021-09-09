@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -21,27 +22,27 @@ class DeregisterStreamConsumerTests
 
   test("It should deregister a stream consumer")(PropF.forAllF {
     (
-      consumerArn: ConsumerArn
+        consumerName: ConsumerName,
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
+        streamArn = StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
         _ <- cache
           .createStream(
-            CreateStreamRequest(1, consumerArn.streamArn.streamName),
+            CreateStreamRequest(1, streamName),
             context,
             false,
-            Some(consumerArn.streamArn.awsRegion)
+            Some(awsRegion)
           )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         _ <- cache
           .registerStreamConsumer(
-            RegisterStreamConsumerRequest(
-              consumerArn.consumerName,
-              consumerArn.streamArn
-            ),
+            RegisterStreamConsumerRequest(consumerName, streamArn),
             context,
             false
           )
@@ -53,8 +54,8 @@ class DeregisterStreamConsumerTests
           .deregisterStreamConsumer(
             DeregisterStreamConsumerRequest(
               None,
-              Some(consumerArn.consumerName),
-              Some(consumerArn.streamArn)
+              Some(consumerName),
+              Some(streamArn)
             ),
             context,
             false
@@ -62,8 +63,8 @@ class DeregisterStreamConsumerTests
           .rethrow
         describeStreamConsumerReq = DescribeStreamConsumerRequest(
           None,
-          Some(consumerArn.consumerName),
-          Some(consumerArn.streamArn)
+          Some(consumerName),
+          Some(streamArn)
         )
         checkStream1 <- cache
           .describeStreamConsumer(

@@ -109,5 +109,8 @@ object DeregisterStreamConsumerRequest {
       : Decoder[DeregisterStreamConsumerRequest] =
     Decoder.derive
   implicit val deregisterStreamConsumerEq: Eq[DeregisterStreamConsumerRequest] =
-    Eq.fromUniversalEquals
+    (x, y) =>
+      x.consumerArn === y.consumerArn &&
+        x.consumerName === y.consumerName &&
+        x.streamArn === y.streamArn
 }

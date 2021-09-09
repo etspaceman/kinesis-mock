@@ -46,17 +46,17 @@ object StreamData {
 
   implicit val streamDataEq: Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
-      x.encryptionType == y.encryptionType &&
-      x.enhancedMonitoring == y.enhancedMonitoring &&
-      x.keyId == y.keyId &&
-      x.retentionPeriod == y.retentionPeriod &&
+      x.encryptionType === y.encryptionType &&
+      x.enhancedMonitoring === y.enhancedMonitoring &&
+      x.keyId === y.keyId &&
+      x.retentionPeriod === y.retentionPeriod &&
       x.shards.toMap === y.shards.toMap &&
-      x.streamArn == y.streamArn &&
+      x.streamArn === y.streamArn &&
       x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
-      x.streamName == y.streamName &&
-      x.streamStatus == y.streamStatus &&
-      x.tags == y.tags &&
-      x.shardCountUpdates.map(_.getEpochSecond) == y.shardCountUpdates.map(
+      x.streamName === y.streamName &&
+      x.streamStatus === y.streamStatus &&
+      x.tags === y.tags &&
+      x.shardCountUpdates.map(_.getEpochSecond) === y.shardCountUpdates.map(
         _.getEpochSecond
       )
 
