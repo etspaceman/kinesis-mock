@@ -1,6 +1,7 @@
 package kinesis.mock
 
 import scala.concurrent.duration._
+import scala.util.Try
 
 import java.net.URI
 
@@ -65,7 +66,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .oneOf(
             AwsRegion.values
               .filterNot(_ == AwsRegion.US_EAST_1)
-              .filter(x => Regions.values().map(_.name()).contains(x.entryName))
+              .filter(x => Try(Regions.fromName(x.entryName)).isSuccess)
           )
           .one
       )
