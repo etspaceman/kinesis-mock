@@ -16,18 +16,21 @@ final case class StartStreamEncryptionRequest(
     streamName: StreamName
 ) {
   def startStreamEncryption(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
         CommonValidations
-          .findStream(streamName, streams)
+          .findStream(streamArn, streams)
           .flatMap(stream =>
             (
               CommonValidations.validateKeyId(keyId),
               CommonValidations.isKmsEncryptionType(encryptionType),
-              CommonValidations.isStreamActive(streamName, streams)
+              CommonValidations.isStreamActive(streamArn, streams)
             ).mapN((_, _, _) => stream)
           )
       )

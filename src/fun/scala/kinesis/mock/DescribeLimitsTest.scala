@@ -10,11 +10,22 @@ class DescribeLimitsTest extends AwsFunctionalTests {
         .describeLimits()
         .toIO
     } yield assert(
-      res.openShardCount() == (initializedStreams
-        .map(_._2)
-        .sum + genStreamShardCount) &&
+      res.openShardCount() == genStreamShardCount &&
         res.shardLimit() == resources.cacheConfig.shardLimit,
       s"$res"
     )
+  }
+
+  fixture.test("It should describe limits for the initialized streams") {
+    resources =>
+      for {
+        res <- resources.defaultRegionKinesisClient
+          .describeLimits()
+          .toIO
+      } yield assert(
+        res.openShardCount() == initializedStreams.map(_._2).sum &&
+          res.shardLimit() == resources.cacheConfig.shardLimit,
+        s"$res"
+      )
   }
 }

@@ -15,7 +15,7 @@ import kinesis.mock.validations.CommonValidations
 final case class ListStreamConsumersRequest(
     maxResults: Option[Int],
     nextToken: Option[ConsumerName],
-    streamArn: String,
+    streamArn: StreamArn,
     streamCreationTimestamp: Option[Instant]
 ) {
   def listStreamConsumers(
@@ -25,7 +25,7 @@ final case class ListStreamConsumersRequest(
       .validateStreamArn(streamArn)
       .flatMap(_ =>
         CommonValidations
-          .findStreamByArn(streamArn, streams)
+          .findStream(streamArn, streams)
           .flatMap(stream =>
             (
               maxResults match {
@@ -98,7 +98,7 @@ object ListStreamConsumersRequest {
     for {
       maxResults <- x.downField("MaxResults").as[Option[Int]]
       nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
-      streamArn <- x.downField("StreamARN").as[String]
+      streamArn <- x.downField("StreamARN").as[StreamArn]
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Option[Instant]]

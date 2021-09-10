@@ -11,8 +11,7 @@ final case class WorkerStartedListener(started: Deferred[IO, Unit])(implicit
   override def onWorkerStateChange(newState: WorkerState): Unit = {
     if (newState == WorkerState.STARTED) {
 
-      val _ = (IO.println("KCL worker is started") >> started.complete(()))
-        .unsafeRunSync()
+      val _ = started.complete(()).unsafeRunSync()
     }
   }
   override def onAllInitializationAttemptsFailed(e: Throwable): Unit =

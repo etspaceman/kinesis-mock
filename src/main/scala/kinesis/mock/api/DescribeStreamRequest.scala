@@ -16,14 +16,17 @@ final case class DescribeStreamRequest(
     streamName: StreamName
 ) {
   def describeStream(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[DescribeStreamResponse]] =
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[DescribeStreamResponse]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap(stream =>
               (
                 exclusiveStartShardId match {
@@ -44,6 +47,7 @@ final case class DescribeStreamRequest(
             )
         )
     )
+  }
 }
 
 object DescribeStreamRequest {

@@ -15,7 +15,7 @@ class ListStreamsTests extends AwsFunctionalTests {
 
   fixture.test("It should list all initialized streams") { resources =>
     for {
-      res <- resources.kinesisClient.listStreams().toIO
+      res <- resources.defaultRegionKinesisClient.listStreams().toIO
     } yield assert(
       initializedStreams.forall { case (name, _) =>
         res.streamNames().contains(name)

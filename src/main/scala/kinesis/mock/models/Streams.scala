@@ -8,44 +8,37 @@ import cats.syntax.all._
 import io.circe._
 import io.circe.derivation._
 
-final case class Streams(streams: SortedMap[StreamName, StreamData]) {
+final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
   def updateStream(stream: StreamData): Streams =
-    copy(streams = streams ++ Seq(stream.streamName -> stream))
+    copy(streams = streams ++ Seq(stream.streamArn -> stream))
   def findAndUpdateStream(
-      streamName: StreamName
+      streamArn: StreamArn
   )(f: StreamData => StreamData): Streams =
     streams
-      .get(streamName)
+      .get(streamArn)
       .map(stream =>
-        copy(streams = streams ++ Seq(stream.streamName -> f(stream)))
+        copy(streams = streams ++ Seq(stream.streamArn -> f(stream)))
       )
       .getOrElse(this)
 
   def addStream(
       shardCount: Int,
-      streamName: StreamName,
-      awsRegion: AwsRegion,
-      awsAccountId: AwsAccountId
+      streamArn: StreamArn
   ): Streams =
     copy(streams =
       streams ++ Seq(
-        streamName -> StreamData.create(
-          shardCount,
-          streamName,
-          awsRegion,
-          awsAccountId
-        )
+        streamArn -> StreamData.create(shardCount, streamArn)
       )
     )
 
   def deleteStream(
-      streamName: StreamName
+      streamArn: StreamArn
   ): Streams = streams
-    .get(streamName)
+    .get(streamArn)
     .map(stream =>
       copy(streams =
         streams ++ Seq(
-          streamName -> stream.copy(
+          streamArn -> stream.copy(
             shards = SortedMap.empty,
             streamStatus = StreamStatus.DELETING,
             tags = Tags.empty,
@@ -57,8 +50,8 @@ final case class Streams(streams: SortedMap[StreamName, StreamData]) {
     )
     .getOrElse(this)
 
-  def removeStream(streamName: StreamName): Streams =
-    copy(streams = streams.filterNot { case (x, _) => streamName == x })
+  def removeStream(streamArn: StreamArn): Streams =
+    copy(streams = streams.filterNot { case (x, _) => streamArn == x })
 }
 
 object Streams {

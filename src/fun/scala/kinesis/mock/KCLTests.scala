@@ -13,7 +13,6 @@ import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
 import retry._
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.kinesis.model._
@@ -44,7 +43,7 @@ class KCLTests extends AwsFunctionalTests {
               CloudWatchAsyncClient
                 .builder()
                 .httpClient(nettyClient)
-                .region(Region.US_EAST_1)
+                .region(resources.awsRegion)
                 .credentialsProvider(AwsCreds.LocalCreds)
                 .endpointOverride(
                   URI.create(s"https://localhost:4566")
@@ -57,7 +56,7 @@ class KCLTests extends AwsFunctionalTests {
               DynamoDbAsyncClient
                 .builder()
                 .httpClient(nettyClient)
-                .region(Region.US_EAST_1)
+                .region(resources.awsRegion)
                 .credentialsProvider(AwsCreds.LocalCreds)
                 .endpointOverride(
                   URI.create(s"http://localhost:8000")

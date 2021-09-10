@@ -15,12 +15,15 @@ final case class EnableEnhancedMonitoringRequest(
     streamName: StreamName
 ) {
   def enableEnhancedMonitoring(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[EnableEnhancedMonitoringResponse]] =
     streamsRef.modify { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       CommonValidations
         .validateStreamName(streamName)
-        .flatMap(_ => CommonValidations.findStream(streamName, streams))
+        .flatMap(_ => CommonValidations.findStream(streamArn, streams))
         .map { stream =>
           val current = stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
           val desired =

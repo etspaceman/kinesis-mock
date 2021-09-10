@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -23,14 +24,20 @@ class PutRecordsTests
 
   test("It should put records in batch")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         req <- IO(
@@ -41,12 +48,13 @@ class PutRecordsTests
             streamName
           )
         )
-        _ <- cache.putRecords(req, context, false).rethrow
+        _ <- cache.putRecords(req, context, false, Some(awsRegion)).rethrow
         shard <- cache
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName)),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shards.head)
@@ -60,12 +68,18 @@ class PutRecordsTests
               None
             ),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
           .map(_.shardIterator)
         res <- cache
-          .getRecords(GetRecordsRequest(None, shardIterator), context, false)
+          .getRecords(
+            GetRecordsRequest(None, shardIterator),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
       } yield assert(
         res.records.length == 5 && res.records.toVector.map(

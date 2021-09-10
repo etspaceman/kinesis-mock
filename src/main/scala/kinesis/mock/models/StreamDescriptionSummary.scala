@@ -15,7 +15,7 @@ final case class StreamDescriptionSummary(
     keyId: Option[String],
     openShardCount: Int,
     retentionPeriodHours: Int,
-    streamArn: String,
+    streamArn: StreamArn,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus
@@ -76,7 +76,7 @@ object StreamDescriptionSummary {
       keyId <- x.downField("KeyId").as[Option[String]]
       openShardCount <- x.downField("OpenShardCount").as[Int]
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
-      streamArn <- x.downField("StreamARN").as[String]
+      streamArn <- x.downField("StreamARN").as[StreamArn]
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Instant]

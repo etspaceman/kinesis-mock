@@ -14,38 +14,41 @@ class DeleteStreamTests
     with munit.ScalaCheckEffectSuite {
   test("It should delete a stream")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val asActive = streams.findAndUpdateStream(streamName)(x =>
+      val asActive = streams.findAndUpdateStream(streamArn)(x =>
         x.copy(streamStatus = StreamStatus.ACTIVE)
       )
 
       for {
         streamsRef <- Ref.of[IO, Streams](asActive)
-        req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef)
+        req = DeleteStreamRequest(streamArn.streamName, None)
+        res <- req.deleteStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams
-          .get(streamName)
+          .get(streamArn)
           .exists(_.streamStatus == StreamStatus.DELETING),
         s"req: $req\nres: $res\nstreams: $asActive"
       )
   })
 
   test("It should reject when the stream doesn't exist")(PropF.forAllF {
-    streamName: StreamName =>
+    streamArn: StreamArn =>
       val streams = Streams.empty
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef)
+        req = DeleteStreamRequest(streamArn.streamName, None)
+        res <- req
+          .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
@@ -54,17 +57,16 @@ class DeleteStreamTests
 
   test("It should reject when the stream is not active")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef)
+        req = DeleteStreamRequest(streamArn.streamName, None)
+        res <- req
+          .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
@@ -75,27 +77,30 @@ class DeleteStreamTests
     "It should reject when the stream has consumes and enforceConsumerDeletion is not set"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val withConsumers = streams.findAndUpdateStream(streamName)(x =>
-        x.copy(
-          consumers = SortedMap(
-            consumerName -> Consumer.create(x.streamArn, consumerName)
-          ),
-          streamStatus = StreamStatus.ACTIVE
+      val withConsumers =
+        streams.findAndUpdateStream(consumerArn.streamArn)(x =>
+          x.copy(
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(x.streamArn, consumerArn.consumerName)
+            ),
+            streamStatus = StreamStatus.ACTIVE
+          )
         )
-      )
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
-        req = DeleteStreamRequest(streamName, None)
-        res <- req.deleteStream(streamsRef)
+        req = DeleteStreamRequest(consumerArn.streamArn.streamName, None)
+        res <- req.deleteStream(
+          streamsRef,
+          consumerArn.streamArn.awsRegion,
+          consumerArn.streamArn.awsAccountId
+        )
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
@@ -106,27 +111,30 @@ class DeleteStreamTests
     "It should reject when the stream has consumes and enforceConsumerDeletion is false"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val withConsumers = streams.findAndUpdateStream(streamName)(x =>
-        x.copy(
-          consumers = SortedMap(
-            consumerName -> Consumer.create(x.streamArn, consumerName)
-          ),
-          streamStatus = StreamStatus.ACTIVE
+      val withConsumers =
+        streams.findAndUpdateStream(consumerArn.streamArn)(x =>
+          x.copy(
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(x.streamArn, consumerArn.consumerName)
+            ),
+            streamStatus = StreamStatus.ACTIVE
+          )
         )
-      )
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
-        req = DeleteStreamRequest(streamName, Some(false))
-        res <- req.deleteStream(streamsRef)
+        req = DeleteStreamRequest(consumerArn.streamArn.streamName, Some(false))
+        res <- req.deleteStream(
+          streamsRef,
+          consumerArn.streamArn.awsRegion,
+          consumerArn.streamArn.awsAccountId
+        )
       } yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"

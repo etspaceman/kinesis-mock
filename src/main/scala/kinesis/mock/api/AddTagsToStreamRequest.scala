@@ -18,13 +18,15 @@ final case class AddTagsToStreamRequest(
     tags: Tags
 ) {
   def addTagsToStream(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
     CommonValidations
       .validateStreamName(streamName)
       .flatMap(_ =>
         CommonValidations
-          .findStream(streamName, streams)
+          .findStream(StreamArn(awsRegion, streamName, awsAccountId), streams)
           .flatMap(stream =>
             (
               CommonValidations.validateTagKeys(tags.tags.keys), {

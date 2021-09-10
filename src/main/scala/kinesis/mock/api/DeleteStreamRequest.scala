@@ -17,17 +17,20 @@ final case class DeleteStreamRequest(
     enforceConsumerDeletion: Option[Boolean]
 ) {
   def deleteStream(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
     streamsRef.modify { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap(stream =>
               (
-                CommonValidations.isStreamActive(streamName, streams),
+                CommonValidations.isStreamActive(streamArn, streams),
                 if (
                   !enforceConsumerDeletion
                     .getOrElse(false) && stream.consumers.nonEmpty
@@ -41,7 +44,7 @@ final case class DeleteStreamRequest(
         )
         .map { stream =>
           val deletingStream = Map(
-            streamName -> stream.copy(
+            streamArn -> stream.copy(
               shards = SortedMap.empty,
               streamStatus = StreamStatus.DELETING,
               tags = Tags.empty,

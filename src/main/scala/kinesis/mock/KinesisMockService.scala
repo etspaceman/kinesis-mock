@@ -17,7 +17,7 @@ import retry._
 
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
-import kinesis.mock.models.{StreamName, StreamStatus}
+import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
 // $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
@@ -42,7 +42,7 @@ object KinesisMockService extends IOApp {
         cacheConfig.createStreamDuration,
         context,
         logger,
-        cacheConfig.initializeStreams.toVector.flatten
+        cacheConfig.initializeStreams.getOrElse(Map.empty)
       )
       serviceConfig <- KinesisMockServiceConfig.read
       app = Logger.httpApp(true, true, _ => false)(
@@ -98,12 +98,15 @@ object KinesisMockService extends IOApp {
       createStreamDuration: FiniteDuration,
       context: LoggingContext,
       logger: SelfAwareStructuredLogger[IO],
-      streams: Vector[CreateStreamRequest]
+      streams: Map[AwsRegion, List[CreateStreamRequest]]
   ): IO[Unit] = {
-    def isInitStreamDone(streamName: StreamName): IO[Boolean] = {
+    def isInitStreamDone(
+        streamName: StreamName,
+        region: AwsRegion
+    ): IO[Boolean] = {
       val descReq = DescribeStreamSummaryRequest(streamName)
       cache
-        .describeStreamSummary(descReq, context, isCbor = false)
+        .describeStreamSummary(descReq, context, isCbor = false, Some(region))
         .map {
           case Left(_) => false
           case Right(v) =>
@@ -111,29 +114,31 @@ object KinesisMockService extends IOApp {
         }
     }
 
-    def initStream(req: CreateStreamRequest): IO[Unit] =
+    def initStream(req: CreateStreamRequest, region: AwsRegion): IO[Unit] =
       for {
         _ <- logger.info(
           s"Initializing stream '${req.streamName}' " +
             s"(shardCount=${req.shardCount})"
         )
-        _ <- cache.createStream(req, context, isCbor = false)
+        _ <- cache.createStream(req, context, isCbor = false, Some(region))
         _ <- retryingOnFailures[Boolean](
           RetryPolicies
             .limitRetries[IO](3)
             .join(constantDelay(createStreamDuration)),
           IO.pure,
           noop[IO, Boolean]
-        )(isInitStreamDone(req.streamName))
+        )(isInitStreamDone(req.streamName, region))
       } yield {}
 
-    for {
-      semaphore <- Semaphore[IO](5)
-      _ <- streams
-        .parTraverse(stream =>
-          semaphore.permit.use(_ => initStream(stream).void)
-        )
-    } yield {}
+    streams.toList
+      .parTraverse_ { case (region, s) =>
+        for {
+          semaphore <- Semaphore[IO](5)
+          _ <- s.parTraverse { stream =>
+            semaphore.permit.use(_ => initStream(stream, region).void)
+          }
+        } yield ()
+      }
   }
 
   def persistDataLoop(

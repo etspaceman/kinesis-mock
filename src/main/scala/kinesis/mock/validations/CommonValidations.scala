@@ -29,14 +29,14 @@ object CommonValidations {
     ).mapN((_, _) => streamName)
 
   def validateStreamArn(
-      streamArn: String
-  ): Response[String] = (
-    if (!streamArn.matches("arn:aws.*:kinesis:.*:\\d{12}:stream/.+"))
+      streamArn: StreamArn
+  ): Response[StreamArn] = (
+    if (!streamArn.streamArn.matches("arn:aws.*:kinesis:.*:\\d{12}:stream/.+"))
       InvalidArgumentException(
         s"StreamARN '$streamArn' is not formatted properly"
       ).asLeft
     else Right(()),
-    if (streamArn.isEmpty || streamArn.length() > 2048)
+    if (streamArn.streamArn.isEmpty || streamArn.streamArn.length() > 2048)
       InvalidArgumentException(
         s"StreamARN must be between 1 and 2048 characters. Invalid StreamARN: $streamArn"
       ).asLeft
@@ -44,31 +44,24 @@ object CommonValidations {
   ).mapN((_, _) => streamArn)
 
   def findStream(
-      streamName: StreamName,
+      streamArn: StreamArn,
       streams: Streams
   ): Response[StreamData] =
     streams.streams
-      .get(streamName)
+      .get(streamArn)
       .toRight(
-        ResourceNotFoundException(s"Stream name $streamName not found")
+        ResourceNotFoundException(s"Stream arn $streamArn not found")
       )
 
-  def findStreamByArn(
-      streamArn: String,
-      streams: Streams
-  ): Response[StreamData] = streams.streams.values
-    .find(_.streamArn == streamArn)
-    .toRight(ResourceNotFoundException(s"StreamARN $streamArn not found"))
-
   def findStreamByConsumerArn(
-      consumerArn: String,
+      consumerArn: ConsumerArn,
       streams: Streams
   ): Response[(Consumer, StreamData)] =
     streams.streams.values
-      .find(_.consumers.values.exists(_.consumerArn == consumerArn))
+      .find(_.consumers.values.exists(_.consumerArn === consumerArn))
       .flatMap(stream =>
         stream.consumers.values
-          .find(_.consumerArn == consumerArn)
+          .find(_.consumerArn === consumerArn)
           .map(consumer => (consumer, stream))
       )
       .toRight(
@@ -76,34 +69,34 @@ object CommonValidations {
       )
 
   def isStreamActive(
-      streamName: StreamName,
+      streamArn: StreamArn,
       streams: Streams
-  ): Response[StreamName] =
+  ): Response[StreamArn] =
     if (
       streams.streams
-        .get(streamName)
+        .get(streamArn)
         .exists(_.streamStatus != StreamStatus.ACTIVE)
     )
       ResourceInUseException(
-        s"Stream $streamName is not currently ACTIVE."
+        s"Stream $streamArn is not currently ACTIVE."
       ).asLeft
-    else streamName.asRight
+    else streamArn.asRight
 
   def isStreamActiveOrUpdating(
-      streamName: StreamName,
+      streamArn: StreamArn,
       streams: Streams
-  ): Response[StreamName] =
+  ): Response[StreamArn] =
     if (
       streams.streams
-        .get(streamName)
+        .get(streamArn)
         .exists(x =>
           x.streamStatus != StreamStatus.ACTIVE && x.streamStatus != StreamStatus.UPDATING
         )
     )
       ResourceInUseException(
-        s"Stream $streamName is not currently ACTIVE or UPDATING."
+        s"Stream $streamArn is not currently ACTIVE or UPDATING."
       ).asLeft
-    else streamName.asRight
+    else streamArn.asRight
 
   def validateShardLimit(
       shardCountToAdd: Int,

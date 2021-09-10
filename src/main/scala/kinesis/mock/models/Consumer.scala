@@ -4,23 +4,24 @@ package models
 import java.time.Instant
 
 import cats.Eq
+import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.instances.circe._
 
 final case class Consumer(
-    consumerArn: String,
+    consumerArn: ConsumerArn,
     consumerCreationTimestamp: Instant,
     consumerName: ConsumerName,
     consumerStatus: ConsumerStatus,
-    streamArn: String
+    streamArn: StreamArn
 )
 
 object Consumer {
-  def create(streamArn: String, consumerName: ConsumerName): Consumer = {
+  def create(streamArn: StreamArn, consumerName: ConsumerName): Consumer = {
     val consumerCreationTimestamp = Instant.now()
     Consumer(
-      s"$streamArn/consumer/$consumerName:${consumerCreationTimestamp.getEpochSecond}",
+      ConsumerArn(streamArn, consumerName, consumerCreationTimestamp),
       consumerCreationTimestamp,
       consumerName,
       ConsumerStatus.CREATING,
@@ -49,13 +50,13 @@ object Consumer {
       DI: circe.Decoder[Instant]
   ): circe.Decoder[Consumer] = { x =>
     for {
-      consumerArn <- x.downField("ConsumerARN").as[String]
+      consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
         .as[Instant]
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
-      streamArn <- x.downField("StreamARN").as[String]
+      streamArn <- x.downField("StreamARN").as[StreamArn]
     } yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
@@ -76,9 +77,9 @@ object Consumer {
   )
 
   implicit val consumerEq: Eq[Consumer] = (x, y) =>
-    x.consumerArn == y.consumerArn &&
-      x.consumerCreationTimestamp.getEpochSecond == y.consumerCreationTimestamp.getEpochSecond &&
-      x.consumerName == y.consumerName &&
-      x.consumerStatus == y.consumerStatus &&
-      x.streamArn == y.streamArn
+    x.consumerArn === y.consumerArn &&
+      x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
+      x.consumerName === y.consumerName &&
+      x.consumerStatus === y.consumerStatus &&
+      x.streamArn === y.streamArn
 }

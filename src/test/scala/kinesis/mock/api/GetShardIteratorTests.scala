@@ -18,14 +18,12 @@ class GetShardIteratorTests
     with munit.ScalaCheckEffectSuite {
   test("It should get a shard iterator for TRIM_HORIZON")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -41,7 +39,7 @@ class GetShardIteratorTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -54,16 +52,20 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.TRIM_HORIZON,
           None,
-          streamName,
+          streamArn.streamName,
           None
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
-          parts.streamName == streamName
+          parts.streamName == streamArn.streamName
         },
         s"req: $req\nres: $parsed\n"
       )
@@ -71,14 +73,12 @@ class GetShardIteratorTests
 
   test("It should get a shard iterator for LATEST")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -94,7 +94,7 @@ class GetShardIteratorTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -107,16 +107,20 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.LATEST,
           None,
-          streamName,
+          streamArn.streamName,
           None
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records.last.sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
-          parts.streamName == streamName
+          parts.streamName == streamArn.streamName
         },
         s"req: $req\nres: $parsed\n"
       )
@@ -124,14 +128,12 @@ class GetShardIteratorTests
 
   test("It should get a shard iterator for AT_TIMESTAMP")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val startingInstant = Instant.parse("2021-01-01T00:00:00.00Z")
 
@@ -151,7 +153,7 @@ class GetShardIteratorTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -164,16 +166,20 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_TIMESTAMP,
           None,
-          streamName,
+          streamArn.streamName,
           Some(startingInstant.plusSeconds(25L))
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
-          parts.streamName == streamName
+          parts.streamName == streamArn.streamName
         },
         s"req: $req\n" +
           s"res: $res\n" +
@@ -185,14 +191,12 @@ class GetShardIteratorTests
 
   test("It should get a shard iterator for AT_SEQUENCE_NUMBER")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -208,7 +212,7 @@ class GetShardIteratorTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -221,16 +225,20 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_SEQUENCE_NUMBER,
           Some(records(25).sequenceNumber),
-          streamName,
+          streamArn.streamName,
           None
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
-          parts.streamName == streamName
+          parts.streamName == streamArn.streamName
         },
         s"req: $req\nres: $parsed\n"
       )
@@ -240,14 +248,12 @@ class GetShardIteratorTests
     "It should get a shard iterator for AT_SEQUENCE_NUMBER if the sequence number is the beginning of the shard"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       val records: Vector[KinesisRecord] =
         kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -263,7 +269,7 @@ class GetShardIteratorTests
             )
         }
 
-      val withRecords = streams.findAndUpdateStream(streamName) { s =>
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
         s.copy(
           shards = SortedMap(s.shards.head._1 -> records),
           streamStatus = StreamStatus.ACTIVE
@@ -276,16 +282,20 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_SEQUENCE_NUMBER,
           Some(shard.sequenceNumberRange.startingSequenceNumber),
-          streamName,
+          streamArn.streamName,
           None
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         parsed = res.flatMap(_.shardIterator.parse)
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
-          parts.streamName == streamName
+          parts.streamName == streamArn.streamName
         },
         s"req: $req\nres: $parsed\n"
       )
@@ -294,14 +304,12 @@ class GetShardIteratorTests
   test("It should get a shard iterator for AFTER_SEQUENCE_NUMBER")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val shard = streams.streams(streamName).shards.head._1
+        val shard = streams.streams(streamArn).shards.head._1
 
         val records: Vector[KinesisRecord] =
           kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -317,7 +325,7 @@ class GetShardIteratorTests
               )
           }
 
-        val withRecords = streams.findAndUpdateStream(streamName) { s =>
+        val withRecords = streams.findAndUpdateStream(streamArn) { s =>
           s.copy(
             shards = SortedMap(s.shards.head._1 -> records),
             streamStatus = StreamStatus.ACTIVE
@@ -330,16 +338,20 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AFTER_SEQUENCE_NUMBER,
             Some(records(25).sequenceNumber),
-            streamName,
+            streamArn.streamName,
             None
           )
-          res <- req.getShardIterator(streamsRef)
+          res <- req.getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
           parsed = res.flatMap(_.shardIterator.parse)
         } yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == records(25).sequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
-            parts.streamName == streamName
+            parts.streamName == streamArn.streamName
           },
           s"req: $req\nres: $parsed\n"
         )
@@ -351,14 +363,12 @@ class GetShardIteratorTests
   )(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val shard = streams.streams(streamName).shards.head._1
+        val shard = streams.streams(streamArn).shards.head._1
 
         val records: Vector[KinesisRecord] =
           kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
@@ -374,7 +384,7 @@ class GetShardIteratorTests
               )
           }
 
-        val withRecords = streams.findAndUpdateStream(streamName) { s =>
+        val withRecords = streams.findAndUpdateStream(streamArn) { s =>
           s.copy(
             shards = SortedMap(s.shards.head._1 -> records),
             streamStatus = StreamStatus.ACTIVE
@@ -387,16 +397,20 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AFTER_SEQUENCE_NUMBER,
             Some(shard.sequenceNumberRange.startingSequenceNumber),
-            streamName,
+            streamArn.streamName,
             None
           )
-          res <- req.getShardIterator(streamsRef)
+          res <- req.getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
           parsed = res.flatMap(_.shardIterator.parse)
         } yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
-            parts.streamName == streamName
+            parts.streamName == streamArn.streamName
           },
           s"req: $req\nres: $parsed\n"
         )
@@ -405,14 +419,12 @@ class GetShardIteratorTests
 
   test("It should reject for AT_TIMESTAMP with no timestamp")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val shard = streams.streams(streamName).shards.head._1
+      val shard = streams.streams(streamArn).shards.head._1
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -420,24 +432,26 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_TIMESTAMP,
           None,
-          streamName,
+          streamArn.streamName,
           None
         )
-        res <- req.getShardIterator(streamsRef)
+        res <- req.getShardIterator(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(res.isLeft, s"req: $req")
   })
 
   test("It should reject for AT_TIMESTAMP with a timestamp in the future")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val shard = streams.streams(streamName).shards.head._1
+        val shard = streams.streams(streamArn).shards.head._1
 
         for {
           streamsRef <- Ref.of[IO, Streams](streams)
@@ -445,10 +459,14 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_TIMESTAMP,
             None,
-            streamName,
+            streamArn.streamName,
             Some(Instant.now().plusSeconds(30))
           )
-          res <- req.getShardIterator(streamsRef)
+          res <- req.getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(res.isLeft, s"req: $req")
     }
   )
@@ -456,14 +474,12 @@ class GetShardIteratorTests
   test("It should reject for AT_SEQUENCE_NUMBER with no sequenceNumber")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val shard = streams.streams(streamName).shards.head._1
+        val shard = streams.streams(streamArn).shards.head._1
 
         for {
           streamsRef <- Ref.of[IO, Streams](streams)
@@ -471,10 +487,14 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_SEQUENCE_NUMBER,
             None,
-            streamName,
+            streamArn.streamName,
             None
           )
-          res <- req.getShardIterator(streamsRef)
+          res <- req.getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(res.isLeft, s"req: $req")
     }
   )
@@ -482,14 +502,12 @@ class GetShardIteratorTests
   test("It should reject for AFTER_SEQUENCE_NUMBER with no sequenceNumber")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val shard = streams.streams(streamName).shards.head._1
+        val shard = streams.streams(streamArn).shards.head._1
 
         for {
           streamsRef <- Ref.of[IO, Streams](streams)
@@ -497,10 +515,14 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_SEQUENCE_NUMBER,
             None,
-            streamName,
+            streamArn.streamName,
             None
           )
-          res <- req.getShardIterator(streamsRef)
+          res <- req.getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(res.isLeft, s"req: $req")
     }
   )

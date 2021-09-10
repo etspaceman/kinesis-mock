@@ -30,13 +30,13 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, streamName, awsRegion, awsAccountId)
+          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
       }
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, None)
-        res <- req.listStreams(streamsRef)
+        res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
       } yield assert(
         res.isRight && res.exists { response =>
           streamNames == response.streamNames
@@ -62,7 +62,7 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, streamName, awsRegion, awsAccountId)
+          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
       }
 
       val exclusiveStartStreamName = streamNames(3)
@@ -70,7 +70,7 @@ class ListStreamsTests
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
-        res <- req.listStreams(streamsRef)
+        res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
       } yield assert(
         res.isRight && res.exists { response =>
           streamNames.takeRight(6) == response.streamNames
@@ -96,13 +96,13 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, streamName, awsRegion, awsAccountId)
+          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
       }
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, Some(5))
-        res <- req.listStreams(streamsRef)
+        res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
       } yield assert(
         res.isRight && res.exists { response =>
           streamNames.take(5) == response.streamNames &&

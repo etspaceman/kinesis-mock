@@ -18,12 +18,10 @@ class ListStreamConsumersTests
     with munit.ScalaCheckEffectSuite {
   test("It should list consumers")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(100, streamArn)
 
       val consumers = SortedMap.from(
         Gen
@@ -37,11 +35,9 @@ class ListStreamConsumersTests
           .map(c => c.consumerName -> c)
       )
 
-      val withConsumers = streams.findAndUpdateStream(streamName)(s =>
+      val withConsumers = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(consumers = consumers)
       )
-
-      val streamArn = withConsumers.streams(streamName).streamArn
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
@@ -59,14 +55,9 @@ class ListStreamConsumersTests
 
   test("It should list consumers when consumers are empty")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
-
-      val streamArn = streams.streams(streamName).streamArn
+      val streams = Streams.empty.addStream(100, streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -81,12 +72,9 @@ class ListStreamConsumersTests
 
   test("It should paginate properly")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamName, awsRegion, awsAccountId)
+      val streams = Streams.empty.addStream(100, streamArn)
 
       val consumers = SortedMap.from(
         Gen
@@ -100,11 +88,9 @@ class ListStreamConsumersTests
           .map(c => c.consumerName -> c)
       )
 
-      val withConsumers = streams.findAndUpdateStream(streamName)(s =>
+      val withConsumers = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(consumers = consumers)
       )
-
-      val streamArn = withConsumers.streams(streamName).streamArn
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)

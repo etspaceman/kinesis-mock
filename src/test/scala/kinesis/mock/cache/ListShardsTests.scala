@@ -1,6 +1,7 @@
 package kinesis.mock.cache
 
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -18,20 +19,27 @@ class ListShardsTests
 
   test("It should list shards")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(5, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(5, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         res <- cache
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName)),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
       } yield assert(

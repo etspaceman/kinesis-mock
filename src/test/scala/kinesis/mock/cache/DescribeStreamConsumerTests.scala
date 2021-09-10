@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -22,27 +23,29 @@ class DescribeStreamConsumerTests
   test("It should describe a stream consumer")(PropF.forAllF {
     (
         streamName: StreamName,
-        consumerName: ConsumerName
+        consumerName: ConsumerName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
+        streamArn = StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
-        streamArn <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+          .createStream(
+            CreateStreamRequest(1, streamName),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
-          .map(_.streamDescriptionSummary.streamArn)
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         registerRes <- cache
           .registerStreamConsumer(
-            RegisterStreamConsumerRequest(consumerName, streamArn),
+            RegisterStreamConsumerRequest(
+              consumerName,
+              streamArn
+            ),
             context,
             false
           )

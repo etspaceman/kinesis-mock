@@ -13,14 +13,12 @@ class StartStreamEncryptionTests
     with munit.ScalaCheckEffectSuite {
   test("It should start stream encryption")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
-      val asActive = streams.findAndUpdateStream(streamName)(x =>
+      val asActive = streams.findAndUpdateStream(streamArn)(x =>
         x.copy(streamStatus = StreamStatus.ACTIVE)
       )
 
@@ -31,13 +29,17 @@ class StartStreamEncryptionTests
         req = StartStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamName
+          streamArn.streamName
         )
-        res <- req.startStreamEncryption(streamsRef)
+        res <- req.startStreamEncryption(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams
-          .get(streamName)
+          .get(streamArn)
           .exists { s =>
             s.keyId.contains(keyId) &&
             s.encryptionType == EncryptionType.KMS &&
@@ -50,14 +52,12 @@ class StartStreamEncryptionTests
   test("It should reject when the KMS encryption type is not used")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId
+        streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, streamArn)
 
-        val asActive = streams.findAndUpdateStream(streamName)(x =>
+        val asActive = streams.findAndUpdateStream(streamArn)(x =>
           x.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
@@ -68,9 +68,13 @@ class StartStreamEncryptionTests
           req = StartStreamEncryptionRequest(
             EncryptionType.NONE,
             keyId,
-            streamName
+            streamArn.streamName
           )
-          res <- req.startStreamEncryption(streamsRef)
+          res <- req.startStreamEncryption(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
         } yield assert(
           res.isLeft,
           s"req: $req\nres: $res\nstreams: $asActive"
@@ -80,12 +84,10 @@ class StartStreamEncryptionTests
 
   test("It should reject when the stream is not active")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
       val keyId = keyIdGen.one
 
@@ -94,9 +96,13 @@ class StartStreamEncryptionTests
         req = StartStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamName
+          streamArn.streamName
         )
-        res <- req.startStreamEncryption(streamsRef)
+        res <- req.startStreamEncryption(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
       } yield assert(res.isLeft, s"req: $req\nres: $res\nstreams: $streams")
   })
 }

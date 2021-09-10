@@ -4,12 +4,13 @@ package models
 import java.time.Instant
 
 import cats.Eq
+import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.instances.circe._
 
 final case class ConsumerSummary(
-    consumerArn: String,
+    consumerArn: ConsumerArn,
     consumerCreationTimestamp: Instant,
     consumerName: ConsumerName,
     consumerStatus: ConsumerStatus
@@ -42,7 +43,7 @@ object ConsumerSummary {
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ConsumerSummary] = { x =>
     for {
-      consumerArn <- x.downField("ConsumerARN").as[String]
+      consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
         .as[Instant]
@@ -69,8 +70,8 @@ object ConsumerSummary {
     )
 
   implicit val consumerSummaryEq: Eq[ConsumerSummary] = (x, y) =>
-    x.consumerArn == y.consumerArn &&
-      x.consumerCreationTimestamp.getEpochSecond == y.consumerCreationTimestamp.getEpochSecond &&
-      x.consumerName == y.consumerName &&
-      x.consumerStatus == y.consumerStatus
+    x.consumerArn === y.consumerArn &&
+      x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
+      x.consumerName === y.consumerName &&
+      x.consumerStatus === y.consumerStatus
 }

@@ -22,7 +22,9 @@ final case class ListShardsRequest(
     streamName: Option[StreamName]
 ) {
   def listShards(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[ListShardsResponse]] = streamsRef.get.map { streams =>
     (
       exclusiveStartShardId,
@@ -36,10 +38,11 @@ final case class ListShardsRequest(
           .validateNextToken(nt)
           .flatMap(ListShardsRequest.parseNextToken)
           .flatMap { case (streamName, shardId) =>
+            val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
             (
               CommonValidations.validateStreamName(streamName),
               CommonValidations.validateShardId(shardId),
-              CommonValidations.findStream(streamName, streams),
+              CommonValidations.findStream(streamArn, streams),
               maxResults match {
                 case Some(l) => CommonValidations.validateMaxResults(l)
                 case _       => Right(())
@@ -67,8 +70,9 @@ final case class ListShardsRequest(
             })
           }
       case (_, None, _, _, Some(sName)) =>
+        val streamArn = StreamArn(awsRegion, sName, awsAccountId)
         CommonValidations
-          .findStream(sName, streams)
+          .findStream(streamArn, streams)
           .flatMap(stream =>
             (
               CommonValidations.validateStreamName(sName),

@@ -13,24 +13,26 @@ class EnableEnhancedMonitoringTests
     with munit.ScalaCheckEffectSuite {
   test("It should enable enhanced monitoring")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
+        streamArn: StreamArn,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = EnableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
-          streamName
+          streamArn.streamName
         )
-        res <- req.enableEnhancedMonitoring(streamsRef)
+        res <- req.enableEnhancedMonitoring(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
         updatedMetrics = s.streams
-          .get(streamName)
+          .get(streamArn)
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
 
       } yield assert(

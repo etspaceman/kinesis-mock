@@ -1,5 +1,6 @@
 package kinesis.mock.models
 
+import cats.kernel.Eq
 import io.circe.Encoder
 import pureconfig.ConfigReader
 
@@ -12,4 +13,5 @@ object AwsAccountId {
     Encoder[String].contramap(_.accountId)
   implicit val awsAccountIdConfigReader: ConfigReader[AwsAccountId] =
     ConfigReader[String].map(AwsAccountId.apply)
+  implicit val awsAccountIdEq: Eq[AwsAccountId] = Eq.fromUniversalEquals
 }

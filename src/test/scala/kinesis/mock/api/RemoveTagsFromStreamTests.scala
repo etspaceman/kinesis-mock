@@ -17,12 +17,10 @@ class RemoveTagsFromStreamTests
     with munit.ScalaCheckEffectSuite {
   test("It should remove tags to a stream")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId
+      streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, streamArn)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
@@ -31,17 +29,21 @@ class RemoveTagsFromStreamTests
         .one
 
       val withTags =
-        streams.findAndUpdateStream(streamName)(_.copy(tags = tags))
+        streams.findAndUpdateStream(streamArn)(_.copy(tags = tags))
 
       val removedTags = tags.tags.keys.take(3).toVector
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = RemoveTagsFromStreamRequest(streamName, removedTags)
-        res <- req.removeTagsFromStream(streamsRef)
+        req = RemoveTagsFromStreamRequest(streamArn.streamName, removedTags)
+        res <- req.removeTagsFromStream(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.tags == tags.copy(tags = tags.tags.filterNot { case (k, _) =>
             removedTags.contains(k)
           })

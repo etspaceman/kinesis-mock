@@ -18,34 +18,39 @@ final case class RemoveTagsFromStreamRequest(
   // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
   // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
   def removeTagsFromStream(
-      streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.modify(streams =>
-    CommonValidations
-      .validateStreamName(streamName)
-      .flatMap(_ =>
-        CommonValidations
-          .findStream(streamName, streams)
-          .flatMap(stream =>
-            (
-              CommonValidations.validateTagKeys(tagKeys), {
-                val numberOfTags = tagKeys.length
-                if (numberOfTags > 10)
-                  InvalidArgumentException(
-                    s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
-                  ).asLeft
-                else Right(())
-              }
-            ).mapN((_, _) => stream)
-          )
-      )
-      .map(stream =>
-        (
-          streams.updateStream(stream.copy(tags = stream.tags -- tagKeys)),
-          ()
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): IO[Response[Unit]] = {
+    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
+    streamsRef.modify(streams =>
+      CommonValidations
+        .validateStreamName(streamName)
+        .flatMap(_ =>
+          CommonValidations
+            .findStream(streamArn, streams)
+            .flatMap(stream =>
+              (
+                CommonValidations.validateTagKeys(tagKeys), {
+                  val numberOfTags = tagKeys.length
+                  if (numberOfTags > 10)
+                    InvalidArgumentException(
+                      s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
+                    ).asLeft
+                  else Right(())
+                }
+              ).mapN((_, _) => stream)
+            )
         )
-      )
-      .sequenceWithDefault(streams)
-  )
+        .map(stream =>
+          (
+            streams.updateStream(stream.copy(tags = stream.tags -- tagKeys)),
+            ()
+          )
+        )
+        .sequenceWithDefault(streams)
+    )
+  }
 }
 
 object RemoveTagsFromStreamRequest {

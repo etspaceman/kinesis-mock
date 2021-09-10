@@ -15,38 +15,37 @@ class DeregisterStreamConsumerTests
     with munit.ScalaCheckEffectSuite {
   test("It should deregister stream consumers by consumerName")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
-      val streamArn = streams.streams.get(streamName).map(_.streamArn)
+        }
+      val streamArn =
+        streams.streams.get(consumerArn.streamArn).map(_.streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DeregisterStreamConsumerRequest(
           None,
-          Some(consumerName),
+          Some(consumerArn.consumerName),
           streamArn
         )
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
           stream.consumers
-            .get(consumerName)
+            .get(consumerArn.consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
         },
         s"req: $req\nres: $res"
@@ -55,38 +54,32 @@ class DeregisterStreamConsumerTests
 
   test("It should deregister stream consumers by consumerArn")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
-
-      val consumerArn = updated.streams
-        .get(streamName)
-        .flatMap(_.consumers.get(consumerName).map(_.consumerArn))
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DeregisterStreamConsumerRequest(consumerArn, None, None)
+        req = DeregisterStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
+        res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
           stream.consumers
-            .get(consumerName)
+            .get(consumerArn.consumerName)
             .exists(_.consumerStatus == ConsumerStatus.DELETING)
         },
         s"req: $req\nres: $res"
@@ -95,31 +88,25 @@ class DeregisterStreamConsumerTests
 
   test("It should reject if consumer is not active")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+            )
           )
-        )
-      }
-
-      val consumerArn = updated.streams
-        .get(streamName)
-        .flatMap(_.consumers.get(consumerName).map(_.consumerArn))
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DeregisterStreamConsumerRequest(consumerArn, None, None)
+        req = DeregisterStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
         res.isLeft,
@@ -129,22 +116,17 @@ class DeregisterStreamConsumerTests
 
   test("It should reject if consumer does not exist")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-
-      val streamArn = streams.streams.get(streamName).map(_.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DeregisterStreamConsumerRequest(
           None,
-          Some(consumerName),
-          streamArn
+          Some(consumerArn.consumerName),
+          Some(consumerArn.streamArn)
         )
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
@@ -157,27 +139,29 @@ class DeregisterStreamConsumerTests
     "It should reject if a consumerName is provided without a streamArn"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DeregisterStreamConsumerRequest(None, Some(consumerName), None)
+        req = DeregisterStreamConsumerRequest(
+          None,
+          Some(consumerArn.consumerName),
+          None
+        )
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
         res.isLeft,
@@ -189,29 +173,29 @@ class DeregisterStreamConsumerTests
     "It should reject if a streamArn is provided without a consumerName"
   )(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-      val updated = streams.findAndUpdateStream(streamName) { stream =>
-        stream.copy(
-          streamStatus = StreamStatus.ACTIVE,
-          consumers = SortedMap(
-            consumerName -> Consumer
-              .create(stream.streamArn, consumerName)
-              .copy(consumerStatus = ConsumerStatus.ACTIVE)
+        Streams.empty.addStream(1, consumerArn.streamArn)
+      val updated =
+        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+          stream.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            consumers = SortedMap(
+              consumerArn.consumerName -> Consumer
+                .create(stream.streamArn, consumerArn.consumerName)
+                .copy(consumerStatus = ConsumerStatus.ACTIVE)
+            )
           )
-        )
-      }
-
-      val streamArn = updated.streams.get(streamName).map(_.streamArn)
+        }
 
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = DeregisterStreamConsumerRequest(None, None, streamArn)
+        req = DeregisterStreamConsumerRequest(
+          None,
+          None,
+          Some(consumerArn.streamArn)
+        )
         res <- req.deregisterStreamConsumer(streamsRef)
       } yield assert(
         res.isLeft,

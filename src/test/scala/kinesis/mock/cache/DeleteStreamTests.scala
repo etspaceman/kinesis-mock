@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.syntax.all._
+import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -21,34 +22,43 @@ class DeleteStreamTests
 
   test("It should delete a stream")(PropF.forAllF {
     (
-      streamName: StreamName
+        streamName: StreamName,
+        awsRegion: AwsRegion
     ) =>
       for {
         cacheConfig <- CacheConfig.read
         cache <- Cache(cacheConfig)
         context = LoggingContext.create
         _ <- cache
-          .createStream(CreateStreamRequest(1, streamName), context, false)
+          .createStream(
+            CreateStreamRequest(1, streamName),
+            context,
+            false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
         res <- cache
           .deleteStream(
             DeleteStreamRequest(streamName, None),
             context,
-            false
+            false,
+            Some(awsRegion)
           )
           .rethrow
         describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
         checkStream1 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,
-          false
+          false,
+          Some(awsRegion)
         )
         _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
         checkStream2 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,
-          false
+          false,
+          Some(awsRegion)
         )
       } yield assert(
         checkStream1.exists(

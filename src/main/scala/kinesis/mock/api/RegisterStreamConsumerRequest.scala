@@ -13,7 +13,7 @@ import kinesis.mock.validations.CommonValidations
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
 final case class RegisterStreamConsumerRequest(
     consumerName: ConsumerName,
-    streamArn: String
+    streamArn: StreamArn
 ) {
   def registerStreamConsumer(
       streamsRef: Ref[IO, Streams]
@@ -23,7 +23,7 @@ final case class RegisterStreamConsumerRequest(
         .validateStreamArn(streamArn)
         .flatMap(_ =>
           CommonValidations
-            .findStreamByArn(streamArn, streams)
+            .findStream(streamArn, streams)
             .flatMap(stream =>
               (
                 CommonValidations.validateConsumerName(consumerName),
@@ -77,7 +77,7 @@ object RegisterStreamConsumerRequest {
       : circe.Decoder[RegisterStreamConsumerRequest] = { x =>
     for {
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
-      streamArn <- x.downField("StreamARN").as[String]
+      streamArn <- x.downField("StreamARN").as[StreamArn]
     } yield RegisterStreamConsumerRequest(consumerName, streamArn)
   }
   implicit val registerStreamConsumerRequestEncoder
@@ -85,5 +85,6 @@ object RegisterStreamConsumerRequest {
   implicit val registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
   implicit val registerStreamConsumerRequestEq
-      : Eq[RegisterStreamConsumerRequest] = Eq.fromUniversalEquals
+      : Eq[RegisterStreamConsumerRequest] = (x, y) =>
+    x.consumerName === y.consumerName && x.streamArn === y.streamArn
 }

@@ -19,18 +19,21 @@ final case class PutRecordsRequest(
     streamName: StreamName
 ) {
   def putRecords(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[PutRecordsResponse]] =
     streamsRef.modify[Response[PutRecordsResponse]] { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       val now = Instant.now()
       CommonValidations
         .validateStreamName(streamName)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap { stream =>
               (
-                CommonValidations.isStreamActiveOrUpdating(streamName, streams),
+                CommonValidations.isStreamActiveOrUpdating(streamArn, streams),
                 records.traverse(x =>
                   (
                     CommonValidations.validatePartitionKey(x.partitionKey),

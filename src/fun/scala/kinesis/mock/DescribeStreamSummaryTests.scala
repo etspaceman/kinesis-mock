@@ -23,7 +23,7 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
         .openShardCount(genStreamShardCount)
         .retentionPeriodHours(24)
         .streamARN(
-          s"arn:aws:kinesis:${resources.cacheConfig.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
+          s"arn:aws:kinesis:${resources.awsRegion.id()}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
         )
         .streamCreationTimestamp(
           res.streamDescriptionSummary().streamCreationTimestamp()
@@ -40,7 +40,7 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
   fixture.test("It should describe initialized streams") { resources =>
     for {
       res <- initializedStreams.parTraverse { case (name, _) =>
-        describeStreamSummary(resources.kinesisClient, name).map(
+        describeStreamSummary(resources.defaultRegionKinesisClient, name).map(
           _.streamDescriptionSummary()
         )
       }

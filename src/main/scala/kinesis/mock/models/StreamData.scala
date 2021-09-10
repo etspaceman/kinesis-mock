@@ -20,7 +20,7 @@ final case class StreamData(
     keyId: Option[String],
     retentionPeriod: FiniteDuration,
     shards: SortedMap[Shard, Vector[KinesisRecord]],
-    streamArn: String,
+    streamArn: StreamArn,
     streamCreationTimestamp: Instant,
     streamName: StreamName,
     streamStatus: StreamStatus,
@@ -46,27 +46,24 @@ object StreamData {
 
   implicit val streamDataEq: Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
-      x.encryptionType == y.encryptionType &&
-      x.enhancedMonitoring == y.enhancedMonitoring &&
-      x.keyId == y.keyId &&
-      x.retentionPeriod == y.retentionPeriod &&
+      x.encryptionType === y.encryptionType &&
+      x.enhancedMonitoring === y.enhancedMonitoring &&
+      x.keyId === y.keyId &&
+      x.retentionPeriod === y.retentionPeriod &&
       x.shards.toMap === y.shards.toMap &&
-      x.streamArn == y.streamArn &&
+      x.streamArn === y.streamArn &&
       x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
-      x.streamName == y.streamName &&
-      x.streamStatus == y.streamStatus &&
-      x.tags == y.tags &&
-      x.shardCountUpdates.map(_.getEpochSecond) == y.shardCountUpdates.map(
+      x.streamName === y.streamName &&
+      x.streamStatus === y.streamStatus &&
+      x.tags === y.tags &&
+      x.shardCountUpdates.map(_.getEpochSecond) === y.shardCountUpdates.map(
         _.getEpochSecond
       )
 
   def create(
       shardCount: Int,
-      streamName: StreamName,
-      awsRegion: AwsRegion,
-      awsAccountId: AwsAccountId
+      streamArn: StreamArn
   ): StreamData = {
-
     val createTime = Instant.now()
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
@@ -77,9 +74,9 @@ object StreamData {
       None,
       minRetentionPeriod,
       shards,
-      s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName",
+      streamArn,
       Instant.now(),
-      streamName,
+      streamArn.streamName,
       StreamStatus.CREATING,
       Tags.empty,
       Vector.empty

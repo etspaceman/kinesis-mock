@@ -17,14 +17,17 @@ final case class GetRecordsRequest(
     shardIterator: ShardIterator
 ) {
   def getRecords(
-      streamsRef: Ref[IO, Streams]
+      streamsRef: Ref[IO, Streams],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
   ): IO[Response[GetRecordsResponse]] = streamsRef.get.map { streams =>
     shardIterator.parse.flatMap { parts =>
+      val streamArn = StreamArn(awsRegion, parts.streamName, awsAccountId)
       CommonValidations
-        .isStreamActiveOrUpdating(parts.streamName, streams)
+        .isStreamActiveOrUpdating(streamArn, streams)
         .flatMap(_ =>
           CommonValidations
-            .findStream(parts.streamName, streams)
+            .findStream(streamArn, streams)
             .flatMap(stream =>
               CommonValidations.findShard(parts.shardId, stream).flatMap { case (shard, data) =>
                 (limit match {

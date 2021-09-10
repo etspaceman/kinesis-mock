@@ -17,24 +17,22 @@ class RegisterStreamConsumerTests
     with munit.ScalaCheckEffectSuite {
   test("It should register stream consumers")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
-
-      val streamArn = streams.streams(streamName).streamArn
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = RegisterStreamConsumerRequest(consumerName, streamArn)
+        req = RegisterStreamConsumerRequest(
+          consumerArn.consumerName,
+          consumerArn.streamArn
+        )
         res <- req.registerStreamConsumer(streamsRef)
         s <- streamsRef.get
       } yield assert(
-        res.isRight && s.streams.get(streamName).exists { stream =>
-          stream.consumers.contains(consumerName)
+        res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
+          stream.consumers.contains(consumerArn.consumerName)
         },
         s"req: $req\nres: $res"
       )
@@ -42,13 +40,10 @@ class RegisterStreamConsumerTests
 
   test("It should reject when there are 20 consumers")(PropF.forAllF {
     (
-        streamName: StreamName,
-        awsRegion: AwsRegion,
-        awsAccountId: AwsAccountId,
-        consumerName: ConsumerName
+      consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+        Streams.empty.addStream(1, consumerArn.streamArn)
 
       val consumers = SortedMap.from(
         Gen
@@ -62,15 +57,16 @@ class RegisterStreamConsumerTests
           .map(c => c.consumerName -> c)
       )
 
-      val updated = streams.findAndUpdateStream(streamName)(s =>
+      val updated = streams.findAndUpdateStream(consumerArn.streamArn)(s =>
         s.copy(consumers = consumers)
       )
 
-      val streamArn = updated.streams(streamName).streamArn
-
       for {
         streamsRef <- Ref.of[IO, Streams](updated)
-        req = RegisterStreamConsumerRequest(consumerName, streamArn)
+        req = RegisterStreamConsumerRequest(
+          consumerArn.consumerName,
+          consumerArn.streamArn
+        )
         res <- req.registerStreamConsumer(streamsRef)
       } yield assert(res.isLeft, s"req: $req\nres: $res")
   })
@@ -78,13 +74,10 @@ class RegisterStreamConsumerTests
   test("It should reject when there are 5 consumers being created")(
     PropF.forAllF {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion,
-          awsAccountId: AwsAccountId,
-          consumerName: ConsumerName
+        consumerArn: ConsumerArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamName, awsRegion, awsAccountId)
+          Streams.empty.addStream(1, consumerArn.streamArn)
 
         val consumers = SortedMap.from(
           Gen
@@ -99,15 +92,16 @@ class RegisterStreamConsumerTests
             .map(c => c.consumerName -> c)
         )
 
-        val updated = streams.findAndUpdateStream(streamName)(s =>
+        val updated = streams.findAndUpdateStream(consumerArn.streamArn)(s =>
           s.copy(consumers = consumers)
         )
 
-        val streamArn = updated.streams(streamName).streamArn
-
         for {
           streamsRef <- Ref.of[IO, Streams](updated)
-          req = RegisterStreamConsumerRequest(consumerName, streamArn)
+          req = RegisterStreamConsumerRequest(
+            consumerArn.consumerName,
+            consumerArn.streamArn
+          )
           res <- req.registerStreamConsumer(streamsRef)
         } yield assert(res.isLeft, s"req: $req\nres: $res")
     }

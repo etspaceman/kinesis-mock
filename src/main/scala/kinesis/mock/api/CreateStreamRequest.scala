@@ -18,9 +18,10 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
     streamsRef.modify { streams =>
+      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       (
         CommonValidations.validateStreamName(streamName),
-        if (streams.streams.contains(streamName))
+        if (streams.streams.contains(streamArn))
           ResourceInUseException(
             s"Stream $streamName already exists"
           ).asLeft
@@ -38,10 +39,10 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
         CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
       ).mapN { (_, _, _, _, _) =>
         val newStream =
-          StreamData.create(shardCount, streamName, awsRegion, awsAccountId)
+          StreamData.create(shardCount, streamArn)
         (
           streams
-            .copy(streams = streams.streams ++ Seq(streamName -> newStream)),
+            .copy(streams = streams.streams ++ Seq(streamArn -> newStream)),
           ()
         )
       }.sequenceWithDefault(streams)
