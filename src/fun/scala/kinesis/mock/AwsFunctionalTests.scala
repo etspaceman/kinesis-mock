@@ -65,9 +65,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .oneOf(
             AwsRegion.values
               .filterNot(_ == AwsRegion.US_EAST_1)
-              .filter(x =>
-                Regions.values().contains(Regions.valueOf(x.entryName))
-              )
+              .filter(x => Regions.values().map(_.name()).contains(x.entryName))
           )
           .one
       )
