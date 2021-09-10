@@ -73,7 +73,7 @@ class CacheConfigTests
         Gen.oneOf(AwsRegion.values.filterNot(_ == awsRegion)).one
       val testRegion2 = Gen
         .oneOf(
-          AwsRegion.values.filterNot(x => x == awsRegion && x == testRegion1)
+          AwsRegion.values.filterNot(x => x == awsRegion || x == testRegion1)
         )
         .one
       val res = CacheConfig

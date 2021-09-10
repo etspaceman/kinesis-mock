@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
+import com.amazonaws.regions.Regions
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
 import org.scalacheck.Gen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -59,7 +60,17 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
     testConfig <- Resource.eval(FunctionalTestConfig.read)
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
     region <- Resource.eval(
-      IO(Gen.oneOf(AwsRegion.values.filterNot(_ == AwsRegion.US_EAST_1)).one)
+      IO(
+        Gen
+          .oneOf(
+            AwsRegion.values
+              .filterNot(_ == AwsRegion.US_EAST_1)
+              .filter(x =>
+                Regions.values().contains(Regions.valueOf(x.entryName))
+              )
+          )
+          .one
+      )
         .map(x => Region.of(x.entryName))
     )
     kinesisClient <- Resource
