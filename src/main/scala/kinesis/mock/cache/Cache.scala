@@ -1399,11 +1399,11 @@ class Cache private (
               "path" -> config.persistConfig.osPath.toString
             )
             _ <- IO
-              .interruptible(false)(os.exists(config.persistConfig.osPath))
+              .interruptible(os.exists(config.persistConfig.osPath))
               .ifM(
                 IO.unit,
                 logger.info(ctx.context)("Creating directories") >>
-                  IO.interruptible(false)(
+                  IO.interruptible(
                     os.makeDir.all(config.persistConfig.osPath)
                   )
               )
@@ -1415,8 +1415,7 @@ class Cache private (
                 for {
                   _ <- logger
                     .debug(ctx.context)("Persisting stream data to disk")
-                  r <- IO
-                    .interruptible(false)(om.writer().writeValue(fw, jacksonJs))
+                  r <- IO.interruptible(om.writer().writeValue(fw, jacksonJs))
                   _ <- logger
                     .debug(ctx.context)("Successfully persisted stream data")
                 } yield r
@@ -1452,11 +1451,10 @@ object Cache {
   )(implicit C: Concurrent[IO]): IO[Cache] = {
     val om = new ObjectMapper()
 
-    IO.interruptible(false)(os.exists(config.persistConfig.osFile))
+    IO.interruptible(os.exists(config.persistConfig.osFile))
       .ifM(
         for {
-          jn <- IO
-            .interruptible(false)(om.readTree(config.persistConfig.osFile.toIO))
+          jn <- IO.interruptible(om.readTree(config.persistConfig.osFile.toIO))
           streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
           res <- apply(config, streams)
         } yield res,

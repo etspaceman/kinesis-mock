@@ -105,7 +105,7 @@ class KCLTests extends AwsFunctionalTests {
             supervisor
               .supervise(
                 resources.logger.debug("Starting KCL Scheduler") >>
-                  IO.interruptible(false)(scheduler.run())
+                  IO.interruptible(scheduler.run())
               )
               .flatTap(_ =>
                 resources.logger.debug("Checking if KCL is started") >>
