@@ -1398,7 +1398,8 @@ class Cache private (
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )
-            _ <- IO.interruptible(os.exists(config.persistConfig.osPath))
+            _ <- IO
+              .interruptible(os.exists(config.persistConfig.osPath))
               .ifM(
                 IO.unit,
                 logger.info(ctx.context)("Creating directories") >>
