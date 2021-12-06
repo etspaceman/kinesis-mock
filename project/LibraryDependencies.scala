@@ -29,7 +29,7 @@ object LibraryDependencies {
     val munitVersion = "0.7.29"
     val core = "org.scalameta" %% "munit" % munitVersion
     val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-3" % "1.0.6"
+    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-3" % "1.0.7"
     val scalacheckEffect =
       "org.typelevel" %% "scalacheck-effect-munit" % "1.0.3"
   }
@@ -44,7 +44,7 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.7.0"
-    val catsEffectVersion = "3.2.9"
+    val catsEffectVersion = "3.3.0"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
@@ -65,7 +65,7 @@ object LibraryDependencies {
   }
 
   object PureConfig {
-    private val pureConfigVersion = "0.17.0"
+    private val pureConfigVersion = "0.17.1"
     val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
     val enumeratum =
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
