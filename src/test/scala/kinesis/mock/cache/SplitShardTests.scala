@@ -71,7 +71,7 @@ class SplitShardTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.splitShardDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.splitShardDuration.plus(500.millis))
         checkStream2 <- cache
           .describeStreamSummary(
             describeStreamSummaryReq,

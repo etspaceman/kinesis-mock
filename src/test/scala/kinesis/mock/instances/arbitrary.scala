@@ -23,8 +23,8 @@ object arbitrary {
 
   def arnPrefixGen(service: String, part: String): Gen[String] = for {
     accountId <- awsAccountIdGen
-    region <- Arbitrary.arbitrary[AwsRegion].map(_.entryName)
-  } yield s"arn:aws:$service:$region:$accountId:$part/"
+    region <- Arbitrary.arbitrary[AwsRegion]
+  } yield s"arn:${region.awsArnPiece}:$service:${region.entryName}:$accountId:$part/"
 
   def arnGen(service: String, part: String, value: String): Gen[String] =
     arnPrefixGen(service, part).map(arnPrefix => s"$arnPrefix$value")

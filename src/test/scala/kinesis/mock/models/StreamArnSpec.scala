@@ -15,7 +15,7 @@ class StreamArnSpec extends munit.ScalaCheckSuite {
       val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
 
       val expected =
-        s"arn:aws:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName"
+        s"arn:${awsRegion.awsArnPiece}:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName"
 
       (streamArn.streamArn == expected) :| s"Calculated: ${streamArn}\nExpected: ${expected}"
   })

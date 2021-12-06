@@ -61,7 +61,7 @@ class MergeShardsTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(500.millis))
         checkStream2 <- cache
           .describeStreamSummary(
             describeStreamSummaryReq,

@@ -17,7 +17,7 @@ class ConsumerArnSpec extends munit.ScalaCheckSuite {
       val consumerArn = ConsumerArn(streamArn, consumerName, creationTime)
 
       val expected =
-        s"arn:aws:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
+        s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
 
       (consumerArn.consumerArn == expected) :| s"Calculated: ${consumerArn}\nExpected: ${expected}"
   })
@@ -29,7 +29,7 @@ class ConsumerArnSpec extends munit.ScalaCheckSuite {
     ) =>
       val creationTime = Instant.now()
       val expected =
-        s"arn:aws:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
+        s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
       val consumerArn = ConsumerArn.fromArn(expected)
 
       (consumerArn.exists(
