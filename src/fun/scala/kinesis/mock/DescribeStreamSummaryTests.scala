@@ -23,7 +23,7 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
         .openShardCount(genStreamShardCount)
         .retentionPeriodHours(24)
         .streamARN(
-          s"arn:aws:kinesis:${resources.awsRegion.id()}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
+          s"arn:${resources.awsRegion.awsArnPiece}:kinesis:${resources.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
         )
         .streamCreationTimestamp(
           res.streamDescriptionSummary().streamCreationTimestamp()

@@ -3,16 +3,18 @@ package kinesis.mock.models
 import enumeratum._
 import io.circe.{KeyDecoder, KeyEncoder}
 
-sealed abstract class AwsRegion(override val entryName: String)
-    extends EnumEntry
+sealed abstract class AwsRegion(
+    override val entryName: String,
+    val awsArnPiece: String = "aws"
+) extends EnumEntry
 
 object AwsRegion
     extends Enum[AwsRegion]
     with CirceEnum[AwsRegion]
     with CatsEnum[AwsRegion] {
   override val values: IndexedSeq[AwsRegion] = findValues
-  case object US_GOV_EAST_1 extends AwsRegion("us-gov-east-1")
-  case object US_GOV_WEST_1 extends AwsRegion("us-gov-west-1")
+  case object US_GOV_EAST_1 extends AwsRegion("us-gov-east-1", "aws-gov")
+  case object US_GOV_WEST_1 extends AwsRegion("us-gov-west-1", "aws-gov")
   case object US_EAST_1 extends AwsRegion("us-east-1")
   case object US_EAST_2 extends AwsRegion("us-east-2")
   case object US_WEST_1 extends AwsRegion("us-west-1")

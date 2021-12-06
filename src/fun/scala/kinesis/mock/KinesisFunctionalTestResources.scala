@@ -6,7 +6,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
 
 import kinesis.mock.cache.CacheConfig
-import kinesis.mock.models.StreamName
+import kinesis.mock.models.{AwsRegion, StreamName}
 
 case class KinesisFunctionalTestResources(
     kinesisClient: KinesisAsyncClient,
@@ -16,5 +16,7 @@ case class KinesisFunctionalTestResources(
     testConfig: FunctionalTestConfig,
     httpProtocol: String,
     logger: SelfAwareStructuredLogger[IO],
-    awsRegion: Region
-)
+    awsRegion: AwsRegion
+) {
+  val sdkRegion = Region.of(awsRegion.entryName)
+}

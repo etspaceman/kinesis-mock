@@ -70,7 +70,6 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           )
           .one
       )
-        .map(x => Region.of(x.entryName))
     )
     kinesisClient <- Resource
       .fromAutoCloseable {
@@ -78,7 +77,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           KinesisAsyncClient
             .builder()
             .httpClient(nettyClient)
-            .region(region)
+            .region(Region.of(region.entryName))
             .credentialsProvider(AwsCreds.LocalCreds)
             .endpointOverride(
               URI.create(s"$protocol://localhost:${testConfig.servicePort}")

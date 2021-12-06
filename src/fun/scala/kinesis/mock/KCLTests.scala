@@ -43,7 +43,7 @@ class KCLTests extends AwsFunctionalTests {
               CloudWatchAsyncClient
                 .builder()
                 .httpClient(nettyClient)
-                .region(resources.awsRegion)
+                .region(resources.sdkRegion)
                 .credentialsProvider(AwsCreds.LocalCreds)
                 .endpointOverride(
                   URI.create(s"https://localhost:4566")
@@ -56,7 +56,7 @@ class KCLTests extends AwsFunctionalTests {
               DynamoDbAsyncClient
                 .builder()
                 .httpClient(nettyClient)
-                .region(resources.awsRegion)
+                .region(resources.sdkRegion)
                 .credentialsProvider(AwsCreds.LocalCreds)
                 .endpointOverride(
                   URI.create(s"http://localhost:8000")

@@ -31,7 +31,7 @@ class DescribeStreamTests extends AwsFunctionalTests {
         .shards(res.streamDescription().shards())
         .retentionPeriodHours(24)
         .streamARN(
-          s"arn:aws:kinesis:${resources.awsRegion.id()}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
+          s"arn:${resources.awsRegion.awsArnPiece}:kinesis:${resources.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
         )
         .streamCreationTimestamp(
           res.streamDescription().streamCreationTimestamp()
