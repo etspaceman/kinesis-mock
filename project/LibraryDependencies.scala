@@ -9,7 +9,7 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "4.1.3"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "4.2.1"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "21.3.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.7.8"
@@ -39,11 +39,11 @@ object LibraryDependencies {
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.10"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.9"
   }
 
   object Cats {
-    val catsVersion = "2.6.1"
+    val catsVersion = "2.7.0"
     val catsEffectVersion = "3.2.9"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
@@ -83,14 +83,14 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.3.9"
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.3"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
   }
 
   object Refined {
-    val refinedVersion = "0.9.27"
+    val refinedVersion = "0.9.28"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
