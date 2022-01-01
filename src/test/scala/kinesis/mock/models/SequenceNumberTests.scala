@@ -42,9 +42,9 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
       (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
-            x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
-            x.shardIndex == shardIndex.value
+          x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
+          seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
+          x.shardIndex == shardIndex.value
 
         case _ => false
       }) :| s"shardCreateTime: $shardCreateTime\n" +
@@ -81,9 +81,9 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
       (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           seqIndex.value == x.seqIndex &&
-            x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            shardCreateTime.getEpochSecond == x.seqTime.getEpochSecond &&
-            x.shardIndex == shardIndex.value
+          x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
+          shardCreateTime.getEpochSecond == x.seqTime.getEpochSecond &&
+          x.shardIndex == shardIndex.value
 
         case _ => false
       }) :| s"shardCreateTime: $shardCreateTime\n" +
@@ -124,9 +124,9 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
       (parsed.isRight && parsed.exists {
         case x: SequenceNumberParts =>
           x.seqIndex == 0 &&
-            x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
-            seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
-            x.shardIndex == shardIndex.value
+          x.shardCreateTime.getEpochSecond == shardCreateTime.getEpochSecond &&
+          seqTime.getEpochSecond == x.seqTime.getEpochSecond &&
+          x.shardIndex == shardIndex.value
 
         case _ => false
       }) :| s"shardCreateTime: $shardCreateTime=\n" +
