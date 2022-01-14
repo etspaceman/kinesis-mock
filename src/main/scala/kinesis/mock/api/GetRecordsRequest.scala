@@ -54,7 +54,11 @@ final case class GetRecordsRequest(
                           GetRecordsResponse(
                             childShards,
                             0L,
-                            shardIterator,
+                            ShardIterator.create(
+                              parts.streamName,
+                              parts.shardId,
+                              parts.sequenceNumber
+                            ),
                             Queue.empty
                           )
                         )
@@ -102,7 +106,11 @@ final case class GetRecordsRequest(
                                 GetRecordsResponse(
                                   childShards,
                                   0L,
-                                  shardIterator,
+                                  ShardIterator.create(
+                                    parts.streamName,
+                                    parts.shardId,
+                                    parts.sequenceNumber
+                                  ),
                                   Queue.empty
                                 )
                               )
