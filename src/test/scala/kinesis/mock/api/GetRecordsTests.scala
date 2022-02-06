@@ -191,10 +191,10 @@ class GetRecordsTests
           s"res2Head: ${res.map { case (_, r2) => r2.records.head }.fold(_.toString, _.toString)}\n" +
           s"rec51: ${records(50)}\n" +
           s"res2HeadInex: ${res
-            .map { case (_, r2) =>
-              records.indexWhere(_.partitionKey == r2.records.head.partitionKey)
-            }
-            .fold(_.toString, _.toString)}"
+              .map { case (_, r2) =>
+                records.indexWhere(_.partitionKey == r2.records.head.partitionKey)
+              }
+              .fold(_.toString, _.toString)}"
       )
   })
 

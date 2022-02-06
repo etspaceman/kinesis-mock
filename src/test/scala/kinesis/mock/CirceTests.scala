@@ -21,7 +21,7 @@ trait CirceTests extends munit.ScalaCheckSuite {
         val decoded = parse(encoded).flatMap(_.as[A])
 
         decoded.exists(_ === a) :| s"\n\tInput:\n\t$a\n\tDecoded:\n\t${decoded
-          .fold(_.toString, _.toString)}"
+            .fold(_.toString, _.toString)}"
       }
 
     }
