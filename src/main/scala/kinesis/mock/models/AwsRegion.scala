@@ -21,6 +21,7 @@ object AwsRegion
   case object US_WEST_2 extends AwsRegion("us-west-2")
   case object EU_WEST_1 extends AwsRegion("eu-west-1")
   case object EU_WEST_2 extends AwsRegion("eu-west-2")
+  case object EU_WEST_3 extends AwsRegion("eu-west-3")
   case object EU_CENTRAL_1 extends AwsRegion("eu-central-1")
   case object EU_NORTH_1 extends AwsRegion("eu-north-1")
   case object EU_SOUTH_1 extends AwsRegion("eu-south-1")
