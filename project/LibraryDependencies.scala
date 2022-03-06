@@ -4,7 +4,7 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.6.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.10"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.2.11"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
