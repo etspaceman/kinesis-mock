@@ -14,7 +14,7 @@ RUN mkdir ${RESULT_LIB} && \
 ENV PATH="$PATH:${RESULT_LIB}/bin"
 ENV CC="musl-gcc"
 
-RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.11.tar.gz && \
+RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.12.tar.gz && \
    mkdir zlib && tar -xvzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
    ./configure --static --prefix=${RESULT_LIB} && \
     make && make install && \
