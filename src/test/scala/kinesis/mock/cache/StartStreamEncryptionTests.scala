@@ -38,7 +38,7 @@ class StartStreamEncryptionTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         keyId <- IO(keyIdGen.one)
         _ <- cache
           .startStreamEncryption(
@@ -57,7 +57,7 @@ class StartStreamEncryptionTests
           .describeStreamSummary(describeReq, context, false, Some(awsRegion))
           .rethrow
         _ <- IO.sleep(
-          cacheConfig.startStreamEncryptionDuration.plus(200.millis)
+          cacheConfig.startStreamEncryptionDuration.plus(400.millis)
         )
         checkStream2 <- cache
           .describeStreamSummary(describeReq, context, false, Some(awsRegion))

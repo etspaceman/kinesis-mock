@@ -44,7 +44,7 @@ class CreateStreamTests
           false,
           Some(awsRegion)
         )
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         checkStream2 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,

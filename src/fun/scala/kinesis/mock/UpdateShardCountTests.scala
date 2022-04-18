@@ -23,7 +23,7 @@ class UpdateShardCountTests extends AwsFunctionalTests {
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.updateShardCountDuration.plus(200.millis)
+        resources.cacheConfig.updateShardCountDuration.plus(400.millis)
       )
       openShards <- resources.kinesisClient
         .listShards(

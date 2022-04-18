@@ -38,7 +38,7 @@ class StopStreamEncryptionTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         keyId <- IO(keyIdGen.one)
         _ <- cache
           .startStreamEncryption(
@@ -53,7 +53,7 @@ class StopStreamEncryptionTests
           )
           .rethrow
         _ <- IO.sleep(
-          cacheConfig.startStreamEncryptionDuration.plus(200.millis)
+          cacheConfig.startStreamEncryptionDuration.plus(400.millis)
         )
         _ <- cache
           .stopStreamEncryption(
@@ -72,7 +72,7 @@ class StopStreamEncryptionTests
           .describeStreamSummary(describeReq, context, false, Some(awsRegion))
           .rethrow
         _ <- IO.sleep(
-          cacheConfig.stopStreamEncryptionDuration.plus(200.millis)
+          cacheConfig.stopStreamEncryptionDuration.plus(400.millis)
         )
         checkStream2 <- cache
           .describeStreamSummary(describeReq, context, false, Some(awsRegion))

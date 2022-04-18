@@ -25,7 +25,7 @@ class StartStreamEncryptionTests extends AwsFunctionalTests {
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.startStreamEncryptionDuration.plus(200.millis)
+        resources.cacheConfig.startStreamEncryptionDuration.plus(400.millis)
       )
       res <- describeStreamSummary(resources)
     } yield assert(

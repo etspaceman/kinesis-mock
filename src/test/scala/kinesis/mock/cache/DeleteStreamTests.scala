@@ -37,7 +37,7 @@ class DeleteStreamTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         res <- cache
           .deleteStream(
             DeleteStreamRequest(streamName, None),
@@ -53,7 +53,7 @@ class DeleteStreamTests
           false,
           Some(awsRegion)
         )
-        _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(400.millis))
         checkStream2 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,

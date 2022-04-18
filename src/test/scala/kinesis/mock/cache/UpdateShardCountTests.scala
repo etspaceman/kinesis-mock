@@ -37,7 +37,7 @@ class UpdateShardCountTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         res <- cache
           .updateShardCount(
             UpdateShardCountRequest(
@@ -59,7 +59,7 @@ class UpdateShardCountTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(400.millis))
         checkStream2 <- cache
           .describeStreamSummary(
             describeStreamSummaryReq,

@@ -34,7 +34,7 @@ class SplitShardTests extends AwsFunctionalTests {
             .build()
         )
         .toIO
-      _ <- IO.sleep(resources.cacheConfig.splitShardDuration.plus(200.millis))
+      _ <- IO.sleep(resources.cacheConfig.splitShardDuration.plus(400.millis))
       openShards <- resources.kinesisClient
         .listShards(
           ListShardsRequest

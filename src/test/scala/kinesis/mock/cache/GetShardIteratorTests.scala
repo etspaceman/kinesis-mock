@@ -37,7 +37,7 @@ class GetShardIteratorTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         shard <- cache
           .listShards(
             ListShardsRequest(None, None, None, None, None, Some(streamName)),
