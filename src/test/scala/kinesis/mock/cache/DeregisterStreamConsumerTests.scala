@@ -39,7 +39,7 @@ class DeregisterStreamConsumerTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         _ <- cache
           .registerStreamConsumer(
             RegisterStreamConsumerRequest(consumerName, streamArn),
@@ -48,7 +48,7 @@ class DeregisterStreamConsumerTests
           )
           .rethrow
         _ <- IO.sleep(
-          cacheConfig.registerStreamConsumerDuration.plus(200.millis)
+          cacheConfig.registerStreamConsumerDuration.plus(400.millis)
         )
         _ <- cache
           .deregisterStreamConsumer(
@@ -74,7 +74,7 @@ class DeregisterStreamConsumerTests
           )
           .rethrow
         _ <- IO.sleep(
-          cacheConfig.deregisterStreamConsumerDuration.plus(200.millis)
+          cacheConfig.deregisterStreamConsumerDuration.plus(400.millis)
         )
         checkStream2 <- cache.describeStreamConsumer(
           describeStreamConsumerReq,

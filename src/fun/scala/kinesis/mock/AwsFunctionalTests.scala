@@ -132,7 +132,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
       .toIO
     _ <- resources.logger.debug(s"Created stream ${resources.streamName}")
     _ <- IO.sleep(
-      resources.cacheConfig.createStreamDuration.plus(200.millis)
+      resources.cacheConfig.createStreamDuration.plus(400.millis)
     )
     _ <- resources.logger.debug(
       s"Describing stream summary for ${resources.streamName}"
@@ -163,7 +163,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
       .toIO
     _ <- resources.logger.debug(s"Deleted stream ${resources.streamName}")
     _ <- IO.sleep(
-      resources.cacheConfig.deleteStreamDuration.plus(200.millis)
+      resources.cacheConfig.deleteStreamDuration.plus(400.millis)
     )
     _ <- resources.logger.debug(
       s"Describing stream summary for ${resources.streamName}"

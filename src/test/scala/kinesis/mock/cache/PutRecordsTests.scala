@@ -39,7 +39,7 @@ class PutRecordsTests
             Some(awsRegion)
           )
           .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(200.millis))
+        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         req <- IO(
           PutRecordsRequest(
             putRecordsRequestEntryArb.arbitrary

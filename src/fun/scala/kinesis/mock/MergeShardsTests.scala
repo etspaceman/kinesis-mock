@@ -23,7 +23,7 @@ class MergeShardsTests extends AwsFunctionalTests {
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.updateShardCountDuration.plus(200.millis)
+        resources.cacheConfig.updateShardCountDuration.plus(400.millis)
       )
       openShards <- resources.kinesisClient
         .listShards(
@@ -49,7 +49,7 @@ class MergeShardsTests extends AwsFunctionalTests {
             .build()
         )
         .toIO
-      _ <- IO.sleep(resources.cacheConfig.mergeShardsDuration.plus(200.millis))
+      _ <- IO.sleep(resources.cacheConfig.mergeShardsDuration.plus(400.millis))
       openShards2 <- resources.kinesisClient
         .listShards(
           ListShardsRequest

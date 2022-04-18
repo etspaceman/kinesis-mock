@@ -141,7 +141,7 @@ object CommonValidations {
         else Right(())
       }, {
         val invalidKeyCharacters =
-          keys.filterNot(x => x.matches("^([\\p{L}\\p{Z}\\p{N}_./=+\\-%@]*)$"))
+          keys.filterNot(x => x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$"))
         if (invalidKeyCharacters.nonEmpty)
           InvalidArgumentException(
             s"Keys contain invalid characters. Invalid keys: ${invalidKeyCharacters.mkString(", ")}"

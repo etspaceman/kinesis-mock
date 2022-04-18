@@ -26,7 +26,7 @@ class DeregisterStreamConsumerTests extends AwsFunctionalTests {
         )
         .toIO
       _ <- IO.sleep(
-        resources.cacheConfig.registerStreamConsumerDuration.plus(200.millis)
+        resources.cacheConfig.registerStreamConsumerDuration.plus(400.millis)
       )
       _ <- resources.kinesisClient
         .deregisterStreamConsumer(
@@ -39,7 +39,7 @@ class DeregisterStreamConsumerTests extends AwsFunctionalTests {
         .toIO
       check1 <- describeStreamConsumer(resources, consumerName, streamArn)
       _ <- IO.sleep(
-        resources.cacheConfig.deregisterStreamConsumerDuration.plus(200.millis)
+        resources.cacheConfig.deregisterStreamConsumerDuration.plus(400.millis)
       )
       check2 <- describeStreamConsumer(
         resources,
