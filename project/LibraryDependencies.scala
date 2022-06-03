@@ -10,7 +10,7 @@ object LibraryDependencies {
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "4.6.1"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.0.0.2"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.1.0.1"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
 
@@ -44,20 +44,20 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.7.0"
-    val catsEffectVersion = "3.3.11"
+    val catsEffectVersion = "3.3.12"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "0.23.11"
+    val http4sVersion = "0.23.12"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   }
 
   object Circe {
-    val circeVersion = "0.14.1"
+    val circeVersion = "0.14.2"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
     val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
@@ -90,7 +90,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.28"
+    val refinedVersion = "0.9.29"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
