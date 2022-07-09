@@ -9,7 +9,7 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "4.6.1"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.0.0"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.1.0.1"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
@@ -21,7 +21,7 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "2.3.1"
+    val log4CatsVersion = "2.3.2"
     val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
@@ -43,14 +43,14 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.7.0"
+    val catsVersion = "2.8.0"
     val catsEffectVersion = "3.3.12"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
 
   object Http4s {
-    val http4sVersion = "0.23.12"
+    val http4sVersion = "0.23.13"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
@@ -90,7 +90,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.9.29"
+    val refinedVersion = "0.10.1"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
