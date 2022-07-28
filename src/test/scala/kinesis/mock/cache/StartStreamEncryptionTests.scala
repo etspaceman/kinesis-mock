@@ -32,7 +32,7 @@ class StartStreamEncryptionTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(1, streamName),
+            CreateStreamRequest(streamName, 1),
             context,
             false,
             Some(awsRegion)

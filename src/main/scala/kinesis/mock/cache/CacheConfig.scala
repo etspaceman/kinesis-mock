@@ -112,7 +112,7 @@ object CacheConfig {
       .traverse {
         case name :: count :: Nil if name.nonEmpty && count.nonEmpty =>
           count.toIntOption.map(x =>
-            defaultRegion -> CreateStreamRequest(x, StreamName(name))
+            defaultRegion -> CreateStreamRequest(StreamName(name), x)
           )
         case name :: count :: region :: Nil
             if name.nonEmpty && count.nonEmpty =>
@@ -120,8 +120,7 @@ object CacheConfig {
             AwsRegion
               .withNameOption(region)
               .getOrElse(defaultRegion) -> CreateStreamRequest(
-              x,
-              StreamName(name)
+              StreamName(name), x
             )
           )
         case _ => none

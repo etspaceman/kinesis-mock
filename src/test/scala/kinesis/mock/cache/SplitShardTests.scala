@@ -31,7 +31,7 @@ class SplitShardTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(5, streamName),
+            CreateStreamRequest(streamName, 5),
             context,
             false,
             Some(awsRegion)

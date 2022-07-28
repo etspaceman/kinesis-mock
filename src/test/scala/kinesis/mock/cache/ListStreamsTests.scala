@@ -33,7 +33,7 @@ class ListStreamsTests extends munit.CatsEffectSuite {
       _ <- streamNames.traverse(streamName =>
         cache
           .createStream(
-            CreateStreamRequest(1, streamName),
+            CreateStreamRequest(streamName, 1),
             context,
             false,
             Some(awsRegion)
