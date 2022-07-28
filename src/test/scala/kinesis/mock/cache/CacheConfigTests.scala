@@ -97,11 +97,10 @@ class CacheConfigTests
   })
 
   test("It should parse INITIALIZE_STREAMS string without shardCount")(
-
     Prop.forAll {
       (
-        streamName: StreamName,
-        awsRegion: AwsRegion
+          streamName: StreamName,
+          awsRegion: AwsRegion
       ) =>
         val res = List(
           CacheConfig
@@ -109,9 +108,9 @@ class CacheConfigTests
           CacheConfig
             .initializeStreamsReader(awsRegion, s"$streamName:"),
           CacheConfig
-          .initializeStreamsReader(awsRegion, s"$streamName::"),
+            .initializeStreamsReader(awsRegion, s"$streamName::"),
           CacheConfig
-          .initializeStreamsReader(awsRegion, s"$streamName::$awsRegion")
+            .initializeStreamsReader(awsRegion, s"$streamName::$awsRegion")
         )
 
         assert(res.forall(_.isRight), s"${res.map(_.isRight)}")

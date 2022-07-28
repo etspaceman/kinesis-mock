@@ -113,13 +113,21 @@ object CacheConfig {
         case name :: Nil if name.nonEmpty =>
           Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
         case name :: count :: Nil if name.nonEmpty =>
-          if (count.isEmpty) Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
-          else count.toIntOption.map(x => defaultRegion -> CreateStreamRequest(Some(x), StreamName(name)))
-        case name :: count :: region :: Nil
-            if name.nonEmpty =>
-          val regionOrDefault = AwsRegion.withNameOption(region).getOrElse(defaultRegion)
-          if (count.isEmpty) Some(regionOrDefault -> CreateStreamRequest(None, StreamName(name)))
-          else count.toIntOption.map(x => regionOrDefault -> CreateStreamRequest(Some(x), StreamName(name)))
+          if (count.isEmpty)
+            Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
+          else
+            count.toIntOption.map(x =>
+              defaultRegion -> CreateStreamRequest(Some(x), StreamName(name))
+            )
+        case name :: count :: region :: Nil if name.nonEmpty =>
+          val regionOrDefault =
+            AwsRegion.withNameOption(region).getOrElse(defaultRegion)
+          if (count.isEmpty)
+            Some(regionOrDefault -> CreateStreamRequest(None, StreamName(name)))
+          else
+            count.toIntOption.map(x =>
+              regionOrDefault -> CreateStreamRequest(Some(x), StreamName(name))
+            )
         case _ => none
       }
       .map(_.groupMap(_._1)(_._2))

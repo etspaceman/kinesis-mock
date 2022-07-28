@@ -10,7 +10,10 @@ import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
-final case class CreateStreamRequest(shardCount: Option[Int], streamName: StreamName) {
+final case class CreateStreamRequest(
+    shardCount: Option[Int],
+    streamName: StreamName
+) {
   def createStream(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -37,7 +40,11 @@ final case class CreateStreamRequest(shardCount: Option[Int], streamName: Stream
             "Limit for streams being created concurrently exceeded"
           ).asLeft
         else Right(()),
-        CommonValidations.validateShardLimit(shardCountOrDefault, streams, shardLimit)
+        CommonValidations.validateShardLimit(
+          shardCountOrDefault,
+          streams,
+          shardLimit
+        )
       ).mapN { (_, _, _, _, _) =>
         val newStream =
           StreamData.create(shardCountOrDefault, streamArn)
