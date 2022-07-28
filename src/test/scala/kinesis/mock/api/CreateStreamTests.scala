@@ -23,14 +23,14 @@ class CreateStreamTests
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.createStream(
           streamsRef,
-          req.shardCount,
+          req.shardCount.getOrElse(4),
           awsRegion,
           awsAccountId
         )
         s <- streamsRef.get
       } yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
-          stream.shards.size == req.shardCount
+          stream.shards.size == req.shardCount.getOrElse(4)
         },
         s"req: $req\nres: $res"
       )
@@ -49,7 +49,7 @@ class CreateStreamTests
           streamsRef <- Ref.of[IO, Streams](streams)
           res <- req.createStream(
             streamsRef,
-            req.shardCount - 1,
+            0,
             awsRegion,
             awsAccountId
           )
