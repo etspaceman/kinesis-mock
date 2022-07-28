@@ -31,7 +31,7 @@ class DecreaseStreamRetentionPeriodTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(streamName, 1),
+            CreateStreamRequest(1, streamName),
             context,
             false,
             Some(awsRegion)

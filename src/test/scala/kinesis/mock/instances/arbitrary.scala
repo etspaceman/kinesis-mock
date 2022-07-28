@@ -250,17 +250,13 @@ object arbitrary {
     } yield AddTagsToStreamRequest(streamName, tags)
   )
 
-  implicit val createStreamRequestArb: Arbitrary[CreateStreamRequest] = {
+  implicit val createStreamRequestArb: Arbitrary[CreateStreamRequest] =
     Arbitrary(
       for {
+        shardCount <- Gen.choose(1, 1000)
         streamName <- streamNameGen
-        shardCount: Option[Int] <- Gen.option(Gen.choose(1, 1000))
-      } yield shardCount match {
-          case Some(shardCount) => CreateStreamRequest(streamName, shardCount)
-          case None => CreateStreamRequest(streamName)
-        }
+      } yield CreateStreamRequest(shardCount, streamName)
     )
-  }
 
   val retentionPeriodHoursGen: Gen[Int] = Gen.choose(
     StreamData.minRetentionPeriod.toHours.toInt,

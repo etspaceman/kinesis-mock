@@ -10,7 +10,7 @@ import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
-final case class CreateStreamRequest(streamName: StreamName, shardCount: Int = 4) {
+final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
   def createStream(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -58,9 +58,9 @@ object CreateStreamRequest {
   implicit val createStreamRequestCirceDecoder
       : circe.Decoder[CreateStreamRequest] = { x =>
     for {
+      shardCount <- x.downField("ShardCount").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
-      shardCount <- x.downField("ShardCount").as[Option[Int]]
-    } yield CreateStreamRequest(streamName, shardCount.getOrElse(4))
+    } yield CreateStreamRequest(shardCount, streamName)
   }
   implicit val createStreamRequestEncoder: Encoder[CreateStreamRequest] =
     Encoder.derive

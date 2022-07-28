@@ -31,7 +31,7 @@ class MergeShardsTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(streamName, 5),
+            CreateStreamRequest(5, streamName),
             context,
             false,
             Some(awsRegion)
