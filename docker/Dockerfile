@@ -1,10 +1,10 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-21.0.0.2 as build
+FROM ghcr.io/graalvm/graalvm-ce:java11-22.2.0 as build
 RUN gu install native-image
 
 ARG RESULT_LIB="/staticlibs"
 
 RUN mkdir ${RESULT_LIB} && \
-    curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz && \
+    curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.3.tar.gz && \
     mkdir musl && tar -xvzf musl.tar.gz -C musl --strip-components 1 && cd musl && \
     ./configure --disable-shared --prefix=${RESULT_LIB} && \
     make && make install && \
