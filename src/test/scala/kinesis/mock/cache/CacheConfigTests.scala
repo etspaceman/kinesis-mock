@@ -96,16 +96,25 @@ class CacheConfigTests
       assert(res == Right(expected), s"$res")
   })
 
-  test("It should not parse INITIALIZE_STREAMS string without shardCount")(
+  test("It should parse INITIALIZE_STREAMS string without shardCount")(
+
     Prop.forAll {
       (
-          streamName: StreamName,
-          awsRegion: AwsRegion
+        streamName: StreamName,
+        awsRegion: AwsRegion
       ) =>
-        val res = CacheConfig
-          .initializeStreamsReader(awsRegion, streamName.toString)
+        val res = List(
+          CacheConfig
+            .initializeStreamsReader(awsRegion, streamName.toString),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s"$streamName:"),
+          CacheConfig
+          .initializeStreamsReader(awsRegion, s"$streamName::"),
+          CacheConfig
+          .initializeStreamsReader(awsRegion, s"$streamName::$awsRegion")
+        )
 
-        assert(res.isLeft, s"$res")
+        assert(res.forall(_.isRight), s"${res.map(_.isRight)}")
     }
   )
 

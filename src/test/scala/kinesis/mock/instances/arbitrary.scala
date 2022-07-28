@@ -253,7 +253,7 @@ object arbitrary {
   implicit val createStreamRequestArb: Arbitrary[CreateStreamRequest] = {
     Arbitrary(
       for {
-        shardCount: Option[Int] <- Gen.option(Gen.choose(1, 1000))
+        shardCount <- Gen.option(Gen.choose(1, 1000))
         streamName <- streamNameGen
       } yield CreateStreamRequest(shardCount, streamName)
     )

@@ -110,6 +110,8 @@ object CacheConfig {
       .toList
       .map(_.split(':').toList)
       .traverse {
+        case name :: Nil if name.nonEmpty =>
+          Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
         case name :: count :: Nil if name.nonEmpty =>
           if (count.isEmpty) Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
           else count.toIntOption.map(x => defaultRegion -> CreateStreamRequest(Some(x), StreamName(name)))
