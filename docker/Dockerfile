@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-22.2.0 as build
+FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.2.0 as build
 RUN gu install native-image
 
 ARG RESULT_LIB="/staticlibs"
