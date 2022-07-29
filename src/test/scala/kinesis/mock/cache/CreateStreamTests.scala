@@ -31,7 +31,7 @@ class CreateStreamTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(1, streamName),
+            CreateStreamRequest(Some(1), streamName),
             context,
             false,
             Some(awsRegion)

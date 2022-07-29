@@ -10,7 +10,10 @@ import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
 
-final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
+final case class CreateStreamRequest(
+    shardCount: Option[Int],
+    streamName: StreamName
+) {
   def createStream(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -18,6 +21,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
     streamsRef.modify { streams =>
+      val shardCountOrDefault = shardCount.getOrElse(4)
       val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       (
         CommonValidations.validateStreamName(streamName),
@@ -26,7 +30,7 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
             s"Stream $streamName already exists"
           ).asLeft
         else Right(()),
-        CommonValidations.validateShardCount(shardCount),
+        CommonValidations.validateShardCount(shardCountOrDefault),
         if (
           streams.streams.count { case (_, stream) =>
             stream.streamStatus == StreamStatus.CREATING
@@ -36,10 +40,14 @@ final case class CreateStreamRequest(shardCount: Int, streamName: StreamName) {
             "Limit for streams being created concurrently exceeded"
           ).asLeft
         else Right(()),
-        CommonValidations.validateShardLimit(shardCount, streams, shardLimit)
+        CommonValidations.validateShardLimit(
+          shardCountOrDefault,
+          streams,
+          shardLimit
+        )
       ).mapN { (_, _, _, _, _) =>
         val newStream =
-          StreamData.create(shardCount, streamArn)
+          StreamData.create(shardCountOrDefault, streamArn)
         (
           streams
             .copy(streams = streams.streams ++ Seq(streamArn -> newStream)),
@@ -58,7 +66,7 @@ object CreateStreamRequest {
   implicit val createStreamRequestCirceDecoder
       : circe.Decoder[CreateStreamRequest] = { x =>
     for {
-      shardCount <- x.downField("ShardCount").as[Int]
+      shardCount <- x.downField("ShardCount").as[Option[Int]]
       streamName <- x.downField("StreamName").as[StreamName]
     } yield CreateStreamRequest(shardCount, streamName)
   }

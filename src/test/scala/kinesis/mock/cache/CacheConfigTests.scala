@@ -26,7 +26,7 @@ class CacheConfigTests
         .initializeStreamsReader(awsRegion, s"$streamName:3")
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(3, streamName)
+          CreateStreamRequest(Some(3), streamName)
         )
       )
 
@@ -50,9 +50,9 @@ class CacheConfigTests
 
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(3, streamName1),
-          CreateStreamRequest(2, streamName2),
-          CreateStreamRequest(1, streamName3)
+          CreateStreamRequest(Some(3), streamName1),
+          CreateStreamRequest(Some(2), streamName2),
+          CreateStreamRequest(Some(1), streamName3)
         )
       )
 
@@ -84,28 +84,36 @@ class CacheConfigTests
 
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(2, streamName2)
+          CreateStreamRequest(Some(2), streamName2)
         ),
         testRegion1 -> List(
-          CreateStreamRequest(3, streamName1),
-          CreateStreamRequest(1, streamName3)
+          CreateStreamRequest(Some(3), streamName1),
+          CreateStreamRequest(Some(1), streamName3)
         ),
-        testRegion2 -> List(CreateStreamRequest(1, streamName4))
+        testRegion2 -> List(CreateStreamRequest(Some(1), streamName4))
       )
 
       assert(res == Right(expected), s"$res")
   })
 
-  test("It should not parse INITIALIZE_STREAMS string without shardCount")(
+  test("It should parse INITIALIZE_STREAMS string without shardCount")(
     Prop.forAll {
       (
           streamName: StreamName,
           awsRegion: AwsRegion
       ) =>
-        val res = CacheConfig
-          .initializeStreamsReader(awsRegion, streamName.toString)
+        val res = List(
+          CacheConfig
+            .initializeStreamsReader(awsRegion, streamName.toString),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s"$streamName:"),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s"$streamName::"),
+          CacheConfig
+            .initializeStreamsReader(awsRegion, s"$streamName::$awsRegion")
+        )
 
-        assert(res.isLeft, s"$res")
+        assert(res.forall(_.isRight), s"${res.map(_.isRight)}")
     }
   )
 
@@ -140,14 +148,7 @@ class CacheConfigTests
           CacheConfig
             .initializeStreamsReader(awsRegion, s":$streamName1"),
           CacheConfig
-            .initializeStreamsReader(awsRegion, s"$streamName1:"),
-          CacheConfig
             .initializeStreamsReader(awsRegion, s",$streamName1:3"),
-          CacheConfig
-            .initializeStreamsReader(
-              awsRegion,
-              s"$streamName1:3,$streamName2::2"
-            ),
           CacheConfig
             .initializeStreamsReader(
               awsRegion,

@@ -83,7 +83,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, res)
@@ -116,7 +116,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonJson
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, res)
@@ -162,7 +162,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, request.uri)
@@ -208,7 +208,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonJson
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(res.status.isSuccess, request.uri)
@@ -239,7 +239,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(
@@ -269,7 +269,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -301,7 +301,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -332,7 +332,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -362,7 +362,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -402,7 +402,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, request)
@@ -439,7 +439,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, request)
@@ -471,7 +471,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -504,7 +504,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -536,7 +536,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -590,7 +590,7 @@ class KinesisMockServiceTests
           ),
           body = kinesisMockEntityEncoder[CreateStreamRequest](
             KinesisMockMediaTypes.amazonCbor
-          ).toEntity(CreateStreamRequest(1, streamName)).body
+          ).toEntity(CreateStreamRequest(Some(1), streamName)).body
         )
         res <- app.run(request)
       } yield assert(!res.status.isSuccess, res)
@@ -651,7 +651,7 @@ class KinesisMockServiceTests
         ),
         body = kinesisMockEntityEncoder[CreateStreamRequest](
           KinesisMockMediaTypes.amazonCbor
-        ).toEntity(CreateStreamRequest(1, StreamName(""))).body
+        ).toEntity(CreateStreamRequest(Some(1), StreamName(""))).body
       )
       res <- app.run(request)
     } yield assert(!res.status.isSuccess, res)
