@@ -15,7 +15,7 @@ object LibraryDependencies {
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
 
   object Borer {
-    val borerVersion = "1.7.2"
+    val borerVersion = "1.8.0"
     val core = "io.bullet" %% "borer-core" % borerVersion
     val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
   }
@@ -50,7 +50,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.13"
+    val http4sVersion = "0.23.14"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
