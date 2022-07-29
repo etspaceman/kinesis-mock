@@ -1,7 +1,7 @@
 package kinesis.mock.instances
 
 import scala.annotation.switch
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.{compat, _}
