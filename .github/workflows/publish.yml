@@ -18,7 +18,7 @@ jobs:
     - uses: ayltai/setup-graalvm@v1
       with:
         java-version: 11
-        graalvm-version: 21.0.0.2
+        graalvm-version: 22.2.0
         native-image: true
     - name: Install sbt
       run: choco install sbt 
@@ -87,7 +87,7 @@ jobs:
     - uses: ayltai/setup-graalvm@v1
       with:
         java-version: 11
-        graalvm-version: 21.0.0.2
+        graalvm-version: 22.2.0
         native-image: true
     - name: Install sbt
       run: brew install sbt
