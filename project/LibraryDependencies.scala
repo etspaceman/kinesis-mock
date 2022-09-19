@@ -8,7 +8,7 @@ object LibraryDependencies {
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
-    "io.github.wolfendale" %% "scalacheck-gen-regexp" % "0.1.3"
+    "io.github.wolfendale" %% "scalacheck-gen-regexp" % "1.0.0"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.1.2"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.2.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
