@@ -6,7 +6,6 @@ import scala.collection.SortedMap
 import cats.Eq
 import cats.syntax.all._
 import io.circe._
-import io.circe.derivation._
 
 final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
   def updateStream(stream: StreamData): Streams =
@@ -56,8 +55,13 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
 
 object Streams {
   val empty: Streams = Streams(SortedMap.empty)
-  implicit val streamsCirceEncoder: Encoder[Streams] = deriveEncoder
-  implicit val streamsCirceDecoder: Decoder[Streams] = deriveDecoder
+  implicit val streamsCirceEncoder: Encoder[Streams] =
+    Encoder.forProduct1("streams")(x => (x.streams))
+  implicit val streamsCirceDecoder: Decoder[Streams] = { x =>
+    for {
+      streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
+    } yield Streams(streams)
+  }
   implicit val streamsEq: Eq[Streams] = (x, y) =>
     x.streams.toMap === y.streams.toMap
 }
