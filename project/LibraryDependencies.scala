@@ -4,13 +4,13 @@ object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
   val OrganizeImports =
     "com.github.liancheng" %% "organize-imports" % "0.6.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.1"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.4"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "1.0.0"
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.1.2"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.2.0"
+  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.2.0.1"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
 
@@ -50,17 +50,16 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.15"
+    val http4sVersion = "0.23.16"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   }
 
   object Circe {
-    val circeVersion = "0.14.2"
+    val circeVersion = "0.14.3"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
-    val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
     val jackson = "io.circe" %% "circe-jackson212" % "0.14.0"
   }
 
