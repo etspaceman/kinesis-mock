@@ -57,10 +57,9 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.2"
+    val circeVersion = "0.14.3"
     val core = "io.circe" %% "circe-core" % circeVersion
     val parser = "io.circe" %% "circe-parser" % circeVersion
-    val derivation = "io.circe" %% "circe-derivation" % "0.13.0-M5"
     val jackson = "io.circe" %% "circe-jackson212" % "0.14.0"
   }
 

@@ -18,7 +18,6 @@ lazy val kinesisMock = project
       Cats.effect,
       CatsRetry,
       Circe.core,
-      Circe.derivation,
       Circe.parser,
       Circe.jackson,
       PureConfig.core,

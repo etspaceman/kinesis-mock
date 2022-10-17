@@ -5,7 +5,6 @@ import scala.concurrent.duration._
 import cats.effect.IO
 import cats.implicits._
 import io.circe.Encoder
-import io.circe.derivation._
 import pureconfig._
 import pureconfig.error.{CannotConvert, FailureReason}
 import pureconfig.generic.semiauto._
@@ -100,7 +99,40 @@ object CacheConfig {
         }
       )
 
-  implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] = deriveEncoder
+  implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] =
+    Encoder.forProduct14(
+      "initializeStreams",
+      "createStreamDuration",
+      "deleteStreamDuration",
+      "registerStreamConsumerDuration",
+      "deregisterStreamConsumerDuration",
+      "startStreamEncryptionDuration",
+      "stopStreamEncryptionDuration",
+      "mergeShardsDuration",
+      "splitShardDuration",
+      "updateShardCountDuration",
+      "shardLimit",
+      "awsAccountId",
+      "awsRegion",
+      "persistConfig"
+    )(x =>
+      (
+        x.initializeStreams,
+        x.createStreamDuration,
+        x.deleteStreamDuration,
+        x.registerStreamConsumerDuration,
+        x.deregisterStreamConsumerDuration,
+        x.startStreamEncryptionDuration,
+        x.stopStreamEncryptionDuration,
+        x.mergeShardsDuration,
+        x.splitShardDuration,
+        x.updateShardCountDuration,
+        x.shardLimit,
+        x.awsAccountId,
+        x.awsRegion,
+        x.persistConfig
+      )
+    )
 
   def initializeStreamsReader(
       defaultRegion: AwsRegion,
