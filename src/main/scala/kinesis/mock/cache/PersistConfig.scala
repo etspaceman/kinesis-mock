@@ -3,7 +3,6 @@ package kinesis.mock.cache
 import scala.concurrent.duration.FiniteDuration
 
 import io.circe.Encoder
-import io.circe.derivation._
 import pureconfig.ConfigReader
 import pureconfig.generic.semiauto._
 
@@ -38,7 +37,14 @@ final case class PersistConfig(
 }
 
 object PersistConfig {
-  implicit val persistConfigCirceEncoder: Encoder[PersistConfig] = deriveEncoder
+  implicit val persistConfigCirceEncoder: Encoder[PersistConfig] =
+    Encoder.forProduct5(
+      "loadIfExists",
+      "shouldPersist",
+      "path",
+      "fileName",
+      "interval"
+    )(x => (x.loadIfExists, x.shouldPersist, x.path, x.fileName, x.interval))
   implicit val persistConfigConfigReader: ConfigReader[PersistConfig] =
     deriveReader
 }
