@@ -116,20 +116,21 @@ class UpdateShardCountTests
 
   test("It should decrease the shard count after recently updating the shard count")(PropF.forAllF {
     (
-    streamArn: StreamArn
+      streamArn: StreamArn
     ) =>
       val streams =
         Streams.empty.addStream(10, streamArn)
-      val active =
+      val active: Streams =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
+      val firstRoundShardCount = 6
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           streamArn.streamName,
-          6
+          firstRoundShardCount
         )
       val finalShardCount = req.targetShardCount / 2
       val req2 = req.copy(targetShardCount = finalShardCount)
@@ -143,30 +144,42 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         _ <- streamsRef.update(_.findAndUpdateStream(streamArn)(_.copy(streamStatus = StreamStatus.ACTIVE)))
+        s <- streamsRef.get
         res2 <- req2.updateShardCount(
           streamsRef,
           50,
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        s <- streamsRef.get
+        s2 <- streamsRef.get
       } yield {
         assert(
-          res.isRight && res2.isRight && s.streams.get(streamArn).exists { stream =>
+          res.isRight && s.streams.get(streamArn).exists { stream =>
+            val shards = stream.shards.keys.toVector
+            shards.count(_.isOpen) == firstRoundShardCount &&
+            // we want to open firstRoundShardCount shards,
+            // so we have closed max(firstRoundShardCount * 2,stream.shards.size)
+            shards.filterNot(_.isOpen).map(_.shardId) == active
+              .streams(streamArn)
+              .shards
+              .keys
+              .toVector
+              .map(_.shardId) &&
+            stream.streamStatus == StreamStatus.ACTIVE &&
+            res.exists { r =>
+              r.currentShardCount == firstRoundShardCount &&
+              r.targetShardCount == firstRoundShardCount &&
+              r.streamName == streamArn.streamName
+            }
+          } &&
+          res2.isRight && s2.streams.get(streamArn).exists { stream =>
             val shards = stream.shards.keys.toVector
             shards.count(_.isOpen) == finalShardCount &&
-//            shards.filterNot(_.isOpen).map(_.shardId) == active
-//              .streams(streamArn)
-//              .shards
-//              .keys
-//              .toVector
-//              .map(_.shardId)// &&
+            // we want to open finalShardCount shards,
+            // so we have closed everything we had after the first request
+            shards.filterNot(_.isOpen).map(_.shardId).sorted ==
+              s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
             stream.streamStatus == StreamStatus.UPDATING &&
-            res.exists { r =>
-              r.currentShardCount == 6 &&
-              r.targetShardCount == 6 &&
-              r.streamName == streamArn.streamName
-            } &&
             res2.exists { r =>
               r.currentShardCount == finalShardCount &&
               r.targetShardCount == finalShardCount &&
@@ -184,7 +197,7 @@ class UpdateShardCountTests
 
   test("It should increase the shard count after recently updating the shard count")(PropF.forAllF {
     (
-    streamArn: StreamArn
+      streamArn: StreamArn
     ) =>
       val streams =
         Streams.empty.addStream(10, streamArn)
@@ -193,11 +206,12 @@ class UpdateShardCountTests
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
 
+      val firstRoundShardCount = 20
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           streamArn.streamName,
-          20
+          firstRoundShardCount
         )
       val finalShardCount = req.targetShardCount * 2
       val req2 = req.copy(targetShardCount = finalShardCount)
@@ -211,36 +225,49 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         _ <- streamsRef.update(_.findAndUpdateStream(streamArn)(_.copy(streamStatus = StreamStatus.ACTIVE)))
+        s <- streamsRef.get
         res2 <- req2.updateShardCount(
           streamsRef,
           50,
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        s <- streamsRef.get
+        s2 <- streamsRef.get
       } yield {
         assert(
-          res.isRight && res2.isRight && s.streams.get(streamArn).exists { stream =>
+          res.isRight && s.streams.get(streamArn).exists { stream =>
+            val shards = stream.shards.keys.toVector
+            shards.count(_.isOpen) == firstRoundShardCount &&
+            // we want to open firstRoundShardCount shards,
+            // so we have closed max(firstRoundShardCount * 2,stream.shards.size)
+            shards.filterNot(_.isOpen).map(_.shardId) == active
+              .streams(streamArn)
+              .shards
+              .keys
+              .toVector
+              .map(_.shardId) &&
+            stream.streamStatus == StreamStatus.ACTIVE &&
+            res.exists { r =>
+              r.currentShardCount == firstRoundShardCount &&
+              r.targetShardCount == firstRoundShardCount &&
+              r.streamName == streamArn.streamName
+            }
+          } &&
+          res2.isRight && s2.streams.get(streamArn).exists { stream =>
             val shards = stream.shards.keys.toVector
             shards.count(_.isOpen) == finalShardCount &&
-              //            shards.filterNot(_.isOpen).map(_.shardId) == active
-              //              .streams(streamArn)
-              //              .shards
-              //              .keys
-              //              .toVector
-              //              .map(_.shardId)// &&
-              stream.streamStatus == StreamStatus.UPDATING &&
-              res.exists { r =>
-                r.currentShardCount == 20 &&
-                  r.targetShardCount == 20 &&
-                  r.streamName == streamArn.streamName
-              } &&
+            // we want to open finalShardCount shards,
+            // so we have closed everything we had after the first request
+            shards.filterNot(_.isOpen).map(_.shardId).sorted ==
+              s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
+            stream.streamStatus == StreamStatus.UPDATING &&
               res2.exists { r =>
                 r.currentShardCount == finalShardCount &&
-                  r.targetShardCount == finalShardCount &&
-                  r.streamName == streamArn.streamName
+                r.targetShardCount == finalShardCount &&
+                r.streamName == streamArn.streamName
               }
           },
+
           s"req: $req\n" +
             s"res: $res\n" +
             s"resOpenShards: ${s.streams(streamArn).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
