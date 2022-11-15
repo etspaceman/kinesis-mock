@@ -43,7 +43,7 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.8.0"
+    val catsVersion = "2.9.0"
     val catsEffectVersion = "3.3.14"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
@@ -64,7 +64,7 @@ object LibraryDependencies {
   }
 
   object PureConfig {
-    private val pureConfigVersion = "0.17.1"
+    private val pureConfigVersion = "0.17.2"
     val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
     val enumeratum =
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
