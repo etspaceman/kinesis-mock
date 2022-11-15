@@ -98,7 +98,7 @@ final case class UpdateShardCountRequest(
               )
             ),
             UpdateShardCountResponse(
-              shards.length,
+              combined.keys.count(_.isOpen),
               streamName,
               targetShardCount
             )
