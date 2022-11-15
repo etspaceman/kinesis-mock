@@ -37,11 +37,11 @@ final case class UpdateShardCountRequest(
             .flatMap { stream =>
               (
                 CommonValidations.isStreamActive(streamArn, streams),
-                if (targetShardCount > stream.shards.size * 2)
+                if (targetShardCount > stream.shards.keys.count(_.isOpen) * 2)
                   InvalidArgumentException(
                     "Cannot update shard count beyond 2x current shard count"
                   ).asLeft
-                else if (targetShardCount < stream.shards.size / 2)
+                else if (targetShardCount < stream.shards.keys.count(_.isOpen) / 2)
                   InvalidArgumentException(
                     "Cannot update shard count below 50% of the current shard count"
                   ).asLeft
