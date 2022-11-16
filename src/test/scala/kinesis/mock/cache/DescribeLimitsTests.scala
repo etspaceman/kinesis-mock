@@ -1,7 +1,5 @@
 package kinesis.mock.cache
 
-import cats.syntax.all._
-
 import kinesis.mock.LoggingContext
 
 class DescribeLimitsTests extends munit.CatsEffectSuite {

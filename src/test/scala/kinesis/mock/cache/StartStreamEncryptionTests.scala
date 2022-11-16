@@ -3,7 +3,6 @@ package kinesis.mock.cache
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.syntax.all._
 import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
