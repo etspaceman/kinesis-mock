@@ -49,7 +49,7 @@ class UpdateShardCountTests
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>
-            r.currentShardCount == 10 &&
+            r.currentShardCount == active.streams(streamArn).shards.size &&
             r.targetShardCount == 10 &&
             r.streamName == streamArn.streamName
           }
@@ -101,7 +101,7 @@ class UpdateShardCountTests
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>
-            r.currentShardCount == 5 &&
+            r.currentShardCount == active.streams(streamArn).shards.size &&
             r.targetShardCount == 5 &&
             r.streamName == streamArn.streamName
           }
@@ -167,7 +167,7 @@ class UpdateShardCountTests
               .map(_.shardId) &&
             stream.streamStatus == StreamStatus.ACTIVE &&
             res.exists { r =>
-              r.currentShardCount == firstRoundShardCount &&
+              r.currentShardCount == active.streams(streamArn).shards.size &&
               r.targetShardCount == firstRoundShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -181,7 +181,7 @@ class UpdateShardCountTests
               s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
             stream.streamStatus == StreamStatus.UPDATING &&
             res2.exists { r =>
-              r.currentShardCount == finalShardCount &&
+              r.currentShardCount == s.streams(streamArn).shards.size &&
               r.targetShardCount == finalShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -248,7 +248,7 @@ class UpdateShardCountTests
               .map(_.shardId) &&
             stream.streamStatus == StreamStatus.ACTIVE &&
             res.exists { r =>
-              r.currentShardCount == firstRoundShardCount &&
+              r.currentShardCount == active.streams(streamArn).shards.size &&
               r.targetShardCount == firstRoundShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -262,7 +262,7 @@ class UpdateShardCountTests
               s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
             stream.streamStatus == StreamStatus.UPDATING &&
               res2.exists { r =>
-                r.currentShardCount == finalShardCount &&
+                r.currentShardCount == s.streams(streamArn).shards.size &&
                 r.targetShardCount == finalShardCount &&
                 r.streamName == streamArn.streamName
               }
