@@ -14,8 +14,9 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
+      val initialShardCount = 5
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -49,7 +50,7 @@ class UpdateShardCountTests
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>
-            r.currentShardCount == active.streams(streamArn).shards.size &&
+            r.currentShardCount == initialShardCount &&
             r.targetShardCount == 10 &&
             r.streamName == streamArn.streamName
           }
@@ -66,8 +67,9 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
+      val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(10, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -101,7 +103,7 @@ class UpdateShardCountTests
             .map(_.shardId) &&
           stream.streamStatus == StreamStatus.UPDATING &&
           res.exists { r =>
-            r.currentShardCount == active.streams(streamArn).shards.size &&
+            r.currentShardCount == initialShardCount &&
             r.targetShardCount == 5 &&
             r.streamName == streamArn.streamName
           }
@@ -118,8 +120,9 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
+      val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(10, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn)
       val active: Streams =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -167,7 +170,7 @@ class UpdateShardCountTests
               .map(_.shardId) &&
             stream.streamStatus == StreamStatus.ACTIVE &&
             res.exists { r =>
-              r.currentShardCount == active.streams(streamArn).shards.size &&
+              r.currentShardCount == initialShardCount &&
               r.targetShardCount == firstRoundShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -181,7 +184,7 @@ class UpdateShardCountTests
               s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
             stream.streamStatus == StreamStatus.UPDATING &&
             res2.exists { r =>
-              r.currentShardCount == s.streams(streamArn).shards.size &&
+              r.currentShardCount == initialShardCount + firstRoundShardCount &&
               r.targetShardCount == finalShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -199,8 +202,9 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
+      val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(10, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -248,7 +252,7 @@ class UpdateShardCountTests
               .map(_.shardId) &&
             stream.streamStatus == StreamStatus.ACTIVE &&
             res.exists { r =>
-              r.currentShardCount == active.streams(streamArn).shards.size &&
+              r.currentShardCount == initialShardCount &&
               r.targetShardCount == firstRoundShardCount &&
               r.streamName == streamArn.streamName
             }
@@ -262,7 +266,7 @@ class UpdateShardCountTests
               s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
             stream.streamStatus == StreamStatus.UPDATING &&
               res2.exists { r =>
-                r.currentShardCount == s.streams(streamArn).shards.size &&
+                r.currentShardCount == initialShardCount + firstRoundShardCount &&
                 r.targetShardCount == finalShardCount &&
                 r.streamName == streamArn.streamName
               }
