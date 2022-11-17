@@ -4,6 +4,7 @@ package api
 import cats.effect._
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
+
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
@@ -116,7 +117,9 @@ class UpdateShardCountTests
       )
   })
 
-  test("It should decrease the shard count after recently updating the shard count")(PropF.forAllF {
+  test(
+    "It should decrease the shard count after recently updating the shard count"
+  )(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
@@ -146,7 +149,11 @@ class UpdateShardCountTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        _ <- streamsRef.update(_.findAndUpdateStream(streamArn)(_.copy(streamStatus = StreamStatus.ACTIVE)))
+        _ <- streamsRef.update(
+          _.findAndUpdateStream(streamArn)(
+            _.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+        )
         s <- streamsRef.get
         res2 <- req2.updateShardCount(
           streamsRef,
@@ -175,20 +182,20 @@ class UpdateShardCountTests
               r.streamName == streamArn.streamName
             }
           } &&
-          res2.isRight && s2.streams.get(streamArn).exists { stream =>
-            val shards = stream.shards.keys.toVector
-            shards.count(_.isOpen) == finalShardCount &&
-            // we want to open finalShardCount shards,
-            // so we have closed everything we had after the first request
-            shards.filterNot(_.isOpen).map(_.shardId).sorted ==
-              s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
-            stream.streamStatus == StreamStatus.UPDATING &&
-            res2.exists { r =>
-              r.currentShardCount == initialShardCount + firstRoundShardCount &&
-              r.targetShardCount == finalShardCount &&
-              r.streamName == streamArn.streamName
-            }
-          },
+            res2.isRight && s2.streams.get(streamArn).exists { stream =>
+              val shards = stream.shards.keys.toVector
+              shards.count(_.isOpen) == finalShardCount &&
+              // we want to open finalShardCount shards,
+              // so we have closed everything we had after the first request
+              shards.filterNot(_.isOpen).map(_.shardId).sorted ==
+                s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
+              stream.streamStatus == StreamStatus.UPDATING &&
+              res2.exists { r =>
+                r.currentShardCount == initialShardCount + firstRoundShardCount &&
+                r.targetShardCount == finalShardCount &&
+                r.streamName == streamArn.streamName
+              }
+            },
           s"req: $req\n" +
             s"res: $res\n" +
             s"resOpenShards: ${s.streams(streamArn).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +
@@ -198,7 +205,9 @@ class UpdateShardCountTests
       }
   })
 
-  test("It should increase the shard count after recently updating the shard count")(PropF.forAllF {
+  test(
+    "It should increase the shard count after recently updating the shard count"
+  )(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
@@ -228,7 +237,11 @@ class UpdateShardCountTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        _ <- streamsRef.update(_.findAndUpdateStream(streamArn)(_.copy(streamStatus = StreamStatus.ACTIVE)))
+        _ <- streamsRef.update(
+          _.findAndUpdateStream(streamArn)(
+            _.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+        )
         s <- streamsRef.get
         res2 <- req2.updateShardCount(
           streamsRef,
@@ -257,21 +270,20 @@ class UpdateShardCountTests
               r.streamName == streamArn.streamName
             }
           } &&
-          res2.isRight && s2.streams.get(streamArn).exists { stream =>
-            val shards = stream.shards.keys.toVector
-            shards.count(_.isOpen) == finalShardCount &&
-            // we want to open finalShardCount shards,
-            // so we have closed everything we had after the first request
-            shards.filterNot(_.isOpen).map(_.shardId).sorted ==
-              s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
-            stream.streamStatus == StreamStatus.UPDATING &&
+            res2.isRight && s2.streams.get(streamArn).exists { stream =>
+              val shards = stream.shards.keys.toVector
+              shards.count(_.isOpen) == finalShardCount &&
+              // we want to open finalShardCount shards,
+              // so we have closed everything we had after the first request
+              shards.filterNot(_.isOpen).map(_.shardId).sorted ==
+                s.streams(streamArn).shards.keys.map(_.shardId).toVector.sorted
+              stream.streamStatus == StreamStatus.UPDATING &&
               res2.exists { r =>
                 r.currentShardCount == initialShardCount + firstRoundShardCount &&
                 r.targetShardCount == finalShardCount &&
                 r.streamName == streamArn.streamName
               }
-          },
-
+            },
           s"req: $req\n" +
             s"res: $res\n" +
             s"resOpenShards: ${s.streams(streamArn).shards.keys.toVector.filter(_.isOpen).map(_.shardId)}\n" +

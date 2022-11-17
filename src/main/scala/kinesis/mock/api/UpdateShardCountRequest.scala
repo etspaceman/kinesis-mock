@@ -41,7 +41,9 @@ final case class UpdateShardCountRequest(
                   InvalidArgumentException(
                     "Cannot update shard count beyond 2x current shard count"
                   ).asLeft
-                else if (targetShardCount < stream.shards.keys.count(_.isOpen) / 2)
+                else if (
+                  targetShardCount < stream.shards.keys.count(_.isOpen) / 2
+                )
                   InvalidArgumentException(
                     "Cannot update shard count below 50% of the current shard count"
                   ).asLeft
