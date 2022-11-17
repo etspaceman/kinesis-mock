@@ -9,7 +9,7 @@ object LibraryDependencies {
   val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
   val ScalacheckGenRegexp =
     "io.github.wolfendale" %% "scalacheck-gen-regexp" % "1.0.0"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.1.2"
+  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.2.0"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.3.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
   val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
@@ -43,8 +43,8 @@ object LibraryDependencies {
   }
 
   object Cats {
-    val catsVersion = "2.8.0"
-    val catsEffectVersion = "3.3.14"
+    val catsVersion = "2.9.0"
+    val catsEffectVersion = "3.4.0"
     val core = "org.typelevel" %% "cats-core" % catsVersion
     val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
@@ -64,7 +64,7 @@ object LibraryDependencies {
   }
 
   object PureConfig {
-    private val pureConfigVersion = "0.17.1"
+    private val pureConfigVersion = "0.17.2"
     val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
     val enumeratum =
       "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
