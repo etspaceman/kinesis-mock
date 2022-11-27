@@ -49,10 +49,11 @@ class SplitShardTests
           .listShards(listShardsReq, context, false, Some(awsRegion))
           .rethrow
           .map(_.shards.head)
+        newStartingHashKey = shardToSplit.hashKeyRange.endingHashKey / BigInt(2)
         _ <- cache
           .splitShard(
             SplitShardRequest(
-              (shardToSplit.hashKeyRange.endingHashKey / BigInt(2)).toString,
+              newStartingHashKey.toString(),
               shardToSplit.shardId,
               streamName
             ),
@@ -82,13 +83,28 @@ class SplitShardTests
         checkShards <- cache
           .listShards(listShardsReq, context, false, Some(awsRegion))
           .rethrow
+        newShards = checkShards.shards.filter(shard =>
+          shard.parentShardId.contains(shardToSplit.shardId)
+        )
       } yield assert(
         checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
           checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
           checkShards.shards.count(!_.isOpen) == 1 &&
-          checkShards.shards.count(shard =>
-            shard.parentShardId.contains(shardToSplit.shardId)
-          ) == 2 && checkShards.shards.length == 7,
+          newShards.size == 2 && checkShards.shards.length == 7 && (
+            (newShards(0).hashKeyRange == HashKeyRange(
+              startingHashKey = shardToSplit.hashKeyRange.startingHashKey,
+              endingHashKey = newStartingHashKey - BigInt(1)
+            ) && newShards(1).hashKeyRange == HashKeyRange(
+              startingHashKey = newStartingHashKey,
+              endingHashKey = shardToSplit.hashKeyRange.endingHashKey
+            )) || (newShards(0).hashKeyRange == HashKeyRange(
+              startingHashKey = newStartingHashKey,
+              endingHashKey = shardToSplit.hashKeyRange.endingHashKey
+            ) && newShards(1).hashKeyRange == HashKeyRange(
+              startingHashKey = shardToSplit.hashKeyRange.startingHashKey,
+              endingHashKey = newStartingHashKey - BigInt(1)
+            ))
+          ),
         s"${checkShards.shards.mkString("\n\t")}\n" +
           s"$checkStream1\n" +
           s"$checkStream2"

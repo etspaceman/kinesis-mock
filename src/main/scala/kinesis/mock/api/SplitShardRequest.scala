@@ -76,8 +76,8 @@ final case class SplitShardRequest(
             None,
             now,
             HashKeyRange(
-              shard.hashKeyRange.startingHashKey,
-              newStartingHashKeyNumber - BigInt(1)
+              startingHashKey = shard.hashKeyRange.startingHashKey,
+              endingHashKey = newStartingHashKeyNumber - BigInt(1)
             ),
             Some(shard.shardId.shardId),
             SequenceNumberRange(
@@ -92,8 +92,8 @@ final case class SplitShardRequest(
             None,
             now,
             HashKeyRange(
-              newStartingHashKeyNumber,
-              shard.hashKeyRange.endingHashKey
+              startingHashKey = newStartingHashKeyNumber,
+              endingHashKey = shard.hashKeyRange.endingHashKey
             ),
             Some(shard.shardId.shardId),
             SequenceNumberRange(
