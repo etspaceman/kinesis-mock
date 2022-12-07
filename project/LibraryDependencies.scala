@@ -73,7 +73,7 @@ object LibraryDependencies {
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.7.0"
+    val enumeratumVersion = "1.7.2"
     val cats = "com.beachape" %% "enumeratum-cats" % enumeratumVersion
     val core = "com.beachape" %% "enumeratum" % enumeratumVersion
     val circe = "com.beachape" %% "enumeratum-circe" % enumeratumVersion
