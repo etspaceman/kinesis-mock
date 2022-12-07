@@ -12,7 +12,7 @@ object LibraryDependencies {
   val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.2.0"
   val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.3.0"
   val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
-  val OsLib = "com.lihaoyi" %% "os-lib" % "0.8.1"
+  val OsLib = "com.lihaoyi" %% "os-lib" % "0.9.0"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -73,7 +73,7 @@ object LibraryDependencies {
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.7.0"
+    val enumeratumVersion = "1.7.2"
     val cats = "com.beachape" %% "enumeratum-cats" % enumeratumVersion
     val core = "com.beachape" %% "enumeratum" % enumeratumVersion
     val circe = "com.beachape" %% "enumeratum-circe" % enumeratumVersion
