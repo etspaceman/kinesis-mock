@@ -58,4 +58,29 @@ class CreateStreamTests
         } yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
+
+  test("It should reject if the on-demand-stream-count exceeds the limit")(
+    PropF.forAllF {
+      (
+          req: CreateStreamRequest,
+          awsRegion: AwsRegion,
+          awsAccountId: AwsAccountId
+      ) =>
+        val streams = Streams.empty
+        val reqForTest = req.copy(streamModeDetails =
+          Some(StreamModeDetails(StreamMode.ON_DEMAND))
+        )
+
+        for {
+          streamsRef <- Ref.of[IO, Streams](streams)
+          res <- reqForTest.createStream(
+            streamsRef,
+            50,
+            0,
+            awsRegion,
+            awsAccountId
+          )
+        } yield assert(res.isLeft, s"req: $req\nres: $res")
+    }
+  )
 }
