@@ -27,7 +27,7 @@ class ListShardsTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(Some(5), streamName),
+            CreateStreamRequest(Some(5), None, streamName),
             context,
             false,
             Some(awsRegion)

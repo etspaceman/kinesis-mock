@@ -18,7 +18,7 @@ class SplitShardTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -66,7 +66,7 @@ class SplitShardTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
 
       val shardToSplit =
         streams.streams(streamArn).shards.keys.head
@@ -102,7 +102,7 @@ class SplitShardTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
@@ -141,7 +141,7 @@ class SplitShardTests
         streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(5, streamArn)
+          Streams.empty.addStream(5, streamArn, None)
         val active =
           streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)

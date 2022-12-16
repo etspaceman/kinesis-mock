@@ -24,6 +24,7 @@ class CreateStreamTests
         res <- req.createStream(
           streamsRef,
           req.shardCount.getOrElse(4),
+          10,
           awsRegion,
           awsAccountId
         )
@@ -50,6 +51,7 @@ class CreateStreamTests
           res <- req.createStream(
             streamsRef,
             0,
+            10,
             awsRegion,
             awsAccountId
           )

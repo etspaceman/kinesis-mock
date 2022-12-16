@@ -21,7 +21,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -54,7 +54,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -115,7 +115,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val exclusiveStartShardId = ShardId.create(10)
 
@@ -151,7 +151,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val updated = streams.findAndUpdateStream(streamArn) { s =>
         val shards = s.shards.toList
@@ -205,7 +205,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val updated = streams.findAndUpdateStream(streamArn) { s =>
         val shards = s.shards.toList
@@ -258,7 +258,7 @@ class ListShardsTests
         streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(100, streamArn)
+          Streams.empty.addStream(100, streamArn, None)
 
         val updated = streams.findAndUpdateStream(streamArn) { s =>
           val shards = s.shards.toList
@@ -315,7 +315,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val shards = streams.streams(streamArn).shards.keys.toVector
       val shardId = shards(4).shardId
@@ -359,7 +359,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
       val updated = streams.findAndUpdateStream(streamArn) { s =>
@@ -431,7 +431,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
       val updated = streams.findAndUpdateStream(streamArn) { s =>
@@ -509,7 +509,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -536,7 +536,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -563,7 +563,7 @@ class ListShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)

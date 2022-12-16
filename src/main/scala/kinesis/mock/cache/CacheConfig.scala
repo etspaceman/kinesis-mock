@@ -29,7 +29,8 @@ final case class CacheConfig(
     shardLimit: Int,
     awsAccountId: AwsAccountId,
     awsRegion: AwsRegion,
-    persistConfig: PersistConfig
+    persistConfig: PersistConfig,
+    onDemandStreamCountLimit: Int
 )
 
 final case class CacheConfigStep1(
@@ -46,7 +47,8 @@ final case class CacheConfigStep1(
     shardLimit: Int,
     awsAccountId: AwsAccountId,
     awsRegion: AwsRegion,
-    persistConfig: PersistConfig
+    persistConfig: PersistConfig,
+    onDemandStreamCountLimit: Int
 )
 
 object CacheConfig {
@@ -72,7 +74,8 @@ object CacheConfig {
                 step1.shardLimit,
                 step1.awsAccountId,
                 step1.awsRegion,
-                step1.persistConfig
+                step1.persistConfig,
+                step1.onDemandStreamCountLimit
               )
             )
 
@@ -93,14 +96,15 @@ object CacheConfig {
                   step1.shardLimit,
                   step1.awsAccountId,
                   step1.awsRegion,
-                  step1.persistConfig
+                  step1.persistConfig,
+                  step1.onDemandStreamCountLimit
                 )
             }
         }
       )
 
   implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] =
-    Encoder.forProduct14(
+    Encoder.forProduct15(
       "initializeStreams",
       "createStreamDuration",
       "deleteStreamDuration",
@@ -114,7 +118,8 @@ object CacheConfig {
       "shardLimit",
       "awsAccountId",
       "awsRegion",
-      "persistConfig"
+      "persistConfig",
+      "onDemandStreamCountLimit"
     )(x =>
       (
         x.initializeStreams,
@@ -130,7 +135,8 @@ object CacheConfig {
         x.shardLimit,
         x.awsAccountId,
         x.awsRegion,
-        x.persistConfig
+        x.persistConfig,
+        x.onDemandStreamCountLimit
       )
     )
 
@@ -143,22 +149,40 @@ object CacheConfig {
       .map(_.split(':').toList)
       .traverse {
         case name :: Nil if name.nonEmpty =>
-          Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
+          Some(
+            defaultRegion -> CreateStreamRequest(None, None, StreamName(name))
+          )
         case name :: count :: Nil if name.nonEmpty =>
           if (count.isEmpty)
-            Some(defaultRegion -> CreateStreamRequest(None, StreamName(name)))
+            Some(
+              defaultRegion -> CreateStreamRequest(None, None, StreamName(name))
+            )
           else
             count.toIntOption.map(x =>
-              defaultRegion -> CreateStreamRequest(Some(x), StreamName(name))
+              defaultRegion -> CreateStreamRequest(
+                Some(x),
+                None,
+                StreamName(name)
+              )
             )
         case name :: count :: region :: Nil if name.nonEmpty =>
           val regionOrDefault =
             AwsRegion.withNameOption(region).getOrElse(defaultRegion)
           if (count.isEmpty)
-            Some(regionOrDefault -> CreateStreamRequest(None, StreamName(name)))
+            Some(
+              regionOrDefault -> CreateStreamRequest(
+                None,
+                None,
+                StreamName(name)
+              )
+            )
           else
             count.toIntOption.map(x =>
-              regionOrDefault -> CreateStreamRequest(Some(x), StreamName(name))
+              regionOrDefault -> CreateStreamRequest(
+                Some(x),
+                None,
+                StreamName(name)
+              )
             )
         case _ => none
       }

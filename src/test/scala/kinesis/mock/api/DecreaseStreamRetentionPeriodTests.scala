@@ -17,7 +17,7 @@ class DecreaseStreamRetentionPeriodTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
       val withIncreasedRetention =
         streams.findAndUpdateStream(streamArn)(stream =>
           stream.copy(
@@ -49,7 +49,7 @@ class DecreaseStreamRetentionPeriodTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)

@@ -16,7 +16,7 @@ class DescribeStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -42,7 +42,7 @@ class DescribeStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(2, streamArn)
+        Streams.empty.addStream(2, streamArn, None)
 
       val limit = Some(1)
 
@@ -72,7 +72,7 @@ class DescribeStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(4, streamArn)
+        Streams.empty.addStream(4, streamArn, None)
 
       val exclusiveStartShardId = streams.streams
         .get(streamArn)

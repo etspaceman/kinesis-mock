@@ -18,7 +18,7 @@ class PutRecordsTests
         initReq: PutRecordsRequest
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -66,7 +66,7 @@ class PutRecordsTests
           initReq: PutRecordsRequest
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamArn)
+          Streams.empty.addStream(1, streamArn, None)
 
         val req = initReq.copy(
           streamName = streamArn.streamName
@@ -90,7 +90,7 @@ class PutRecordsTests
           initReq: PutRecordsRequest
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamArn)
+          Streams.empty.addStream(1, streamArn, None)
 
         val updated = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(shards = s.shards.map { case (shard, recs) =>

@@ -16,7 +16,7 @@ class MergeShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -59,7 +59,7 @@ class MergeShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
 
       val shards = streams.streams(streamArn).shards.keys.toVector
 
@@ -88,7 +88,7 @@ class MergeShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
@@ -119,7 +119,7 @@ class MergeShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )
@@ -151,7 +151,7 @@ class MergeShardsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(streamStatus = StreamStatus.ACTIVE)
       )

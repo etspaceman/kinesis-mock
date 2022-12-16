@@ -3,21 +3,32 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
+import cats.syntax.all._
 import io.circe
 
 import kinesis.mock.models._
 
-final case class DescribeLimitsResponse(openShardCount: Int, shardLimit: Int)
+final case class DescribeLimitsResponse(
+    onDemandStreamCount: Int,
+    onDemandStreamCountLimit: Int,
+    openShardCount: Int,
+    shardLimit: Int
+)
 
 object DescribeLimitsResponse {
   def get(
       shardLimit: Int,
+      onDemandStreamCountLimit: Int,
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[DescribeLimitsResponse] =
     streamsRef.get.map { streams =>
       DescribeLimitsResponse(
+        streams.streams.count { case (_, stream) =>
+          stream.streamModeDetails.streamMode === StreamMode.ON_DEMAND
+        },
+        onDemandStreamCountLimit,
         streams.streams
           .filter { case (streamArn, _) =>
             streamArn.awsRegion == awsRegion && streamArn.awsAccountId == awsAccountId
@@ -31,15 +42,34 @@ object DescribeLimitsResponse {
 
   implicit val describeLimitsResponseCirceEncoder
       : circe.Encoder[DescribeLimitsResponse] =
-    circe.Encoder.forProduct2("OpenShardCount", "ShardLimit")(x =>
-      (x.openShardCount, x.shardLimit)
+    circe.Encoder.forProduct4(
+      "OnDemandStreamCount",
+      "OnDemandStreamCountLimit",
+      "OpenShardCount",
+      "ShardLimit"
+    )(x =>
+      (
+        x.onDemandStreamCount,
+        x.onDemandStreamCountLimit,
+        x.openShardCount,
+        x.shardLimit
+      )
     )
   implicit val describeLimitsResponseCirceDecoder
       : circe.Decoder[DescribeLimitsResponse] = { x =>
     for {
+      onDemandStreamCount <- x.downField("OnDemandStreamCount").as[Int]
+      onDemandStreamCountLimit <- x
+        .downField("OnDemandStreamCountLimit")
+        .as[Int]
       openShardCount <- x.downField("OpenShardCount").as[Int]
       shardLimit <- x.downField("ShardLimit").as[Int]
-    } yield DescribeLimitsResponse(openShardCount, shardLimit)
+    } yield DescribeLimitsResponse(
+      onDemandStreamCount,
+      onDemandStreamCountLimit,
+      openShardCount,
+      shardLimit
+    )
   }
   implicit val describeLimitsResponseEncoder: Encoder[DescribeLimitsResponse] =
     Encoder.derive

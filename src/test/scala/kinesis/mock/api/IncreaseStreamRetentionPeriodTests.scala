@@ -17,7 +17,7 @@ class IncreaseStreamRetentionPeriodTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val active = streams.findAndUpdateStream(streamArn)(
         _.copy(streamStatus = StreamStatus.ACTIVE)
@@ -48,7 +48,7 @@ class IncreaseStreamRetentionPeriodTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val withUpdatedRetention = streams.findAndUpdateStream(streamArn)(s =>
         s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)

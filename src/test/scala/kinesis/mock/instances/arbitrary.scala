@@ -250,12 +250,17 @@ object arbitrary {
     } yield AddTagsToStreamRequest(streamName, tags)
   )
 
+  implicit val streamModeDetailsArb: Arbitrary[StreamModeDetails] = Arbitrary(
+    Arbitrary.arbitrary[StreamMode].map(StreamModeDetails.apply)
+  )
+
   implicit val createStreamRequestArb: Arbitrary[CreateStreamRequest] = {
     Arbitrary(
       for {
         shardCount <- Gen.option(Gen.choose(1, 1000))
         streamName <- streamNameGen
-      } yield CreateStreamRequest(shardCount, streamName)
+        streamModeDetails <- Gen.option(streamModeDetailsArb.arbitrary)
+      } yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
     )
   }
 
@@ -303,9 +308,16 @@ object arbitrary {
   implicit val describeLimitsResponseArb: Arbitrary[DescribeLimitsResponse] =
     Arbitrary(
       for {
+        onDemandStreamCountLimit <- Gen.choose(1, 10)
+        onDemandStreamCount <- Gen.choose(0, onDemandStreamCountLimit)
         shardLimit <- Gen.choose(1, 50)
         openShardCount <- Gen.choose(0, shardLimit)
-      } yield DescribeLimitsResponse(openShardCount, shardLimit)
+      } yield DescribeLimitsResponse(
+        onDemandStreamCount,
+        onDemandStreamCountLimit,
+        openShardCount,
+        shardLimit
+      )
     )
 
   implicit val describeStreamConsumerRequestArb
@@ -365,6 +377,7 @@ object arbitrary {
       streamName <- streamNameGen
       awsRegion <- Arbitrary.arbitrary[AwsRegion]
       awsAccountId <- awsAccountIdGen
+      streamModeDetails <- streamModeDetailsArb.arbitrary
       streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       streamStatus <- Arbitrary.arbitrary[StreamStatus]
     } yield StreamDescription(
@@ -376,6 +389,7 @@ object arbitrary {
       shards,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus
     )
@@ -423,6 +437,7 @@ object arbitrary {
       openShardCount <- Gen.choose(1, 50)
       retentionPeriodHours <- retentionPeriodHoursGen
       streamCreationTimestamp <- nowGen
+      streamModeDetails <- streamModeDetailsArb.arbitrary
       streamName <- streamNameGen
       awsRegion <- Arbitrary.arbitrary[AwsRegion]
       awsAccountId <- awsAccountIdGen
@@ -437,6 +452,7 @@ object arbitrary {
       retentionPeriodHours,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus
     )
@@ -917,6 +933,7 @@ object arbitrary {
             )
         )
       )
+      streamModeDetails <- streamModeDetailsArb.arbitrary
       streamName <- streamNameGen
       awsRegion <- Arbitrary.arbitrary[AwsRegion]
       awsAccountId <- awsAccountIdGen
@@ -936,6 +953,7 @@ object arbitrary {
       shards,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus,
       tags,
@@ -952,5 +970,13 @@ object arbitrary {
       )
       .map(x => Streams(SortedMap.from(x.map(sd => sd.streamArn -> sd))))
   }
+
+  implicit val updateStreamModeRequestArb: Arbitrary[UpdateStreamModeRequest] =
+    Arbitrary {
+      for {
+        streamArn <- streamArnGen
+        streamModeDetails <- streamModeDetailsArb.arbitrary
+      } yield UpdateStreamModeRequest(streamArn, streamModeDetails)
+    }
 
 }

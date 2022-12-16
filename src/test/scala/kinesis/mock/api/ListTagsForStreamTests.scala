@@ -21,7 +21,7 @@ class ListTagsForStreamTests
         tags: Tags
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val withTags =
         streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
@@ -47,7 +47,7 @@ class ListTagsForStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
@@ -87,7 +87,7 @@ class ListTagsForStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(100, streamArn)
+        Streams.empty.addStream(100, streamArn, None)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))

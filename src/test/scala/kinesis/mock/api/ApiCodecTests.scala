@@ -46,4 +46,5 @@ class ApiCodecTests extends CodecTests {
   identityLawTest[StopStreamEncryptionRequest]
   identityLawTest[UpdateShardCountRequest]
   identityLawTest[UpdateShardCountResponse]
+  identityLawTest[UpdateStreamModeRequest]
 }

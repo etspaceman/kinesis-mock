@@ -27,7 +27,7 @@ class DescribeStreamTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(Some(1), streamName),
+            CreateStreamRequest(Some(1), None, streamName),
             context,
             false,
             Some(awsRegion)
@@ -66,6 +66,7 @@ class DescribeStreamTests
           shardSummary,
           StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
           res.streamDescription.streamCreationTimestamp,
+          StreamModeDetails(StreamMode.PROVISIONED),
           streamName,
           StreamStatus.CREATING
         )

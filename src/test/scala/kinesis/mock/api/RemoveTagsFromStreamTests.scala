@@ -20,7 +20,7 @@ class RemoveTagsFromStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val tags: Tags = Gen
         .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))

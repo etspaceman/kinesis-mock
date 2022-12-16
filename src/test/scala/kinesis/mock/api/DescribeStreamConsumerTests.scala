@@ -18,7 +18,7 @@ class DescribeStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
@@ -55,7 +55,7 @@ class DescribeStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -90,7 +90,7 @@ class DescribeStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val streamArn =
         streams.streams.get(consumerArn.streamArn).map(_.streamArn)
@@ -113,7 +113,7 @@ class DescribeStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
@@ -144,7 +144,7 @@ class DescribeStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(

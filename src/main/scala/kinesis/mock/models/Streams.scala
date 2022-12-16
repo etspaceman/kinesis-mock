@@ -22,11 +22,12 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
 
   def addStream(
       shardCount: Int,
-      streamArn: StreamArn
+      streamArn: StreamArn,
+      streamModeDetails: Option[StreamModeDetails]
   ): Streams =
     copy(streams =
       streams ++ Seq(
-        streamArn -> StreamData.create(shardCount, streamArn)
+        streamArn -> StreamData.create(shardCount, streamArn, streamModeDetails)
       )
     )
 

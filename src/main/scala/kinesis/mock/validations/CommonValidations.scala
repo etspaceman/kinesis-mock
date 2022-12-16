@@ -370,4 +370,17 @@ object CommonValidations {
     if (data.length > 1048576)
       InvalidArgumentException("Data object is too large").asLeft
     else Right(data)
+
+  def validateOnDemandStreamCount(
+      streams: Streams,
+      onDemandStreamCountLimit: Int
+  ): Response[Unit] = if (
+    streams.streams.count { case (_, stream) =>
+      stream.streamModeDetails.streamMode === StreamMode.ON_DEMAND
+    } >= onDemandStreamCountLimit
+  )
+    LimitExceededException(
+      "Limit for on-demand streams has been reached"
+    ).asLeft
+  else Right(())
 }

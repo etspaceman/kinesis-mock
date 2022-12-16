@@ -17,7 +17,7 @@ class UpdateShardCountTests
     ) =>
       val initialShardCount = 5
       val streams =
-        Streams.empty.addStream(initialShardCount, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -70,7 +70,7 @@ class UpdateShardCountTests
     ) =>
       val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(initialShardCount, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -125,7 +125,7 @@ class UpdateShardCountTests
     ) =>
       val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(initialShardCount, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn, None)
       val active: Streams =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -213,7 +213,7 @@ class UpdateShardCountTests
     ) =>
       val initialShardCount = 10
       val streams =
-        Streams.empty.addStream(initialShardCount, streamArn)
+        Streams.empty.addStream(initialShardCount, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -299,7 +299,7 @@ class UpdateShardCountTests
         streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(5, streamArn)
+          Streams.empty.addStream(5, streamArn, None)
         val active =
           streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -330,7 +330,7 @@ class UpdateShardCountTests
         streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(10, streamArn)
+          Streams.empty.addStream(10, streamArn, None)
         val active =
           streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -360,7 +360,7 @@ class UpdateShardCountTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
       val active =
         streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
@@ -389,7 +389,7 @@ class UpdateShardCountTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(5, streamArn)
+        Streams.empty.addStream(5, streamArn, None)
 
       val req =
         UpdateShardCountRequest(

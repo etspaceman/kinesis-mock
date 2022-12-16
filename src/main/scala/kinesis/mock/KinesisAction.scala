@@ -37,6 +37,7 @@ object KinesisAction extends Enum[KinesisAction] {
   case object StopStreamEncryption extends KinesisAction
   case object SubscribeToShard extends KinesisAction
   case object UpdateShardCount extends KinesisAction
+  case object UpdateStreamMode extends KinesisAction
 
   implicit val kinesisActionQueryParamDecoder
       : QueryParamDecoder[KinesisAction] = QueryParamDecoder[String].emap(x =>

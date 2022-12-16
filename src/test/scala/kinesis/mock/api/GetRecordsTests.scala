@@ -20,7 +20,7 @@ class GetRecordsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val shard = streams.streams(streamArn).shards.head._1
 
@@ -75,7 +75,7 @@ class GetRecordsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val shard = streams.streams(streamArn).shards.head._1
 
@@ -130,7 +130,7 @@ class GetRecordsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val shard = streams.streams(streamArn).shards.head._1
 
@@ -205,7 +205,7 @@ class GetRecordsTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val shard = streams.streams(streamArn).shards.head._1
 
