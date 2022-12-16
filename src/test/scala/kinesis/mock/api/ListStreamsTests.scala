@@ -30,7 +30,11 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
+          streams.addStream(
+            1,
+            StreamArn(awsRegion, streamName, awsAccountId),
+            None
+          )
       }
 
       for {
@@ -62,7 +66,11 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
+          streams.addStream(
+            1,
+            StreamArn(awsRegion, streamName, awsAccountId),
+            None
+          )
       }
 
       val exclusiveStartStreamName = streamNames(3)
@@ -96,7 +104,11 @@ class ListStreamsTests
 
       val streams = streamNames.foldLeft(Streams.empty) {
         case (streams, streamName) =>
-          streams.addStream(1, StreamArn(awsRegion, streamName, awsAccountId))
+          streams.addStream(
+            1,
+            StreamArn(awsRegion, streamName, awsAccountId),
+            None
+          )
       }
 
       for {

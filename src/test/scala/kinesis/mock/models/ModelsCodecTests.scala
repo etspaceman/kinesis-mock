@@ -13,6 +13,7 @@ class ModelsCodecTests extends CodecTests {
   identityLawTest[Shard]
   identityLawTest[ShardLevelMetrics]
   identityLawTest[ShardSummary]
+  identityLawTest[StreamModeDetails]
   identityLawTest[SequenceNumberRange]
   identityLawTest[StreamDescription]
   identityLawTest[StreamDescriptionSummary]

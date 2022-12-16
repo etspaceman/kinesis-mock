@@ -18,7 +18,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
@@ -57,7 +57,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -91,7 +91,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -119,7 +119,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -142,7 +142,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
@@ -176,7 +176,7 @@ class DeregisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
       val updated =
         streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(

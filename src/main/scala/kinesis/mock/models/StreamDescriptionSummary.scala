@@ -17,6 +17,7 @@ final case class StreamDescriptionSummary(
     retentionPeriodHours: Int,
     streamArn: StreamArn,
     streamCreationTimestamp: Instant,
+    streamModeDetails: StreamModeDetails,
     streamName: StreamName,
     streamStatus: StreamStatus
 )
@@ -32,13 +33,14 @@ object StreamDescriptionSummary {
       streamData.retentionPeriod.toHours.toInt,
       streamData.streamArn,
       streamData.streamCreationTimestamp,
+      streamData.streamModeDetails,
       streamData.streamName,
       streamData.streamStatus
     )
 
   def streamDescriptionSummaryCirceEncoder(implicit
       EI: circe.Encoder[Instant]
-  ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct10(
+  ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct11(
     "ConsumerCount",
     "EncryptionType",
     "EnhancedMonitoring",
@@ -47,6 +49,7 @@ object StreamDescriptionSummary {
     "RetentionPeriodHours",
     "StreamARN",
     "StreamCreationTimestamp",
+    "StreamModeDetails",
     "StreamName",
     "StreamStatus"
   )(x =>
@@ -59,6 +62,7 @@ object StreamDescriptionSummary {
       x.retentionPeriodHours,
       x.streamArn,
       x.streamCreationTimestamp,
+      x.streamModeDetails,
       x.streamName,
       x.streamStatus
     )
@@ -80,6 +84,9 @@ object StreamDescriptionSummary {
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Instant]
+      streamModeDetails <- x
+        .downField("StreamModeDetails")
+        .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
     } yield StreamDescriptionSummary(
@@ -91,6 +98,7 @@ object StreamDescriptionSummary {
       retentionPeriodHours,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus
     )

@@ -901,6 +901,21 @@ object KinesisMockRoutes {
                   )
                 )
           )
+      case KinesisAction.UpdateStreamMode =>
+        request
+          .attemptAs[UpdateStreamModeRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateStreamMode(req, loggingContext, isCbor)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => Ok("", responseHeaders: _*)
+                  )
+                )
+          )
     }
   // $COVERAGE-ON$
 }

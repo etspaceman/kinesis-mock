@@ -17,7 +17,7 @@ class DeleteStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val asActive = streams.findAndUpdateStream(streamArn)(x =>
         x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -60,7 +60,7 @@ class DeleteStreamTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -80,7 +80,7 @@ class DeleteStreamTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val withConsumers =
         streams.findAndUpdateStream(consumerArn.streamArn)(x =>
@@ -114,7 +114,7 @@ class DeleteStreamTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val withConsumers =
         streams.findAndUpdateStream(consumerArn.streamArn)(x =>

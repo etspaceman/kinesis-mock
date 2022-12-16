@@ -21,6 +21,7 @@ final case class StreamData(
     shards: SortedMap[Shard, Vector[KinesisRecord]],
     streamArn: StreamArn,
     streamCreationTimestamp: Instant,
+    streamModeDetails: StreamModeDetails,
     streamName: StreamName,
     streamStatus: StreamStatus,
     tags: Tags,
@@ -41,7 +42,7 @@ object StreamData {
     Decoder[KinesisRecord].circeDecoder
 
   implicit val streamDataCirceEncoder: circe.Encoder[StreamData] =
-    circe.Encoder.forProduct12(
+    circe.Encoder.forProduct13(
       "consumers",
       "encryptionType",
       "enhancedMonitoring",
@@ -50,6 +51,7 @@ object StreamData {
       "shards",
       "streamArn",
       "streamCreationTimestamp",
+      "streamModeDetails",
       "streamName",
       "streamStatus",
       "tags",
@@ -64,6 +66,7 @@ object StreamData {
         x.shards,
         x.streamArn,
         x.streamCreationTimestamp,
+        x.streamModeDetails,
         x.streamName,
         x.streamStatus,
         x.tags,
@@ -88,6 +91,9 @@ object StreamData {
       streamCreationTimestamp <- x
         .downField("streamCreationTimestamp")
         .as[Instant]
+      streamModeDetails <- x
+        .downField("streamModeDetails")
+        .as[StreamModeDetails]
       streamName <- x.downField("streamName").as[StreamName]
       streamStatus <- x.downField("streamStatus").as[StreamStatus]
       tags <- x.downField("tags").as[Tags]
@@ -101,6 +107,7 @@ object StreamData {
       shards,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus,
       tags,
@@ -118,6 +125,7 @@ object StreamData {
       x.shards.toMap === y.shards.toMap &&
       x.streamArn === y.streamArn &&
       x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
+      x.streamModeDetails === y.streamModeDetails &&
       x.streamName === y.streamName &&
       x.streamStatus === y.streamStatus &&
       x.tags === y.tags &&
@@ -127,7 +135,8 @@ object StreamData {
 
   def create(
       shardCount: Int,
-      streamArn: StreamArn
+      streamArn: StreamArn,
+      streamModeDetails: Option[StreamModeDetails]
   ): StreamData = {
     val createTime = Instant.now()
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
@@ -141,6 +150,7 @@ object StreamData {
       shards,
       streamArn,
       Instant.now(),
+      streamModeDetails.getOrElse(StreamModeDetails(StreamMode.PROVISIONED)),
       streamArn.streamName,
       StreamStatus.CREATING,
       Tags.empty,

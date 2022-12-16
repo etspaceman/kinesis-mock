@@ -17,7 +17,7 @@ class DisableEnhancedMonitoringTests
         shardLevelMetrics: ShardLevelMetrics
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val updated = streams.findAndUpdateStream(streamArn)(stream =>
         stream.copy(enhancedMonitoring =

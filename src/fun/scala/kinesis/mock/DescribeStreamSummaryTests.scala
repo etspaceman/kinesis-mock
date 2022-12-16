@@ -30,6 +30,9 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
         )
         .streamName(resources.streamName.streamName)
         .streamStatus(StreamStatus.ACTIVE)
+        .streamModeDetails(
+          StreamModeDetails.builder().streamMode(StreamMode.PROVISIONED).build()
+        )
         .build()
     } yield assert(
       res.streamDescriptionSummary == expected,

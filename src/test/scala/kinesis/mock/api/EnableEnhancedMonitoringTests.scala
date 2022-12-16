@@ -17,7 +17,7 @@ class EnableEnhancedMonitoringTests
         shardLevelMetrics: ShardLevelMetrics
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)

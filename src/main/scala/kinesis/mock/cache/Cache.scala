@@ -148,6 +148,7 @@ class Cache private (
               .createStream(
                 streamsRef,
                 config.shardLimit,
+                config.onDemandStreamCountLimit,
                 region.getOrElse(config.awsRegion),
                 config.awsAccountId
               )
@@ -336,6 +337,7 @@ class Cache private (
             DescribeLimitsResponse
               .get(
                 config.shardLimit,
+                config.onDemandStreamCountLimit,
                 streamsRef,
                 region.getOrElse(config.awsRegion),
                 config.awsAccountId
@@ -1382,6 +1384,53 @@ class Cache private (
                       config.awsAccountId
                     )
                   )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
+                )
+          )
+          .void
+      } yield result)
+  }
+
+  def updateStreamMode(
+      req: UpdateStreamModeRequest,
+      context: LoggingContext,
+      isCbor: Boolean
+  ): IO[Response[Unit]] = {
+    val ctx = context + ("streamArn" -> req.streamArn.streamArn)
+    logger.debug(ctx.context)(
+      "Processing UpdateStreamMode request"
+    ) *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *> (for {
+        result <- req.updateStreamMode(
+          streamsRef,
+          config.onDemandStreamCountLimit
+        )
+        _ <- result.fold(
+          e =>
+            logger
+              .warn(ctx.context, e)(
+                "Updating stream mode was unuccessful"
+              ),
+          _ =>
+            logger.debug(ctx.context)(
+              "Successfully updated stream mode"
+            )
+        )
+        _ <- supervisor
+          .supervise(
+            logger.debug(context.context)(
+              s"Delaying setting the stream to active for ${config.updateStreamModeDuration.toString}"
+            ) *>
+              IO.sleep(config.updateStreamModeDuration) *>
+              logger.debug(context.context)(
+                s"Setting the stream to active"
+              ) *>
+              streamsRef
+                .update(updated =>
+                  updated.findAndUpdateStream(req.streamArn)(x =>
+                    x.copy(streamStatus = StreamStatus.ACTIVE)
+                  )
                 )
           )
           .void

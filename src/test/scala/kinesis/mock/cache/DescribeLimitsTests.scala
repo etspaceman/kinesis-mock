@@ -9,7 +9,10 @@ class DescribeLimitsTests extends munit.CatsEffectSuite {
       cache <- Cache(cacheConfig)
       res <- cache.describeLimits(LoggingContext.create, None).rethrow
     } yield assert(
-      res.openShardCount == 0 && res.shardLimit == cacheConfig.shardLimit,
+      res.openShardCount == 0 &&
+        res.shardLimit == cacheConfig.shardLimit &&
+        res.onDemandStreamCountLimit == cacheConfig.onDemandStreamCountLimit &&
+        res.onDemandStreamCount == 0,
       res
     )
   )

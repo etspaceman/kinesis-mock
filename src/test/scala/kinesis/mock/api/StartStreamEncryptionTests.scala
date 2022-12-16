@@ -16,7 +16,7 @@ class StartStreamEncryptionTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val asActive = streams.findAndUpdateStream(streamArn)(x =>
         x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -55,7 +55,7 @@ class StartStreamEncryptionTests
         streamArn: StreamArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, streamArn)
+          Streams.empty.addStream(1, streamArn, None)
 
         val asActive = streams.findAndUpdateStream(streamArn)(x =>
           x.copy(streamStatus = StreamStatus.ACTIVE)
@@ -87,7 +87,7 @@ class StartStreamEncryptionTests
       streamArn: StreamArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val keyId = keyIdGen.one
 

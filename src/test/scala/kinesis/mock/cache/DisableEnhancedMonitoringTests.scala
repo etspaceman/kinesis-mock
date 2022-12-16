@@ -27,7 +27,7 @@ class DisableEnhancedMonitoringTests
         context = LoggingContext.create
         _ <- cache
           .createStream(
-            CreateStreamRequest(Some(1), streamName),
+            CreateStreamRequest(Some(1), None, streamName),
             context,
             false,
             Some(awsRegion)

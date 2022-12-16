@@ -20,7 +20,7 @@ class RegisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -43,7 +43,7 @@ class RegisterStreamConsumerTests
       consumerArn: ConsumerArn
     ) =>
       val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn)
+        Streams.empty.addStream(1, consumerArn.streamArn, None)
 
       val consumers = SortedMap.from(
         Gen
@@ -77,7 +77,7 @@ class RegisterStreamConsumerTests
         consumerArn: ConsumerArn
       ) =>
         val streams =
-          Streams.empty.addStream(1, consumerArn.streamArn)
+          Streams.empty.addStream(1, consumerArn.streamArn, None)
 
         val consumers = SortedMap.from(
           Gen

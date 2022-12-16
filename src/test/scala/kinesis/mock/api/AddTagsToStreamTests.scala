@@ -20,7 +20,7 @@ class AddTagsToStreamTests
         tags: Tags
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -44,7 +44,7 @@ class AddTagsToStreamTests
       streamArn: StreamArn,
     ) =>
       val streams =
-        Streams.empty.addStream(1, streamArn)
+        Streams.empty.addStream(1, streamArn, None)
 
       val tagKey = tagKeyGen.one
       val tagValue = tagValueGen.one

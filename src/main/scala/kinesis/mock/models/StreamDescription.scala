@@ -18,6 +18,7 @@ final case class StreamDescription(
     shards: Vector[ShardSummary],
     streamArn: StreamArn,
     streamCreationTimestamp: Instant,
+    streamModeDetails: StreamModeDetails,
     streamName: StreamName,
     streamStatus: StreamStatus
 )
@@ -53,6 +54,7 @@ object StreamDescription {
       shards.map(ShardSummary.fromShard),
       streamData.streamArn,
       streamData.streamCreationTimestamp,
+      streamData.streamModeDetails,
       streamData.streamName,
       streamData.streamStatus
     )
@@ -61,7 +63,7 @@ object StreamDescription {
   def streamDescriptionCirceEncoder(implicit
       EI: circe.Encoder[Instant]
   ): circe.Encoder[StreamDescription] =
-    circe.Encoder.forProduct10(
+    circe.Encoder.forProduct11(
       "EncryptionType",
       "EnhancedMonitoring",
       "HasMoreShards",
@@ -70,6 +72,7 @@ object StreamDescription {
       "Shards",
       "StreamARN",
       "StreamCreationTimestamp",
+      "StreamModeDetails",
       "StreamName",
       "StreamStatus"
     )(x =>
@@ -82,6 +85,7 @@ object StreamDescription {
         x.shards,
         x.streamArn,
         x.streamCreationTimestamp,
+        x.streamModeDetails,
         x.streamName,
         x.streamStatus
       )
@@ -105,6 +109,9 @@ object StreamDescription {
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Instant]
+      streamModeDetails <- x
+        .downField("StreamModeDetails")
+        .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
     } yield StreamDescription(
@@ -116,6 +123,7 @@ object StreamDescription {
       shards,
       streamArn,
       streamCreationTimestamp,
+      streamModeDetails,
       streamName,
       streamStatus
     )
