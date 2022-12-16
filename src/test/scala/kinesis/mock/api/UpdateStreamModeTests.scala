@@ -45,10 +45,10 @@ class UpdateStreamModeTests
         val streams =
           Streams.empty.addStream(1, streamArn, None)
 
-      val active: Streams =
-        streams.findAndUpdateStream(streamArn)(s =>
-          s.copy(streamStatus = StreamStatus.ACTIVE)
-        )
+        val active: Streams =
+          streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(streamStatus = StreamStatus.ACTIVE)
+          )
 
         for {
           streamsRef <- Ref.of[IO, Streams](active)
