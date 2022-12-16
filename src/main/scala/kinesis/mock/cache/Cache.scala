@@ -1420,9 +1420,9 @@ class Cache private (
         _ <- supervisor
           .supervise(
             logger.debug(context.context)(
-              s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
+              s"Delaying setting the stream to active for ${config.updateStreamModeDuration.toString}"
             ) *>
-              IO.sleep(config.updateShardCountDuration) *>
+              IO.sleep(config.updateStreamModeDuration) *>
               logger.debug(context.context)(
                 s"Setting the stream to active"
               ) *>
