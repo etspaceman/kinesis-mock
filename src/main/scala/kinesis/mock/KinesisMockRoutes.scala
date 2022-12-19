@@ -180,6 +180,7 @@ class KinesisMockRoutes(cache: Cache) {
                   Authorization=AWS4-HMAC-SHA256 Credential=mock-kinesis-access-key/20210402/us-east-1/kinesis/aws4_request, SignedHeaders=amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, Signature=4a789f84587c3592d3ebd2fcc25e2cdcbc01bc3312771f5170b253ab6a5fedb6
                    */
                   val authParsed = authHeader.value
+                    .replace(",", ", ")
                     .split(" ")
                     .toVector
                     .map(_.replace(",", ""))
