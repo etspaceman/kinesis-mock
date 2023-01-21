@@ -41,7 +41,7 @@ class AddTagsToStreamTests
 
   test("It should overwrite tags to a stream")(PropF.forAllF {
     (
-      streamArn: StreamArn,
+      streamArn: StreamArn
     ) =>
       val streams =
         Streams.empty.addStream(1, streamArn, None)
