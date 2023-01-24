@@ -20,12 +20,14 @@ class PutRecordTests extends AwsFunctionalTests {
         putRecordRequestArb.arbitrary
           .take(20)
           .toVector
-          .map(_.copy(streamName = resources.streamName))
+          .map(
+            _.copy(streamName = Some(resources.streamName), streamArn = None)
+          )
           .map(x =>
             PutRecordRequest
               .builder()
               .partitionKey(x.partitionKey)
-              .streamName(x.streamName.streamName)
+              .streamName(resources.streamName.streamName)
               .data(SdkBytes.fromByteArray(x.data))
               .maybeTransform(x.explicitHashKey)(_.explicitHashKey(_))
               .maybeTransform(x.sequenceNumberForOrdering)((req, sequenceNum) =>

@@ -45,7 +45,8 @@ class PutRecordsTests
             putRecordsRequestEntryArb.arbitrary
               .take(5)
               .toVector,
-            streamName
+            Some(streamName),
+            None
           )
         )
         _ <- cache.putRecords(req, context, false, Some(awsRegion)).rethrow
