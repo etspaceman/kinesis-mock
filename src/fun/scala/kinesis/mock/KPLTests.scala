@@ -32,6 +32,8 @@ class KPLTests extends AwsFunctionalTests {
                 .setKinesisPort(4567L) // KPL only supports TLS
                 .setCloudwatchEndpoint("localhost")
                 .setCloudwatchPort(4566L)
+                .setStsEndpoint("localhost")
+                .setStsPort(4566L)
                 .setVerifyCertificate(false)
             )
           )

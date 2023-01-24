@@ -18,55 +18,73 @@ final case class PutRecordRequest(
     explicitHashKey: Option[String],
     partitionKey: String,
     sequenceNumberForOrdering: Option[SequenceNumber],
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def putRecord(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[PutRecordResponse]] = streamsRef.modify { streams =>
-    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
-    val now = Instant.now()
-    CommonValidations
-      .validateStreamName(streamName)
-      .flatMap(_ =>
-        CommonValidations
-          .findStream(streamArn, streams)
-          .flatMap { stream =>
-            (
-              CommonValidations.isStreamActiveOrUpdating(streamArn, streams),
-              CommonValidations.validateData(data),
-              sequenceNumberForOrdering match {
-                case None => Right(())
-                case Some(seqNo) =>
-                  seqNo.parse.flatMap {
-                    case parts: SequenceNumberParts
-                        if parts.seqTime.toEpochMilli > now.toEpochMilli =>
-                      InvalidArgumentException(
-                        s"Sequence time in the future"
-                      ).asLeft
-                    case x => Right(x)
-                  }
-              },
-              CommonValidations.validatePartitionKey(partitionKey),
-              explicitHashKey match {
-                case Some(explHashKeh) =>
-                  CommonValidations.validateExplicitHashKey(explHashKeh)
-                case None => Right(())
-              },
-              CommonValidations
-                .computeShard(partitionKey, explicitHashKey, stream)
-                .flatMap { case (shard, records) =>
-                  CommonValidations
-                    .isShardOpen(shard)
-                    .map(_ => (shard, records))
+    val streamNameArn: Response[(StreamName, StreamArn)] =
+      (streamName, streamArn) match {
+        case (_, Some(arn)) =>
+          Right((arn.streamName, arn))
+        case (Some(name), _) =>
+          Right((name, StreamArn(awsRegion, name, awsAccountId)))
+        case _ =>
+          Left(
+            InvalidArgumentException(
+              "Neither streamArn or streamName was provided"
+            )
+          )
+      }
 
+    val now = Instant.now()
+    streamNameArn
+      .flatMap { case (name, arn) =>
+        CommonValidations
+          .validateStreamName(name)
+          .flatMap(_ =>
+            CommonValidations
+              .findStream(arn, streams)
+              .flatMap { stream =>
+                (
+                  CommonValidations
+                    .isStreamActiveOrUpdating(arn, streams),
+                  CommonValidations.validateData(data),
+                  sequenceNumberForOrdering match {
+                    case None => Right(())
+                    case Some(seqNo) =>
+                      seqNo.parse.flatMap {
+                        case parts: SequenceNumberParts
+                            if parts.seqTime.toEpochMilli > now.toEpochMilli =>
+                          InvalidArgumentException(
+                            s"Sequence time in the future"
+                          ).asLeft
+                        case x => Right(x)
+                      }
+                  },
+                  CommonValidations.validatePartitionKey(partitionKey),
+                  explicitHashKey match {
+                    case Some(explHashKeh) =>
+                      CommonValidations.validateExplicitHashKey(explHashKeh)
+                    case None => Right(())
+                  },
+                  CommonValidations
+                    .computeShard(partitionKey, explicitHashKey, stream)
+                    .flatMap { case (shard, records) =>
+                      CommonValidations
+                        .isShardOpen(shard)
+                        .map(_ => (shard, records))
+
+                    }
+                ).mapN { case (_, _, _, _, _, (shard, records)) =>
+                  (stream, shard, records)
                 }
-            ).mapN { case (_, _, _, _, _, (shard, records)) =>
-              (stream, shard, records)
-            }
-          }
-      )
+              }
+          )
+      }
       .map { case (stream, shard, records) =>
         val seqNo = SequenceNumber.create(
           shard.createdAtTimestamp,
@@ -102,19 +120,21 @@ final case class PutRecordRequest(
 
 object PutRecordRequest {
   implicit val purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
-    circe.Encoder.forProduct5(
+    circe.Encoder.forProduct6(
       "Data",
       "ExplicitHashKey",
       "PartitionKey",
       "SequenceNumberForOrdering",
-      "StreamName"
+      "StreamName",
+      "StreamARN"
     )(x =>
       (
         x.data,
         x.explicitHashKey,
         x.partitionKey,
         x.sequenceNumberForOrdering,
-        x.streamName
+        x.streamName,
+        x.streamArn
       )
     )
 
@@ -127,13 +147,15 @@ object PutRecordRequest {
         sequenceNumberForOrdering <- x
           .downField("SequenceNumberForOrdering")
           .as[Option[SequenceNumber]]
-        streamName <- x.downField("StreamName").as[StreamName]
+        streamName <- x.downField("StreamName").as[Option[StreamName]]
+        streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       } yield PutRecordRequest(
         data,
         explicitHashKey,
         partitionKey,
         sequenceNumberForOrdering,
-        streamName
+        streamName,
+        streamArn
       )
 
   implicit val putRecordRequestEncoder: Encoder[PutRecordRequest] =

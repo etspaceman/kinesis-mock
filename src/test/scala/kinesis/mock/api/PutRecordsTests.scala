@@ -25,7 +25,8 @@ class PutRecordsTests
         )
 
       val req = initReq.copy(
-        streamName = streamArn.streamName
+        streamArn = Some(streamArn),
+        streamName = None
       )
 
       val predictedShards = req.records.map(entry =>
@@ -69,7 +70,8 @@ class PutRecordsTests
           Streams.empty.addStream(1, streamArn, None)
 
         val req = initReq.copy(
-          streamName = streamArn.streamName
+          streamArn = Some(streamArn),
+          streamName = None
         )
 
         for {
@@ -103,7 +105,8 @@ class PutRecordsTests
         )
 
         val req = initReq.copy(
-          streamName = streamArn.streamName
+          streamArn = Some(streamArn),
+          streamName = None
         )
 
         for {

@@ -751,13 +751,18 @@ object arbitrary {
       explicitHashKey <- Gen.option(explicitHashKeyGen)
       partitionKey <- partitionKeyGen
       sequenceNumberForOrdering <- Gen.option(sequenceNumberArbitrary.arbitrary)
-      streamName <- streamNameGen
+      nameOrArn <- Gen.choose(1, 2)
+      streamName <-
+        if (nameOrArn == 1) streamNameGen.map(Some(_)) else Gen.const(None)
+      streamArn <-
+        if (nameOrArn == 2) streamArnGen.map(Some(_)) else Gen.const(None)
     } yield PutRecordRequest(
       data,
       explicitHashKey,
       partitionKey,
       sequenceNumberForOrdering,
-      streamName
+      streamName,
+      streamArn
     )
   )
 
@@ -785,8 +790,12 @@ object arbitrary {
         recordsSize,
         putRecordsRequestEntryArb.arbitrary
       )
-      streamName <- streamNameGen
-    } yield PutRecordsRequest(records, streamName)
+      nameOrArn <- Gen.choose(1, 2)
+      streamName <-
+        if (nameOrArn == 1) streamNameGen.map(Some(_)) else Gen.const(None)
+      streamArn <-
+        if (nameOrArn == 2) streamArnGen.map(Some(_)) else Gen.const(None)
+    } yield PutRecordsRequest(records, streamName, streamArn)
   )
 
   implicit val putRecordsResultEntry: Arbitrary[PutRecordsResultEntry] =

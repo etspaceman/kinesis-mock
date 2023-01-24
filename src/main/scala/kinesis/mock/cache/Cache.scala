@@ -1147,7 +1147,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[PutRecordResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecord request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
@@ -1181,7 +1184,9 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[PutRecordsResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx = context ++
+      req.streamName.map(x => "streamName" -> x.streamName).toList ++
+      req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     for {
       _ <- logger.debug(ctx.context)("Processing PutRecords request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(

@@ -24,7 +24,8 @@ class PutRecordTests
         )
 
       val req = initReq.copy(
-        streamName = streamArn.streamName
+        streamArn = Some(streamArn),
+        streamName = None
       )
 
       for {
@@ -55,7 +56,8 @@ class PutRecordTests
           Streams.empty.addStream(1, streamArn, None)
 
         val req = initReq.copy(
-          streamName = streamArn.streamName
+          streamArn = Some(streamArn),
+          streamName = None
         )
 
         for {
@@ -89,7 +91,8 @@ class PutRecordTests
         )
 
         val req = initReq.copy(
-          streamName = streamArn.streamName
+          streamArn = Some(streamArn),
+          streamName = None
         )
 
         for {

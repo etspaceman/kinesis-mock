@@ -44,7 +44,7 @@ class PutRecordTests
           putRecordRequestArb.arbitrary
             .take(5)
             .toVector
-            .map(_.copy(streamName = streamName))
+            .map(_.copy(streamName = Some(streamName), streamArn = None))
         )
         _ <- recordRequests.traverse(req =>
           cache.putRecord(req, context, false, Some(awsRegion)).rethrow
