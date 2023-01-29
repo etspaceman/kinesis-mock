@@ -29,14 +29,13 @@ final case class GetRecordsRequest(
           CommonValidations
             .findStream(streamArn, streams)
             .flatMap(stream =>
-              CommonValidations.findShard(parts.shardId, stream).flatMap { case (shard, data) =>
-                (limit match {
-                  case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Right(())
-                }).flatMap { _ =>
-                  CommonValidations
-                    .isShardOpen(shard)
-                    .flatMap { _ =>
+              CommonValidations.findShard(parts.shardId, stream).flatMap {
+                case (shard, data) =>
+                  (limit match {
+                    case Some(l) => CommonValidations.validateLimit(l)
+                    case None    => Right(())
+                  }).flatMap {
+                    _ =>
                       val allShards = stream.shards.keys.toVector
                       val childShards = allShards
                         .filter(_.parentShardId.contains(shard.shardId.shardId))
@@ -151,8 +150,8 @@ final case class GetRecordsRequest(
                           }
                         }
                       }
-                    }
-                }
+
+                  }
               }
             )
         )
