@@ -25,21 +25,9 @@ final case class PutRecordsRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[PutRecordsResponse]] =
     streamsRef.modify[Response[PutRecordsResponse]] { streams =>
-      val streamNameArn: Response[(StreamName, StreamArn)] =
-        (streamName, streamArn) match {
-          case (_, Some(arn)) =>
-            Right((arn.streamName, arn))
-          case (Some(name), _) =>
-            Right((name, StreamArn(awsRegion, name, awsAccountId)))
-          case _ =>
-            Left(
-              InvalidArgumentException(
-                "Neither streamArn or streamName was provided"
-              )
-            )
-        }
       val now = Instant.now()
-      streamNameArn
+      CommonValidations
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
         .flatMap { case (name, arn) =>
           CommonValidations
             .validateStreamName(name)
@@ -173,5 +161,6 @@ object PutRecordsRequest {
 
   implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
     x.records === y.records &&
-      x.streamName == y.streamName
+      x.streamName == y.streamName &&
+      x.streamArn == y.streamArn
 }

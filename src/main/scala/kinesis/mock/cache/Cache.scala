@@ -26,6 +26,22 @@ class Cache private (
 
   val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
+  private def getStreamArn(
+      streamArn: Option[StreamArn],
+      streamName: Option[StreamName],
+      region: Option[AwsRegion]
+  ): IO[StreamArn] = IO.fromOption(
+    streamArn.orElse(
+      streamName.map(name =>
+        StreamArn(
+          region.getOrElse(config.awsRegion),
+          name,
+          config.awsAccountId
+        )
+      )
+    )
+  )(new RuntimeException("Unexpected outcome recreating StreamArn"))
+
   private def getSemaphores(region: Option[AwsRegion]): IO[CacheSemaphores] =
     region match {
       case None => semaphores.get.map(_(config.awsRegion))
@@ -49,7 +65,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)("Processing AddTagsToStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
@@ -92,7 +111,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)("Processing RemoveTagsFromStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
@@ -203,7 +225,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)("Processing DeleteStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
@@ -228,22 +253,21 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                logger.debug(ctx.context)(
-                  s"Delaying removing the stream for ${config.deleteStreamDuration.toString}"
-                ) *>
-                  IO.sleep(config.deleteStreamDuration) *>
-                  logger.debug(ctx.context)(
-                    s"Removing stream"
-                  ) *>
-                  streamsRef.update(x =>
-                    x.removeStream(
-                      StreamArn(
-                        region.getOrElse(config.awsRegion),
-                        req.streamName,
-                        config.awsAccountId
-                      )
-                    )
+                for {
+                  _ <- logger.debug(ctx.context)(
+                    s"Delaying removing the stream for ${config.deleteStreamDuration.toString}"
                   )
+                  _ <- IO.sleep(config.deleteStreamDuration)
+                  _ <- logger.debug(ctx.context)(
+                    s"Removing stream"
+                  )
+                  streamArn <- getStreamArn(
+                    req.streamArn,
+                    req.streamName,
+                    region
+                  )
+                  _ <- streamsRef.update(x => x.removeStream(streamArn))
+                } yield ()
               )
               .void
           } yield deleteStreamRes,
@@ -266,7 +290,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing DecreaseStreamRetentionPeriod request"
     ) *>
@@ -299,7 +326,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing IncreaseStreamRetentionPeriod request"
     ) *>
@@ -370,7 +400,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[DescribeStreamResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing DescribeStream request"
     ) *>
@@ -420,7 +453,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[DescribeStreamSummaryResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing DescribeStreamSummary request"
     ) *>
@@ -681,7 +717,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[DisableEnhancedMonitoringResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing DisableEnhancedMonitoring request"
     ) *>
@@ -720,7 +759,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[EnableEnhancedMonitoringResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing EnableEnhancedMonitoring request"
     ) *>
@@ -902,7 +944,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[ListTagsForStreamResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing ListTagsForStream request"
     ) *>
@@ -954,7 +999,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing StartStreamEncryption request"
     ) *>
@@ -981,23 +1029,26 @@ class Cache private (
                   "Successfully started stream encryption"
                 ) *> supervisor
                   .supervise(
-                    logger.debug(context.context)(
-                      s"Delaying setting the stream to active for ${config.startStreamEncryptionDuration.toString}"
-                    ) *>
-                      IO.sleep(config.startStreamEncryptionDuration) *>
-                      logger.debug(context.context)(
+                    for {
+                      _ <- logger.debug(context.context)(
+                        s"Delaying setting the stream to active for ${config.startStreamEncryptionDuration.toString}"
+                      )
+                      _ <- IO.sleep(config.startStreamEncryptionDuration)
+                      _ <- logger.debug(context.context)(
                         s"Setting the stream to active"
-                      ) *>
-                      streamsRef
+                      )
+                      streamArn <- getStreamArn(
+                        req.streamArn,
+                        req.streamName,
+                        region
+                      )
+                      _ <- streamsRef
                         .update(updated =>
                           updated.findAndUpdateStream(
-                            StreamArn(
-                              region.getOrElse(config.awsRegion),
-                              req.streamName,
-                              config.awsAccountId
-                            )
+                            streamArn
                           )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                         )
+                    } yield ()
                   )
                   .as(response)
             )
@@ -1010,7 +1061,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing StopStreamEncryption request"
     ) *>
@@ -1038,23 +1092,26 @@ class Cache private (
                 ) *>
                   supervisor
                     .supervise(
-                      logger.debug(context.context)(
-                        s"Delaying setting the stream to active for ${config.stopStreamEncryptionDuration.toString}"
-                      ) *>
-                        IO.sleep(config.stopStreamEncryptionDuration) *>
-                        logger.debug(context.context)(
+                      for {
+                        _ <- logger.debug(context.context)(
+                          s"Delaying setting the stream to active for ${config.stopStreamEncryptionDuration.toString}"
+                        )
+                        _ <- IO.sleep(config.stopStreamEncryptionDuration)
+                        _ <- logger.debug(context.context)(
                           s"Setting the stream to active"
-                        ) *>
-                        streamsRef
+                        )
+                        streamArn <- getStreamArn(
+                          req.streamArn,
+                          req.streamName,
+                          region
+                        )
+                        _ <- streamsRef
                           .update(updated =>
                             updated.findAndUpdateStream(
-                              StreamArn(
-                                region.getOrElse(config.awsRegion),
-                                req.streamName,
-                                config.awsAccountId
-                              )
+                              streamArn
                             )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                           )
+                      } yield ()
                     )
                     .void
                     .as(response)
@@ -1069,7 +1126,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[GetShardIteratorResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing GetShardIterator request"
     ) *>
@@ -1220,7 +1280,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing MergeShards request"
     ) *>
@@ -1248,23 +1311,26 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                logger.debug(context.context)(
-                  s"Delaying setting the stream to active for ${config.mergeShardsDuration.toString}"
-                ) *>
-                  IO.sleep(config.mergeShardsDuration) *>
-                  logger.debug(context.context)(
+                for {
+                  _ <- logger.debug(context.context)(
+                    s"Delaying setting the stream to active for ${config.mergeShardsDuration.toString}"
+                  )
+                  _ <- IO.sleep(config.mergeShardsDuration)
+                  _ <- logger.debug(context.context)(
                     s"Setting the stream to active"
-                  ) *>
-                  streamsRef
+                  )
+                  streamArn <- getStreamArn(
+                    req.streamArn,
+                    req.streamName,
+                    region
+                  )
+                  _ <- streamsRef
                     .update(updated =>
                       updated.findAndUpdateStream(
-                        StreamArn(
-                          region.getOrElse(config.awsRegion),
-                          req.streamName,
-                          config.awsAccountId
-                        )
+                        streamArn
                       )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                     )
+                } yield ()
               )
               .void
           } yield result,
@@ -1283,7 +1349,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing SplitShard request"
     ) *>
@@ -1312,23 +1381,27 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                logger.debug(context.context)(
-                  s"Delaying setting the stream to active for ${config.splitShardDuration.toString}"
-                ) *>
-                  IO.sleep(config.splitShardDuration) *>
-                  logger.debug(context.context)(
+                for {
+                  _ <- logger.debug(context.context)(
+                    s"Delaying setting the stream to active for ${config.splitShardDuration.toString}"
+                  )
+                  _ <- IO.sleep(config.splitShardDuration)
+                  _ <- logger.debug(context.context)(
                     s"Setting the stream to active"
-                  ) *>
-                  streamsRef
+                  )
+                  streamArn <- getStreamArn(
+                    req.streamArn,
+                    req.streamName,
+                    region
+                  )
+                  _ <- streamsRef
                     .update(updated =>
                       updated.findAndUpdateStream(
-                        StreamArn(
-                          region.getOrElse(config.awsRegion),
-                          req.streamName,
-                          config.awsAccountId
-                        )
+                        streamArn
                       )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                     )
+
+                } yield ()
               )
               .void
           } yield result,
@@ -1347,7 +1420,10 @@ class Cache private (
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[UpdateShardCountResponse]] = {
-    val ctx = context + ("streamName" -> req.streamName.streamName)
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
     logger.debug(ctx.context)(
       "Processing UpdateShardCount request"
     ) *>
@@ -1373,23 +1449,22 @@ class Cache private (
         )
         _ <- supervisor
           .supervise(
-            logger.debug(context.context)(
-              s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
-            ) *>
-              IO.sleep(config.updateShardCountDuration) *>
-              logger.debug(context.context)(
+            for {
+              _ <- logger.debug(context.context)(
+                s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
+              )
+              _ <- IO.sleep(config.updateShardCountDuration)
+              _ <- logger.debug(context.context)(
                 s"Setting the stream to active"
-              ) *>
-              streamsRef
+              )
+              streamArn <- getStreamArn(req.streamArn, req.streamName, region)
+              _ <- streamsRef
                 .update(updated =>
                   updated.findAndUpdateStream(
-                    StreamArn(
-                      region.getOrElse(config.awsRegion),
-                      req.streamName,
-                      config.awsAccountId
-                    )
+                    streamArn
                   )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                 )
+            } yield ()
           )
           .void
       } yield result)

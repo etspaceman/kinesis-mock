@@ -26,7 +26,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           10
         )
 
@@ -79,7 +80,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           5
         )
 
@@ -135,7 +137,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           firstRoundShardCount
         )
       val finalShardCount = req.targetShardCount / 2
@@ -223,7 +226,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           firstRoundShardCount
         )
       val finalShardCount = req.targetShardCount * 2
@@ -308,7 +312,8 @@ class UpdateShardCountTests
         val req =
           UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             11
           )
 
@@ -339,7 +344,8 @@ class UpdateShardCountTests
         val req =
           UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             4
           )
 
@@ -369,7 +375,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           10
         )
 
@@ -394,7 +401,8 @@ class UpdateShardCountTests
       val req =
         UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           10
         )
 

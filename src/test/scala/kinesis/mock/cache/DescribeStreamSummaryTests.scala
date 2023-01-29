@@ -35,7 +35,7 @@ class DescribeStreamSummaryTests
           .rethrow
         res <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)

@@ -20,7 +20,6 @@ object arbitrary {
   implicit val awsAccountIdArb: Arbitrary[AwsAccountId] = Arbitrary(
     awsAccountIdGen
   )
-
   def arnPrefixGen(service: String, part: String): Gen[String] = for {
     accountId <- awsAccountIdGen
     region <- Arbitrary.arbitrary[AwsRegion]
@@ -46,6 +45,12 @@ object arbitrary {
   } yield StreamArn(awsRegion, streamName, awsAccountId)
 
   implicit val streamArnArb: Arbitrary[StreamArn] = Arbitrary(streamArnGen)
+
+  val streamNameOrArnGen: Gen[(Option[StreamName], Option[StreamArn])] = for {
+    streamName <- Gen.option(streamNameGen)
+    streamArn <-
+      if (streamName.isEmpty) streamArnGen.map(Some(_)) else Gen.const(None)
+  } yield (streamName, streamArn)
 
   val nowGen: Gen[Instant] = Gen.delay(Gen.const(Instant.now()))
 
@@ -245,9 +250,9 @@ object arbitrary {
   implicit val addTagsToStreamRequestArbitrary
       : Arbitrary[AddTagsToStreamRequest] = Arbitrary(
     for {
-      streamName <- streamNameGen
+      (streamName, streamArn) <- streamNameOrArnGen
       tags <- tagsGen
-    } yield AddTagsToStreamRequest(streamName, tags)
+    } yield AddTagsToStreamRequest(streamName, streamArn, tags)
   )
 
   implicit val streamModeDetailsArb: Arbitrary[StreamModeDetails] = Arbitrary(
@@ -273,19 +278,24 @@ object arbitrary {
       : Arbitrary[DecreaseStreamRetentionPeriodRequest] = Arbitrary(
     for {
       retentionPeriodHours <- retentionPeriodHoursGen
-      streamName <- streamNameGen
+      (streamName, streamArn) <- streamNameOrArnGen
     } yield DecreaseStreamRetentionPeriodRequest(
       retentionPeriodHours,
-      streamName
+      streamName,
+      streamArn
     )
   )
 
   implicit val deleteStreamRequestArb: Arbitrary[DeleteStreamRequest] =
     Arbitrary(
       for {
-        streamName <- streamNameGen
+        (streamName, streamArn) <- streamNameOrArnGen
         enforceConsumerDeletion <- Gen.option(Arbitrary.arbitrary[Boolean])
-      } yield DeleteStreamRequest(streamName, enforceConsumerDeletion)
+      } yield DeleteStreamRequest(
+        streamName,
+        streamArn,
+        enforceConsumerDeletion
+      )
     )
 
   implicit val deregisterStreamConsumerRequestArb
@@ -402,13 +412,20 @@ object arbitrary {
   )
 
   implicit val describeStreamRequestArb: Arbitrary[DescribeStreamRequest] =
-    Arbitrary(for {
-      exclusiveStartShardId <- Gen.option(
-        shardIdArbitrary.arbitrary.map(_.shardId)
+    Arbitrary(
+      for {
+        exclusiveStartShardId <- Gen.option(
+          shardIdArbitrary.arbitrary.map(_.shardId)
+        )
+        limit <- Gen.option(limitGen)
+        (streamName, streamArn) <- streamNameOrArnGen
+      } yield DescribeStreamRequest(
+        exclusiveStartShardId,
+        limit,
+        streamName,
+        streamArn
       )
-      limit <- Gen.option(limitGen)
-      streamName <- streamNameGen
-    } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName))
+    )
 
   implicit val describeStreamResponseArb: Arbitrary[DescribeStreamResponse] =
     Arbitrary(
@@ -417,7 +434,9 @@ object arbitrary {
 
   implicit val describeStreamSummaryRequestArb
       : Arbitrary[DescribeStreamSummaryRequest] = Arbitrary(
-    streamNameGen.map(DescribeStreamSummaryRequest.apply)
+    streamNameOrArnGen.map { case (streamName, streamArn) =>
+      DescribeStreamSummaryRequest(streamName, streamArn)
+    }
   )
 
   implicit val streamDescriptionSummaryArb
@@ -471,8 +490,12 @@ object arbitrary {
       shardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
         _.shardLevelMetrics
       )
-      streamName <- streamNameGen
-    } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield DisableEnhancedMonitoringRequest(
+      shardLevelMetrics,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val disableEnhancedMonitoringResponseArb
@@ -484,11 +507,12 @@ object arbitrary {
       desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
         _.shardLevelMetrics
       )
-      streamName <- streamNameGen
+      streamArn <- streamArnGen
     } yield DisableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,
-      streamName
+      streamArn.streamName,
+      streamArn
     )
   )
 
@@ -498,8 +522,12 @@ object arbitrary {
       shardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
         _.shardLevelMetrics
       )
-      streamName <- streamNameGen
-    } yield EnableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield EnableEnhancedMonitoringRequest(
+      shardLevelMetrics,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val enableEnhancedMonitoringResponseArb
@@ -511,11 +539,12 @@ object arbitrary {
       desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
         _.shardLevelMetrics
       )
-      streamName <- streamNameGen
+      streamArn <- streamArnGen
     } yield EnableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,
-      streamName
+      streamArn.streamName,
+      streamArn
     )
   )
 
@@ -529,7 +558,14 @@ object arbitrary {
     for {
       limit <- Gen.option(limitGen)
       shardIterator <- shardIteratorGen
-    } yield GetRecordsRequest(limit, shardIterator)
+      streamArn <- Gen.option(
+        streamArnGen.map(x =>
+          x.copy(streamName =
+            shardIterator.parse.map(_.streamName).getOrElse(x.streamName)
+          )
+        )
+      )
+    } yield GetRecordsRequest(limit, shardIterator, streamArn)
   )
 
   val childShardGen: Gen[ChildShard] = for {
@@ -574,7 +610,7 @@ object arbitrary {
             sequenceNumberArbitrary.arbitrary.map(x => Some(x))
           case _ => Gen.const(None)
         }
-        streamName <- streamNameGen
+        (streamName, streamArn) <- streamNameOrArnGen
         timestamp <- shardIteratorType match {
           case ShardIteratorType.AT_TIMESTAMP => nowGen.map(x => Some(x))
           case _                              => Gen.const(None)
@@ -584,6 +620,7 @@ object arbitrary {
         shardIteratorType,
         startingSequenceNumber,
         streamName,
+        streamArn,
         timestamp
       )
     )
@@ -597,10 +634,11 @@ object arbitrary {
       : Arbitrary[IncreaseStreamRetentionPeriodRequest] = Arbitrary(
     for {
       retentionPeriodHours <- retentionPeriodHoursGen
-      streamName <- streamNameGen
+      (streamName, streamArn) <- streamNameOrArnGen
     } yield IncreaseStreamRetentionPeriodRequest(
       retentionPeriodHours,
-      streamName
+      streamName,
+      streamArn
     )
   )
 
@@ -647,13 +685,16 @@ object arbitrary {
       )
       streamCreationTimestamp <- Gen.option(nowGen)
       streamName <- Gen.option(streamNameGen)
+      streamArn <-
+        if (streamName.isEmpty) Gen.option(streamArnGen) else Gen.const(None)
     } yield ListShardsRequest(
       exclusiveStartShardId.map(_.shardId),
       maxResults,
       nextToken,
       shardFilter,
       streamCreationTimestamp,
-      streamName
+      streamName,
+      streamArn
     )
   )
 
@@ -714,8 +755,13 @@ object arbitrary {
     for {
       exclusiveStartTagKey <- Gen.option(tagKeyGen)
       limit <- Gen.option(limitGen)
-      streamName <- streamNameGen
-    } yield ListTagsForStreamRequest(exclusiveStartTagKey, limit, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield ListTagsForStreamRequest(
+      exclusiveStartTagKey,
+      limit,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val listTagsForStreamResponseArb
@@ -732,11 +778,12 @@ object arbitrary {
       shardToMerge <- shardIdArbitrary.arbitrary.suchThat(
         _ != adjacentShardToMerge
       )
-      streamName <- streamNameGen
+      (streamName, streamArn) <- streamNameOrArnGen
     } yield MergeShardsRequest(
       adjacentShardToMerge.shardId,
       shardToMerge.shardId,
-      streamName
+      streamName,
+      streamArn
     )
   )
 
@@ -857,8 +904,13 @@ object arbitrary {
         _.startingHashKey.toString
       )
       shardToSplit <- shardIdArbitrary.arbitrary.map(_.shardId)
-      streamName <- streamNameGen
-    } yield SplitShardRequest(newStartingHashKey, shardToSplit, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield SplitShardRequest(
+      newStartingHashKey,
+      shardToSplit,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val startStreamEncryptionRequestArb
@@ -866,8 +918,13 @@ object arbitrary {
     for {
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       keyId <- keyIdGen
-      streamName <- streamNameGen
-    } yield StartStreamEncryptionRequest(encryptionType, keyId, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield StartStreamEncryptionRequest(
+      encryptionType,
+      keyId,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val stopStreamEncryptionRequestArb
@@ -875,17 +932,27 @@ object arbitrary {
     for {
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
       keyId <- keyIdGen
-      streamName <- streamNameGen
-    } yield StopStreamEncryptionRequest(encryptionType, keyId, streamName)
+      (streamName, streamArn) <- streamNameOrArnGen
+    } yield StopStreamEncryptionRequest(
+      encryptionType,
+      keyId,
+      streamName,
+      streamArn
+    )
   )
 
   implicit val updateShardCountRequestArb: Arbitrary[UpdateShardCountRequest] =
     Arbitrary(
       for {
         scalingType <- Arbitrary.arbitrary[ScalingType]
-        streamName <- streamNameGen
+        (streamName, streamArn) <- streamNameOrArnGen
         targetShardCount <- Gen.choose(1, 1000)
-      } yield UpdateShardCountRequest(scalingType, streamName, targetShardCount)
+      } yield UpdateShardCountRequest(
+        scalingType,
+        streamName,
+        streamArn,
+        targetShardCount
+      )
     )
 
   implicit val updateShardCountResponseArb

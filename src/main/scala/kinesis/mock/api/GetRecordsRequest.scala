@@ -14,7 +14,8 @@ import kinesis.mock.validations.CommonValidations
 
 final case class GetRecordsRequest(
     limit: Option[Int],
-    shardIterator: ShardIterator
+    shardIterator: ShardIterator,
+    streamArn: Option[StreamArn]
 ) {
   def getRecords(
       streamsRef: Ref[IO, Streams],
@@ -22,12 +23,14 @@ final case class GetRecordsRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[GetRecordsResponse]] = streamsRef.get.map { streams =>
     shardIterator.parse.flatMap { parts =>
-      val streamArn = StreamArn(awsRegion, parts.streamName, awsAccountId)
+      val arn = streamArn.getOrElse(
+        StreamArn(awsRegion, parts.streamName, awsAccountId)
+      )
       CommonValidations
-        .isStreamActiveOrUpdating(streamArn, streams)
+        .isStreamActiveOrUpdating(arn, streams)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamArn, streams)
+            .findStream(arn, streams)
             .flatMap(stream =>
               CommonValidations.findShard(parts.shardId, stream).flatMap {
                 case (shard, data) =>
@@ -182,8 +185,8 @@ object GetRecordsRequest {
   }
 
   implicit val getRecordsRequestCirceEncoder: circe.Encoder[GetRecordsRequest] =
-    circe.Encoder.forProduct2("Limit", "ShardIterator")(x =>
-      (x.limit, x.shardIterator)
+    circe.Encoder.forProduct3("Limit", "ShardIterator", "StreamARN")(x =>
+      (x.limit, x.shardIterator, x.streamArn)
     )
 
   implicit val getRecordsRequestCirceDecoder: circe.Decoder[GetRecordsRequest] =
@@ -191,7 +194,8 @@ object GetRecordsRequest {
       for {
         limit <- x.downField("Limit").as[Option[Int]]
         shardIterator <- x.downField("ShardIterator").as[ShardIterator]
-      } yield GetRecordsRequest(limit, shardIterator)
+        streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+      } yield GetRecordsRequest(limit, shardIterator, streamArn)
   implicit val getRecordsRequestEncoder: Encoder[GetRecordsRequest] =
     Encoder.derive
   implicit val getRecordsRequestDecoder: Decoder[GetRecordsRequest] =

@@ -14,7 +14,8 @@ import kinesis.mock.validations.CommonValidations
 // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
 // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
 final case class AddTagsToStreamRequest(
-    streamName: StreamName,
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn],
     tags: Tags
 ) {
   def addTagsToStream(
@@ -23,50 +24,54 @@ final case class AddTagsToStreamRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
     CommonValidations
-      .validateStreamName(streamName)
-      .flatMap(_ =>
+      .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+      .flatMap { case (name, _) =>
         CommonValidations
-          .findStream(StreamArn(awsRegion, streamName, awsAccountId), streams)
-          .flatMap(stream =>
-            (
-              CommonValidations.validateTagKeys(tags.tags.keys), {
-                val valuesTooLong =
-                  tags.tags.values.filter(x => x.length() > 256)
-                if (valuesTooLong.nonEmpty)
-                  InvalidArgumentException(
-                    s"Values must be less than 256 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
-                  ).asLeft
-                else Right(())
-              }, {
-                val invalidValues = tags.tags.values.filterNot(x =>
-                  x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$")
-                )
-                if (invalidValues.nonEmpty)
-                  InvalidArgumentException(
-                    s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
-                  ).asLeft
-                else Right(())
-              }, {
-                val numberOfTags = tags.size
-                if (numberOfTags > 10)
-                  InvalidArgumentException(
-                    s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
-                  ).asLeft
-                else Right(())
-              }, {
-                val totalTagsAfterAppend = (stream.tags |+| tags).size
-                if (totalTagsAfterAppend > 50)
-                  InvalidArgumentException(
-                    s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
-                  ).asLeft
-                else Right(())
-              }
-            ).mapN((_, _, _, _, _) => stream)
+          .validateStreamName(name)
+          .flatMap(_ =>
+            CommonValidations
+              .findStream(StreamArn(awsRegion, name, awsAccountId), streams)
+              .flatMap(stream =>
+                (
+                  CommonValidations.validateTagKeys(tags.tags.keys), {
+                    val valuesTooLong =
+                      tags.tags.values.filter(x => x.length() > 256)
+                    if (valuesTooLong.nonEmpty)
+                      InvalidArgumentException(
+                        s"Values must be less than 256 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
+                      ).asLeft
+                    else Right(())
+                  }, {
+                    val invalidValues = tags.tags.values.filterNot(x =>
+                      x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$")
+                    )
+                    if (invalidValues.nonEmpty)
+                      InvalidArgumentException(
+                        s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
+                      ).asLeft
+                    else Right(())
+                  }, {
+                    val numberOfTags = tags.size
+                    if (numberOfTags > 10)
+                      InvalidArgumentException(
+                        s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
+                      ).asLeft
+                    else Right(())
+                  }, {
+                    val totalTagsAfterAppend = (stream.tags |+| tags).size
+                    if (totalTagsAfterAppend > 50)
+                      InvalidArgumentException(
+                        s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
+                      ).asLeft
+                    else Right(())
+                  }
+                ).mapN((_, _, _, _, _) => stream)
+              )
           )
-      )
-      .map(stream =>
-        (streams.updateStream(stream.copy(tags = stream.tags |+| tags)), ())
-      )
+          .map(stream =>
+            (streams.updateStream(stream.copy(tags = stream.tags |+| tags)), ())
+          )
+      }
       .sequenceWithDefault(streams)
   }
 }
@@ -74,13 +79,16 @@ final case class AddTagsToStreamRequest(
 object AddTagsToStreamRequest {
   implicit val addTagsToStreamRequestCirceEncoder
       : circe.Encoder[AddTagsToStreamRequest] =
-    circe.Encoder.forProduct2("StreamName", "Tags")(x => (x.streamName, x.tags))
+    circe.Encoder.forProduct3("StreamName", "StreamARN", "Tags")(x =>
+      (x.streamName, x.streamArn, x.tags)
+    )
   implicit val addTagsToStreamRequestCirceDecoder
       : circe.Decoder[AddTagsToStreamRequest] = { x =>
     for {
-      streamName <- x.downField("StreamName").as[StreamName]
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       tags <- x.downField("Tags").as[Tags]
-    } yield AddTagsToStreamRequest(streamName, tags)
+    } yield AddTagsToStreamRequest(streamName, streamArn, tags)
   }
   implicit val addTagsToStreamRequestEncoder: Encoder[AddTagsToStreamRequest] =
     Encoder.derive

@@ -43,7 +43,8 @@ class SplitShardTests
           None,
           None,
           None,
-          Some(streamName)
+          Some(streamName),
+          None
         )
         shardToSplit <- cache
           .listShards(listShardsReq, context, false, Some(awsRegion))
@@ -55,14 +56,18 @@ class SplitShardTests
             SplitShardRequest(
               newStartingHashKey.toString(),
               shardToSplit.shardId,
-              streamName
+              Some(streamName),
+              None
             ),
             context,
             false,
             Some(awsRegion)
           )
           .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
+        describeStreamSummaryReq = DescribeStreamSummaryRequest(
+          Some(streamName),
+          None
+        )
         checkStream1 <- cache
           .describeStreamSummary(
             describeStreamSummaryReq,

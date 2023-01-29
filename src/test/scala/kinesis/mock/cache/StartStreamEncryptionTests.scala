@@ -44,14 +44,15 @@ class StartStreamEncryptionTests
             StartStreamEncryptionRequest(
               EncryptionType.KMS,
               keyId,
-              streamName
+              Some(streamName),
+              None
             ),
             context,
             false,
             Some(awsRegion)
           )
           .rethrow
-        describeReq = DescribeStreamSummaryRequest(streamName)
+        describeReq = DescribeStreamSummaryRequest(Some(streamName), None)
         checkStream1 <- cache
           .describeStreamSummary(describeReq, context, false, Some(awsRegion))
           .rethrow

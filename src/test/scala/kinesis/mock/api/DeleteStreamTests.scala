@@ -25,7 +25,7 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](asActive)
-        req = DeleteStreamRequest(streamArn.streamName, None)
+        req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req.deleteStream(
           streamsRef,
           streamArn.awsRegion,
@@ -46,7 +46,7 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DeleteStreamRequest(streamArn.streamName, None)
+        req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req
           .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
       } yield assert(
@@ -64,7 +64,7 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DeleteStreamRequest(streamArn.streamName, None)
+        req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req
           .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
       } yield assert(
@@ -95,7 +95,7 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
-        req = DeleteStreamRequest(consumerArn.streamArn.streamName, None)
+        req = DeleteStreamRequest(None, Some(consumerArn.streamArn), None)
         res <- req.deleteStream(
           streamsRef,
           consumerArn.streamArn.awsRegion,
@@ -129,7 +129,11 @@ class DeleteStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
-        req = DeleteStreamRequest(consumerArn.streamArn.streamName, Some(false))
+        req = DeleteStreamRequest(
+          None,
+          Some(consumerArn.streamArn),
+          Some(false)
+        )
         res <- req.deleteStream(
           streamsRef,
           consumerArn.streamArn.awsRegion,

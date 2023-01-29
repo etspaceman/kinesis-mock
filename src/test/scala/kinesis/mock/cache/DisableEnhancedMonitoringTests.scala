@@ -37,7 +37,8 @@ class DisableEnhancedMonitoringTests
           .enableEnhancedMonitoring(
             EnableEnhancedMonitoringRequest(
               Vector(ShardLevelMetric.ALL),
-              streamName
+              Some(streamName),
+              None
             ),
             context,
             false,
@@ -48,7 +49,8 @@ class DisableEnhancedMonitoringTests
           .disableEnhancedMonitoring(
             DisableEnhancedMonitoringRequest(
               Vector(ShardLevelMetric.IncomingBytes),
-              streamName
+              Some(streamName),
+              None
             ),
             context,
             false,
@@ -57,7 +59,7 @@ class DisableEnhancedMonitoringTests
           .rethrow
         streamMonitoring <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)

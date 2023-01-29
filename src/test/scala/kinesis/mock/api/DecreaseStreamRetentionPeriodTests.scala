@@ -27,7 +27,7 @@ class DecreaseStreamRetentionPeriodTests
         )
       for {
         streamsRef <- Ref.of[IO, Streams](withIncreasedRetention)
-        req = DecreaseStreamRetentionPeriodRequest(24, streamArn.streamName)
+        req = DecreaseStreamRetentionPeriodRequest(24, None, Some(streamArn))
         res <- req.decreaseStreamRetention(
           streamsRef,
           streamArn.awsRegion,
@@ -53,7 +53,7 @@ class DecreaseStreamRetentionPeriodTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DecreaseStreamRetentionPeriodRequest(48, streamArn.streamName)
+        req = DecreaseStreamRetentionPeriodRequest(48, None, Some(streamArn))
         res <- req.decreaseStreamRetention(
           streamsRef,
           streamArn.awsRegion,

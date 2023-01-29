@@ -19,7 +19,8 @@ final case class ListShardsRequest(
     nextToken: Option[String],
     shardFilter: Option[ShardFilter],
     streamCreationTimestamp: Option[Instant],
-    streamName: Option[StreamName]
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def listShards(
       streamsRef: Ref[IO, Streams],
@@ -31,9 +32,10 @@ final case class ListShardsRequest(
       nextToken,
       shardFilter,
       streamCreationTimestamp,
-      streamName
+      streamName,
+      streamArn
     ) match {
-      case (None, Some(nt), None, None, None) =>
+      case (None, Some(nt), None, None, None, None) =>
         CommonValidations
           .validateNextToken(nt)
           .flatMap(ListShardsRequest.parseNextToken)
@@ -69,96 +71,14 @@ final case class ListShardsRequest(
               ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           }
-      case (_, None, _, _, Some(sName)) =>
+      case (_, None, _, _, Some(sName), None) =>
         val streamArn = StreamArn(awsRegion, sName, awsAccountId)
-        CommonValidations
-          .findStream(streamArn, streams)
-          .flatMap(stream =>
-            (
-              CommonValidations.validateStreamName(sName),
-              exclusiveStartShardId match {
-                case Some(eShardId) =>
-                  CommonValidations.validateShardId(eShardId)
-                case None => Right(())
-              },
-              shardFilter match {
-                case Some(sf) => ListShardsRequest.validateShardFilter(sf)
-                case None     => Right(())
-              }
-            ).mapN((_, _, _) => {
-              val allShards: Vector[Shard] = stream.shards.keys.toVector
-              val filteredShards = shardFilter match {
-                case Some(sf)
-                    if sf.`type` == ShardFilterType.AT_TRIM_HORIZON ||
-                      (sf.`type` == ShardFilterType.AT_TIMESTAMP && sf.timestamp
-                        .exists(x =>
-                          x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
-                        )) ||
-                      (sf.`type` == ShardFilterType.FROM_TIMESTAMP && sf.timestamp
-                        .exists(x =>
-                          x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
-                        )) =>
-                  allShards
-                case Some(sf)
-                    if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON =>
-                  val now = Instant.now()
-                  allShards.filter(x =>
-                    x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
-                      x.plusSeconds(stream.retentionPeriod.toSeconds)
-                        .getEpochSecond >= now.getEpochSecond
-                    )
-                  )
-
-                case Some(sf) if sf.`type` == ShardFilterType.AT_LATEST =>
-                  allShards.filter(_.isOpen)
-
-                case Some(sf) if sf.`type` == ShardFilterType.AT_TIMESTAMP =>
-                  allShards.filter(x =>
-                    sf.timestamp.exists(ts =>
-                      x.createdAtTimestamp.getEpochSecond <= ts.getEpochSecond && (x.isOpen || x.closedTimestamp
-                        .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond))
-                    )
-                  )
-
-                case Some(sf) if sf.`type` == ShardFilterType.FROM_TIMESTAMP =>
-                  allShards.filter(x =>
-                    x.isOpen || sf.timestamp.exists(ts =>
-                      x.closedTimestamp
-                        .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond)
-                    )
-                  )
-                case Some(sf) if sf.`type` == ShardFilterType.AFTER_SHARD_ID =>
-                  val index = sf.shardId
-                    .map(eShardId =>
-                      allShards.indexWhere(_.shardId.shardId == eShardId) + 1
-                    )
-                    .getOrElse(0)
-                  allShards.slice(index, allShards.length)
-
-                case _ => allShards
-              }
-              val lastShardIndex = filteredShards.length - 1
-              val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
-              val firstIndex = exclusiveStartShardId
-                .map(eShardId =>
-                  filteredShards.indexWhere(_.shardId.shardId == eShardId) + 1
-                )
-                .getOrElse(0)
-              val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
-              val shards = filteredShards.slice(firstIndex, lastIndex)
-              val nextToken =
-                if (lastShardIndex + 1 == lastIndex) None
-                else
-                  Some(
-                    ListShardsRequest
-                      .createNextToken(sName, shards.last.shardId.shardId)
-                  )
-              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
-            })
-          )
-      case (_, None, _, _, None) =>
+        getList(streamArn, sName, streams)
+      case (_, None, _, _, None, Some(sArn)) =>
+        getList(sArn, sArn.streamName, streams)
+      case (_, None, _, _, None, None) =>
         InvalidArgumentException(
-          "StreamName is required if NextToken is not provided"
+          "StreamName or StreamARN is required if NextToken is not provided"
         ).asLeft
       case _ =>
         InvalidArgumentException(
@@ -166,6 +86,91 @@ final case class ListShardsRequest(
         ).asLeft
     }
   }
+
+  def getList(streamArn: StreamArn, sName: StreamName, streams: Streams) = CommonValidations
+    .findStream(streamArn, streams)
+    .flatMap(stream =>
+      (
+        CommonValidations.validateStreamName(sName),
+        exclusiveStartShardId match {
+          case Some(eShardId) =>
+            CommonValidations.validateShardId(eShardId)
+          case None => Right(())
+        },
+        shardFilter match {
+          case Some(sf) => ListShardsRequest.validateShardFilter(sf)
+          case None     => Right(())
+        }
+      ).mapN((_, _, _) => {
+        val allShards: Vector[Shard] = stream.shards.keys.toVector
+        val filteredShards = shardFilter match {
+          case Some(sf)
+              if sf.`type` == ShardFilterType.AT_TRIM_HORIZON ||
+                (sf.`type` == ShardFilterType.AT_TIMESTAMP && sf.timestamp
+                  .exists(x =>
+                    x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
+                  )) ||
+                (sf.`type` == ShardFilterType.FROM_TIMESTAMP && sf.timestamp
+                  .exists(x =>
+                    x.getEpochSecond < stream.streamCreationTimestamp.getEpochSecond
+                  )) =>
+            allShards
+          case Some(sf) if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON =>
+            val now = Instant.now()
+            allShards.filter(x =>
+              x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
+                x.plusSeconds(stream.retentionPeriod.toSeconds)
+                  .getEpochSecond >= now.getEpochSecond
+              )
+            )
+
+          case Some(sf) if sf.`type` == ShardFilterType.AT_LATEST =>
+            allShards.filter(_.isOpen)
+
+          case Some(sf) if sf.`type` == ShardFilterType.AT_TIMESTAMP =>
+            allShards.filter(x =>
+              sf.timestamp.exists(ts =>
+                x.createdAtTimestamp.getEpochSecond <= ts.getEpochSecond && (x.isOpen || x.closedTimestamp
+                  .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond))
+              )
+            )
+
+          case Some(sf) if sf.`type` == ShardFilterType.FROM_TIMESTAMP =>
+            allShards.filter(x =>
+              x.isOpen || sf.timestamp.exists(ts =>
+                x.closedTimestamp
+                  .exists(cTs => cTs.getEpochSecond >= ts.getEpochSecond)
+              )
+            )
+          case Some(sf) if sf.`type` == ShardFilterType.AFTER_SHARD_ID =>
+            val index = sf.shardId
+              .map(eShardId =>
+                allShards.indexWhere(_.shardId.shardId == eShardId) + 1
+              )
+              .getOrElse(0)
+            allShards.slice(index, allShards.length)
+
+          case _ => allShards
+        }
+        val lastShardIndex = filteredShards.length - 1
+        val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
+        val firstIndex = exclusiveStartShardId
+          .map(eShardId =>
+            filteredShards.indexWhere(_.shardId.shardId == eShardId) + 1
+          )
+          .getOrElse(0)
+        val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
+        val shards = filteredShards.slice(firstIndex, lastIndex)
+        val nextToken =
+          if (lastShardIndex + 1 == lastIndex) None
+          else
+            Some(
+              ListShardsRequest
+                .createNextToken(sName, shards.last.shardId.shardId)
+            )
+        ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
+      })
+    )
 }
 
 object ListShardsRequest {
@@ -173,13 +178,14 @@ object ListShardsRequest {
       ESF: circe.Encoder[ShardFilter],
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ListShardsRequest] =
-    circe.Encoder.forProduct6(
+    circe.Encoder.forProduct7(
       "ExclusiveStartShardId",
       "MaxResults",
       "NextToken",
       "ShardFilter",
       "StreamCreationTimestamp",
-      "StreamName"
+      "StreamName",
+      "StreamARN"
     )(x =>
       (
         x.exclusiveStartShardId,
@@ -187,7 +193,8 @@ object ListShardsRequest {
         x.nextToken,
         x.shardFilter,
         x.streamCreationTimestamp,
-        x.streamName
+        x.streamName,
+        x.streamArn
       )
     )
   def listShardsRequestCirceDecoder(implicit
@@ -205,13 +212,15 @@ object ListShardsRequest {
         .downField("StreamCreationTimestamp")
         .as[Option[Instant]]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
     } yield ListShardsRequest(
       exclusiveStartShardId,
       maxResults,
       nextToken,
       shardFilter,
       streamCreationTimestamp,
-      streamName
+      streamName,
+      streamArn
     )
   }
   implicit val listShardsRequestEncoder: Encoder[ListShardsRequest] =
@@ -246,7 +255,8 @@ object ListShardsRequest {
         x.streamCreationTimestamp.map(
           _.getEpochSecond()
         ) == y.streamCreationTimestamp.map(_.getEpochSecond()) &&
-        x.streamName == y.streamName
+        x.streamName == y.streamName &&
+        x.streamArn == y.streamArn
 
   def createNextToken(streamName: StreamName, shardId: String): String =
     s"$streamName::$shardId"

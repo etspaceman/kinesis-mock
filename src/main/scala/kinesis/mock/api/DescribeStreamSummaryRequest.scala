@@ -10,26 +10,30 @@ import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamSummary.html
 final case class DescribeStreamSummaryRequest(
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def describeStreamSummary(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[DescribeStreamSummaryResponse]] = {
-    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
-        .validateStreamName(streamName)
-        .flatMap(_ =>
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+        .flatMap { case (name, arn) =>
           CommonValidations
-            .findStream(streamArn, streams)
-            .map(stream =>
-              DescribeStreamSummaryResponse(
-                StreamDescriptionSummary.fromStreamData(stream)
-              )
+            .validateStreamName(name)
+            .flatMap(_ =>
+              CommonValidations
+                .findStream(arn, streams)
+                .map(stream =>
+                  DescribeStreamSummaryResponse(
+                    StreamDescriptionSummary.fromStreamData(stream)
+                  )
+                )
             )
-        )
+        }
     )
   }
 }
@@ -37,12 +41,15 @@ final case class DescribeStreamSummaryRequest(
 object DescribeStreamSummaryRequest {
   implicit val describeStreamSummaryRequestCirceEncoder
       : circe.Encoder[DescribeStreamSummaryRequest] =
-    circe.Encoder.forProduct1("StreamName")(_.streamName)
+    circe.Encoder.forProduct2("StreamName", "StreamARN")(x =>
+      (x.streamName, x.streamArn)
+    )
   implicit val describeStreamSummaryRequestCirceDecoder
-      : circe.Decoder[DescribeStreamSummaryRequest] =
-    _.downField("StreamName")
-      .as[StreamName]
-      .map(DescribeStreamSummaryRequest.apply)
+      : circe.Decoder[DescribeStreamSummaryRequest] = x =>
+    for {
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+    } yield DescribeStreamSummaryRequest(streamName, streamArn)
   implicit val describeStreamSummaryRequestEncoder
       : Encoder[DescribeStreamSummaryRequest] = Encoder.derive
   implicit val describeStreamSummaryRequestDecoder

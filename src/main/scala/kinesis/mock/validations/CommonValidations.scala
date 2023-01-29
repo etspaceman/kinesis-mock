@@ -12,6 +12,25 @@ import software.amazon.awssdk.utils.Md5Utils
 import kinesis.mock.models._
 
 object CommonValidations {
+  def getStreamNameArn(
+      streamName: Option[StreamName],
+      streamArn: Option[StreamArn],
+      awsRegion: AwsRegion,
+      awsAccountId: AwsAccountId
+  ): Response[(StreamName, StreamArn)] =
+    (streamName, streamArn) match {
+      case (_, Some(arn)) =>
+        Right((arn.streamName, arn))
+      case (Some(name), _) =>
+        Right((name, StreamArn(awsRegion, name, awsAccountId)))
+      case _ =>
+        Left(
+          InvalidArgumentException(
+            "Neither streamArn or streamName was provided"
+          )
+        )
+    }
+
   def validateStreamName(
       streamName: StreamName
   ): Response[StreamName] =

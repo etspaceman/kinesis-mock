@@ -41,7 +41,8 @@ class DisableEnhancedMonitoringTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DisableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.disableEnhancedMonitoring(
           streamsRef,

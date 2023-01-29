@@ -12,7 +12,8 @@ import kinesis.mock.validations.CommonValidations
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
 final case class DisableEnhancedMonitoringRequest(
     shardLevelMetrics: Vector[ShardLevelMetric],
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def disableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams],
@@ -20,29 +21,35 @@ final case class DisableEnhancedMonitoringRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[DisableEnhancedMonitoringResponse]] =
     streamsRef.modify { streams =>
-      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
       CommonValidations
-        .validateStreamName(streamName)
-        .flatMap(_ => CommonValidations.findStream(streamArn, streams))
-        .map { stream =>
-          val current =
-            stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
-          val desired =
-            if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
-              Vector.empty
-            else current.diff(shardLevelMetrics)
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+        .flatMap { case (name, arn) =>
+          CommonValidations
+            .validateStreamName(name)
+            .flatMap(_ => CommonValidations.findStream(arn, streams))
+            .map { stream =>
+              val current =
+                stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
+              val desired =
+                if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
+                  Vector.empty
+                else current.diff(shardLevelMetrics)
 
-          (
-            streams.updateStream(
-              stream
-                .copy(enhancedMonitoring = Vector(ShardLevelMetrics(desired)))
-            ),
-            DisableEnhancedMonitoringResponse(
-              current,
-              desired,
-              streamName
-            )
-          )
+              (
+                streams.updateStream(
+                  stream
+                    .copy(enhancedMonitoring =
+                      Vector(ShardLevelMetrics(desired))
+                    )
+                ),
+                DisableEnhancedMonitoringResponse(
+                  current,
+                  desired,
+                  name,
+                  arn
+                )
+              )
+            }
         }
         .sequenceWithDefault(streams)
     }
@@ -51,8 +58,8 @@ final case class DisableEnhancedMonitoringRequest(
 object DisableEnhancedMonitoringRequest {
   implicit val disableEnhancedMonitoringRequestCirceEncoder
       : circe.Encoder[DisableEnhancedMonitoringRequest] =
-    circe.Encoder.forProduct2("ShardLevelMetrics", "StreamName")(x =>
-      (x.shardLevelMetrics, x.streamName)
+    circe.Encoder.forProduct3("ShardLevelMetrics", "StreamName", "StreamARN")(
+      x => (x.shardLevelMetrics, x.streamName, x.streamArn)
     )
   implicit val disableEnhancedMonitoringRequestCirceDecoder
       : circe.Decoder[DisableEnhancedMonitoringRequest] = { x =>
@@ -60,8 +67,13 @@ object DisableEnhancedMonitoringRequest {
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield DisableEnhancedMonitoringRequest(shardLevelMetrics, streamName)
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+    } yield DisableEnhancedMonitoringRequest(
+      shardLevelMetrics,
+      streamName,
+      streamArn
+    )
   }
   implicit val disableEnhancedMonitoringRequestEncoder
       : Encoder[DisableEnhancedMonitoringRequest] = Encoder.derive

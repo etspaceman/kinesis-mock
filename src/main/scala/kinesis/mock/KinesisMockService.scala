@@ -104,7 +104,7 @@ object KinesisMockService extends IOApp {
         streamName: StreamName,
         region: AwsRegion
     ): IO[Boolean] = {
-      val descReq = DescribeStreamSummaryRequest(streamName)
+      val descReq = DescribeStreamSummaryRequest(Some(streamName), None)
       cache
         .describeStreamSummary(descReq, context, isCbor = false, Some(region))
         .map {

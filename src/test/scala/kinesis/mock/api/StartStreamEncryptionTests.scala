@@ -29,7 +29,8 @@ class StartStreamEncryptionTests
         req = StartStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.startStreamEncryption(
           streamsRef,
@@ -68,7 +69,8 @@ class StartStreamEncryptionTests
           req = StartStreamEncryptionRequest(
             EncryptionType.NONE,
             keyId,
-            streamArn.streamName
+            None,
+            Some(streamArn)
           )
           res <- req.startStreamEncryption(
             streamsRef,
@@ -96,7 +98,8 @@ class StartStreamEncryptionTests
         req = StartStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.startStreamEncryption(
           streamsRef,

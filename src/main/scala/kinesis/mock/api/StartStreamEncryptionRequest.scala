@@ -13,39 +13,43 @@ import kinesis.mock.validations.CommonValidations
 final case class StartStreamEncryptionRequest(
     encryptionType: EncryptionType,
     keyId: String,
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def startStreamEncryption(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
-    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     CommonValidations
-      .validateStreamName(streamName)
-      .flatMap(_ =>
+      .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+      .flatMap { case (name, arn) =>
         CommonValidations
-          .findStream(streamArn, streams)
-          .flatMap(stream =>
-            (
-              CommonValidations.validateKeyId(keyId),
-              CommonValidations.isKmsEncryptionType(encryptionType),
-              CommonValidations.isStreamActive(streamArn, streams)
-            ).mapN((_, _, _) => stream)
+          .validateStreamName(name)
+          .flatMap(_ =>
+            CommonValidations
+              .findStream(arn, streams)
+              .flatMap(stream =>
+                (
+                  CommonValidations.validateKeyId(keyId),
+                  CommonValidations.isKmsEncryptionType(encryptionType),
+                  CommonValidations.isStreamActive(arn, streams)
+                ).mapN((_, _, _) => stream)
+              )
           )
-      )
-      .map(stream =>
-        (
-          streams.updateStream(
-            stream.copy(
-              encryptionType = encryptionType,
-              streamStatus = StreamStatus.UPDATING,
-              keyId = Some(keyId)
+          .map(stream =>
+            (
+              streams.updateStream(
+                stream.copy(
+                  encryptionType = encryptionType,
+                  streamStatus = StreamStatus.UPDATING,
+                  keyId = Some(keyId)
+                )
+              ),
+              ()
             )
-          ),
-          ()
-        )
-      )
+          )
+      }
       .sequenceWithDefault(streams)
   }
 }
@@ -53,17 +57,26 @@ final case class StartStreamEncryptionRequest(
 object StartStreamEncryptionRequest {
   implicit val startStreamEncryptionRequestCirceEncoder
       : circe.Encoder[StartStreamEncryptionRequest] =
-    circe.Encoder.forProduct3("EncryptionType", "KeyId", "StreamName")(x =>
-      (x.encryptionType, x.keyId, x.streamName)
-    )
+    circe.Encoder.forProduct4(
+      "EncryptionType",
+      "KeyId",
+      "StreamName",
+      "StreamARN"
+    )(x => (x.encryptionType, x.keyId, x.streamName, x.streamArn))
 
   implicit val startStreamEncryptionRequestCirceDecoder
       : circe.Decoder[StartStreamEncryptionRequest] = x =>
     for {
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
       keyId <- x.downField("KeyId").as[String]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield StartStreamEncryptionRequest(encryptionType, keyId, streamName)
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+    } yield StartStreamEncryptionRequest(
+      encryptionType,
+      keyId,
+      streamName,
+      streamArn
+    )
 
   implicit val startStreamEncryptionRequestEncoder
       : Encoder[StartStreamEncryptionRequest] = Encoder.derive

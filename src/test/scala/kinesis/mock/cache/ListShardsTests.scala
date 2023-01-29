@@ -35,7 +35,15 @@ class ListShardsTests
           .rethrow
         res <- cache
           .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            ListShardsRequest(
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(streamName),
+              None
+            ),
             context,
             false,
             Some(awsRegion)

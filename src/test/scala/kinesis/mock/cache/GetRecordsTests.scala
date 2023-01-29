@@ -50,7 +50,15 @@ class GetRecordsTests
         )
         shard <- cache
           .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            ListShardsRequest(
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(streamName),
+              None
+            ),
             context,
             false,
             Some(awsRegion)
@@ -63,7 +71,8 @@ class GetRecordsTests
               shard.shardId,
               ShardIteratorType.TRIM_HORIZON,
               None,
-              streamName,
+              Some(streamName),
+              None,
               None
             ),
             context,
@@ -74,7 +83,7 @@ class GetRecordsTests
           .map(_.shardIterator)
         res <- cache
           .getRecords(
-            GetRecordsRequest(None, shardIterator),
+            GetRecordsRequest(None, shardIterator, None),
             context,
             false,
             Some(awsRegion)

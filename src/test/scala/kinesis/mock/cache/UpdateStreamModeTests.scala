@@ -50,7 +50,7 @@ class UpdateStreamModeTests
           .rethrow
         res1 <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)
@@ -59,7 +59,7 @@ class UpdateStreamModeTests
         _ <- IO.sleep(cacheConfig.updateStreamModeDuration.plus(400.millis))
         res2 <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)

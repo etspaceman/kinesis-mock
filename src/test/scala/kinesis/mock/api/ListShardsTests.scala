@@ -31,7 +31,8 @@ class ListShardsTests
           None,
           None,
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -64,7 +65,8 @@ class ListShardsTests
           None,
           None,
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -77,6 +79,7 @@ class ListShardsTests
               None,
               Some(50),
               result.nextToken,
+              None,
               None,
               None,
               None
@@ -127,7 +130,8 @@ class ListShardsTests
           None,
           None,
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -178,7 +182,8 @@ class ListShardsTests
           None,
           Some(filter),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -232,7 +237,8 @@ class ListShardsTests
           None,
           Some(filter),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -288,7 +294,8 @@ class ListShardsTests
             None,
             Some(filter),
             None,
-            Some(streamArn.streamName)
+            None,
+            Some(streamArn)
           )
           res <- req.listShards(
             streamsRef,
@@ -330,7 +337,8 @@ class ListShardsTests
           None,
           Some(filter),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -405,7 +413,8 @@ class ListShardsTests
           None,
           Some(filter),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -481,7 +490,8 @@ class ListShardsTests
           None,
           Some(filter),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -519,7 +529,8 @@ class ListShardsTests
           None,
           Some(ShardFilter(None, None, ShardFilterType.AT_TIMESTAMP)),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -546,7 +557,8 @@ class ListShardsTests
           None,
           Some(ShardFilter(None, None, ShardFilterType.FROM_TIMESTAMP)),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,
@@ -573,7 +585,8 @@ class ListShardsTests
           None,
           Some(ShardFilter(None, None, ShardFilterType.AFTER_SHARD_ID)),
           None,
-          Some(streamArn.streamName)
+          None,
+          Some(streamArn)
         )
         res <- req.listShards(
           streamsRef,

@@ -29,7 +29,8 @@ class StopStreamEncryptionTests
         req = StopStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.stopStreamEncryption(
           streamsRef,
@@ -68,7 +69,8 @@ class StopStreamEncryptionTests
           req = StopStreamEncryptionRequest(
             EncryptionType.NONE,
             keyId,
-            streamArn.streamName
+            None,
+            Some(streamArn)
           )
           res <- req.stopStreamEncryption(
             streamsRef,
@@ -96,7 +98,8 @@ class StopStreamEncryptionTests
         req = StopStreamEncryptionRequest(
           EncryptionType.KMS,
           keyId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.stopStreamEncryption(
           streamsRef,

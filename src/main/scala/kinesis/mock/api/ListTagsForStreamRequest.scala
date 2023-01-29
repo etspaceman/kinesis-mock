@@ -14,50 +14,55 @@ import kinesis.mock.validations.CommonValidations
 final case class ListTagsForStreamRequest(
     exclusiveStartTagKey: Option[String],
     limit: Option[Int],
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def listTagsForStream(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[ListTagsForStreamResponse]] = {
-    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
-        .validateStreamName(streamName)
-        .flatMap(_ =>
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+        .flatMap { case (name, arn) =>
           CommonValidations
-            .findStream(streamArn, streams)
-            .flatMap(stream =>
-              (
-                exclusiveStartTagKey match {
-                  case Some(tagKey) =>
-                    CommonValidations.validateTagKeys(Vector(tagKey))
-                  case None => Right(())
-                },
-                limit match {
-                  case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Right(())
-                }
-              ).mapN((_, _) => {
-                val allTags = stream.tags.toVector
-                val lastTagIndex = allTags.length - 1
-                val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
-                val firstIndex = exclusiveStartTagKey
-                  .map(x => allTags.indexWhere(_._1 == x) + 1)
-                  .getOrElse(0)
-                val lastIndex = Math.min(firstIndex + lim, lastTagIndex + 1)
-                val tags = SortedMap.from(allTags.slice(firstIndex, lastIndex))
-                val hasMoreTags =
-                  if (lastTagIndex + 1 == lastIndex) false
-                  else true
-                ListTagsForStreamResponse(
-                  hasMoreTags,
-                  TagList.fromTags(Tags(tags))
+            .validateStreamName(name)
+            .flatMap(_ =>
+              CommonValidations
+                .findStream(arn, streams)
+                .flatMap(stream =>
+                  (
+                    exclusiveStartTagKey match {
+                      case Some(tagKey) =>
+                        CommonValidations.validateTagKeys(Vector(tagKey))
+                      case None => Right(())
+                    },
+                    limit match {
+                      case Some(l) => CommonValidations.validateLimit(l)
+                      case None    => Right(())
+                    }
+                  ).mapN((_, _) => {
+                    val allTags = stream.tags.toVector
+                    val lastTagIndex = allTags.length - 1
+                    val lim = limit.map(l => Math.min(l, 100)).getOrElse(100)
+                    val firstIndex = exclusiveStartTagKey
+                      .map(x => allTags.indexWhere(_._1 == x) + 1)
+                      .getOrElse(0)
+                    val lastIndex = Math.min(firstIndex + lim, lastTagIndex + 1)
+                    val tags =
+                      SortedMap.from(allTags.slice(firstIndex, lastIndex))
+                    val hasMoreTags =
+                      if (lastTagIndex + 1 == lastIndex) false
+                      else true
+                    ListTagsForStreamResponse(
+                      hasMoreTags,
+                      TagList.fromTags(Tags(tags))
+                    )
+                  })
                 )
-              })
             )
-        )
+        }
     )
   }
 }
@@ -65,9 +70,12 @@ final case class ListTagsForStreamRequest(
 object ListTagsForStreamRequest {
   implicit val listTagsForStreamRequestCirceEncoder
       : circe.Encoder[ListTagsForStreamRequest] =
-    circe.Encoder.forProduct3("ExclusiveStartTagKey", "Limit", "StreamName")(
-      x => (x.exclusiveStartTagKey, x.limit, x.streamName)
-    )
+    circe.Encoder.forProduct4(
+      "ExclusiveStartTagKey",
+      "Limit",
+      "StreamName",
+      "StreamARN"
+    )(x => (x.exclusiveStartTagKey, x.limit, x.streamName, x.streamArn))
 
   implicit val listTagsForStreamRequestCirceDecoder
       : circe.Decoder[ListTagsForStreamRequest] =
@@ -77,8 +85,14 @@ object ListTagsForStreamRequest {
           .downField("ExclusiveStartTagKey")
           .as[Option[String]]
         limit <- x.downField("Limit").as[Option[Int]]
-        streamName <- x.downField("StreamName").as[StreamName]
-      } yield ListTagsForStreamRequest(exclusiveStartTagKey, limit, streamName)
+        streamName <- x.downField("StreamName").as[Option[StreamName]]
+        streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+      } yield ListTagsForStreamRequest(
+        exclusiveStartTagKey,
+        limit,
+        streamName,
+        streamArn
+      )
 
   implicit val listTagsForStreamRequestEncoder
       : Encoder[ListTagsForStreamRequest] = Encoder.derive

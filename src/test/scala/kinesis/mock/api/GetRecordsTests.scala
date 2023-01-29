@@ -53,7 +53,7 @@ class GetRecordsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
-        req = GetRecordsRequest(None, shardIterator)
+        req = GetRecordsRequest(None, shardIterator, None)
         res <- req.getRecords(
           streamsRef,
           streamArn.awsRegion,
@@ -108,7 +108,7 @@ class GetRecordsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
-        req = GetRecordsRequest(Some(50), shardIterator)
+        req = GetRecordsRequest(Some(50), shardIterator, None)
         res <- req.getRecords(
           streamsRef,
           streamArn.awsRegion,
@@ -163,7 +163,7 @@ class GetRecordsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
-        req1 = GetRecordsRequest(Some(50), shardIterator)
+        req1 = GetRecordsRequest(Some(50), shardIterator, None)
         res1 <- req1.getRecords(
           streamsRef,
           streamArn.awsRegion,
@@ -171,7 +171,7 @@ class GetRecordsTests
         )
         res2 <- res1
           .traverse(r =>
-            GetRecordsRequest(Some(50), r.nextShardIterator)
+            GetRecordsRequest(Some(50), r.nextShardIterator, None)
               .getRecords(
                 streamsRef,
                 streamArn.awsRegion,
@@ -238,7 +238,7 @@ class GetRecordsTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
-        req1 = GetRecordsRequest(Some(50), shardIterator)
+        req1 = GetRecordsRequest(Some(50), shardIterator, None)
         res1 <- req1.getRecords(
           streamsRef,
           streamArn.awsRegion,
@@ -246,7 +246,7 @@ class GetRecordsTests
         )
         res2 <- res1
           .traverse(r =>
-            GetRecordsRequest(Some(50), r.nextShardIterator)
+            GetRecordsRequest(Some(50), r.nextShardIterator, None)
               .getRecords(
                 streamsRef,
                 streamArn.awsRegion,

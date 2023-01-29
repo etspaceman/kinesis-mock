@@ -24,7 +24,7 @@ class AddTagsToStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = AddTagsToStreamRequest(streamArn.streamName, tags)
+        req = AddTagsToStreamRequest(None, Some(streamArn), tags)
         res <- req.addTagsToStream(
           streamsRef,
           streamArn.awsRegion,
@@ -57,7 +57,7 @@ class AddTagsToStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streamsWithTag)
-        req = AddTagsToStreamRequest(streamArn.streamName, tags)
+        req = AddTagsToStreamRequest(None, Some(streamArn), tags)
         res <- req.addTagsToStream(
           streamsRef,
           streamArn.awsRegion,

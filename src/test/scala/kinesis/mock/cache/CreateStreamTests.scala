@@ -36,7 +36,10 @@ class CreateStreamTests
             Some(awsRegion)
           )
           .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
+        describeStreamSummaryReq = DescribeStreamSummaryRequest(
+          Some(streamName),
+          None
+        )
         checkStream1 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,
