@@ -80,34 +80,45 @@ final case class UpdateShardCountRequest(
                 }
             )
             .map { stream =>
-              val shards = stream.shards.toVector
-              val oldShards = shards.map { case (shard, data) =>
-                (
-                  shard.copy(
-                    closedTimestamp = Some(now),
-                    sequenceNumberRange = shard.sequenceNumberRange
-                      .copy(endingSequenceNumber =
-                        Some(SequenceNumber.shardEnd)
-                      )
-                  ),
-                  data
-                )
+              val openShards = stream.shards.toVector.filter(_._1.isOpen)
+              val scalingUp = openShards.size < targetShardCount
+
+              val newStreamData = if (scalingUp) {
+                openShards.foldLeft(stream) {
+                  case (streamData, (oldShard, oldShardData)) =>
+                    SplitShardRequest.splitShard(
+                      (oldShard.hashKeyRange.startingHashKey + ((oldShard.hashKeyRange.endingHashKey - oldShard.hashKeyRange.startingHashKey) / 2))
+                        .toString(),
+                      oldShard,
+                      oldShardData,
+                      streamData
+                    )
+                }
+              } else {
+                openShards.foldLeft(stream) {
+                  case (streamData, (oldShard, oldShardData)) =>
+                    streamData.shards
+                      .find { case (x, _) =>
+                        x.hashKeyRange.isAdjacent(oldShard.hashKeyRange)
+                      }
+                      .fold(
+                        streamData
+                      ) { case (adjacentShard, adjacentData) =>
+                        MergeShardsRequest.mergeShards(
+                          streamData,
+                          adjacentShard,
+                          adjacentData,
+                          oldShard,
+                          oldShardData
+                        )
+                      }
+                }
               }
-              val newShards = Shard.newShards(
-                targetShardCount,
-                now,
-                oldShards.map(_._1.shardId.index).max + 1
-              )
-              val combined = newShards ++ oldShards
+
               (
-                streams.updateStream(
-                  stream.copy(
-                    shards = combined,
-                    streamStatus = StreamStatus.UPDATING
-                  )
-                ),
+                streams.updateStream(newStreamData),
                 UpdateShardCountResponse(
-                  shards.length,
+                  openShards.length,
                   name,
                   targetShardCount
                 )

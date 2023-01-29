@@ -87,59 +87,14 @@ final case class MergeShardsRequest(
                     (adjacentShard, adjacentData),
                     (shard, shardData)
                   ) =>
-                val now = Instant.now()
-                val newShardIndex =
-                  stream.shards.keys.map(_.shardId.index).max + 1
-                val newShard: (Shard, Vector[KinesisRecord]) = Shard(
-                  Some(adjacentShard.shardId.shardId),
-                  None,
-                  now,
-                  HashKeyRange(
-                    Math.max(
-                      adjacentShard.hashKeyRange.endingHashKey.toLong,
-                      shard.hashKeyRange.endingHashKey.toLong
-                    ),
-                    Math.min(
-                      adjacentShard.hashKeyRange.startingHashKey.toLong,
-                      shard.hashKeyRange.startingHashKey.toLong
-                    )
-                  ),
-                  Some(shard.shardId.shardId),
-                  SequenceNumberRange(
-                    None,
-                    if (
-                      adjacentShard.sequenceNumberRange.startingSequenceNumber.numericValue < shard.sequenceNumberRange.startingSequenceNumber.numericValue
-                    )
-                      adjacentShard.sequenceNumberRange.startingSequenceNumber
-                    else shard.sequenceNumberRange.startingSequenceNumber
-                  ),
-                  ShardId.create(newShardIndex)
-                ) -> Vector.empty
-
-                val oldShards: Vector[(Shard, Vector[KinesisRecord])] = Vector(
-                  adjacentShard.copy(
-                    closedTimestamp = Some(now),
-                    sequenceNumberRange = adjacentShard.sequenceNumberRange
-                      .copy(endingSequenceNumber =
-                        Some(SequenceNumber.shardEnd)
-                      )
-                  ) -> adjacentData,
-                  shard.copy(
-                    closedTimestamp = Some(now),
-                    sequenceNumberRange = shard.sequenceNumberRange
-                      .copy(endingSequenceNumber =
-                        Some(SequenceNumber.shardEnd)
-                      )
-                  ) -> shardData
-                )
                 (
                   streams.updateStream(
-                    stream.copy(
-                      shards = stream.shards.filterNot { case (s, _) =>
-                        s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
-                      }
-                        ++ (oldShards :+ newShard),
-                      streamStatus = StreamStatus.UPDATING
+                    MergeShardsRequest.mergeShards(
+                      stream,
+                      adjacentShard,
+                      adjacentData,
+                      shard,
+                      shardData
                     )
                   ),
                   ()
@@ -152,6 +107,64 @@ final case class MergeShardsRequest(
 }
 
 object MergeShardsRequest {
+
+  def mergeShards(
+      stream: StreamData,
+      adjacentShard: Shard,
+      adjacentData: Vector[KinesisRecord],
+      shard: Shard,
+      shardData: Vector[KinesisRecord]
+  ): StreamData = {
+    val now = Instant.now()
+    val newShardIndex =
+      stream.shards.keys.map(_.shardId.index).max + 1
+    val newShard: (Shard, Vector[KinesisRecord]) = Shard(
+      Some(adjacentShard.shardId.shardId),
+      None,
+      now,
+      HashKeyRange(
+        Math.max(
+          adjacentShard.hashKeyRange.endingHashKey.toLong,
+          shard.hashKeyRange.endingHashKey.toLong
+        ),
+        Math.min(
+          adjacentShard.hashKeyRange.startingHashKey.toLong,
+          shard.hashKeyRange.startingHashKey.toLong
+        )
+      ),
+      Some(shard.shardId.shardId),
+      SequenceNumberRange(
+        None,
+        if (
+          adjacentShard.sequenceNumberRange.startingSequenceNumber.numericValue < shard.sequenceNumberRange.startingSequenceNumber.numericValue
+        )
+          adjacentShard.sequenceNumberRange.startingSequenceNumber
+        else shard.sequenceNumberRange.startingSequenceNumber
+      ),
+      ShardId.create(newShardIndex)
+    ) -> Vector.empty
+
+    val oldShards: Vector[(Shard, Vector[KinesisRecord])] = Vector(
+      adjacentShard.copy(
+        closedTimestamp = Some(now),
+        sequenceNumberRange = adjacentShard.sequenceNumberRange
+          .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
+      ) -> adjacentData,
+      shard.copy(
+        closedTimestamp = Some(now),
+        sequenceNumberRange = shard.sequenceNumberRange
+          .copy(endingSequenceNumber = Some(SequenceNumber.shardEnd))
+      ) -> shardData
+    )
+    stream.copy(
+      shards = stream.shards.filterNot { case (s, _) =>
+        s.shardId == adjacentShard.shardId || s.shardId == shard.shardId
+      }
+        ++ (oldShards :+ newShard),
+      streamStatus = StreamStatus.UPDATING
+    )
+  }
+
   implicit val mergeShardsRequestCirceEncoder
       : circe.Encoder[MergeShardsRequest] =
     circe.Encoder.forProduct4(

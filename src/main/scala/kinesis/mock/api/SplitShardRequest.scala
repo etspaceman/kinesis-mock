@@ -73,59 +73,13 @@ final case class SplitShardRequest(
                 }
             )
             .map { case (shard, shardData, stream) =>
-              val now = Instant.now()
-              val newStartingHashKeyNumber = BigInt(newStartingHashKey)
-              val newShardIndex1 =
-                stream.shards.keys.map(_.shardId.index).max + 1
-              val newShardIndex2 = newShardIndex1 + 1
-              val newShard1: (Shard, Vector[KinesisRecord]) = Shard(
-                None,
-                None,
-                now,
-                HashKeyRange(
-                  startingHashKey = shard.hashKeyRange.startingHashKey,
-                  endingHashKey = newStartingHashKeyNumber - BigInt(1)
-                ),
-                Some(shard.shardId.shardId),
-                SequenceNumberRange(
-                  None,
-                  SequenceNumber.create(now, newShardIndex1, None, None, None)
-                ),
-                ShardId.create(newShardIndex1)
-              ) -> Vector.empty
-
-              val newShard2: (Shard, Vector[KinesisRecord]) = Shard(
-                None,
-                None,
-                now,
-                HashKeyRange(
-                  startingHashKey = newStartingHashKeyNumber,
-                  endingHashKey = shard.hashKeyRange.endingHashKey
-                ),
-                Some(shard.shardId.shardId),
-                SequenceNumberRange(
-                  None,
-                  SequenceNumber.create(now, newShardIndex2, None, None, None)
-                ),
-                ShardId.create(newShardIndex2)
-              ) -> Vector.empty
-
-              val newShards = Vector(newShard1, newShard2)
-
-              val oldShard: (Shard, Vector[KinesisRecord]) = shard.copy(
-                closedTimestamp = Some(now),
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  endingSequenceNumber = Some(SequenceNumber.shardEnd)
-                )
-              ) -> shardData
-
               (
                 streams.updateStream(
-                  stream.copy(
-                    shards = stream.shards.filterNot { case (shard, _) =>
-                      shard.shardId == oldShard._1.shardId
-                    } ++ (newShards :+ oldShard),
-                    streamStatus = StreamStatus.UPDATING
+                  SplitShardRequest.splitShard(
+                    newStartingHashKey,
+                    shard,
+                    shardData,
+                    stream
                   )
                 ),
                 ()
@@ -137,6 +91,67 @@ final case class SplitShardRequest(
 }
 
 object SplitShardRequest {
+
+  def splitShard(
+      newStartingHashKey: String,
+      shard: Shard,
+      shardData: Vector[KinesisRecord],
+      stream: StreamData
+  ): StreamData = {
+    val now = Instant.now()
+    val newStartingHashKeyNumber = BigInt(newStartingHashKey)
+    val newShardIndex1 =
+      stream.shards.keys.map(_.shardId.index).max + 1
+    val newShardIndex2 = newShardIndex1 + 1
+    val newShard1: (Shard, Vector[KinesisRecord]) = Shard(
+      None,
+      None,
+      now,
+      HashKeyRange(
+        startingHashKey = shard.hashKeyRange.startingHashKey,
+        endingHashKey = newStartingHashKeyNumber - BigInt(1)
+      ),
+      Some(shard.shardId.shardId),
+      SequenceNumberRange(
+        None,
+        SequenceNumber.create(now, newShardIndex1, None, None, None)
+      ),
+      ShardId.create(newShardIndex1)
+    ) -> Vector.empty
+
+    val newShard2: (Shard, Vector[KinesisRecord]) = Shard(
+      None,
+      None,
+      now,
+      HashKeyRange(
+        startingHashKey = newStartingHashKeyNumber,
+        endingHashKey = shard.hashKeyRange.endingHashKey
+      ),
+      Some(shard.shardId.shardId),
+      SequenceNumberRange(
+        None,
+        SequenceNumber.create(now, newShardIndex2, None, None, None)
+      ),
+      ShardId.create(newShardIndex2)
+    ) -> Vector.empty
+
+    val newShards = Vector(newShard1, newShard2)
+
+    val oldShard: (Shard, Vector[KinesisRecord]) = shard.copy(
+      closedTimestamp = Some(now),
+      sequenceNumberRange = shard.sequenceNumberRange.copy(
+        endingSequenceNumber = Some(SequenceNumber.shardEnd)
+      )
+    ) -> shardData
+
+    stream.copy(
+      shards = stream.shards.filterNot { case (shard, _) =>
+        shard.shardId == oldShard._1.shardId
+      } ++ (newShards :+ oldShard),
+      streamStatus = StreamStatus.UPDATING
+    )
+  }
+
   implicit val splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
     circe.Encoder.forProduct4(
       "NewStartingHashKey",
