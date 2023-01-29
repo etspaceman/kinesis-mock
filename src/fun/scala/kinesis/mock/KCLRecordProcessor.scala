@@ -28,7 +28,8 @@ case class KCLRecordProcessor(
     )
     .unsafeRunSync()
   override def leaseLost(x: LeaseLostInput): Unit = ()
-  override def shardEnded(x: ShardEndedInput): Unit = ()
+  override def shardEnded(x: ShardEndedInput): Unit =
+    x.checkpointer().checkpoint()
   override def shutdownRequested(x: ShutdownRequestedInput): Unit = ()
 }
 
