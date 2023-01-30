@@ -80,39 +80,21 @@ final case class UpdateShardCountRequest(
                 }
             )
             .map { stream =>
-              val openShards = stream.shards.toVector.filter(_._1.isOpen)
+              val openShards = stream.shards.toList.filter(_._1.isOpen)
               val scalingUp = openShards.size < targetShardCount
 
               val newStreamData = if (scalingUp) {
-                openShards.foldLeft(stream) {
-                  case (streamData, (oldShard, oldShardData)) =>
-                    SplitShardRequest.splitShard(
-                      (oldShard.hashKeyRange.startingHashKey + ((oldShard.hashKeyRange.endingHashKey - oldShard.hashKeyRange.startingHashKey) / 2))
-                        .toString(),
-                      oldShard,
-                      oldShardData,
-                      streamData
-                    )
-                }
+                UpdateShardCountRequest.splitShards(
+                  stream,
+                  openShards,
+                  targetShardCount
+                )
               } else {
-                openShards.foldLeft(stream) {
-                  case (streamData, (oldShard, oldShardData)) =>
-                    streamData.shards
-                      .find { case (x, _) =>
-                        x.hashKeyRange.isAdjacent(oldShard.hashKeyRange)
-                      }
-                      .fold(
-                        streamData
-                      ) { case (adjacentShard, adjacentData) =>
-                        MergeShardsRequest.mergeShards(
-                          streamData,
-                          adjacentShard,
-                          adjacentData,
-                          oldShard,
-                          oldShardData
-                        )
-                      }
-                }
+                UpdateShardCountRequest.mergeShards(
+                  stream,
+                  openShards,
+                  targetShardCount
+                )
               }
 
               (
@@ -130,6 +112,64 @@ final case class UpdateShardCountRequest(
 }
 
 object UpdateShardCountRequest {
+  @annotation.tailrec
+  def mergeShards(
+      streamData: StreamData,
+      openShards: List[(Shard, Vector[KinesisRecord])],
+      targetShardCount: Int
+  ): StreamData = openShards match {
+    case _
+        if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
+      streamData
+    case Nil | _ :: Nil => streamData
+    case h :: t => {
+      val (oldShard, oldShardData) = h
+      val (newStreamData, newOpenShards) = t
+        .find { case (x, _) =>
+          x.hashKeyRange.isAdjacent(oldShard.hashKeyRange)
+        }
+        .fold((streamData, t)) { case (adjacentShard, adjacentData) =>
+          (
+            MergeShardsRequest.mergeShards(
+              streamData,
+              adjacentShard,
+              adjacentData,
+              oldShard,
+              oldShardData
+            ),
+            t.filterNot(_._1.shardId == adjacentShard.shardId)
+          )
+        }
+      mergeShards(newStreamData, newOpenShards, targetShardCount)
+    }
+  }
+
+  @annotation.tailrec
+  def splitShards(
+      streamData: StreamData,
+      openShards: List[(Shard, Vector[KinesisRecord])],
+      targetShardCount: Int
+  ): StreamData = openShards match {
+    case _
+        if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
+      streamData
+    case Nil => streamData
+    case h :: t => {
+      val (oldShard, oldShardData) = h
+      splitShards(
+        SplitShardRequest.splitShard(
+          (oldShard.hashKeyRange.startingHashKey + ((oldShard.hashKeyRange.endingHashKey - oldShard.hashKeyRange.startingHashKey) / 2))
+            .toString(),
+          oldShard,
+          oldShardData,
+          streamData
+        ),
+        t,
+        targetShardCount
+      )
+    }
+  }
+
   implicit val updateShardCountRequestCirceEncoder
       : circe.Encoder[UpdateShardCountRequest] =
     circe.Encoder.forProduct4(

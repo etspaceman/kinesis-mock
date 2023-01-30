@@ -123,14 +123,10 @@ object MergeShardsRequest {
       None,
       now,
       HashKeyRange(
-        Math.max(
-          adjacentShard.hashKeyRange.endingHashKey.toLong,
-          shard.hashKeyRange.endingHashKey.toLong
-        ),
-        Math.min(
-          adjacentShard.hashKeyRange.startingHashKey.toLong,
-          shard.hashKeyRange.startingHashKey.toLong
-        )
+        adjacentShard.hashKeyRange.endingHashKey
+          .max(shard.hashKeyRange.endingHashKey),
+        adjacentShard.hashKeyRange.startingHashKey
+          .min(shard.hashKeyRange.startingHashKey)
       ),
       Some(shard.shardId.shardId),
       SequenceNumberRange(
