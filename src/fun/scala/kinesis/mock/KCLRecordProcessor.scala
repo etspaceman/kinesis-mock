@@ -21,17 +21,18 @@ case class KCLRecordProcessor(
     .asScala
     .toVector
     .traverse_(record =>
-      resultsQueue.offer(record) *> IO.blocking(
+      resultsQueue.offer(record) >> IO.blocking(
         x.checkpointer()
           .checkpoint(record.sequenceNumber(), record.subSequenceNumber())
       )
     )
     .unsafeRunSync()
   override def leaseLost(x: LeaseLostInput): Unit = ()
-  override def shardEnded(x: ShardEndedInput): Unit = {
+  override def shardEnded(x: ShardEndedInput): Unit =
     x.checkpointer().checkpoint()
-  }
-  override def shutdownRequested(x: ShutdownRequestedInput): Unit = ()
+
+  override def shutdownRequested(x: ShutdownRequestedInput): Unit =
+    x.checkpointer().checkpoint()
 }
 
 case class KCLRecordProcessorFactory(
