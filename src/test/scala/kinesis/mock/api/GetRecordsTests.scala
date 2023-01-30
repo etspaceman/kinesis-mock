@@ -61,7 +61,9 @@ class GetRecordsTests
         )
       } yield assert(
         res.isRight && res.exists { response =>
-          response.records.toVector === records
+          response.records.toVector === records &&
+          response.nextShardIterator.nonEmpty &&
+          response.childShards.isEmpty
         },
         s"req: $req\n" +
           s"resCount: ${res.map(_.records.length)}\n" +
@@ -116,7 +118,9 @@ class GetRecordsTests
         )
       } yield assert(
         res.isRight && res.exists { response =>
-          response.records.toVector === records.take(50)
+          response.records.toVector === records.take(50) &&
+          response.nextShardIterator.nonEmpty &&
+          response.childShards.isEmpty
         },
         s"req: $req\n" +
           s"resCount: ${res.map(_.records.length)}\n" +
@@ -184,7 +188,9 @@ class GetRecordsTests
         res.isRight && res.exists { case (r1, r2) =>
           r1.records.toVector === records
             .take(50) && r2.records.toVector === records
-            .takeRight(50)
+            .takeRight(50) &&
+          r2.nextShardIterator.nonEmpty &&
+          r2.childShards.isEmpty
         },
         s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +
           s"recHead: ${records.head}\n" +
@@ -194,7 +200,11 @@ class GetRecordsTests
               .map { case (_, r2) =>
                 records.indexWhere(_.partitionKey == r2.records.head.partitionKey)
               }
-              .fold(_.toString, _.toString)}"
+              .fold(_.toString, _.toString)}\n" +
+          s"res2NextShardIterator: ${res.map { case (_, r2) =>
+              r2.nextShardIterator
+            }}\n" +
+          s"res2ChildShards: ${res.map { case (_, r2) => r2.childShards }}"
       )
   })
 
@@ -258,9 +268,85 @@ class GetRecordsTests
       } yield assert(
         res.isRight && res.exists { case (r1, r2) =>
           r1.records.toVector === records
-            .take(50) && r2.records.isEmpty
+            .take(50) && r2.records.isEmpty &&
+          r2.nextShardIterator.nonEmpty &&
+          r2.childShards.isEmpty
         },
         s"res1Head: ${res.map { case (r1, _) => r1.records.head }.fold(_.toString, _.toString)}\n" +
+          s"recHead: ${records.head}"
+      )
+  })
+
+  test("It should get records after a scaling operation")(PropF.forAllF {
+    (
+      streamArn: StreamArn
+    ) =>
+      val streams =
+        Streams.empty.addStream(1, streamArn, None)
+
+      val shard = streams.streams(streamArn).shards.head._1
+
+      val records: Vector[KinesisRecord] =
+        kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
+          case (record, index) =>
+            record.copy(sequenceNumber =
+              SequenceNumber.create(
+                shard.createdAtTimestamp,
+                shard.shardId.index,
+                None,
+                Some(index),
+                Some(record.approximateArrivalTimestamp)
+              )
+            )
+        }
+
+      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
+        s.copy(
+          shards = SortedMap(s.shards.head._1 -> records),
+          streamStatus = StreamStatus.ACTIVE
+        )
+      }
+
+      val shardIterator = ShardIterator.create(
+        streamArn.streamName,
+        shard.shardId.shardId,
+        shard.sequenceNumberRange.startingSequenceNumber
+      )
+
+      for {
+        streamsRef <- Ref.of[IO, Streams](withRecords)
+        scaleReq = UpdateShardCountRequest(
+          ScalingType.UNIFORM_SCALING,
+          None,
+          Some(streamArn),
+          2
+        )
+        _ <- scaleReq.updateShardCount(
+          streamsRef,
+          50,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
+        _ <- streamsRef.update(
+          _.findAndUpdateStream(streamArn)(s =>
+            s.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+        )
+        req = GetRecordsRequest(None, shardIterator, None)
+        res <- req.getRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
+      } yield assert(
+        res.isRight && res.exists { response =>
+          response.records.toVector === records &&
+          response.nextShardIterator.isEmpty &&
+          response.childShards.exists(_.nonEmpty)
+        },
+        s"req: $req\n" +
+          s"resCount: ${res.map(_.records.length)}\n" +
+          s"resHead: ${res.map(r => r.records.head).fold(_.toString, _.toString)}\n" +
           s"recHead: ${records.head}"
       )
   })
