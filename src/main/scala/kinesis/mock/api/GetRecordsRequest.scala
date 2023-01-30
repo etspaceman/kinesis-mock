@@ -41,26 +41,36 @@ final case class GetRecordsRequest(
                     _ =>
                       val allShards = stream.shards.keys.toVector
                       val childShards = allShards
-                        .filter(_.parentShardId.contains(shard.shardId.shardId))
+                        .filter(x =>
+                          x.parentShardId.contains(shard.shardId.shardId) ||
+                            x.adjacentParentShardId
+                              .contains(shard.shardId.shardId)
+                        )
                         .map(s =>
                           ChildShard.fromShard(
                             s,
-                            allShards
-                              .filter(
-                                _.parentShardId.contains(s.shardId.shardId)
-                              )
+                            allShards.filter(x =>
+                              s.adjacentParentShardId.contains(
+                                x.shardId.shardId
+                              ) || s.parentShardId.contains(x.shardId.shardId)
+                            )
                           )
                         )
                       if (data.isEmpty) {
                         Right(
                           GetRecordsResponse(
-                            childShards,
+                            if (childShards.nonEmpty) Some(childShards)
+                            else None,
                             0L,
-                            ShardIterator.create(
-                              parts.streamName,
-                              parts.shardId,
-                              parts.sequenceNumber
-                            ),
+                            if (childShards.nonEmpty) None
+                            else
+                              Some(
+                                ShardIterator.create(
+                                  parts.streamName,
+                                  parts.shardId,
+                                  parts.sequenceNumber
+                                )
+                              ),
                             Queue.empty
                           )
                         )
@@ -84,13 +94,22 @@ final case class GetRecordsRequest(
 
                           Right(
                             GetRecordsResponse(
-                              childShards,
+                              if (
+                                records.length == data.length && childShards.nonEmpty
+                              ) Some(childShards)
+                              else None,
                               millisBehindLatest,
-                              ShardIterator.create(
-                                parts.streamName,
-                                parts.shardId,
-                                records.last.sequenceNumber
-                              ),
+                              if (
+                                records.length == data.length && childShards.nonEmpty
+                              ) None
+                              else
+                                Some(
+                                  ShardIterator.create(
+                                    parts.streamName,
+                                    parts.shardId,
+                                    records.last.sequenceNumber
+                                  )
+                                ),
                               records
                             )
                           )
@@ -106,13 +125,18 @@ final case class GetRecordsRequest(
                             case index if index == data.length - 1 =>
                               Right(
                                 GetRecordsResponse(
-                                  childShards,
+                                  if (childShards.nonEmpty) Some(childShards)
+                                  else None,
                                   0L,
-                                  ShardIterator.create(
-                                    parts.streamName,
-                                    parts.shardId,
-                                    parts.sequenceNumber
-                                  ),
+                                  if (childShards.nonEmpty) None
+                                  else
+                                    Some(
+                                      ShardIterator.create(
+                                        parts.streamName,
+                                        parts.shardId,
+                                        parts.sequenceNumber
+                                      )
+                                    ),
                                   Queue.empty
                                 )
                               )
@@ -140,13 +164,20 @@ final case class GetRecordsRequest(
 
                               Right(
                                 GetRecordsResponse(
-                                  childShards,
+                                  if (data.lastOption == records.lastOption)
+                                    Some(childShards)
+                                  else None,
                                   millisBehindLatest,
-                                  ShardIterator.create(
-                                    parts.streamName,
-                                    parts.shardId,
-                                    records.last.sequenceNumber
-                                  ),
+                                  if (data.lastOption == records.lastOption)
+                                    None
+                                  else
+                                    Some(
+                                      ShardIterator.create(
+                                        parts.streamName,
+                                        parts.shardId,
+                                        records.last.sequenceNumber
+                                      )
+                                    ),
                                   records
                                 )
                               )

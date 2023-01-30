@@ -115,7 +115,7 @@ class KCLTests extends AwsFunctionalTests {
               )
           )(x =>
             resources.logger.debug("Shutting down KCL Scheduler") >>
-              scheduler.startGracefulShutdown().toIO >>
+              IO.blocking(scheduler.shutdown()) >>
               x.join.void >>
               resources.logger.debug("KCL Scheduler has been shut down")
           )

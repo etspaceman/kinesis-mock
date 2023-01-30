@@ -580,9 +580,16 @@ object arbitrary {
 
   implicit val getRecordsResponseArb: Arbitrary[GetRecordsResponse] = Arbitrary(
     for {
-      childShards <- Gen.containerOf[Vector, ChildShard](childShardGen)
+      childShards <- Gen
+        .containerOf[Vector, ChildShard](childShardGen)
+        .flatMap {
+          case x if x.nonEmpty => Gen.some(x)
+          case _               => Gen.const(None)
+        }
       millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
-      nextShardIterator <- shardIteratorGen
+      nextShardIterator <-
+        if (childShards.nonEmpty) Gen.const(None)
+        else Gen.some(shardIteratorGen)
       records <- Gen
         .choose(0, 100)
         .flatMap(size =>

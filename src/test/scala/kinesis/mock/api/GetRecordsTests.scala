@@ -171,7 +171,7 @@ class GetRecordsTests
         )
         res2 <- res1
           .traverse(r =>
-            GetRecordsRequest(Some(50), r.nextShardIterator, None)
+            GetRecordsRequest(Some(50), r.nextShardIterator.orNull, None)
               .getRecords(
                 streamsRef,
                 streamArn.awsRegion,
@@ -246,7 +246,7 @@ class GetRecordsTests
         )
         res2 <- res1
           .traverse(r =>
-            GetRecordsRequest(Some(50), r.nextShardIterator, None)
+            GetRecordsRequest(Some(50), r.nextShardIterator.orNull, None)
               .getRecords(
                 streamsRef,
                 streamArn.awsRegion,
