@@ -7,7 +7,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 
-import cats.effect.std.{Queue, Supervisor}
+import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
 import cats.syntax.all._
 import com.github.f4b6a3.uuid.UuidCreator
@@ -20,6 +20,10 @@ import software.amazon.kinesis.checkpoint.CheckpointConfig
 import software.amazon.kinesis.common._
 import software.amazon.kinesis.coordinator.{CoordinatorConfig, Scheduler}
 import software.amazon.kinesis.leases.LeaseManagementConfig
+import software.amazon.kinesis.leases.dynamodb.{
+  DynamoDBLeaseManagementFactory,
+  DynamoDBLeaseSerializer
+}
 import software.amazon.kinesis.lifecycle.LifecycleConfig
 import software.amazon.kinesis.metrics.MetricsConfig
 import software.amazon.kinesis.processor.ProcessorConfig
@@ -73,8 +77,51 @@ class KCLTests extends AwsFunctionalTests {
             resources.streamName.streamName,
             resources.kinesisClient
           )
-          supervisor <- Supervisor[IO]
           isStarted <- Resource.eval(Deferred[IO, Unit])
+          defaultLeaseManagement = new LeaseManagementConfig(
+            appName,
+            dynamoClient,
+            resources.kinesisClient,
+            workerId
+          ).shardSyncIntervalMillis(1000L)
+          leaseManagementConfig = defaultLeaseManagement.leaseManagementFactory(
+            new DynamoDBLeaseManagementFactory(
+              defaultLeaseManagement.kinesisClient(),
+              defaultLeaseManagement.dynamoDBClient(),
+              defaultLeaseManagement.tableName(),
+              defaultLeaseManagement.workerIdentifier(),
+              defaultLeaseManagement.executorService(),
+              defaultLeaseManagement.failoverTimeMillis(),
+              defaultLeaseManagement.epsilonMillis(),
+              defaultLeaseManagement.maxLeasesForWorker(),
+              defaultLeaseManagement.maxLeasesToStealAtOneTime(),
+              defaultLeaseManagement.maxLeaseRenewalThreads(),
+              defaultLeaseManagement.cleanupLeasesUponShardCompletion(),
+              defaultLeaseManagement.ignoreUnexpectedChildShards(),
+              defaultLeaseManagement.shardSyncIntervalMillis(),
+              defaultLeaseManagement.consistentReads(),
+              defaultLeaseManagement.listShardsBackoffTimeInMillis(),
+              defaultLeaseManagement.maxListShardsRetryAttempts(),
+              defaultLeaseManagement.maxCacheMissesBeforeReload(),
+              defaultLeaseManagement.listShardsCacheAllowedAgeInSeconds(),
+              defaultLeaseManagement.cacheMissWarningModulus(),
+              defaultLeaseManagement.initialLeaseTableReadCapacity().toLong,
+              defaultLeaseManagement.initialLeaseTableWriteCapacity().toLong,
+              defaultLeaseManagement.hierarchicalShardSyncer(),
+              defaultLeaseManagement.tableCreatorCallback(),
+              defaultLeaseManagement.dynamoDbRequestTimeout(),
+              defaultLeaseManagement.billingMode(),
+              new DynamoDBLeaseSerializer(),
+              defaultLeaseManagement.customShardDetectorProvider(),
+              false,
+              LeaseCleanupConfig
+                .builder()
+                .completedLeaseCleanupIntervalMillis(500L)
+                .garbageLeaseCleanupIntervalMillis(500L)
+                .leaseCleanupIntervalMillis(10.seconds.toMillis)
+                .build()
+            )
+          )
           scheduler <- Resource.eval(
             IO(
               new Scheduler(
@@ -82,12 +129,7 @@ class KCLTests extends AwsFunctionalTests {
                 new CoordinatorConfig(appName)
                   .parentShardPollIntervalMillis(1000L)
                   .workerStateChangeListener(WorkerStartedListener(isStarted)),
-                new LeaseManagementConfig(
-                  appName,
-                  dynamoClient,
-                  resources.kinesisClient,
-                  workerId
-                ).shardSyncIntervalMillis(1000L),
+                leaseManagementConfig,
                 new LifecycleConfig(),
                 new MetricsConfig(cloudwatchClient, appName),
                 new ProcessorConfig(KCLRecordProcessorFactory(resultsQueue)),
@@ -101,24 +143,25 @@ class KCLTests extends AwsFunctionalTests {
               )
             )
           )
-          _ <- Resource.make(
-            supervisor
-              .supervise(
-                resources.logger.debug("Starting KCL Scheduler") >>
-                  IO.interruptible(scheduler.run())
-              )
-              .flatTap(_ =>
-                resources.logger.debug("Checking if KCL is started") >>
-                  isStarted.get >>
-                  resources.logger.debug("KCL has started") >>
-                  IO.sleep(2.seconds)
-              )
-          )(x =>
-            resources.logger.debug("Shutting down KCL Scheduler") >>
-              IO.blocking(scheduler.shutdown()) >>
-              x.join.void >>
-              resources.logger.debug("KCL Scheduler has been shut down")
-          )
+          _ <- for {
+            _ <- Resource.eval(resources.logger.info("Starting KCL Scheduler"))
+            _ <- IO.blocking(scheduler.run()).background
+            _ <- Resource.onFinalize(
+              for {
+                _ <- resources.logger.info("Shutting down KCL Scheduler")
+                _ <- scheduler.startGracefulShutdown().toIO
+                _ <- resources.logger.info("KCL Scheduler has been shut down")
+                _ <- IO.blocking(scheduler.shutdown())
+              } yield ()
+            )
+            _ <- Resource.eval(
+              for {
+                _ <- resources.logger.info("Checking if KCL is started")
+                _ <- isStarted.get
+                _ <- resources.logger.info("KCL is started")
+              } yield ()
+            )
+          } yield ()
         } yield KCLResources(resources, resultsQueue)
       }
     )
