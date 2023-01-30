@@ -10,9 +10,9 @@ import io.circe
 import kinesis.mock.models._
 
 final case class GetRecordsResponse(
-    childShards: Vector[ChildShard],
+    childShards: Option[Vector[ChildShard]],
     millisBehindLatest: Long,
-    nextShardIterator: ShardIterator,
+    nextShardIterator: Option[ShardIterator],
     records: Queue[KinesisRecord]
 )
 
@@ -34,9 +34,11 @@ object GetRecordsResponse {
   ): circe.Decoder[GetRecordsResponse] =
     x =>
       for {
-        childShards <- x.downField("ChildShards").as[Vector[ChildShard]]
+        childShards <- x.downField("ChildShards").as[Option[Vector[ChildShard]]]
         millisBehindLatest <- x.downField("MillisBehindLatest").as[Long]
-        nextShardIterator <- x.downField("NextShardIterator").as[ShardIterator]
+        nextShardIterator <- x
+          .downField("NextShardIterator")
+          .as[Option[ShardIterator]]
         records <- x.downField("Records").as[Queue[KinesisRecord]]
       } yield GetRecordsResponse(
         childShards,

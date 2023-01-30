@@ -39,7 +39,7 @@ class DecreaseStreamRetentionPeriodTests
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         _ <- cache
           .increaseStreamRetention(
-            IncreaseStreamRetentionPeriodRequest(48, streamName),
+            IncreaseStreamRetentionPeriodRequest(48, Some(streamName), None),
             context,
             false,
             Some(awsRegion)
@@ -47,7 +47,7 @@ class DecreaseStreamRetentionPeriodTests
           .rethrow
         _ <- cache
           .decreaseStreamRetention(
-            DecreaseStreamRetentionPeriodRequest(24, streamName),
+            DecreaseStreamRetentionPeriodRequest(24, Some(streamName), None),
             context,
             false,
             Some(awsRegion)
@@ -55,7 +55,7 @@ class DecreaseStreamRetentionPeriodTests
           .rethrow
         res <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)

@@ -38,7 +38,8 @@ class SplitShardTests
         SplitShardRequest(
           newStartingHashKey,
           shardToSplit.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -83,7 +84,8 @@ class SplitShardTests
         SplitShardRequest(
           newStartingHashKey,
           shardToSplit.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -121,7 +123,8 @@ class SplitShardTests
         SplitShardRequest(
           "0",
           shardToSplit.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -161,7 +164,8 @@ class SplitShardTests
           SplitShardRequest(
             newStartingHashKey,
             shardToSplit.shardId.shardId,
-            streamArn.streamName
+            None,
+            Some(streamArn)
           )
 
         for {

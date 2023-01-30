@@ -115,7 +115,7 @@ class KCLTests extends AwsFunctionalTests {
               )
           )(x =>
             resources.logger.debug("Shutting down KCL Scheduler") >>
-              scheduler.startGracefulShutdown().toIO >>
+              IO.blocking(scheduler.shutdown()) >>
               x.join.void >>
               resources.logger.debug("KCL Scheduler has been shut down")
           )
@@ -144,6 +144,20 @@ class KCLTests extends AwsFunctionalTests {
         .streamName(resources.functionalTestResources.streamName.streamName)
         .build()
     )
+    _ <- resources.functionalTestResources.logger.debug(
+      s"Scaling stream ${resources.functionalTestResources.streamName}"
+    )
+    _ <- resources.functionalTestResources.kinesisClient
+      .updateShardCount(
+        UpdateShardCountRequest
+          .builder()
+          .streamName(resources.functionalTestResources.streamName.streamName)
+          .targetShardCount(2)
+          .scalingType(ScalingType.UNIFORM_SCALING)
+          .build()
+      )
+      .toIO
+    _ <- IO.sleep(2.seconds)
     _ <- resources.functionalTestResources.logger.debug(
       s"Putting records to ${resources.functionalTestResources.streamName}"
     )

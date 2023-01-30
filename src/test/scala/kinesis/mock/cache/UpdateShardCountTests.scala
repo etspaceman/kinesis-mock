@@ -41,7 +41,8 @@ class UpdateShardCountTests
           .updateShardCount(
             UpdateShardCountRequest(
               ScalingType.UNIFORM_SCALING,
-              streamName,
+              Some(streamName),
+              None,
               10
             ),
             context,
@@ -49,7 +50,10 @@ class UpdateShardCountTests
             Some(awsRegion)
           )
           .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(streamName)
+        describeStreamSummaryReq = DescribeStreamSummaryRequest(
+          Some(streamName),
+          None
+        )
         checkStream1 <- cache
           .describeStreamSummary(
             describeStreamSummaryReq,
@@ -69,7 +73,15 @@ class UpdateShardCountTests
           .rethrow
         checkShards <- cache
           .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            ListShardsRequest(
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(streamName),
+              None
+            ),
             context,
             false,
             Some(awsRegion)

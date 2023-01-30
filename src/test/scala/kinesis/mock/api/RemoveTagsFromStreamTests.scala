@@ -35,7 +35,7 @@ class RemoveTagsFromStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = RemoveTagsFromStreamRequest(streamArn.streamName, removedTags)
+        req = RemoveTagsFromStreamRequest(None, Some(streamArn), removedTags)
         res <- req.removeTagsFromStream(
           streamsRef,
           streamArn.awsRegion,

@@ -20,7 +20,7 @@ class DescribeStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DescribeStreamRequest(None, None, streamArn.streamName)
+        req = DescribeStreamRequest(None, None, None, Some(streamArn))
         res <- req.describeStream(
           streamsRef,
           streamArn.awsRegion,
@@ -48,7 +48,7 @@ class DescribeStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DescribeStreamRequest(None, limit, streamArn.streamName)
+        req = DescribeStreamRequest(None, limit, None, Some(streamArn))
         res <- req.describeStream(
           streamsRef,
           streamArn.awsRegion,
@@ -83,7 +83,8 @@ class DescribeStreamTests
         req = DescribeStreamRequest(
           exclusiveStartShardId,
           None,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.describeStream(
           streamsRef,

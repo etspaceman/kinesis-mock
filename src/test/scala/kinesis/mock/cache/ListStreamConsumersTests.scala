@@ -41,7 +41,7 @@ class ListStreamConsumersTests
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         streamArn <- cache
           .describeStreamSummary(
-            DescribeStreamSummaryRequest(streamName),
+            DescribeStreamSummaryRequest(Some(streamName), None),
             context,
             false,
             Some(awsRegion)

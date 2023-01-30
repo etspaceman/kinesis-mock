@@ -13,39 +13,43 @@ import kinesis.mock.validations.CommonValidations
 final case class DescribeStreamRequest(
     exclusiveStartShardId: Option[String],
     limit: Option[Int],
-    streamName: StreamName
+    streamName: Option[StreamName],
+    streamArn: Option[StreamArn]
 ) {
   def describeStream(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[DescribeStreamResponse]] = {
-    val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
     streamsRef.get.map(streams =>
       CommonValidations
-        .validateStreamName(streamName)
-        .flatMap(_ =>
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+        .flatMap { case (name, arn) =>
           CommonValidations
-            .findStream(streamArn, streams)
-            .flatMap(stream =>
-              (
-                exclusiveStartShardId match {
-                  case Some(shardId) =>
-                    CommonValidations.validateShardId(shardId)
-                  case None => Right(())
-                },
-                limit match {
-                  case Some(l) => CommonValidations.validateLimit(l)
-                  case _       => Right(())
-                }
-              ).mapN((_, _) =>
-                DescribeStreamResponse(
-                  StreamDescription
-                    .fromStreamData(stream, exclusiveStartShardId, limit)
+            .validateStreamName(name)
+            .flatMap(_ =>
+              CommonValidations
+                .findStream(arn, streams)
+                .flatMap(stream =>
+                  (
+                    exclusiveStartShardId match {
+                      case Some(shardId) =>
+                        CommonValidations.validateShardId(shardId)
+                      case None => Right(())
+                    },
+                    limit match {
+                      case Some(l) => CommonValidations.validateLimit(l)
+                      case _       => Right(())
+                    }
+                  ).mapN((_, _) =>
+                    DescribeStreamResponse(
+                      StreamDescription
+                        .fromStreamData(stream, exclusiveStartShardId, limit)
+                    )
+                  )
                 )
-              )
             )
-        )
+        }
     )
   }
 }
@@ -53,9 +57,12 @@ final case class DescribeStreamRequest(
 object DescribeStreamRequest {
   implicit val describeStreamRequestCirceEncoder
       : circe.Encoder[DescribeStreamRequest] =
-    circe.Encoder.forProduct3("ExclusiveStartShardId", "Limit", "StreamName")(
-      x => (x.exclusiveStartShardId, x.limit, x.streamName)
-    )
+    circe.Encoder.forProduct4(
+      "ExclusiveStartShardId",
+      "Limit",
+      "StreamName",
+      "StreamARN"
+    )(x => (x.exclusiveStartShardId, x.limit, x.streamName, x.streamArn))
   implicit val describeStreamRequestCirceDecoder
       : circe.Decoder[DescribeStreamRequest] = { x =>
     for {
@@ -63,8 +70,14 @@ object DescribeStreamRequest {
         .downField("ExclusiveStartShardId")
         .as[Option[String]]
       limit <- x.downField("Limit").as[Option[Int]]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield DescribeStreamRequest(exclusiveStartShardId, limit, streamName)
+      streamName <- x.downField("StreamName").as[Option[StreamName]]
+      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+    } yield DescribeStreamRequest(
+      exclusiveStartShardId,
+      limit,
+      streamName,
+      streamArn
+    )
   }
   implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
     Encoder.derive

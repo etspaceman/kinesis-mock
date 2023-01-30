@@ -23,7 +23,8 @@ class EnableEnhancedMonitoringTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = EnableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.enableEnhancedMonitoring(
           streamsRef,

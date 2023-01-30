@@ -39,7 +39,15 @@ class GetShardIteratorTests
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         shard <- cache
           .listShards(
-            ListShardsRequest(None, None, None, None, None, Some(streamName)),
+            ListShardsRequest(
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(streamName),
+              None
+            ),
             context,
             false,
             Some(awsRegion)
@@ -52,7 +60,8 @@ class GetShardIteratorTests
               shard.shardId,
               ShardIteratorType.TRIM_HORIZON,
               None,
-              streamName,
+              Some(streamName),
+              None,
               None
             ),
             context,

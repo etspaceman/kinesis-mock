@@ -14,7 +14,8 @@ import kinesis.mock.validations.CommonValidations
 
 final case class GetRecordsRequest(
     limit: Option[Int],
-    shardIterator: ShardIterator
+    shardIterator: ShardIterator,
+    streamArn: Option[StreamArn]
 ) {
   def getRecords(
       streamsRef: Ref[IO, Streams],
@@ -22,43 +23,54 @@ final case class GetRecordsRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[GetRecordsResponse]] = streamsRef.get.map { streams =>
     shardIterator.parse.flatMap { parts =>
-      val streamArn = StreamArn(awsRegion, parts.streamName, awsAccountId)
+      val arn = streamArn.getOrElse(
+        StreamArn(awsRegion, parts.streamName, awsAccountId)
+      )
       CommonValidations
-        .isStreamActiveOrUpdating(streamArn, streams)
+        .isStreamActiveOrUpdating(arn, streams)
         .flatMap(_ =>
           CommonValidations
-            .findStream(streamArn, streams)
+            .findStream(arn, streams)
             .flatMap(stream =>
-              CommonValidations.findShard(parts.shardId, stream).flatMap { case (shard, data) =>
-                (limit match {
-                  case Some(l) => CommonValidations.validateLimit(l)
-                  case None    => Right(())
-                }).flatMap { _ =>
-                  CommonValidations
-                    .isShardOpen(shard)
-                    .flatMap { _ =>
+              CommonValidations.findShard(parts.shardId, stream).flatMap {
+                case (shard, data) =>
+                  (limit match {
+                    case Some(l) => CommonValidations.validateLimit(l)
+                    case None    => Right(())
+                  }).flatMap {
+                    _ =>
                       val allShards = stream.shards.keys.toVector
                       val childShards = allShards
-                        .filter(_.parentShardId.contains(shard.shardId.shardId))
+                        .filter(x =>
+                          x.parentShardId.contains(shard.shardId.shardId) ||
+                            x.adjacentParentShardId
+                              .contains(shard.shardId.shardId)
+                        )
                         .map(s =>
                           ChildShard.fromShard(
                             s,
-                            allShards
-                              .filter(
-                                _.parentShardId.contains(s.shardId.shardId)
-                              )
+                            allShards.filter(x =>
+                              s.adjacentParentShardId.contains(
+                                x.shardId.shardId
+                              ) || s.parentShardId.contains(x.shardId.shardId)
+                            )
                           )
                         )
                       if (data.isEmpty) {
                         Right(
                           GetRecordsResponse(
-                            childShards,
+                            if (childShards.nonEmpty) Some(childShards)
+                            else None,
                             0L,
-                            ShardIterator.create(
-                              parts.streamName,
-                              parts.shardId,
-                              parts.sequenceNumber
-                            ),
+                            if (childShards.nonEmpty) None
+                            else
+                              Some(
+                                ShardIterator.create(
+                                  parts.streamName,
+                                  parts.shardId,
+                                  parts.sequenceNumber
+                                )
+                              ),
                             Queue.empty
                           )
                         )
@@ -82,13 +94,22 @@ final case class GetRecordsRequest(
 
                           Right(
                             GetRecordsResponse(
-                              childShards,
+                              if (
+                                records.length == data.length && childShards.nonEmpty
+                              ) Some(childShards)
+                              else None,
                               millisBehindLatest,
-                              ShardIterator.create(
-                                parts.streamName,
-                                parts.shardId,
-                                records.last.sequenceNumber
-                              ),
+                              if (
+                                records.length == data.length && childShards.nonEmpty
+                              ) None
+                              else
+                                Some(
+                                  ShardIterator.create(
+                                    parts.streamName,
+                                    parts.shardId,
+                                    records.last.sequenceNumber
+                                  )
+                                ),
                               records
                             )
                           )
@@ -104,13 +125,18 @@ final case class GetRecordsRequest(
                             case index if index == data.length - 1 =>
                               Right(
                                 GetRecordsResponse(
-                                  childShards,
+                                  if (childShards.nonEmpty) Some(childShards)
+                                  else None,
                                   0L,
-                                  ShardIterator.create(
-                                    parts.streamName,
-                                    parts.shardId,
-                                    parts.sequenceNumber
-                                  ),
+                                  if (childShards.nonEmpty) None
+                                  else
+                                    Some(
+                                      ShardIterator.create(
+                                        parts.streamName,
+                                        parts.shardId,
+                                        parts.sequenceNumber
+                                      )
+                                    ),
                                   Queue.empty
                                 )
                               )
@@ -138,21 +164,28 @@ final case class GetRecordsRequest(
 
                               Right(
                                 GetRecordsResponse(
-                                  childShards,
+                                  if (data.lastOption == records.lastOption)
+                                    Some(childShards)
+                                  else None,
                                   millisBehindLatest,
-                                  ShardIterator.create(
-                                    parts.streamName,
-                                    parts.shardId,
-                                    records.last.sequenceNumber
-                                  ),
+                                  if (data.lastOption == records.lastOption)
+                                    None
+                                  else
+                                    Some(
+                                      ShardIterator.create(
+                                        parts.streamName,
+                                        parts.shardId,
+                                        records.last.sequenceNumber
+                                      )
+                                    ),
                                   records
                                 )
                               )
                           }
                         }
                       }
-                    }
-                }
+
+                  }
               }
             )
         )
@@ -183,8 +216,8 @@ object GetRecordsRequest {
   }
 
   implicit val getRecordsRequestCirceEncoder: circe.Encoder[GetRecordsRequest] =
-    circe.Encoder.forProduct2("Limit", "ShardIterator")(x =>
-      (x.limit, x.shardIterator)
+    circe.Encoder.forProduct3("Limit", "ShardIterator", "StreamARN")(x =>
+      (x.limit, x.shardIterator, x.streamArn)
     )
 
   implicit val getRecordsRequestCirceDecoder: circe.Decoder[GetRecordsRequest] =
@@ -192,7 +225,8 @@ object GetRecordsRequest {
       for {
         limit <- x.downField("Limit").as[Option[Int]]
         shardIterator <- x.downField("ShardIterator").as[ShardIterator]
-      } yield GetRecordsRequest(limit, shardIterator)
+        streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+      } yield GetRecordsRequest(limit, shardIterator, streamArn)
   implicit val getRecordsRequestEncoder: Encoder[GetRecordsRequest] =
     Encoder.derive
   implicit val getRecordsRequestDecoder: Decoder[GetRecordsRequest] =

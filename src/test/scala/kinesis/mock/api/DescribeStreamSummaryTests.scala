@@ -20,7 +20,7 @@ class DescribeStreamSummaryTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = DescribeStreamSummaryRequest(streamArn.streamName)
+        req = DescribeStreamSummaryRequest(None, Some(streamArn))
         res <- req.describeStreamSummary(
           streamsRef,
           streamArn.awsRegion,

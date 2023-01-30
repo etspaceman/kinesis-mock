@@ -39,13 +39,28 @@ class MergeShardsTests extends AwsFunctionalTests {
               .endingSequenceNumber() == null // scalafix:ok
           )
         )
+      withRanges = openShards.map(x =>
+        (
+          x,
+          models.HashKeyRange(
+            BigInt(x.hashKeyRange().endingHashKey()),
+            BigInt(x.hashKeyRange().startingHashKey())
+          )
+        )
+      )
+      (shardToMerge, adjacentShardToMerge) = withRanges
+        .map { case (shard, range) =>
+          (shard, withRanges.filter(_._2.isAdjacent(range)).map(_._1))
+        }
+        .filter(_._2.nonEmpty)
+        .head
       _ <- resources.kinesisClient
         .mergeShards(
           MergeShardsRequest
             .builder()
             .streamName(resources.streamName.streamName)
-            .adjacentShardToMerge(openShards.last.shardId())
-            .shardToMerge(openShards.head.shardId())
+            .adjacentShardToMerge(adjacentShardToMerge.head.shardId())
+            .shardToMerge(shardToMerge.shardId())
             .build()
         )
         .toIO

@@ -9,18 +9,25 @@ import kinesis.mock.models._
 final case class EnableEnhancedMonitoringResponse(
     currentShardLevelMetrics: Vector[ShardLevelMetric],
     desiredShardLevelMetrics: Vector[ShardLevelMetric],
-    streamName: StreamName
+    streamName: StreamName,
+    streamArn: StreamArn
 )
 
 object EnableEnhancedMonitoringResponse {
   implicit val enableEnhancedMonitoringResponseCirceEncoder
       : circe.Encoder[EnableEnhancedMonitoringResponse] =
-    circe.Encoder.forProduct3(
+    circe.Encoder.forProduct4(
       "CurrentShardLevelMetrics",
       "DesiredShardLevelMetrics",
-      "StreamName"
+      "StreamName",
+      "StreamARN"
     )(x =>
-      (x.currentShardLevelMetrics, x.desiredShardLevelMetrics, x.streamName)
+      (
+        x.currentShardLevelMetrics,
+        x.desiredShardLevelMetrics,
+        x.streamName,
+        x.streamArn
+      )
     )
 
   implicit val enableEnhancedMonitoringResponseCirceDecoder
@@ -33,10 +40,12 @@ object EnableEnhancedMonitoringResponse {
         .downField("DesiredShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
+      streamArn <- x.downField("StreamARN").as[StreamArn]
     } yield EnableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,
-      streamName
+      streamName,
+      streamArn
     )
   }
   implicit val enableEnhancedMonitoringResponseEncoder

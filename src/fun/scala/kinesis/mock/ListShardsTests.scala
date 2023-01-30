@@ -34,7 +34,7 @@ class ListShardsTests extends AwsFunctionalTests {
         )
         .toIO
     } yield assert(
-      res.shards().size() == 5,
+      res.shards().size() == 4,
       s"$res"
     )
   }

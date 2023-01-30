@@ -52,7 +52,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.TRIM_HORIZON,
           None,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           None
         )
         res <- req.getShardIterator(
@@ -107,7 +108,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.LATEST,
           None,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           None
         )
         res <- req.getShardIterator(
@@ -166,7 +168,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_TIMESTAMP,
           None,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           Some(startingInstant.plusSeconds(25L))
         )
         res <- req.getShardIterator(
@@ -225,7 +228,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_SEQUENCE_NUMBER,
           Some(records(25).sequenceNumber),
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           None
         )
         res <- req.getShardIterator(
@@ -282,7 +286,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_SEQUENCE_NUMBER,
           Some(shard.sequenceNumberRange.startingSequenceNumber),
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           None
         )
         res <- req.getShardIterator(
@@ -338,7 +343,8 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AFTER_SEQUENCE_NUMBER,
             Some(records(25).sequenceNumber),
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             None
           )
           res <- req.getShardIterator(
@@ -397,7 +403,8 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AFTER_SEQUENCE_NUMBER,
             Some(shard.sequenceNumberRange.startingSequenceNumber),
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             None
           )
           res <- req.getShardIterator(
@@ -432,7 +439,8 @@ class GetShardIteratorTests
           shard.shardId.shardId,
           ShardIteratorType.AT_TIMESTAMP,
           None,
-          streamArn.streamName,
+          None,
+          Some(streamArn),
           None
         )
         res <- req.getShardIterator(
@@ -459,7 +467,8 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_TIMESTAMP,
             None,
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             Some(Instant.now().plusSeconds(30))
           )
           res <- req.getShardIterator(
@@ -487,7 +496,8 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_SEQUENCE_NUMBER,
             None,
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             None
           )
           res <- req.getShardIterator(
@@ -515,7 +525,8 @@ class GetShardIteratorTests
             shard.shardId.shardId,
             ShardIteratorType.AT_SEQUENCE_NUMBER,
             None,
-            streamArn.streamName,
+            None,
+            Some(streamArn),
             None
           )
           res <- req.getShardIterator(

@@ -36,7 +36,7 @@ class AddTagsToStreamTests
           .rethrow
         _ <- cache
           .addTagsToStream(
-            AddTagsToStreamRequest(streamName, tags),
+            AddTagsToStreamRequest(Some(streamName), None, tags),
             context,
             false,
             Some(awsRegion)
@@ -44,7 +44,12 @@ class AddTagsToStreamTests
           .rethrow
         res <- cache
           .listTagsForStream(
-            ListTagsForStreamRequest(None, None, streamName),
+            ListTagsForStreamRequest(
+              None,
+              None,
+              Some(streamName),
+              None
+            ),
             context,
             false,
             Some(awsRegion)

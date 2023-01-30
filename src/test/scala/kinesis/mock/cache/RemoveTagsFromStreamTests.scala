@@ -36,21 +36,25 @@ class RemoveTagsFromStreamTests
           .rethrow
         _ <- cache
           .addTagsToStream(
-            AddTagsToStreamRequest(streamName, tags),
+            AddTagsToStreamRequest(Some(streamName), None, tags),
             context,
             false,
             Some(awsRegion)
           )
           .rethrow
         _ <- cache.removeTagsFromStream(
-          RemoveTagsFromStreamRequest(streamName, tags.tags.keys.toVector),
+          RemoveTagsFromStreamRequest(
+            Some(streamName),
+            None,
+            tags.tags.keys.toVector
+          ),
           context,
           false,
           Some(awsRegion)
         )
         res <- cache
           .listTagsForStream(
-            ListTagsForStreamRequest(None, None, streamName),
+            ListTagsForStreamRequest(None, None, Some(streamName), None),
             context,
             false,
             Some(awsRegion)

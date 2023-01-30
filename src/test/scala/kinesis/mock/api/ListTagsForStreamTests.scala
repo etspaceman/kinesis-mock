@@ -28,7 +28,7 @@ class ListTagsForStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = ListTagsForStreamRequest(None, None, streamArn.streamName)
+        req = ListTagsForStreamRequest(None, None, None, Some(streamArn))
         res <- req.listTagsForStream(
           streamsRef,
           streamArn.awsRegion,
@@ -65,7 +65,8 @@ class ListTagsForStreamTests
         req = ListTagsForStreamRequest(
           Some(exclusiveStartTagKey),
           None,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.listTagsForStream(
           streamsRef,
@@ -100,7 +101,7 @@ class ListTagsForStreamTests
 
       for {
         streamsRef <- Ref.of[IO, Streams](withTags)
-        req = ListTagsForStreamRequest(None, Some(5), streamArn.streamName)
+        req = ListTagsForStreamRequest(None, Some(5), None, Some(streamArn))
         res <- req.listTagsForStream(
           streamsRef,
           streamArn.awsRegion,

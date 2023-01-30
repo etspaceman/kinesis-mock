@@ -31,7 +31,8 @@ class MergeShardsTests
         req = MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
         res <- req.mergeShards(
           streamsRef,
@@ -70,7 +71,8 @@ class MergeShardsTests
         MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -101,7 +103,8 @@ class MergeShardsTests
         MergeShardsRequest(
           adjacentShardToMerge.shardId,
           shardToMerge.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -133,7 +136,8 @@ class MergeShardsTests
         MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {
@@ -163,7 +167,8 @@ class MergeShardsTests
         MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId.shardId,
-          streamArn.streamName
+          None,
+          Some(streamArn)
         )
 
       for {

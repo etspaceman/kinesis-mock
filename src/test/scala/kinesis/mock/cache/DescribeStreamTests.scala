@@ -35,7 +35,7 @@ class DescribeStreamTests
           .rethrow
         res <- cache
           .describeStream(
-            DescribeStreamRequest(None, None, streamName),
+            DescribeStreamRequest(None, None, Some(streamName), None),
             context,
             false,
             Some(awsRegion)
@@ -49,7 +49,8 @@ class DescribeStreamTests
               None,
               None,
               None,
-              Some(streamName)
+              Some(streamName),
+              None
             ),
             context,
             false,
