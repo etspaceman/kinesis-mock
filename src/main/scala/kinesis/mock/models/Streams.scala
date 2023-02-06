@@ -42,7 +42,7 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
             shards = SortedMap.empty,
             streamStatus = StreamStatus.DELETING,
             tags = Tags.empty,
-            enhancedMonitoring = Vector.empty,
+            enhancedMonitoring = None,
             consumers = SortedMap.empty
           )
         )

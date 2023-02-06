@@ -34,7 +34,7 @@ class EnableEnhancedMonitoringTests
         s <- streamsRef.get
         updatedMetrics = s.streams
           .get(streamArn)
-          .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
+          .map(_.enhancedMonitoring.map(_.flatMap(_.shardLevelMetrics)))
 
       } yield assert(
         res.isRight && res.exists { case response =>

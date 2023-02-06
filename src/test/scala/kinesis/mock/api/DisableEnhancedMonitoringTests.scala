@@ -21,16 +21,18 @@ class DisableEnhancedMonitoringTests
 
       val updated = streams.findAndUpdateStream(streamArn)(stream =>
         stream.copy(enhancedMonitoring =
-          Vector(
-            ShardLevelMetrics(
-              Vector(
-                ShardLevelMetric.IncomingBytes,
-                ShardLevelMetric.IncomingRecords,
-                ShardLevelMetric.OutgoingBytes,
-                ShardLevelMetric.OutgoingRecords,
-                ShardLevelMetric.WriteProvisionedThroughputExceeded,
-                ShardLevelMetric.ReadProvisionedThroughputExceeded,
-                ShardLevelMetric.IteratorAgeMilliseconds
+          Some(
+            Vector(
+              ShardLevelMetrics(
+                Vector(
+                  ShardLevelMetric.IncomingBytes,
+                  ShardLevelMetric.IncomingRecords,
+                  ShardLevelMetric.OutgoingBytes,
+                  ShardLevelMetric.OutgoingRecords,
+                  ShardLevelMetric.WriteProvisionedThroughputExceeded,
+                  ShardLevelMetric.ReadProvisionedThroughputExceeded,
+                  ShardLevelMetric.IteratorAgeMilliseconds
+                )
               )
             )
           )
@@ -52,7 +54,7 @@ class DisableEnhancedMonitoringTests
         s <- streamsRef.get
         updatedMetrics = s.streams
           .get(streamArn)
-          .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
+          .map(_.enhancedMonitoring.map(_.flatMap(_.shardLevelMetrics)))
 
       } yield assert(
         res.isRight && res.exists { case response =>

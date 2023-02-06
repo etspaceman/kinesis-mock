@@ -60,7 +60,7 @@ class DescribeStreamTests
           .map(x => x.shards)
         expected = StreamDescription(
           Some(EncryptionType.NONE),
-          Vector(ShardLevelMetrics(Vector.empty)),
+          None,
           false,
           None,
           24,
