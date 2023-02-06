@@ -55,7 +55,7 @@ class EnableEnhancedMonitoringTests
           .rethrow
           .map(
             _.streamDescriptionSummary.enhancedMonitoring
-              .flatMap(_.shardLevelMetrics)
+              .map(_.flatMap(_.shardLevelMetrics))
           )
       } yield assert(
         res.desiredShardLevelMetrics == streamMonitoring && res.desiredShardLevelMetrics
