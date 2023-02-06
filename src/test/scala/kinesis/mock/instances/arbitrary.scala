@@ -889,8 +889,8 @@ object arbitrary {
   implicit val putRecordsResponseArb: Arbitrary[PutRecordsResponse] = Arbitrary(
     for {
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
-      failedRecordCount <- Gen.choose(0, 500)
-      recordsSize <- Gen.choose(failedRecordCount, 500)
+      failedRecordCount <- Gen.option(Gen.choose(1, 500))
+      recordsSize <- Gen.choose(failedRecordCount.getOrElse(1), 500)
       records <- Gen.containerOfN[Vector, PutRecordsResultEntry](
         recordsSize,
         putRecordsResultEntry.arbitrary

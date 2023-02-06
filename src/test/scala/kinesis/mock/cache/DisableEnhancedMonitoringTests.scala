@@ -71,7 +71,7 @@ class DisableEnhancedMonitoringTests
           )
       } yield assert(
         res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
-          .contains(ShardLevelMetric.IncomingBytes)
+          .exists(_.contains(ShardLevelMetric.IncomingBytes))
       )
   })
 }

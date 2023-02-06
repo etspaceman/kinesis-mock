@@ -8,7 +8,7 @@ import kinesis.mock.models.EncryptionType
 
 final case class PutRecordsResponse(
     encryptionType: EncryptionType,
-    failedRecordCount: Int,
+    failedRecordCount: Option[Int],
     records: Vector[PutRecordsResultEntry]
 )
 
@@ -26,7 +26,7 @@ object PutRecordsResponse {
     x =>
       for {
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
-        failedRecordCount <- x.downField("FailedRecordCount").as[Int]
+        failedRecordCount <- x.downField("FailedRecordCount").as[Option[Int]]
         records <- x.downField("Records").as[Vector[PutRecordsResultEntry]]
       } yield PutRecordsResponse(encryptionType, failedRecordCount, records)
 
