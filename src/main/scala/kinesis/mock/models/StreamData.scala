@@ -15,7 +15,7 @@ import kinesis.mock.instances.circe._
 final case class StreamData(
     consumers: SortedMap[ConsumerName, Consumer],
     encryptionType: EncryptionType,
-    enhancedMonitoring: Vector[ShardLevelMetrics],
+    enhancedMonitoring: Option[Vector[ShardLevelMetrics]],
     keyId: Option[String],
     retentionPeriod: FiniteDuration,
     shards: SortedMap[Shard, Vector[KinesisRecord]],
@@ -81,7 +81,7 @@ object StreamData {
       encryptionType <- x.downField("encryptionType").as[EncryptionType]
       enhancedMonitoring <- x
         .downField("enhancedMonitoring")
-        .as[Vector[ShardLevelMetrics]]
+        .as[Option[Vector[ShardLevelMetrics]]]
       keyId <- x.downField("keyId").as[Option[String]]
       retentionPeriod <- x.downField("retentionPeriod").as[FiniteDuration]
       shards <- x
@@ -144,7 +144,7 @@ object StreamData {
     StreamData(
       SortedMap.empty,
       EncryptionType.NONE,
-      Vector(ShardLevelMetrics(Vector.empty)),
+      None,
       None,
       minRetentionPeriod,
       shards,

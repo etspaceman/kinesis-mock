@@ -117,7 +117,7 @@ final case class PutRecordsRequest(
             ),
             PutRecordsResponse(
               stream.encryptionType,
-              0,
+              None,
               asRecords.map { case (_, _, _, entry) =>
                 entry
               }
