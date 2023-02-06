@@ -1,5 +1,7 @@
 package kinesis.mock
 
+import java.util.Collections
+
 import cats.syntax.all._
 import software.amazon.awssdk.services.kinesis.model._
 
@@ -12,6 +14,12 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
         .builder()
         .consumerCount(0)
         .encryptionType(EncryptionType.NONE)
+        .enhancedMonitoring(
+          EnhancedMetrics
+            .builder()
+            .shardLevelMetricsWithStrings(Collections.emptyList[String]())
+            .build()
+        )
         .openShardCount(genStreamShardCount)
         .retentionPeriodHours(24)
         .streamARN(

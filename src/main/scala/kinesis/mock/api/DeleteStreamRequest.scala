@@ -51,7 +51,7 @@ final case class DeleteStreamRequest(
                   shards = SortedMap.empty,
                   streamStatus = StreamStatus.DELETING,
                   tags = Tags.empty,
-                  enhancedMonitoring = None,
+                  enhancedMonitoring = Vector.empty,
                   consumers = SortedMap.empty
                 )
               )

@@ -67,11 +67,11 @@ class DisableEnhancedMonitoringTests
           .rethrow
           .map(
             _.streamDescriptionSummary.enhancedMonitoring
-              .map(_.flatMap(_.shardLevelMetrics))
+              .flatMap(_.shardLevelMetrics)
           )
       } yield assert(
         res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
-          .exists(_.contains(ShardLevelMetric.IncomingBytes))
+          .contains(ShardLevelMetric.IncomingBytes)
       )
   })
 }

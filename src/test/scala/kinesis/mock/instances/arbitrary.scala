@@ -367,16 +367,14 @@ object arbitrary {
   implicit val streamDescriptionArb: Arbitrary[StreamDescription] = Arbitrary(
     for {
       encryptionType <- Gen.option(Arbitrary.arbitrary[EncryptionType])
-      enhancedMonitoring <- Gen.option(
-        Gen
-          .choose(1, 2)
-          .flatMap(size =>
-            Gen.containerOfN[Vector, ShardLevelMetrics](
-              size,
-              shardLevelMetricsArbitrary.arbitrary
-            )
+      enhancedMonitoring <- Gen
+        .choose(0, 1)
+        .flatMap(size =>
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
           )
-      )
+        )
       hasMoreShards <- Arbitrary.arbitrary[Boolean]
       keyId <- Gen.option(keyIdGen)
       retentionPeriodHours <- retentionPeriodHoursGen
@@ -446,16 +444,14 @@ object arbitrary {
     for {
       consumerCount <- Gen.option(Gen.choose(1, 20))
       encryptionType <- Gen.option(Arbitrary.arbitrary[EncryptionType])
-      enhancedMonitoring <- Gen.option(
-        Gen
-          .choose(1, 2)
-          .flatMap(size =>
-            Gen.containerOfN[Vector, ShardLevelMetrics](
-              size,
-              shardLevelMetricsArbitrary.arbitrary
-            )
+      enhancedMonitoring <- Gen
+        .choose(0, 1)
+        .flatMap(size =>
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
           )
-      )
+        )
       keyId <- Gen.option(keyIdGen)
       openShardCount <- Gen.choose(1, 50)
       retentionPeriodHours <- retentionPeriodHoursGen
@@ -505,15 +501,11 @@ object arbitrary {
   implicit val disableEnhancedMonitoringResponseArb
       : Arbitrary[DisableEnhancedMonitoringResponse] = Arbitrary(
     for {
-      currentShardLevelMetrics <- Gen.option(
-        shardLevelMetricsArbitrary.arbitrary.map(
-          _.shardLevelMetrics
-        )
+      currentShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
       )
-      desiredShardLevelMetrics <- Gen.option(
-        shardLevelMetricsArbitrary.arbitrary.map(
-          _.shardLevelMetrics
-        )
+      desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
       )
       streamArn <- streamArnGen
     } yield DisableEnhancedMonitoringResponse(
@@ -541,13 +533,11 @@ object arbitrary {
   implicit val enableEnhancedMonitoringResponseArb
       : Arbitrary[EnableEnhancedMonitoringResponse] = Arbitrary(
     for {
-      currentShardLevelMetrics <- Gen.option(
-        shardLevelMetricsArbitrary.arbitrary.map(
-          _.shardLevelMetrics
-        )
+      currentShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
       )
-      desiredShardLevelMetrics <- Gen.option(
-        shardLevelMetricsArbitrary.arbitrary.map(_.shardLevelMetrics)
+      desiredShardLevelMetrics <- shardLevelMetricsArbitrary.arbitrary.map(
+        _.shardLevelMetrics
       )
       streamArn <- streamArnGen
     } yield EnableEnhancedMonitoringResponse(
@@ -889,8 +879,8 @@ object arbitrary {
   implicit val putRecordsResponseArb: Arbitrary[PutRecordsResponse] = Arbitrary(
     for {
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
-      failedRecordCount <- Gen.option(Gen.choose(1, 500))
-      recordsSize <- Gen.choose(failedRecordCount.getOrElse(1), 500)
+      failedRecordCount <- Gen.choose(0, 500)
+      recordsSize <- Gen.choose(failedRecordCount, 500)
       records <- Gen.containerOfN[Vector, PutRecordsResultEntry](
         recordsSize,
         putRecordsResultEntry.arbitrary
@@ -996,16 +986,14 @@ object arbitrary {
         )
         .map(x => SortedMap.from(x))
       encryptionType <- Arbitrary.arbitrary[EncryptionType]
-      enhancedMonitoring <- Gen.option(
-        Gen
-          .choose(1, 2)
-          .flatMap(size =>
-            Gen.containerOfN[Vector, ShardLevelMetrics](
-              size,
-              shardLevelMetricsArbitrary.arbitrary
-            )
+      enhancedMonitoring <- Gen
+        .choose(0, 1)
+        .flatMap(size =>
+          Gen.containerOfN[Vector, ShardLevelMetrics](
+            size,
+            shardLevelMetricsArbitrary.arbitrary
           )
-      )
+        )
       keyId <- Gen.option(keyIdGen)
       retentionPeriod <- retentionPeriodHoursGen.map(_.hours)
       shardsSize <- Gen.choose(0, 50)

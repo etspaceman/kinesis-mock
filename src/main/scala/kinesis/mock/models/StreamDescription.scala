@@ -11,7 +11,7 @@ import kinesis.mock.instances.circe._
 
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
-    enhancedMonitoring: Option[Vector[ShardLevelMetrics]],
+    enhancedMonitoring: Vector[ShardLevelMetrics],
     hasMoreShards: Boolean,
     keyId: Option[String],
     retentionPeriodHours: Int,
@@ -100,7 +100,7 @@ object StreamDescription {
         .as[Option[EncryptionType]]
       enhancedMonitoring <- x
         .downField("EnhancedMonitoring")
-        .as[Option[Vector[ShardLevelMetrics]]]
+        .as[Vector[ShardLevelMetrics]]
       hasMoreShards <- x.downField("HasMoreShards").as[Boolean]
       keyId <- x.downField("KeyId").as[Option[String]]
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]

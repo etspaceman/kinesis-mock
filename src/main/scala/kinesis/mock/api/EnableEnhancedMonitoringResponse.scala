@@ -7,8 +7,8 @@ import io.circe
 import kinesis.mock.models._
 
 final case class EnableEnhancedMonitoringResponse(
-    currentShardLevelMetrics: Option[Vector[ShardLevelMetric]],
-    desiredShardLevelMetrics: Option[Vector[ShardLevelMetric]],
+    currentShardLevelMetrics: Vector[ShardLevelMetric],
+    desiredShardLevelMetrics: Vector[ShardLevelMetric],
     streamName: StreamName,
     streamArn: StreamArn
 )
@@ -35,10 +35,10 @@ object EnableEnhancedMonitoringResponse {
     for {
       currentShardLevelMetrics <- x
         .downField("CurrentShardLevelMetrics")
-        .as[Option[Vector[ShardLevelMetric]]]
+        .as[Vector[ShardLevelMetric]]
       desiredShardLevelMetrics <- x
         .downField("DesiredShardLevelMetrics")
-        .as[Option[Vector[ShardLevelMetric]]]
+        .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
       streamArn <- x.downField("StreamARN").as[StreamArn]
     } yield EnableEnhancedMonitoringResponse(

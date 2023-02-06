@@ -1,5 +1,7 @@
 package kinesis.mock
 
+import java.util.Collections
+
 import software.amazon.awssdk.services.kinesis.model._
 
 import kinesis.mock.syntax.javaFuture._
@@ -19,6 +21,12 @@ class DescribeStreamTests extends AwsFunctionalTests {
       expected = StreamDescription
         .builder()
         .encryptionType(EncryptionType.NONE)
+        .enhancedMonitoring(
+          EnhancedMetrics
+            .builder()
+            .shardLevelMetricsWithStrings(Collections.emptyList[String]())
+            .build()
+        )
         .hasMoreShards(false)
         .shards(res.streamDescription().shards())
         .retentionPeriodHours(24)

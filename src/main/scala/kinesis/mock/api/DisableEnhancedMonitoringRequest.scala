@@ -29,17 +29,17 @@ final case class DisableEnhancedMonitoringRequest(
             .flatMap(_ => CommonValidations.findStream(arn, streams))
             .map { stream =>
               val current =
-                stream.enhancedMonitoring.map(_.flatMap(_.shardLevelMetrics))
-              val desired: Option[Vector[ShardLevelMetric]] =
+                stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
+              val desired =
                 if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
-                  None
-                else current.map(_.diff(shardLevelMetrics))
+                  Vector.empty
+                else current.diff(shardLevelMetrics)
 
               (
                 streams.updateStream(
                   stream
                     .copy(enhancedMonitoring =
-                      desired.map(x => Vector(ShardLevelMetrics(x)))
+                      Vector(ShardLevelMetrics(desired))
                     )
                 ),
                 DisableEnhancedMonitoringResponse(
