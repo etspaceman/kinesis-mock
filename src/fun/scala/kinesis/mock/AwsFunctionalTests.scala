@@ -141,6 +141,9 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
     _ <- resources.logger.debug(
       s"Described stream summary for ${resources.streamName}"
     )
+    _ <- resources.logger.trace(
+      s"$streamSummary"
+    )
     res <- IO.raiseWhen(
       streamSummary
         .streamDescriptionSummary()

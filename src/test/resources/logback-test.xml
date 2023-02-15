@@ -4,7 +4,7 @@
       <pattern>[%thread] %highlight(%-5level) %d{ISO8601} %cyan(%logger{15}) %yellow(%mdc) - %msg %n</pattern>
     </encoder>
   </appender>
-  <logger name="kinesis.mock" level="${LOG_LEVEL:-ERROR}"/>
+  <logger name="kinesis.mock" level="${LOG_LEVEL:-TRACE}"/>
   <logger name="software.amazon" level="${AWSV2_LOG_LEVEL:-ERROR}"/>
   <root level="${ROOT_LOG_LEVEL:-ERROR}">
     <appender-ref ref="STDOUT" />
