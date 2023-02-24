@@ -31,6 +31,40 @@ class ListShardsTests
           None,
           None,
           None,
+          Some(streamArn.streamName),
+          None
+        )
+        res <- req.listShards(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
+      } yield assert(
+        res.isRight && res.exists { response =>
+          streams.streams.get(streamArn).exists { s =>
+            s.shards.keys.toVector
+              .map(ShardSummary.fromShard) == response.shards
+          }
+        },
+        s"req: $req\nres: $res"
+      )
+  })
+
+  test("It should list shards when provided a streamArn")(PropF.forAllF {
+    (
+      streamArn: StreamArn
+    ) =>
+      val streams =
+        Streams.empty.addStream(100, streamArn, None)
+
+      for {
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = ListShardsRequest(
+          None,
+          None,
+          None,
+          None,
+          None,
           None,
           Some(streamArn)
         )
@@ -49,6 +83,42 @@ class ListShardsTests
         s"req: $req\nres: $res"
       )
   })
+
+  test("It should list shards when provided a streamArn and streamName")(
+    PropF.forAllF {
+      (
+        streamArn: StreamArn
+      ) =>
+        val streams =
+          Streams.empty.addStream(100, streamArn, None)
+
+        for {
+          streamsRef <- Ref.of[IO, Streams](streams)
+          req = ListShardsRequest(
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(streamArn.streamName),
+            Some(streamArn)
+          )
+          res <- req.listShards(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
+        } yield assert(
+          res.isRight && res.exists { response =>
+            streams.streams.get(streamArn).exists { s =>
+              s.shards.keys.toVector
+                .map(ShardSummary.fromShard) == response.shards
+            }
+          },
+          s"req: $req\nres: $res"
+        )
+    }
+  )
 
   test("It should paginate properly")(PropF.forAllF {
     (
