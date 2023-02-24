@@ -71,11 +71,11 @@ final case class ListShardsRequest(
               ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             })
           }
-      case (_, None, _, _, Some(sName), None) =>
+      case (_, None, _, _, _, Some(sArn)) =>
+        getList(sArn, sArn.streamName, streams)
+      case (_, None, _, _, Some(sName), _) =>
         val streamArn = StreamArn(awsRegion, sName, awsAccountId)
         getList(streamArn, sName, streams)
-      case (_, None, _, _, None, Some(sArn)) =>
-        getList(sArn, sArn.streamName, streams)
       case (_, None, _, _, None, None) =>
         InvalidArgumentException(
           "StreamName or StreamARN is required if NextToken is not provided"
