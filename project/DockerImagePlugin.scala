@@ -12,7 +12,7 @@ object DockerImagePlugin extends AutoPlugin {
   import autoImport._
 
   val dockerTagTask: Def.Initialize[Task[String]] = Def.task {
-    s"${dockerRepository.value}/${dockerNamespace.value}/${name.value}:${imageTag.value}"
+    s"${dockerRepository.value}/${dockerNamespace.value}/${imageName.value}:${imageTag.value}"
   }
 
   val buildDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
@@ -51,6 +51,8 @@ object DockerImagePlugin extends AutoPlugin {
       packageAndBuildDockerImage := packageAndBuildDockerImageTask.value,
       pushDockerImage := pushDockerImageTask.value,
       imageTag := (ThisBuild / version).value,
+      imageName := sys.env
+        .getOrElse("KINESIS_MOCK_DOCKER_IMAGE_NAME", name.value),
       dockerRepository := "ghcr.io",
       dockerNamespace := "etspaceman",
       jarLocation := "docker/image/lib/",
@@ -65,6 +67,8 @@ object DockerImagePlugin extends AutoPlugin {
 
 object DockerImagePluginKeys {
   val imageTag = settingKey[String]("Tag for the image, e.g. latest")
+  val imageName =
+    settingKey[String]("Name for the docker image, e.g. kinesis-mock")
   val dockerRepository = settingKey[String](
     "Repository for the docker images, e.g ghcr.io"
   )
