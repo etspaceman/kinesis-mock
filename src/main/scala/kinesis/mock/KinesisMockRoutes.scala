@@ -571,14 +571,15 @@ object KinesisMockRoutes {
                 )
           )
       case KinesisAction.DescribeLimits =>
-        cache
-          .describeLimits(loggingContext, region)
-          .flatMap(
-            _.fold(
-              err => handleKinesisMockError(err, responseHeaders),
-              res => Ok(res, responseHeaders: _*)
+        request.as[Unit] *>
+          cache
+            .describeLimits(loggingContext, region)
+            .flatMap(
+              _.fold(
+                err => handleKinesisMockError(err, responseHeaders),
+                res => Ok(res, responseHeaders: _*)
+              )
             )
-          )
       case KinesisAction.DescribeStream =>
         request
           .attemptAs[DescribeStreamRequest]
