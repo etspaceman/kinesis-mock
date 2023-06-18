@@ -89,7 +89,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.10.3"
+    val refinedVersion = "0.11.0"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
