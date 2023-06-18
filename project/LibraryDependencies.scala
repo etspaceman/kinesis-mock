@@ -50,7 +50,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.18"
+    val http4sVersion = "0.23.21"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
@@ -89,7 +89,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.10.3"
+    val refinedVersion = "0.11.0"
     val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
   }
 }
