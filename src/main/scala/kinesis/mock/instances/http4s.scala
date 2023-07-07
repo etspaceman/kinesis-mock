@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021-2023 Typelevel
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package kinesis.mock
 package instances
 
@@ -22,15 +38,14 @@ object http4s {
             if ct.mediaType == KinesisMockMediaTypes.amazonJson ||
               (ct.mediaType.isApplication && ct.mediaType.subType.startsWith(
                 "json"
-              )) => {
+              )) =>
           implicit val D = Decoder[A].circeDecoder
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
             MediaType.application.json
           ).decode(msg, false)
-        }
 
-        case Some(ct) if ct.mediaType == KinesisMockMediaTypes.amazonCbor => {
+        case Some(ct) if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
           implicit val D = Decoder[A].borerDecoder
           EntityDecoder.collectBinary[IO](msg).flatMap { chunks =>
             EitherT.fromEither(
@@ -39,7 +54,6 @@ object http4s {
               }
             )
           }
-        }
         case Some(ct) =>
           EitherT.leftT(
             MediaTypeMismatch(
@@ -58,18 +72,16 @@ object http4s {
       mediaType: MediaType
   ): EntityEncoder[IO, A] =
     mediaType match {
-      case KinesisMockMediaTypes.amazonJson | MediaType.application.json => {
+      case KinesisMockMediaTypes.amazonJson | MediaType.application.json =>
         EntityEncoder[IO, Chunk[Byte]]
           .contramap[Json](fromJsonToChunk(Printer.noSpaces))
           .withContentType(`Content-Type`(mediaType))
           .contramap(Encoder[A].circeEncoder.apply)
-      }
-      case _ => {
+      case _ =>
         implicit val E = Encoder[A].borerEncoder
         EntityEncoder[IO, Chunk[Byte]]
           .contramap[A](x => Chunk.array(Cbor.encode(x).toByteArray))
           .withContentType(`Content-Type`(mediaType))
-      }
     }
 
   private def fromJsonToChunk(printer: Printer)(json: Json): Chunk[Byte] =

@@ -1,7 +1,8 @@
+import scala.reflect.runtime.universe
+import scala.util.Try
+
 import sbt.Keys._
 import sbt._
-import scala.util.Try
-import scala.reflect.runtime.universe
 
 trait ExternalSettings {
   @SuppressWarnings(Array("scalafix:DisableSyntax.asInstanceOf"))

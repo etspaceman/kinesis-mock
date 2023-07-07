@@ -1,15 +1,23 @@
 import LibraryDependencies._
 
-val MUnitFramework = new TestFramework("munit.Framework")
+ThisBuild / tlBaseVersion := "0.3"
+ThisBuild / tlCiScalafixCheck := true
+ThisBuild / tlJdkRelease := Some(17)
+ThisBuild / organization := "io.github.etspaceman"
 
 lazy val kinesisMock = project
   .in(file("."))
-  .enablePlugins(DockerImagePlugin, DockerComposePlugin)
+  .enablePlugins(DockerImagePlugin, DockerComposePlugin, NoPublishPlugin)
   .settings(
     name := "kinesis-mock",
-    organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
     scalaVersion := "2.13.11",
+    developers := List(tlGitHubDev("etspaceman", "Eric Meisel")),
+    startYear := Some(2021),
+    headerLicense := Some(
+      HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
+    ),
+    licenses := Seq(License.MIT),
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
@@ -31,7 +39,6 @@ lazy val kinesisMock = project
       JaxbApi,
       Logback,
       Log4Cats.slf4j,
-      GraalSvm % "compile-internal",
       OsLib,
       PureConfig.catsEffect,
       PureConfig.core,
@@ -50,7 +57,6 @@ lazy val kinesisMock = project
     ),
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    ThisBuild / scalafixDependencies += OrganizeImports,
     javacOptions += "-XDignore.symbol.file",
     scalacOptions ++= ScalacSettings.settings,
     Compile / console / scalacOptions ~= {
@@ -58,9 +64,8 @@ lazy val kinesisMock = project
     },
     addCompilerPlugin(KindProjector cross CrossVersion.full),
     addCompilerPlugin(BetterMonadicFor),
-    testFrameworks += MUnitFramework,
     Test / testOptions ++= {
-      List(Tests.Argument(MUnitFramework, "+l"))
+      List(Tests.Argument(TestFrameworks.MUnit, "+l"))
     },
     assembly / test := {},
     assembly / assemblyMergeStrategy := {

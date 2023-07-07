@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021-2023 Typelevel
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package kinesis.mock
 package cache
 
@@ -363,27 +379,25 @@ class Cache private (
     logger.debug(context.context)("Processing DescribeLimits request") *>
       getSemaphores(region).flatMap(
         _.describeLimits.tryAcquireRelease(
-          {
-            DescribeLimitsResponse
-              .get(
-                config.shardLimit,
-                config.onDemandStreamCountLimit,
-                streamsRef,
-                region.getOrElse(config.awsRegion),
-                config.awsAccountId
-              )
-              .flatMap(response =>
+          DescribeLimitsResponse
+            .get(
+              config.shardLimit,
+              config.onDemandStreamCountLimit,
+              streamsRef,
+              region.getOrElse(config.awsRegion),
+              config.awsAccountId
+            )
+            .flatMap(response =>
+              logger
+                .debug(context.context)("Successfully described limits") *>
                 logger
-                  .debug(context.context)("Successfully described limits") *>
-                  logger
-                    .trace(
-                      context.addJson("response", response.asJson).context
-                    )(
-                      "Logging response"
-                    )
-                    .as(Right(response))
-              )
-          },
+                  .trace(
+                    context.addJson("response", response.asJson).context
+                  )(
+                    "Logging response"
+                  )
+                  .as(Right(response))
+            ),
           logger
             .warn(context.context)("Rate limit exceeded for DescribeLimits")
             .as(
@@ -586,7 +600,7 @@ class Cache private (
       req: DeregisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     logger.debug(context.context)(
       "Processing DeregisterStreamConsumer request"
     ) *>
@@ -658,7 +672,6 @@ class Cache private (
             )
         )
       )
-  }
 
   def describeStreamConsumer(
       req: DescribeStreamConsumerRequest,
