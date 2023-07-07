@@ -1,23 +1,9 @@
 import LibraryDependencies._
 
-ThisBuild / tlBaseVersion := "0.3"
-ThisBuild / tlCiScalafixCheck := true
-ThisBuild / tlJdkRelease := Some(17)
-ThisBuild / organization := "io.github.etspaceman"
-
-lazy val kinesisMock = project
-  .in(file("."))
+lazy val `kinesis-mock` = projectMatrix
   .enablePlugins(DockerImagePlugin, DockerComposePlugin, NoPublishPlugin)
   .settings(
-    name := "kinesis-mock",
     description := "A Mock API for AWS Kinesis",
-    scalaVersion := "2.13.11",
-    developers := List(tlGitHubDev("etspaceman", "Eric Meisel")),
-    startYear := Some(2021),
-    headerLicense := Some(
-      HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
-    ),
-    licenses := Seq(License.MIT),
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
@@ -43,84 +29,65 @@ lazy val kinesisMock = project
       PureConfig.catsEffect,
       PureConfig.core,
       PureConfig.enumeratum,
-      UUIDCreator,
-      Enumeratum.scalacheck % Test,
-      Munit.core % Test,
-      Munit.catsEffect2 % Test,
-      Munit.scalacheck % Test,
-      Munit.scalacheckEffect % Test,
-      Refined.scalacheck % Test,
-      ScalacheckGenRegexp % Test,
-      Aws.kinesis % FunctionalTest,
-      Aws.kpl % FunctionalTest,
-      Aws.kcl % FunctionalTest
+      UUIDCreator
     ),
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision,
-    javacOptions += "-XDignore.symbol.file",
-    scalacOptions ++= ScalacSettings.settings,
-    Compile / console / scalacOptions ~= {
-      _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
-    },
-    addCompilerPlugin(KindProjector cross CrossVersion.full),
-    addCompilerPlugin(BetterMonadicFor),
-    Test / testOptions ++= {
-      List(Tests.Argument(TestFrameworks.MUnit, "+l"))
-    },
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
       case x => MergeStrategy.defaultMergeStrategy(x)
     }
   )
-  .configs(FunctionalTest)
-  .settings(
-    inConfig(FunctionalTest)(
-      ScalafmtPlugin.scalafmtConfigSettings ++
-        scalafixConfigSettings(FunctionalTest) ++
-        BloopSettings.default ++
-        DockerImagePlugin.settings ++
-        DockerComposePlugin.settings(FunctionalTest) ++
-        Defaults.testSettings ++
-        Seq(parallelExecution := false)
-    )
-  )
   .settings(DockerImagePlugin.settings)
-  .settings(DockerComposePlugin.settings(FunctionalTest))
+  .jvmPlatform(Seq(Scala213))
+
+lazy val `integration-tests` = projectMatrix
+  .enablePlugins(NoPublishPlugin, DockerImagePlugin)
+  .settings(DockerImagePlugin.settings)
   .settings(
-    Seq(
-      addCommandAlias("cpl", ";Test / compile;Fun / compile"),
-      addCommandAlias(
-        "fixCheck",
-        ";Compile / scalafix --check;Test / scalafix --check;Fun / scalafix --check"
-      ),
-      addCommandAlias(
-        "fix",
-        ";Compile / scalafix;Test / scalafix;Fun / scalafix"
-      ),
-      addCommandAlias(
-        "fmt",
-        ";Compile / scalafmt;Test / scalafmt;Fun / scalafmt;scalafmtSbt"
-      ),
-      addCommandAlias(
-        "fmtCheck",
-        ";Compile / scalafmtCheck;Test / scalafmtCheck;Fun / scalafmtCheck;scalafmtSbtCheck"
-      ),
-      addCommandAlias(
-        "pretty",
-        ";fix;fmt"
-      ),
-      addCommandAlias(
-        "prettyCheck",
-        ";fixCheck;fmtCheck"
-      ),
-      addCommandAlias(
-        "cov",
-        ";clean;test"
-      ),
-      addCommandAlias(
-        "validate",
-        ";Fun / dockerComposeTestQuick;prettyCheck"
-      )
-    ).flatten
+    libraryDependencies ++= Seq(
+      Aws.kinesis % Test,
+      Aws.kpl % Test,
+      Aws.kcl % Test
+    ),
+    Test / parallelExecution := false
   )
+  .jvmPlatform(Seq(Scala213))
+  .dependsOn(`kinesis-mock` % Test)
+
+lazy val allProjects = Seq(
+  `kinesis-mock`,
+  `integration-tests`
+)
+
+lazy val functionalTestProjects = List(`integration-tests`).map(_.jvm(Scala213))
+
+def commonRootSettings: Seq[Setting[_]] =
+  DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(
+    name := "kinesis-mock-root",
+    ThisBuild / mergifyLabelPaths ++= allProjects.map { x =>
+      x.id -> x.base
+    }.toMap
+  )
+
+lazy val root = project
+  .in(file("."))
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(allProjects.flatMap(_.projectRefs): _*)
+
+lazy val `root-jvm-213` = project
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(
+    allProjects.flatMap(
+      _.filterProjects(
+        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+      ).map(_.project)
+    ): _*
+  )
+
+lazy val rootProjects = List(
+  `root-jvm-213`
+).map(_.id)
+
+ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects

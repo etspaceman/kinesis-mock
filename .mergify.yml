@@ -10,6 +10,30 @@ pull_request_rules:
   conditions:
   - author=scala-steward
   - body~=labels:.*early-semver-patch
-  - status-success=Build and Test (ubuntu-latest, 2.12.18, temurin@17)
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, root-jvm-213)
   actions:
     merge: {}
+- name: Label integration-tests PRs
+  conditions:
+  - files~=^integration-tests/
+  actions:
+    label:
+      add:
+      - integration-tests
+      remove: []
+- name: Label kinesis-mock PRs
+  conditions:
+  - files~=^kinesis-mock/
+  actions:
+    label:
+      add:
+      - kinesis-mock
+      remove: []
+- name: Label root-jvm-213 PRs
+  conditions:
+  - files~=^root-jvm-213/
+  actions:
+    label:
+      add:
+      - root-jvm-213
+      remove: []

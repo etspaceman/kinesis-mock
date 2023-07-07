@@ -8,6 +8,7 @@ object DockerComposePlugin extends AutoPlugin {
   override def requires: Plugins = DockerImagePlugin
 
   val autoImport: DockerComposePluginKeys.type = DockerComposePluginKeys
+  import DockerImagePlugin.autoImport._
   import autoImport._
 
   val createNetworkTask: Def.Initialize[Task[Unit]] = Def.task {
@@ -29,7 +30,7 @@ object DockerComposePlugin extends AutoPlugin {
   }
 
   val composeFile: Def.Initialize[Task[String]] =
-    Def.task(s"${composeFileLocation.value}docker-compose.yml")
+    Def.task(s"${composeFileLocation.value}${composeFileName.value}")
 
   val dockerComposeUpBaseTask: Def.Initialize[Task[Unit]] = Def
     .task {
@@ -52,7 +53,7 @@ object DockerComposePlugin extends AutoPlugin {
   val dockerComposeUpTask: Def.Initialize[Task[Unit]] = Def.taskDyn {
     if (buildImage.value) {
       dockerComposeUpBaseTask.dependsOn(
-        DockerImagePlugin.packageAndBuildDockerImageTask
+        projectsToBuild.value.map(p => p / packageAndBuildDockerImage): _*
       )
     } else dockerComposeUpBaseTask
   }
@@ -94,6 +95,9 @@ object DockerComposePlugin extends AutoPlugin {
       removeNetworkTask
     )
 
+  val dockerComposeRestartTask: Def.Initialize[Task[Unit]] =
+    Def.sequential(dockerComposeDownTask, dockerComposeUpTask)
+
   val dockerComposeLogsTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
     val cmd =
@@ -126,47 +130,41 @@ object DockerComposePlugin extends AutoPlugin {
       throw new IllegalStateException(s"docker-compose ps -a returned $res")
   }
 
-  def dockerComposeTestQuickTask(
-      configuration: Configuration
-  ): Def.Initialize[Task[Unit]] =
-    Def.sequential(
-      dockerComposeUp,
-      configuration / test,
-      dockerComposeDown
-    )
-
-  def settings(configuration: Configuration): Seq[Setting[_]] =
+  def settings(
+      build: Boolean,
+      projects: List[Project]
+  ): Seq[Setting[_]] =
     Seq(
       createNetwork := createNetworkTask.value,
       removeNetwork := removeNetworkTask.value,
       dockerComposeUp := dockerComposeUpTask.value,
       dockerComposeDown := dockerComposeDownTask.value,
+      dockerComposeRestart := dockerComposeRestartTask.value,
       dockerComposeLogs := dockerComposeLogsTask.value,
       dockerComposePs := dockerComposePsTask.value,
-      dockerComposeTestQuick := dockerComposeTestQuickTask(configuration).value,
       composeFileLocation := "docker/",
+      composeFileName := s"docker-compose.yml",
       networkName := sys.env
         .getOrElse("DOCKER_NET_NAME", "kinesis_mock_network"),
       composeProjectName := sys.env
         .getOrElse("COMPOSE_PROJECT_NAME", "kinesis-mock"),
-      buildImage := true
+      buildImage := build,
+      projectsToBuild := projects
     )
-
 }
 
 object DockerComposePluginKeys {
-
-  val FunctionalTest = config("fun").extend(Test)
-
   val composeFileLocation =
     settingKey[String]("Path to docker-compose files, e.g. docker/")
+  val composeFileName =
+    settingKey[String]("File name of the compose file, e.g. docker-compose.yml")
   val networkName = settingKey[String]("Name of network to create")
   val composeProjectName =
     settingKey[String]("Name of project for docker-compose.")
   val buildImage = settingKey[Boolean](
     "Determines if dockerComposeUp should also build a docker image via the DockerImagePlugin"
   )
-
+  val projectsToBuild = settingKey[Seq[Project]]("Projects to build images for")
   val createNetwork = taskKey[Unit]("Creates a docker network")
   val removeNetwork = taskKey[Unit]("Removes a docker network")
   val dockerComposeTestQuick =
@@ -177,6 +175,10 @@ object DockerComposePluginKeys {
     )
   val dockerComposeDown =
     taskKey[Unit]("Runs `docker-compose -f <file> down` for the scope")
+  val dockerComposeRestart =
+    taskKey[Unit](
+      "Runs `docker-compose -f <file> down` and `docker-compose -f <file> up` for the scope"
+    )
   val dockerComposeLogs =
     taskKey[Unit]("Runs `docker-compose -f <file> logs` for the scope")
   val dockerComposePs =
