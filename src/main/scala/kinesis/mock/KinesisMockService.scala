@@ -19,7 +19,6 @@ import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
-// $COVERAGE-OFF$
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     for {
@@ -164,4 +163,3 @@ object KinesisMockService extends IOApp {
       )
   }
 }
-// $COVERAGE-ON$
