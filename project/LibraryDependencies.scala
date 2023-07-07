@@ -50,7 +50,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.21"
+    val http4sVersion = "0.23.22"
     val circe = "org.http4s" %% "http4s-circe" % http4sVersion
     val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
     val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
@@ -82,8 +82,8 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.4.5"
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.14.3"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.5.1"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.7"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
   }

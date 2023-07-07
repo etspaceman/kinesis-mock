@@ -22,5 +22,5 @@ final case class AwsCreds(accessKey: String, secretKey: String)
 
 object AwsCreds {
   val LocalCreds: AwsCreds =
-    AwsCreds("mock-kinesis-access-key", "mock-kinesis-secret-key")
+    AwsCreds("mockKinesisAccessKey", "mockKinesisSecretKey")
 }

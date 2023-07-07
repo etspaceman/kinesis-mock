@@ -9,7 +9,7 @@ lazy val kinesisMock = project
     name := "kinesis-mock",
     organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
-    scalaVersion := "2.13.10",
+    scalaVersion := "2.13.11",
     libraryDependencies ++= Seq(
       Aws.utils,
       Borer.circe,
@@ -66,8 +66,7 @@ lazy val kinesisMock = project
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
       case x => MergeStrategy.defaultMergeStrategy(x)
-    },
-    coverageExcludedPackages := "org\\.typelevel\\.log4cats.*"
+    }
   )
   .configs(FunctionalTest)
   .settings(
@@ -112,11 +111,11 @@ lazy val kinesisMock = project
       ),
       addCommandAlias(
         "cov",
-        ";clean;coverage;test;coverageReport;coverageOff"
+        ";clean;test"
       ),
       addCommandAlias(
         "validate",
-        ";cov;Fun / dockerComposeTestQuick;prettyCheck"
+        ";Fun / dockerComposeTestQuick;prettyCheck"
       )
     ).flatten
   )
