@@ -10,7 +10,7 @@ object KinesisMockPlugin extends AutoPlugin {
 
   override def trigger = allRequirements
 
-  override def requires: Plugins = TypelevelPlugin
+  override def requires: Plugins = TypelevelCiPlugin && TypelevelSettingsPlugin && TypelevelVersioningPlugin
 
   def mkCommand(commands: List[String]): String =
     commands.mkString("; ", "; ", "")

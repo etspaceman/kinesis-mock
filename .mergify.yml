@@ -10,13 +10,21 @@ pull_request_rules:
   conditions:
   - author=scala-steward
   - body~=labels:.*early-semver-patch
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, true, root-jvm-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, true, root-jvm-213,
     4568)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, true, root-js-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, true, root-js-213,
+    4568)
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, false, root-jvm-213,
+    4567)
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, false, root-jvm-213,
+    4568)
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, false, root-js-213,
+    4567)
+  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@8, false, root-js-213,
     4568)
   actions:
     merge: {}
@@ -35,6 +43,22 @@ pull_request_rules:
     label:
       add:
       - kinesis-mock
+      remove: []
+- name: Label kinesis-mockJS PRs
+  conditions:
+  - files~=^.sbt/matrix/kinesis-mockJS/
+  actions:
+    label:
+      add:
+      - kinesis-mockJS
+      remove: []
+- name: Label root-js-213 PRs
+  conditions:
+  - files~=^root-js-213/
+  actions:
+    label:
+      add:
+      - root-js-213
       remove: []
 - name: Label root-jvm-213 PRs
   conditions:

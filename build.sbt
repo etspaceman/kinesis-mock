@@ -39,6 +39,7 @@ lazy val `kinesis-mock` = projectMatrix
   )
   .settings(DockerImagePlugin.settings)
   .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
 
 lazy val `integration-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin, DockerImagePlugin)
@@ -86,8 +87,20 @@ lazy val `root-jvm-213` = project
     ): _*
   )
 
+lazy val `root-js-213` = project
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(
+    allProjects.flatMap(
+      _.filterProjects(
+        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+      ).map(_.project)
+    ): _*
+  )
+
 lazy val rootProjects = List(
-  `root-jvm-213`
+  `root-jvm-213`,
+  `root-js-213`
 ).map(_.id)
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects

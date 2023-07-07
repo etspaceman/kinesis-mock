@@ -1,4 +1,5 @@
 import sbt._
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
