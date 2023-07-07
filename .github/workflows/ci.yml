@@ -26,10 +26,13 @@ jobs:
   build:
     name: Build and Test
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         scala: [2.13.11]
         java: [temurin@17]
+        cbor_enabled: [true, false]
+        service_port: [4567, 4568]
         project: [root-jvm-213]
     runs-on: ${{ matrix.os }}
     steps:
@@ -71,18 +74,37 @@ jobs:
 
       - name: Check headers and formatting
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+        run: sbt '++ ${{ matrix.scala }}' headerCheckAll fmtCheck
+
+      - name: Docker Compose Up
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 15
+          retry_on: error
+          command: sbt 'project ${{ matrix.project }}' dockerComposeUp
+          on_retry_command: sbt 'project ${{ matrix.project }}' dockerComposeDown
+          max_attempts: 3
+
+      - name: Link JS
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        run: sbt '++ ${{ matrix.scala }}' Test/fastLinkJS
 
       - name: Test
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' test
+
+      - name: Print docker logs and container listing
+        if: ${{ failure() }}
+        run: sbt '++ ${{ matrix.scala }}' dockerComposePs dockerComposeLogs
+
+      - name: Remove docker containers
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' dockerComposeDown
 
       - name: Check scalafix lints
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' 'scalafixAll --check'
-
-      - name: Generate API documentation
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' doc
+        run: sbt '++ ${{ matrix.scala }}' fixCheck
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
@@ -96,7 +118,7 @@ jobs:
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v3
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.project }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.cbor_enabled }}-${{ matrix.project }}-${{ matrix.service_port }}
           path: targets.tar
 
   publish:
@@ -142,12 +164,12 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directories (2.13.11, root-jvm-213)
+      - name: Download target directories (2.13.11, true, root-jvm-213, 4567)
         uses: actions/download-artifact@v3
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.11-root-jvm-213
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.11-true-root-jvm-213-4567
 
-      - name: Inflate target directories (2.13.11, root-jvm-213)
+      - name: Inflate target directories (2.13.11, true, root-jvm-213, 4567)
         run: |
           tar xf targets.tar
           rm targets.tar
