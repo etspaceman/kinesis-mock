@@ -6,7 +6,6 @@ queue_rules:
       - status-success=build (false, 4568)
       - status-success=build (true, 4567)
       - status-success=build (true, 4568)
-      - status-success=codecov/project
     
 
 pull_request_rules:
@@ -25,7 +24,6 @@ pull_request_rules:
       - status-success=build (false, 4568)
       - status-success=build (true, 4567)
       - status-success=build (true, 4568)
-      - status-success=codecov/project
     actions:
       queue:
         name: default
