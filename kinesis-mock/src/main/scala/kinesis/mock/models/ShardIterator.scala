@@ -27,7 +27,6 @@ import cats.syntax.all._
 import io.circe._
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
-import javax.xml.bind.DatatypeConverter
 
 import kinesis.mock.validations.CommonValidations
 
@@ -90,13 +89,14 @@ final case class ShardIteratorParts(
 object ShardIterator {
 
   private val iteratorPwdKey = new SecretKeySpec(
-    DatatypeConverter.parseHexBinary(
-      "1133a5a833666b49abf28c8ba302930f0b2fb240dccd43cf4dfbc0ca91f17751"
-    ),
+    BigInt(
+      "1133a5a833666b49abf28c8ba302930f0b2fb240dccd43cf4dfbc0ca91f17751",
+      16
+    ).toByteArray,
     "AES"
   )
   private val iteratorPwdIv = new IvParameterSpec(
-    DatatypeConverter.parseHexBinary("7bf139dbabbea2d9995d6fcae1dff7da")
+    BigInt("7bf139dbabbea2d9995d6fcae1dff7da", 16).toByteArray
   )
 
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L252

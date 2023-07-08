@@ -131,6 +131,8 @@ object ConsoleLogger {
       extends Enum[LogLevel]
       with CirisEnum[LogLevel]
       with CirceEnum[LogLevel] {
+    override val values = findValues
+
     case object Error extends LogLevel
     case object Warn extends LogLevel
     case object Info extends LogLevel
