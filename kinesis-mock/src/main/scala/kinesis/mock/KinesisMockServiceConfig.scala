@@ -16,13 +16,10 @@
 
 package kinesis.mock
 
-import cats.effect.IO
+import ciris._
 import com.comcast.ip4s.Port
-import pureconfig.generic.semiauto._
-import pureconfig.module.catseffect.syntax._
-import pureconfig.{ConfigReader, ConfigSource}
 
-import kinesis.mock.instances.pureconfig._
+import kinesis.mock.instances.ciris._
 
 final case class KinesisMockServiceConfig(
     tlsPort: Port,
@@ -32,10 +29,19 @@ final case class KinesisMockServiceConfig(
 )
 
 object KinesisMockServiceConfig {
-  implicit val kinesisMockServiceConfigReader
-      : ConfigReader[KinesisMockServiceConfig] = deriveReader
-  def read: IO[KinesisMockServiceConfig] =
-    ConfigSource
-      .resources("service.conf")
-      .loadF[IO, KinesisMockServiceConfig]()
+  def read: ConfigValue[Effect, KinesisMockServiceConfig] = for {
+    tlsPort <- env("KINESIS_MOCK_TLS_PORT").default("4567").as[Port]
+    plainPort <- env("KINESIS_MOCK_PLAIN_PORT").default("4568").as[Port]
+    keyStorePassword <- env("KINESIS_MOCK_KEYSTORE_PASSWORD").default(
+      "kinesisMock"
+    )
+    keyManagerPassword <- env("KINESIS_MOCK_KEYMANAGER_PASSWORD").default(
+      "kinesisMock"
+    )
+  } yield KinesisMockServiceConfig(
+    tlsPort,
+    plainPort,
+    keyStorePassword,
+    keyManagerPassword
+  )
 }

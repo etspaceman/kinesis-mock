@@ -27,7 +27,6 @@ import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicies.constantDelay
 import retry._
 
@@ -38,8 +37,9 @@ import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 object KinesisMockService extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     for {
-      logger <- Slf4jLogger.create[IO]
-      cacheConfig <- CacheConfig.read
+      logLevel <- ConsoleLogger.LogLevel.read.load[IO]
+      logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
+      cacheConfig <- CacheConfig.read.load[IO]
       context = LoggingContext.create
       _ <- logger.info(
         context.addJson("cacheConfig", cacheConfig.asJson).context
@@ -59,9 +59,9 @@ object KinesisMockService extends IOApp {
         logger,
         cacheConfig.initializeStreams.getOrElse(Map.empty)
       )
-      serviceConfig <- KinesisMockServiceConfig.read
+      serviceConfig <- KinesisMockServiceConfig.read.load[IO]
       app = Logger.httpApp(true, true, _ => false)(
-        new KinesisMockRoutes(cache).routes.orNotFound
+        new KinesisMockRoutes(cache, logLevel).routes.orNotFound
       )
       tlsContext <- Network[IO].tlsContext.fromKeyStoreResource(
         "server.jks",

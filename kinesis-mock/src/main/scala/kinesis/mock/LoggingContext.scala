@@ -16,7 +16,6 @@
 
 package kinesis.mock
 
-import com.github.f4b6a3.uuid.UuidCreator
 import io.circe.Json
 
 final case class LoggingContext private (context: Map[String, String]) {
@@ -40,6 +39,6 @@ final case class LoggingContext private (context: Map[String, String]) {
 
 object LoggingContext {
   def create: LoggingContext = LoggingContext(
-    Map("contextId" -> UuidCreator.toString(UuidCreator.getTimeBased()))
+    Map("contextId" -> Utils.randomUUIDString)
   )
 }

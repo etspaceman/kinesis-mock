@@ -17,16 +17,15 @@
 package kinesis.mock
 package cache
 
-import java.io.FileWriter
-
 import cats.effect._
 import cats.effect.std.{Semaphore, Supervisor}
 import cats.syntax.all._
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.circe.jackson._
+import fs2.io.file._
+import fs2.{Chunk, Stream}
+import io.circe.Printer
+import io.circe.fs2._
 import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
 import kinesis.mock.models._
@@ -38,9 +37,10 @@ class Cache private (
     persistDataSemaphore: Semaphore[IO],
     config: CacheConfig,
     supervisor: Supervisor[IO]
-) {
+) { self =>
 
-  val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
+  val logger: SelfAwareStructuredLogger[IO] =
+    new ConsoleLogger(config.logLevel, self.getClass().getName())
 
   private def getStreamArn(
       streamArn: Option[StreamArn],
@@ -1540,28 +1540,27 @@ class Cache private (
               "fileName" -> config.persistConfig.fileName,
               "path" -> config.persistConfig.osPath.toString
             )
-            _ <- IO
-              .interruptible(os.exists(config.persistConfig.osPath))
+            _ <- Files[IO]
+              .exists(config.persistConfig.osPath)
               .ifM(
                 IO.unit,
                 logger.info(ctx.context)("Creating directories") >>
-                  IO.interruptible(
-                    os.makeDir.all(config.persistConfig.osPath)
-                  )
+                  Files[IO].createDirectories(config.persistConfig.osPath)
               )
-            js = streams.asJson
-            jacksonJs = circeToJackson(js)
-            res <- IO(new FileWriter(config.persistConfig.osFile.toIO, false))
-              .bracket { fw =>
-                val om = new ObjectMapper()
-                for {
-                  _ <- logger
-                    .debug(ctx.context)("Persisting stream data to disk")
-                  r <- IO.interruptible(om.writer().writeValue(fw, jacksonJs))
-                  _ <- logger
-                    .debug(ctx.context)("Successfully persisted stream data")
-                } yield r
-              }(fw => IO(fw.close()))
+            _ <- logger
+              .debug(ctx.context)("Persisting stream data to disk")
+            res <- Stream
+              .chunk(
+                Chunk.ByteBuffer
+                  .view(Printer.noSpaces.printToByteBuffer(streams.asJson))
+              )
+              .through(
+                Files[IO].writeAll(config.persistConfig.osFile)
+              )
+              .compile
+              .drain
+            _ <- logger
+              .debug(ctx.context)("Successfully persisted stream data")
           } yield res
         ),
         logger
@@ -1590,17 +1589,19 @@ object Cache {
 
   def loadFromFile(
       config: CacheConfig
-  )(implicit C: Concurrent[IO]): IO[Cache] = {
-    val om = new ObjectMapper()
-
-    IO.interruptible(os.exists(config.persistConfig.osFile))
+  )(implicit C: Concurrent[IO]): IO[Cache] =
+    Files[IO]
+      .exists(config.persistConfig.osFile)
       .ifM(
         for {
-          jn <- IO.interruptible(om.readTree(config.persistConfig.osFile.toIO))
-          streams <- IO.fromEither(jacksonToCirce(jn).as[Streams])
+          streams <- Files[IO]
+            .readAll(config.persistConfig.osFile)
+            .through(byteArrayParser)
+            .through(decoder[IO, Streams])
+            .compile
+            .lastOrError
           res <- apply(config, streams)
         } yield res,
         apply(config)
       )
-  }
 }

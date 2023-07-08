@@ -179,13 +179,12 @@ object KinesisMockPlugin extends AutoPlugin {
       List(Tests.Argument(TestFrameworks.MUnit, "+l"))
     },
     libraryDependencies ++= Seq(
-      Enumeratum.scalacheck % Test,
-      Munit.core % Test,
-      Munit.catsEffect2 % Test,
-      Munit.scalacheck % Test,
-      Munit.scalacheckEffect % Test,
-      Refined.scalacheck % Test,
-      ScalacheckGenRegexp % Test
+      Enumeratum.scalacheck.value % Test,
+      Munit.core.value % Test,
+      Munit.catsEffect.value % Test,
+      Munit.scalacheck.value % Test,
+      Munit.scalacheckEffect.value % Test,
+      Refined.scalacheck.value % Test
     ),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)

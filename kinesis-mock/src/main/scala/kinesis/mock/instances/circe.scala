@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit
 
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, JsonObject}
-import os.Path
 
 object circe {
   // Used for CBOR
@@ -86,7 +85,4 @@ object circe {
 
   implicit val arrayBytesCirceDecoder: Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))
-
-  implicit val pathCirceEncoder: Encoder[Path] =
-    Encoder[String].contramap(_.toString())
 }

@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import cats.syntax.all._
-import software.amazon.awssdk.utils.Md5Utils
 
 import kinesis.mock.models._
 
@@ -352,7 +351,7 @@ object CommonValidations {
         }
       case None =>
         Try(
-          Md5Utils.computeMD5Hash(partitionKey.getBytes(StandardCharsets.UTF_8))
+          Utils.md5(partitionKey.getBytes(StandardCharsets.UTF_8))
         ).toEither.bimap(
           e =>
             InvalidArgumentException(

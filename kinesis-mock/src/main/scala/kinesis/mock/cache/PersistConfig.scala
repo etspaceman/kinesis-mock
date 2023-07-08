@@ -18,9 +18,9 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration.FiniteDuration
 
+import ciris._
+import fs2.io.file.Path
 import io.circe.Encoder
-import pureconfig.ConfigReader
-import pureconfig.generic.semiauto._
 
 import kinesis.mock.instances.circe._
 
@@ -32,7 +32,7 @@ final case class PersistConfig(
     interval: FiniteDuration
 ) {
 
-  private def createPath(starting: os.Path, p: String): os.Path = {
+  private def createPath(starting: Path, p: String): Path = {
     val split = p.split("/").toList
     split match {
       case Nil      => starting
@@ -41,12 +41,12 @@ final case class PersistConfig(
     }
   }
 
-  def osPath: os.Path = if (path.isEmpty) os.pwd
+  def osPath: Path = if (path.isEmpty) Path(".")
   else {
     if (!path.startsWith("/")) {
-      createPath(os.pwd, path)
+      createPath(Path("."), path)
     } else {
-      createPath(os.root, path.drop(1))
+      createPath(Path("."), path.drop(1))
     }
   }
   def osFile = osPath / fileName
@@ -61,6 +61,12 @@ object PersistConfig {
       "fileName",
       "interval"
     )(x => (x.loadIfExists, x.shouldPersist, x.path, x.fileName, x.interval))
-  implicit val persistConfigConfigReader: ConfigReader[PersistConfig] =
-    deriveReader
+
+  def read: ConfigValue[Effect, PersistConfig] = for {
+    loadIfExists <- env("LOAD_DATA_IF_EXISTS").default("true").as[Boolean]
+    shouldPersist <- env("SHOULD_PERSIST_DATA").default("false").as[Boolean]
+    path <- env("PERSIST_PATH").default("data")
+    fileName <- env("PERSIST_FILE_NAME").default("kinesis-data.json")
+    interval <- env("PERSIST_INTERVAL").default("5s").as[FiniteDuration]
+  } yield PersistConfig(loadIfExists, shouldPersist, path, fileName, interval)
 }

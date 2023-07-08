@@ -21,7 +21,6 @@ import scala.util.Try
 import java.util.UUID
 
 import cats.syntax.all._
-import com.github.f4b6a3.uuid.UuidCreator
 import org.http4s.{Header, ParseFailure}
 import org.typelevel.ci._
 
@@ -52,9 +51,9 @@ object AmazonRequestId {
       : Header[AmazonRequestId, Header.Single] =
     Header.create(
       ci"x-amzn-RequestId",
-      x => UuidCreator.toString(x.value),
+      x => x.value.toString,
       x =>
-        Try(UuidCreator.fromString(x)).toEither
+        Try(UUID.fromString(x)).toEither
           .bimap(e => ParseFailure(e.getMessage(), ""), AmazonRequestId.apply)
     )
 }

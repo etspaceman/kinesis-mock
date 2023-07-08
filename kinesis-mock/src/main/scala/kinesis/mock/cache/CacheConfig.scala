@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import scala.concurrent.duration._
 
-import cats.effect.IO
 import cats.implicits._
+import ciris._
 import io.circe.Encoder
-import pureconfig._
-import pureconfig.error.{CannotConvert, FailureReason}
-import pureconfig.generic.semiauto._
-import pureconfig.module.catseffect.syntax._
-import pureconfig.module.enumeratum._
 
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.instances.circe._
@@ -47,7 +43,8 @@ final case class CacheConfig(
     awsAccountId: AwsAccountId,
     awsRegion: AwsRegion,
     persistConfig: PersistConfig,
-    onDemandStreamCountLimit: Int
+    onDemandStreamCountLimit: Int,
+    logLevel: ConsoleLogger.LogLevel
 )
 
 final case class CacheConfigStep1(
@@ -66,20 +63,105 @@ final case class CacheConfigStep1(
     awsAccountId: AwsAccountId,
     awsRegion: AwsRegion,
     persistConfig: PersistConfig,
-    onDemandStreamCountLimit: Int
+    onDemandStreamCountLimit: Int,
+    logLevel: ConsoleLogger.LogLevel
 )
 
 object CacheConfig {
-  implicit val cacheConfigStep1Reader: ConfigReader[CacheConfigStep1] =
-    deriveReader
-  implicit val cacheConfigReader: ConfigReader[CacheConfig] =
-    cacheConfigStep1Reader
-      .emap(step1 =>
-        step1.initializeStreamsStr match {
-          case None =>
-            Right(
+  private def readStep1: ConfigValue[Effect, CacheConfigStep1] = for {
+    initializeStreamsStr <- env("INITIALIZE_STREAMS").option
+    createStreamDuration <- env("CREATE_STREAM_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    deleteStreamDuration <- env("DELETE_STREAM_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    registerStreamConsumerDuration <- env("REGISTER_STREAM_CONSUMER_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    deregisterStreamConsumerDuration <- env("START_STREAM_ENCRYPTION_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    startStreamEncryptionDuration <- env("STOP_STREAM_ENCRYPTION_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    stopStreamEncryptionDuration <- env("DEREGISTER_STREAM_CONSUMER_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    mergeShardsDuration <- env("MERGE_SHARDS_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    splitShardDuration <- env("SPLIT_SHARD_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    updateShardCountDuration <- env("UPDATE_SHARD_COUNT_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    updateStreamModeDuration <- env("UPDATE_STREAM_MODE_DURATION")
+      .default("500ms")
+      .as[FiniteDuration]
+    shardLimit <- env("SHARD_LIMIT").default("50").as[Int]
+    awsAccountId <- env("AWS_ACCOUNT_ID")
+      .default("000000000000")
+      .as[AwsAccountId]
+    awsRegion <- env("AWS_REGION").default("us-east-1").as[AwsRegion]
+    persistConfig <- PersistConfig.read
+    onDemandStreamCountLimit <- env("ON_DEMAND_STREAM_COUNT_LIMIT")
+      .default("10")
+      .as[Int]
+    logLevel <- ConsoleLogger.LogLevel.read
+  } yield CacheConfigStep1(
+    initializeStreamsStr,
+    createStreamDuration,
+    deleteStreamDuration,
+    registerStreamConsumerDuration,
+    deregisterStreamConsumerDuration,
+    startStreamEncryptionDuration,
+    stopStreamEncryptionDuration,
+    mergeShardsDuration,
+    splitShardDuration,
+    updateShardCountDuration,
+    updateStreamModeDuration,
+    shardLimit,
+    awsAccountId,
+    awsRegion,
+    persistConfig,
+    onDemandStreamCountLimit,
+    logLevel
+  )
+
+  def read: ConfigValue[Effect, CacheConfig] = readStep1.flatMap(step1 =>
+    step1.initializeStreamsStr match {
+      case None =>
+        ConfigValue.default(
+          CacheConfig(
+            None,
+            step1.createStreamDuration,
+            step1.deleteStreamDuration,
+            step1.registerStreamConsumerDuration,
+            step1.deregisterStreamConsumerDuration,
+            step1.startStreamEncryptionDuration,
+            step1.stopStreamEncryptionDuration,
+            step1.mergeShardsDuration,
+            step1.splitShardDuration,
+            step1.updateShardCountDuration,
+            step1.updateStreamModeDuration,
+            step1.shardLimit,
+            step1.awsAccountId,
+            step1.awsRegion,
+            step1.persistConfig,
+            step1.onDemandStreamCountLimit,
+            step1.logLevel
+          )
+        )
+
+      case Some(s) =>
+        initializeStreamsReader(step1.awsRegion, s).fold(
+          ConfigValue.failed(_),
+          initializeStreams =>
+            ConfigValue.default(
               CacheConfig(
-                None,
+                Some(initializeStreams),
                 step1.createStreamDuration,
                 step1.deleteStreamDuration,
                 step1.registerStreamConsumerDuration,
@@ -94,37 +176,16 @@ object CacheConfig {
                 step1.awsAccountId,
                 step1.awsRegion,
                 step1.persistConfig,
-                step1.onDemandStreamCountLimit
+                step1.onDemandStreamCountLimit,
+                step1.logLevel
               )
             )
-
-          case Some(s) =>
-            initializeStreamsReader(step1.awsRegion, s).map {
-              initializeStreams =>
-                CacheConfig(
-                  Some(initializeStreams),
-                  step1.createStreamDuration,
-                  step1.deleteStreamDuration,
-                  step1.registerStreamConsumerDuration,
-                  step1.deregisterStreamConsumerDuration,
-                  step1.startStreamEncryptionDuration,
-                  step1.stopStreamEncryptionDuration,
-                  step1.mergeShardsDuration,
-                  step1.splitShardDuration,
-                  step1.updateShardCountDuration,
-                  step1.updateStreamModeDuration,
-                  step1.shardLimit,
-                  step1.awsAccountId,
-                  step1.awsRegion,
-                  step1.persistConfig,
-                  step1.onDemandStreamCountLimit
-                )
-            }
-        }
-      )
+        )
+    }
+  )
 
   implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] =
-    Encoder.forProduct15(
+    Encoder.forProduct16(
       "initializeStreams",
       "createStreamDuration",
       "deleteStreamDuration",
@@ -139,7 +200,8 @@ object CacheConfig {
       "awsAccountId",
       "awsRegion",
       "persistConfig",
-      "onDemandStreamCountLimit"
+      "onDemandStreamCountLimit",
+      "logLevel"
     )(x =>
       (
         x.initializeStreams,
@@ -156,14 +218,15 @@ object CacheConfig {
         x.awsAccountId,
         x.awsRegion,
         x.persistConfig,
-        x.onDemandStreamCountLimit
+        x.onDemandStreamCountLimit,
+        x.logLevel
       )
     )
 
   def initializeStreamsReader(
       defaultRegion: AwsRegion,
       s: String
-  ): Either[FailureReason, Map[AwsRegion, List[CreateStreamRequest]]] =
+  ): Either[ConfigError, Map[AwsRegion, List[CreateStreamRequest]]] =
     s.split(',')
       .toList
       .map(_.split(':').toList)
@@ -208,13 +271,8 @@ object CacheConfig {
       }
       .map(_.groupMap(_._1)(_._2))
       .toRight(
-        CannotConvert(
-          s,
-          "Map[AwsRegion, List[CreateStreamRequest]]",
-          "Invalid format. Expected: \"<String>:<Int>:<String>,<String>:<Int>:<String>,...\""
+        ConfigError(
+          "Invalid format for INITIALIZE_STREAMS. Expected: \"<String>:<Int>:<String>,<String>:<Int>:<String>,...\""
         )
       )
-
-  def read: IO[CacheConfig] =
-    ConfigSource.resources("cache.conf").loadF[IO, CacheConfig]()
 }

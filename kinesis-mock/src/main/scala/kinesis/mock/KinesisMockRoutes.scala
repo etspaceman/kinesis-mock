@@ -22,22 +22,22 @@ import java.security.SecureRandom
 import java.util.Base64
 
 import cats.effect.IO
+import cats.effect.std.UUIDGen
 import cats.syntax.all._
-import com.github.f4b6a3.uuid.UuidCreator
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.syntax.header._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import kinesis.mock.api._
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.AwsRegion
 
-class KinesisMockRoutes(cache: Cache) {
-  val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
+class KinesisMockRoutes(cache: Cache, logLevel: ConsoleLogger.LogLevel) {
+  val logger: SelfAwareStructuredLogger[IO] =
+    new ConsoleLogger(logLevel, this.getClass().getName())
 
   import KinesisMockMediaTypes._
   import KinesisMockQueryParams._
@@ -75,9 +75,8 @@ class KinesisMockRoutes(cache: Cache) {
             queryAction.map(x => amazonAction -> x.entryName).toVector).context
         )(
           "Logging input query params"
-        ) *> {
-
-          val requestIdHeader = AmazonRequestId(UuidCreator.getTimeBased())
+        ) *> UUIDGen.randomUUID[IO].flatMap { requestId =>
+          val requestIdHeader = AmazonRequestId(requestId)
 
           val amazonId2Header: Vector[Header.ToRaw] = request.headers
             .get[Origin]
@@ -397,55 +396,57 @@ class KinesisMockRoutes(cache: Cache) {
         }
 
     case request @ OPTIONS -> Root =>
-      val requestIdHeader = AmazonRequestId(UuidCreator.getTimeBased).toRaw1
+      UUIDGen.randomUUID[IO].flatMap { requestId =>
+        val requestIdHeader = AmazonRequestId(requestId).toRaw1
 
-      val initContext =
-        LoggingContext.create + ("requestId" -> requestIdHeader.value)
-      logger.debug(initContext.context)("Received OPTIONS request") *> {
-        if (request.headers.get[Origin].isEmpty)
-          logger.warn(initContext.context)(
-            "Missing required origin header for OPTIONS call"
-          ) *>
-            BadRequest(
-              errorMessage(
-                "AccessDeniedException",
-                Some(
-                  "Unable to determine service/authorization name to be authorized"
-                )
-              ),
-              requestIdHeader
-            )
-        else {
-          val responseHeaders: Vector[Header.ToRaw] =
-            request.headers
-              .get[Origin]
-              .fold[Vector[Header.ToRaw]](Vector.empty)(_ =>
-                Vector[Header.ToRaw](
-                  AccessControlAllowOrigin("*").toRaw1,
-                  AccessControlExposeHeaders(
-                    "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
-                  ).toRaw1,
-                  AccessControlMaxAge("172800").toRaw1
-                ) ++ request.headers
-                  .get[AccessControlRequestHeaders]
-                  .map[Header.ToRaw](h =>
-                    AccessControlAllowHeaders(h.value).toRaw1
+        val initContext =
+          LoggingContext.create + ("requestId" -> requestIdHeader.value)
+        logger.debug(initContext.context)("Received OPTIONS request") *> {
+          if (request.headers.get[Origin].isEmpty)
+            logger.warn(initContext.context)(
+              "Missing required origin header for OPTIONS call"
+            ) *>
+              BadRequest(
+                errorMessage(
+                  "AccessDeniedException",
+                  Some(
+                    "Unable to determine service/authorization name to be authorized"
                   )
-                  .toVector ++ request.headers
-                  .get[AccessControlRequestMethod]
-                  .map[Header.ToRaw](h =>
-                    AccessControlAllowMethods(h.value).toRaw1
-                  )
-                  .toVector
-              ) :+ requestIdHeader
+                ),
+                requestIdHeader
+              )
+          else {
+            val responseHeaders: Vector[Header.ToRaw] =
+              request.headers
+                .get[Origin]
+                .fold[Vector[Header.ToRaw]](Vector.empty)(_ =>
+                  Vector[Header.ToRaw](
+                    AccessControlAllowOrigin("*").toRaw1,
+                    AccessControlExposeHeaders(
+                      "x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date"
+                    ).toRaw1,
+                    AccessControlMaxAge("172800").toRaw1
+                  ) ++ request.headers
+                    .get[AccessControlRequestHeaders]
+                    .map[Header.ToRaw](h =>
+                      AccessControlAllowHeaders(h.value).toRaw1
+                    )
+                    .toVector ++ request.headers
+                    .get[AccessControlRequestMethod]
+                    .map[Header.ToRaw](h =>
+                      AccessControlAllowMethods(h.value).toRaw1
+                    )
+                    .toVector
+                ) :+ requestIdHeader
 
-          logger.debug(
-            (initContext ++ responseHeaders.flatMap(tr =>
-              tr.values.map(h => h.name.toString -> h.value)
-            )).context
-          )("Successfully processed OPTIONS call")
+            logger.debug(
+              (initContext ++ responseHeaders.flatMap(tr =>
+                tr.values.map(h => h.name.toString -> h.value)
+              )).context
+            )("Successfully processed OPTIONS call")
 
-          Ok("", responseHeaders: _*)
+            Ok("", responseHeaders: _*)
+          }
         }
       }
   }
