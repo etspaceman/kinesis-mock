@@ -35,7 +35,9 @@ import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
 object KinesisMockService extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] =
+  override def run(args: List[String]): IO[ExitCode] = Network[
+    IO
+  ].tlsContext.insecureResource.use(tlsContext =>
     for {
       logLevel <- ConsoleLogger.LogLevel.read.load[IO]
       logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
@@ -62,11 +64,6 @@ object KinesisMockService extends IOApp {
       serviceConfig <- KinesisMockServiceConfig.read.load[IO]
       app = Logger.httpApp(true, true, _ => false)(
         new KinesisMockRoutes(cache, logLevel).routes.orNotFound
-      )
-      tlsContext <- Network[IO].tlsContext.fromKeyStoreResource(
-        "server.jks",
-        serviceConfig.keyStorePassword.toCharArray(),
-        serviceConfig.keyManagerPassword.toCharArray()
       )
       host <- IO.fromOption(Host.fromString("0.0.0.0"))(
         new RuntimeException("Invalid hostname")
@@ -107,6 +104,7 @@ object KinesisMockService extends IOApp {
         .use(_ => IO.never)
         .as(ExitCode.Success)
     } yield res
+  )
 
   def initializeStreams(
       cache: Cache,
