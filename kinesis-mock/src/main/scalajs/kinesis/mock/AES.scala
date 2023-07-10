@@ -4,6 +4,8 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 import scala.scalajs.js.typedarray._
 
+import scodec.bits.ByteVector
+
 object AES {
   def encrypt(
       str: String,
@@ -12,11 +14,11 @@ object AES {
   ): Array[Byte] = {
     val cipher = createCipheriv(
       "aes-256-cbc",
-      Int8Array.from(iteratorPwdKey.toTypedArray),
-      Int8Array.from(iteratorPwdIv.toTypedArray)
+      ByteVector(iteratorPwdKey).toUint8Array,
+      ByteVector(iteratorPwdIv).toUint8Array
     )
 
-    val res = new Int8Array(cipher.update(str, "utf-8")).toArray
+    val res = ByteVector.fromUint8Array(cipher.update(str, "utf-8")).toArray
     cipher.`final`()
     res
   }
@@ -28,11 +30,13 @@ object AES {
   ): Array[Byte] = {
     val cipher = createDecipheriv(
       "aes-256-cbc",
-      Int8Array.from(iteratorPwdKey.toTypedArray),
-      Int8Array.from(iteratorPwdIv.toTypedArray)
+      ByteVector(iteratorPwdKey).toUint8Array,
+      ByteVector(iteratorPwdIv).toUint8Array
     )
 
-    val res = new Int8Array(cipher.update(bytes.toTypedArray)).toArray
+    val res = ByteVector
+      .fromUint8Array(cipher.update(ByteVector(bytes).toUint8Array))
+      .toArray
     cipher.`final`()
     res
   }
@@ -41,27 +45,27 @@ object AES {
   @JSImport("crypto", "createCipheriv")
   private[mock] def createCipheriv(
       algorithm: String,
-      key: Int8Array,
-      iv: Int8Array
+      key: Uint8Array,
+      iv: Uint8Array
   ): Cipher = js.native
 
   @js.native
   @JSImport("crypto", "createDecipheriv")
   private[mock] def createDecipheriv(
       algorithm: String,
-      key: Int8Array,
-      iv: Int8Array
+      key: Uint8Array,
+      iv: Uint8Array
   ): Decipher = js.native
 
   @js.native
   private[mock] trait Cipher extends js.Object {
-    def `final`(): ArrayBuffer = js.native
-    def update(data: String, inputEncoding: String): ArrayBuffer = js.native
+    def `final`(): Uint8Array = js.native
+    def update(data: String, inputEncoding: String): Uint8Array = js.native
   }
 
   @js.native
   private[mock] trait Decipher extends js.Object {
-    def `final`(): ArrayBuffer = js.native
-    def update(data: Int8Array): ArrayBuffer = js.native
+    def `final`(): Uint8Array = js.native
+    def update(data: Uint8Array): Uint8Array = js.native
   }
 }
