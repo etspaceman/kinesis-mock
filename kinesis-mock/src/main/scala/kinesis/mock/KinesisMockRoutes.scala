@@ -16,9 +16,9 @@
 
 package kinesis.mock
 
+import scala.util.Random
 import scala.util.Try
 
-import java.security.SecureRandom
 import java.util.Base64
 
 import cats.effect.IO
@@ -85,7 +85,7 @@ class KinesisMockRoutes(
             .get[Origin]
             .fold[Vector[Header.ToRaw]] {
               val bytes = new Array[Byte](72)
-              new SecureRandom().nextBytes(bytes)
+              Random.nextBytes(bytes)
               Vector(
                 AmazonId2(
                   new String(Base64.getEncoder.encode(bytes), "UTF-8")

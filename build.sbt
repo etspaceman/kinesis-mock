@@ -39,7 +39,9 @@ lazy val `kinesis-mock-js` =
   `kinesis-mock`
     .js(Scala213)
     .settings(
-      scalaJSUseMainModuleInitializer := true
+      scalaJSUseMainModuleInitializer := true,
+      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) }
     )
 
 lazy val testkit = projectMatrix
