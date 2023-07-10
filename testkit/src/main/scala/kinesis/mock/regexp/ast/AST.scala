@@ -24,8 +24,10 @@ case class Group(term: RegularExpression) extends RegularExpression
 case class Substitution(index: Int) extends RegularExpression
 case class NonCapturingGroup(term: RegularExpression) extends RegularExpression
 
-case class Or(t1: RegularExpression, t2: RegularExpression) extends RegularExpression
-case class And(t1: RegularExpression, t2: RegularExpression) extends RegularExpression
+case class Or(t1: RegularExpression, t2: RegularExpression)
+    extends RegularExpression
+case class And(t1: RegularExpression, t2: RegularExpression)
+    extends RegularExpression
 
 case class Negated(term: RegularExpression) extends RegularExpression
 

@@ -66,6 +66,14 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
+      - name: Link JS
+        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        run: sbt '++ ${{ matrix.scala }}' Test/fastLinkJS
+
+      - name: Unit Tests
+        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' unit-tests/test
+
       - name: Docker Compose Up
         if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
         uses: nick-fields/retry@v2
@@ -76,13 +84,9 @@ jobs:
           on_retry_command: sbt 'project ${{ matrix.project }}' dockerComposeDown
           max_attempts: 3
 
-      - name: Link JS
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
-        run: sbt '++ ${{ matrix.scala }}' Test/fastLinkJS
-
-      - name: Test
+      - name: Integration Tests
         if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' test
+        run: sbt '++ ${{ matrix.scala }}' integration-tests/test
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}

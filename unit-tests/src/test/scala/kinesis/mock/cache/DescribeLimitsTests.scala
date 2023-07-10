@@ -16,8 +16,9 @@
 
 package kinesis.mock.cache
 
-import kinesis.mock.LoggingContext
 import cats.effect.IO
+
+import kinesis.mock.LoggingContext
 
 class DescribeLimitsTests extends munit.CatsEffectSuite {
   test("It should describe limits")(

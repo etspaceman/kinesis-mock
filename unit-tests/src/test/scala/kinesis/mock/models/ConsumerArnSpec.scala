@@ -19,8 +19,8 @@ package kinesis.mock.models
 import enumeratum.scalacheck._
 import org.scalacheck.Prop._
 
-import kinesis.mock.instances.arbitrary._
 import kinesis.mock.Utils
+import kinesis.mock.instances.arbitrary._
 
 class ConsumerArnSpec extends munit.ScalaCheckSuite {
   property("It should convert to a proper ARN format")(forAll {

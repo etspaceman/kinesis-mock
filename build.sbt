@@ -28,11 +28,19 @@ lazy val `kinesis-mock` = projectMatrix
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
       case x => MergeStrategy.defaultMergeStrategy(x)
-    }
+    },
+    Compile / mainClass := Some("kinesis.mock.KinesisMockService")
   )
   .settings(DockerImagePlugin.settings)
   .jvmPlatform(Seq(Scala213))
   .jsPlatform(Seq(Scala213))
+
+lazy val `kinesis-mock-js` =
+  `kinesis-mock`
+    .js(Scala213)
+    .settings(
+      scalaJSUseMainModuleInitializer := true
+    )
 
 lazy val testkit = projectMatrix
   .enablePlugins(NoPublishPlugin)

@@ -24,6 +24,7 @@ object KinesisMockPlugin extends AutoPlugin {
   import TypelevelVersioningPlugin.autoImport._
   import autoImport._
   import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
+  import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
   import scalafix.sbt.ScalafixPlugin.autoImport._
 
   private val primaryJavaOSCond = Def.setting {
@@ -91,6 +92,21 @@ object KinesisMockPlugin extends AutoPlugin {
       }
 
       val test = List(
+        WorkflowStep.Sbt(
+          List("Test/fastLinkJS"),
+          name = Some("Link JS"),
+          cond = Some(onlyScalaJsCond.value)
+        ),
+        WorkflowStep.Sbt(
+          List(
+            "unit-tests/test"
+          ),
+          name = Some("Unit Tests"),
+          cond = Some(primaryJavaOSCond.value)
+        )
+      )
+
+      val integrationTest = List(
         WorkflowStep.Use(
           UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Docker Compose Up"),
@@ -104,15 +120,10 @@ object KinesisMockPlugin extends AutoPlugin {
           )
         ),
         WorkflowStep.Sbt(
-          List("Test/fastLinkJS"),
-          name = Some("Link JS"),
-          cond = Some(onlyScalaJsCond.value)
-        ),
-        WorkflowStep.Sbt(
           List(
-            "test"
+            "integration-tests/test"
           ),
-          name = Some("Test"),
+          name = Some("Integration Tests"),
           cond = Some(primaryJavaOSCond.value)
         ),
         WorkflowStep.Sbt(
@@ -165,7 +176,7 @@ object KinesisMockPlugin extends AutoPlugin {
           )
         else Nil
 
-      style ++ test ++ scalafix ++ mima ++ doc
+      style ++ test ++ integrationTest ++ scalafix ++ mima ++ doc
     }
   )
 

@@ -68,3 +68,35 @@ pull_request_rules:
       add:
       - root-jvm-213
       remove: []
+- name: Label testkit PRs
+  conditions:
+  - files~=^testkit/
+  actions:
+    label:
+      add:
+      - testkit
+      remove: []
+- name: Label testkitJS PRs
+  conditions:
+  - files~=^.sbt/matrix/testkitJS/
+  actions:
+    label:
+      add:
+      - testkitJS
+      remove: []
+- name: Label unit-tests PRs
+  conditions:
+  - files~=^unit-tests/
+  actions:
+    label:
+      add:
+      - unit-tests
+      remove: []
+- name: Label unit-testsJS PRs
+  conditions:
+  - files~=^.sbt/matrix/unit-testsJS/
+  actions:
+    label:
+      add:
+      - unit-testsJS
+      remove: []

@@ -1,17 +1,19 @@
 package kinesis.mock.regexp
 
-import org.scalacheck.{Arbitrary, Gen}
 import ast._
+import org.scalacheck.{Arbitrary, Gen}
 
 object ASTProcessor {
 
   // TODO negation which doesn't use `suchThat`?
-  private def negated(re: Negated)(implicit ev: Arbitrary[Char]): Gen[String] = {
+  private def negated(
+      re: Negated
+  )(implicit ev: Arbitrary[Char]): Gen[String] = {
 
     val arbitraryString: Gen[String] =
       Arbitrary.arbitrary[Char].map(_.toString)
 
-    def termToString(term: CharacterClass.Term): String = {
+    def termToString(term: CharacterClass.Term): String =
       term match {
         case CharacterClass.Literal(str) =>
           str
@@ -28,7 +30,6 @@ object ASTProcessor {
         case _ =>
           ""
       }
-    }
 
     re match {
       case Negated(WordChar) =>
@@ -40,16 +41,17 @@ object ASTProcessor {
       case Negated(WordBoundary) =>
         Gen.const("")
       case Negated(CharacterClass(terms @ _*)) =>
-        arbitraryString.suchThat(_.matches(s"[^${terms.map(termToString).mkString("")}]"))
-        // TODO fix AST so that this isn't a valid construction
+        arbitraryString.suchThat(
+          _.matches(s"[^${terms.map(termToString).mkString("")}]")
+        )
+      // TODO fix AST so that this isn't a valid construction
       case _ =>
         sys.error("invalid negated term")
     }
   }
 
   // TODO tailrec optimisation
-  def apply(re: RegularExpression)(implicit ev: Arbitrary[Char]): Gen[String] = {
-
+  def apply(re: RegularExpression)(implicit ev: Arbitrary[Char]): Gen[String] =
     re match {
       case Literal(str) =>
         literal(str)
@@ -91,7 +93,7 @@ object ASTProcessor {
         } yield list.mkString("")
       case Length(inner, length) =>
         Gen.listOfN(length, apply(inner)).map(_.mkString(""))
-      case CharacterClass(terms@_*) =>
+      case CharacterClass(terms @ _*) =>
         processClass(terms)
       case term: Negated =>
         negated(term)
@@ -100,7 +102,6 @@ object ASTProcessor {
       case WordBoundary | BOS | EOS =>
         Gen.const("")
     }
-  }
 
   private def processClass(terms: Seq[CharacterClass.Term]): Gen[String] = {
 
@@ -133,10 +134,9 @@ object ASTProcessor {
   private val wordChar: Gen[String] =
     Gen.oneOf(Gen.alphaNumChar, Gen.const('_')).map(_.toString)
 
-  private val spaceChar: Gen[String] = {
+  private val spaceChar: Gen[String] =
     // should this contain other characters?
     Gen.oneOf(" ", "\t")
-  }
 
   private val digitChar: Gen[String] =
     Gen.numChar.map(_.toString)
