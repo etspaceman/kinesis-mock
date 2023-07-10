@@ -1,15 +1,8 @@
-FROM ghcr.io/etspaceman/graalvm-ce-base:latest as build
+FROM node:20 as build
 
-ARG DOCKER_SERVICE_JAR
-ARG STATIC_TYPE
-COPY ${DOCKER_SERVICE_JAR} ./kinesis-mock.jar
-COPY graal ./graal
-
-RUN ./graal/buildNativeImageLinux.sh ${STATIC_TYPE}
-RUN ./upx-3.96-amd64_linux/upx --best -o kinesis-mock kinesis-mock-native
-
-FROM alpine:3
-RUN apk --no-cache add curl
-COPY --from=build /app/kinesis-mock /opt/kinesis-mock
+ARG DOCKER_SERVICE_FILE
+ENV KINESIS_MOCK_CERT_PATH="server.json"
+COPY ${DOCKER_SERVICE_FILE} ./kinesis-mock.js
+COPY kinesis-mock/src/main/resources/server.json ./server.json
 EXPOSE 4567 4568
-CMD ["/opt/kinesis-mock", "--gc=G1"]
+CMD ["node", "./kinesis-mock.js"]

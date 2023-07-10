@@ -53,7 +53,7 @@ object DockerComposePlugin extends AutoPlugin {
   val dockerComposeUpTask: Def.Initialize[Task[Unit]] = Def.taskDyn {
     if (buildImage.value) {
       dockerComposeUpBaseTask.dependsOn(
-        projectsToBuild.value.map(p => p / packageAndBuildDockerImage): _*
+        projectsToBuild.value.map(p => p / buildDockerImage): _*
       )
     } else dockerComposeUpBaseTask
   }

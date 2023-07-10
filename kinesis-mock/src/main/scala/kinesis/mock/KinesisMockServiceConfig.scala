@@ -25,7 +25,9 @@ final case class KinesisMockServiceConfig(
     tlsPort: Port,
     plainPort: Port,
     keyStorePassword: String,
-    keyManagerPassword: String
+    keyManagerPassword: String,
+    certPassword: String,
+    certPath: String
 )
 
 object KinesisMockServiceConfig {
@@ -38,10 +40,18 @@ object KinesisMockServiceConfig {
     keyManagerPassword <- env("KINESIS_MOCK_KEYMANAGER_PASSWORD").default(
       "kinesisMock"
     )
+    certPassword <- env("KINESIS_MOCK_PEM_PASSWORD").default(
+      "kinesisMock"
+    )
+    certPath <- env("KINESIS_MOCK_CERT_PATH").default(
+      "kinesis-mock/src/main/resources/server.json"
+    )
   } yield KinesisMockServiceConfig(
     tlsPort,
     plainPort,
     keyStorePassword,
-    keyManagerPassword
+    keyManagerPassword,
+    certPassword,
+    certPath
   )
 }

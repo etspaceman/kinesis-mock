@@ -1,7 +1,7 @@
 import LibraryDependencies._
 
 lazy val `kinesis-mock` = projectMatrix
-  .enablePlugins(DockerImagePlugin, DockerComposePlugin, NoPublishPlugin)
+  .enablePlugins(DockerImagePlugin, NoPublishPlugin)
   .settings(
     description := "A Mock API for AWS Kinesis",
     libraryDependencies ++= Seq(
@@ -39,6 +39,8 @@ lazy val `kinesis-mock-js` =
   `kinesis-mock`
     .js(Scala213)
     .settings(
+      Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file("docker/image/lib"),
+      Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file("docker/image/lib"),
       scalaJSUseMainModuleInitializer := true,
       scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
     )
@@ -57,8 +59,7 @@ lazy val `unit-tests` = projectMatrix
   .dependsOn(testkit % Test)
 
 lazy val `integration-tests` = projectMatrix
-  .enablePlugins(NoPublishPlugin, DockerImagePlugin)
-  .settings(DockerImagePlugin.settings)
+  .enablePlugins(NoPublishPlugin)
   .settings(
     libraryDependencies ++= Seq(
       Aws.kinesis % Test,
@@ -78,7 +79,7 @@ lazy val allProjects = Seq(
   `integration-tests`
 )
 
-lazy val functionalTestProjects = List(`integration-tests`).map(_.jvm(Scala213))
+lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala213))
 
 def commonRootSettings: Seq[Setting[_]] =
   DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(

@@ -1,0 +1,206 @@
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:52.914869Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, cacheConfig={"awsAccountId":"000000000000","awsRegion":"us-east-1","createStreamDuration":{"length":500,"unit":"MILLISECONDS"},"deleteStreamDuration":{"length":500,"unit":"MILLISECONDS"},"deregisterStreamConsumerDuration":{"length":500,"unit":"MILLISECONDS"},"initializeStreams":{"us-east-1":[{"ShardCount":3,"StreamModeDetails":null,"StreamName":"stream1"},{"ShardCount":2,"StreamModeDetails":null,"StreamName":"stream2"},{"ShardCount":1,"StreamModeDetails":null,"StreamName":"stream3"},{"ShardCount":2,"StreamModeDetails":null,"StreamName":"stream4"},{"ShardCount":3,"StreamModeDetails":null,"StreamName":"stream5"},{"ShardCount":5,"StreamModeDetails":null,"StreamName":"stream6"},{"ShardCount":5,"StreamModeDetails":null,"StreamName":"stream7"},{"ShardCount":3,"StreamModeDetails":null,"StreamName":"stream8"},{"ShardCount":1,"StreamModeDetails":null,"StreamName":"stream9"},{"ShardCount":3,"StreamModeDetails":null,"StreamName":"stream10"},{"ShardCount":2,"StreamModeDetails":null,"StreamName":"stream11"}]},"logLevel":"DEBUG","mergeShardsDuration":{"length":500,"unit":"MILLISECONDS"},"onDemandStreamCountLimit":10,"persistConfig":{"fileName":"kinesis-data.json","interval":{"length":5,"unit":"SECONDS"},"loadIfExists":true,"path":"/tmp/datadir1","shouldPersist":true},"registerStreamConsumerDuration":{"length":500,"unit":"MILLISECONDS"},"shardLimit":50,"splitShardDuration":{"length":500,"unit":"MILLISECONDS"},"startStreamEncryptionDuration":{"length":500,"unit":"MILLISECONDS"},"stopStreamEncryptionDuration":{"length":500,"unit":"MILLISECONDS"},"updateShardCountDuration":{"length":500,"unit":"MILLISECONDS"}} Logging Cache Config
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:52.989120Z  Initializing stream 'stream1' (shardCount=Some(3))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:52.994158Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:52.999311Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.001470Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.003233Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.005125Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Delaying setting stream to active for 500 milliseconds
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:53.007288Z  Initializing stream 'stream2' (shardCount=Some(2))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.007736Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.009941Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.010784Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.011736Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.012439Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Delaying setting stream to active for 500 milliseconds
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:53.012892Z  Initializing stream 'stream3' (shardCount=Some(1))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.013246Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.014094Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.014654Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.015554Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.016118Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Delaying setting stream to active for 500 milliseconds
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:53.016843Z  Initializing stream 'stream4' (shardCount=Some(2))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.017215Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.018235Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.018820Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.019552Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.020132Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Delaying setting stream to active for 500 milliseconds
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:53.020538Z  Initializing stream 'stream5' (shardCount=Some(3))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.020809Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.022164Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.022750Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.023535Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.024077Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.507387Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.508944Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.509593Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.512563Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.513303Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.513715Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.516779Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.517444Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.518950Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.520575Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.521448Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.522085Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.523846Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.524453Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:53.524797Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.011671Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.014172Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream1 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:54.015466Z  Initializing stream 'stream6' (shardCount=Some(5))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.015944Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.021677Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.022457Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.023230Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.024211Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.024743Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.031350Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream2 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:54.031793Z  Initializing stream 'stream7' (shardCount=Some(5))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.032104Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.033483Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.034166Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.034768Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.035180Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.035581Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.036248Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream3 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:54.036931Z  Initializing stream 'stream8' (shardCount=Some(3))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.039442Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.040626Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.041118Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.041650Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.042008Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.042444Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.043071Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream4 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:54.043504Z  Initializing stream 'stream9' (shardCount=Some(1))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.043860Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.044906Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.045663Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.046250Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.046651Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.047181Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.047709Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream5 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:54.048047Z  Initializing stream 'stream10' (shardCount=Some(3))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.048390Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.051720Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.052274Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.053749Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.056556Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.525256Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.526662Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.527445Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.535581Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.536686Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.537261Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.543036Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.543880Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.544228Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.546825Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.547463Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.547774Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.556173Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.556997Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:54.557310Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.027434Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.028792Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream6 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:55.029144Z  Initializing stream 'stream11' (shardCount=Some(2))
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.029406Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Processing CreateStream request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.030383Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Successfully created stream
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.031269Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.031749Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.032238Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Delaying setting stream to active for 500 milliseconds
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.036941Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.037863Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream7 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.044947Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.045650Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream8 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.048298Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.048885Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream9 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.057721Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.059061Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream10 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.533608Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.535255Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Successfully described the stream summary
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:55.536183Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Setting stream to active
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:56.038010Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Processing DescribeStreamSummary request
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:56.039327Z contextId=fdd0d5c3-17e7-4ce1-83e8-a48c076ccdfa, streamName=stream11 Successfully described the stream summary
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:56.195665Z  Starting Kinesis TLS Mock Service on port 4567
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:56.196156Z  Starting Kinesis Plain Mock Service on port 4568
+[info] kinesis.mock.KinesisMockService$ 2023-07-10T20:53:56.201925Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f Starting persist data loop
+[info] kinesis.mock.cache.Cache 2023-07-10T20:53:56.218709Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Creating directories
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:56.225807Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:53:56.277874Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:01.284174Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:01.329203Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:06.334610Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:06.372547Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:11.376788Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:11.419618Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:16.425226Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:16.473575Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:21.476600Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:21.503611Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:26.507022Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:26.532543Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:31.536278Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:31.544890Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:36.550619Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:36.577117Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:41.583772Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:41.618483Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:46.622540Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:46.632705Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:51.635839Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:51.650640Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:56.652295Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:54:56.680057Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:01.683295Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:01.707735Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:06.711449Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:06.723547Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:11.726606Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:11.757527Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:16.761192Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:16.771499Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:21.776978Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:21.793929Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:26.799660Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:26.829826Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:31.832887Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Persisting stream data to disk
+[debug] kinesis.mock.cache.Cache 2023-07-10T20:55:31.849006Z contextId=d315b4e7-7e2c-42bb-bbbf-3d2a6a56661f, fileName=kinesis-data.json, path=tmp/datadir1 Successfully persisted stream data
+HTTP/1.1 GET /healthcheck Headers(Host: localhost:4568, User-Agent: curl/7.88.1, Accept: */*) body=""
+HTTP/1.1 200 OK Headers(Content-Length: 0) body=""

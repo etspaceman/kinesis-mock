@@ -22,7 +22,6 @@ import cats.effect.std.Semaphore
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
 import com.comcast.ip4s.Host
-import fs2.io.net.Network
 import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.Logger
@@ -35,9 +34,7 @@ import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
 object KinesisMockService extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] = Network[
-    IO
-  ].tlsContext.insecureResource.use(tlsContext =>
+  override def run(args: List[String]): IO[ExitCode] =
     for {
       logLevel <- ConsoleLogger.LogLevel.read.load[IO]
       logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
@@ -62,6 +59,7 @@ object KinesisMockService extends IOApp {
         cacheConfig.initializeStreams.getOrElse(Map.empty)
       )
       serviceConfig <- KinesisMockServiceConfig.read.load[IO]
+      tlsContext <- TLS.context(serviceConfig)
       app = Logger.httpApp(true, true, _ => false)(
         new KinesisMockRoutes(cache, logLevel).routes.orNotFound
       )
@@ -104,7 +102,6 @@ object KinesisMockService extends IOApp {
         .use(_ => IO.never)
         .as(ExitCode.Success)
     } yield res
-  )
 
   def initializeStreams(
       cache: Cache,
