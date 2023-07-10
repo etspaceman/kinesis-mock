@@ -1,5 +1,3 @@
-
-
 package kinesis.mock.retry
 package syntax
 
@@ -35,8 +33,8 @@ final class RetryingOps[M[_], A](action: => M[A]) {
     )(action)
 }
 
-final class RetryingErrorOps[M[_], A, E](action: => M[A])(
-    implicit M: MonadError[M, E]
+final class RetryingErrorOps[M[_], A, E](action: => M[A])(implicit
+    M: MonadError[M, E]
 ) {
   def retryingOnAllErrors(
       policy: RetryPolicy[M],

@@ -132,7 +132,7 @@ final case class ListShardsRequest(
                   )) =>
             allShards
           case Some(sf) if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON =>
-            val now = Instant.now()
+            val now = Utils.now
             allShards.filter(x =>
               x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
                 x.plusSeconds(stream.retentionPeriod.toSeconds)

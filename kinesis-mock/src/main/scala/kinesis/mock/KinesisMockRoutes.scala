@@ -35,7 +35,10 @@ import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.AwsRegion
 
-class KinesisMockRoutes(cache: Cache, logLevel: ConsoleLogger.LogLevel) {
+class KinesisMockRoutes(
+    cache: Cache,
+    logLevel: ConsoleLogger.LogLevel = ConsoleLogger.LogLevel.Error
+) {
   val logger: SelfAwareStructuredLogger[IO] =
     new ConsoleLogger(logLevel, this.getClass().getName())
 

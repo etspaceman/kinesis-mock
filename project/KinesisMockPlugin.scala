@@ -10,7 +10,8 @@ object KinesisMockPlugin extends AutoPlugin {
 
   override def trigger = allRequirements
 
-  override def requires: Plugins = TypelevelCiPlugin && TypelevelSettingsPlugin && TypelevelVersioningPlugin
+  override def requires: Plugins =
+    TypelevelCiPlugin && TypelevelSettingsPlugin && TypelevelVersioningPlugin
 
   def mkCommand(commands: List[String]): String =
     commands.mkString("; ", "; ", "")
@@ -178,34 +179,27 @@ object KinesisMockPlugin extends AutoPlugin {
     Test / testOptions ++= {
       List(Tests.Argument(TestFrameworks.MUnit, "+l"))
     },
-    libraryDependencies ++= Seq(
-      Enumeratum.scalacheck.value % Test,
-      Munit.core.value % Test,
-      Munit.catsEffect.value % Test,
-      Munit.scalacheck.value % Test,
-      Munit.scalacheckEffect.value % Test,
-      Refined.scalacheck.value % Test
-    ),
+    libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
     )
   ) ++ Seq(
-    addCommandAlias("cpl", ";Test / compile;Fun / compile"),
+    addCommandAlias("cpl", ";Test / compile"),
     addCommandAlias(
       "fixCheck",
-      ";Compile / scalafix --check;Test / scalafix --check;Fun / scalafix --check"
+      ";Compile / scalafix --check;Test / scalafix --check"
     ),
     addCommandAlias(
       "fix",
-      ";Compile / scalafix;Test / scalafix;Fun / scalafix"
+      ";Compile / scalafix;Test / scalafix"
     ),
     addCommandAlias(
       "fmt",
-      ";Compile / scalafmt;Test / scalafmt;Fun / scalafmt;scalafmtSbt"
+      ";Compile / scalafmt;Test / scalafmt;scalafmtSbt"
     ),
     addCommandAlias(
       "fmtCheck",
-      ";Compile / scalafmtCheck;Test / scalafmtCheck;Fun / scalafmtCheck;scalafmtSbtCheck"
+      ";Compile / scalafmtCheck;Test / scalafmtCheck;scalafmtSbtCheck"
     ),
     addCommandAlias(
       "pretty",
@@ -220,4 +214,16 @@ object KinesisMockPlugin extends AutoPlugin {
 
 object KinesisMockPluginKeys {
   val Scala213 = "2.13.11"
+
+  val testDependencies = Def.setting(
+    Seq(
+      Enumeratum.scalacheck.value,
+      Munit.core.value,
+      Munit.catsEffect.value,
+      Munit.scalacheck.value,
+      Munit.scalacheckEffect.value,
+      Refined.scalacheck.value,
+      ScalaParserCombinators.value
+    )
+  )
 }

@@ -19,8 +19,6 @@ package api
 
 import scala.collection.mutable.HashMap
 
-import java.time.Instant
-
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -41,7 +39,7 @@ final case class PutRecordsRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[PutRecordsResponse]] =
     streamsRef.modify[Response[PutRecordsResponse]] { streams =>
-      val now = Instant.now()
+      val now = Utils.now
       CommonValidations
         .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
         .flatMap { case (name, arn) =>

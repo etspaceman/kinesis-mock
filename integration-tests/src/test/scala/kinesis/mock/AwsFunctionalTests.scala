@@ -58,7 +58,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
       .buildWithDefaults(trustAllCertificates)
 
   val resource: Resource[IO, KinesisFunctionalTestResources] = for {
-    testConfig <- Resource.eval(FunctionalTestConfig.read)
+    testConfig <- FunctionalTestConfig.read.resource[IO]
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
     region <- Resource.eval(
       IO(
@@ -99,7 +99,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
             .build()
         )
       }
-    cacheConfig <- Resource.eval(CacheConfig.read)
+    cacheConfig <- CacheConfig.read.resource[IO]
     logger <- Resource.eval(Slf4jLogger.create[IO])
     res <- Resource.make(
       IO(streamNameGen.one)
@@ -182,7 +182,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
   } yield res
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
-    ResourceFixture(resource)
+    ResourceFunFixture(resource)
 
   def describeStreamSummary(
       resources: KinesisFunctionalTestResources

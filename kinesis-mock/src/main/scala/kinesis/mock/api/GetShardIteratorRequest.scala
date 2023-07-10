@@ -110,7 +110,7 @@ final case class GetShardIteratorRequest(
                               )
                             )
                           case (ShardIteratorType.AT_TIMESTAMP, _, Some(ts)) =>
-                            val now = Instant.now()
+                            val now = Utils.now
                             if (ts.toEpochMilli > now.toEpochMilli)
                               InvalidArgumentException(
                                 s"Timestamp cannot be in the future"

@@ -19,29 +19,27 @@ package models
 
 import scala.util.Try
 
-import java.time.Instant
 import java.util.Base64
 
 import cats.Eq
 import cats.syntax.all._
 import io.circe._
-import javax.crypto.Cipher
-import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 
 import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
   def parse: Response[ShardIteratorParts] = {
-    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     val decoded = Base64.getDecoder.decode(value)
+    val now = Utils.now
 
-    val now = Instant.now()
-    cipher.init(
-      Cipher.DECRYPT_MODE,
-      ShardIterator.iteratorPwdKey,
-      ShardIterator.iteratorPwdIv
+    val decrypted = new String(
+      AES.decrypt(
+        decoded.drop(8),
+        ShardIterator.iteratorPwdKey,
+        ShardIterator.iteratorPwdIv
+      ),
+      "UTF-8"
     )
-    val decrypted = new String(cipher.doFinal(decoded.drop(8)), "UTF-8")
     val split = decrypted.split("/")
     if (split.length != 5)
       InvalidArgumentException("Invalid shard iterator").asLeft
@@ -88,16 +86,13 @@ final case class ShardIteratorParts(
 
 object ShardIterator {
 
-  private val iteratorPwdKey = new SecretKeySpec(
+  private val iteratorPwdKey =
     BigInt(
       "1133a5a833666b49abf28c8ba302930f0b2fb240dccd43cf4dfbc0ca91f17751",
       16
-    ).toByteArray,
-    "AES"
-  )
-  private val iteratorPwdIv = new IvParameterSpec(
+    ).toByteArray
+  private val iteratorPwdIv =
     BigInt("7bf139dbabbea2d9995d6fcae1dff7da", 16).toByteArray
-  )
 
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L252
   def create(
@@ -106,18 +101,16 @@ object ShardIterator {
       sequenceNumber: SequenceNumber
   ): ShardIterator = {
     val encryptString =
-      (Vector.fill(14)("0").mkString + Instant.now().toEpochMilli)
+      (Vector.fill(14)("0").mkString + Utils.now.toEpochMilli)
         .takeRight(14) +
         s"/$streamName" +
         s"/$shardId" +
         s"/${sequenceNumber.value}/" +
         Vector.fill(37)("0").mkString
 
-    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-    cipher.init(Cipher.ENCRYPT_MODE, iteratorPwdKey, iteratorPwdIv)
-
     val encryptedBytes = Array[Byte](0, 0, 0, 0, 0, 0, 0, 1) ++
-      cipher.doFinal(encryptString.getBytes("UTF-8"))
+      AES.encrypt(encryptString, iteratorPwdKey, iteratorPwdIv)
+
     ShardIterator(Base64.getEncoder.encodeToString(encryptedBytes))
   }
 

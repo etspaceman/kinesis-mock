@@ -3,12 +3,11 @@ import sbt._
 
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.8"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.3.2"
-  val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
-  val OsLib = "com.lihaoyi" %% "os-lib" % "0.9.1"
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.37")
+  val ScalaParserCombinators = Def.setting(
+    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
+  )
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -20,6 +19,8 @@ object LibraryDependencies {
     val log4CatsVersion = "2.6.0"
     val core =
       Def.setting("org.typelevel" %%% "log4cats-core" % log4CatsVersion)
+    val slf4j =
+      "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
   object Munit {

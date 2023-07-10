@@ -17,8 +17,6 @@
 package kinesis.mock
 package api
 
-import java.time.Instant
-
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -114,7 +112,7 @@ object SplitShardRequest {
       shardData: Vector[KinesisRecord],
       stream: StreamData
   ): StreamData = {
-    val now = Instant.now()
+    val now = Utils.now
     val newStartingHashKeyNumber = BigInt(newStartingHashKey)
     val newShardIndex1 =
       stream.shards.keys.map(_.shardId.index).max + 1

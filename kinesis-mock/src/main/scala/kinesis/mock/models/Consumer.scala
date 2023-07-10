@@ -35,7 +35,7 @@ final case class Consumer(
 
 object Consumer {
   def create(streamArn: StreamArn, consumerName: ConsumerName): Consumer = {
-    val consumerCreationTimestamp = Instant.now()
+    val consumerCreationTimestamp = Utils.now
     Consumer(
       ConsumerArn(streamArn, consumerName, consumerCreationTimestamp),
       consumerCreationTimestamp,

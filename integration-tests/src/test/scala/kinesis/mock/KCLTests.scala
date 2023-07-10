@@ -10,7 +10,6 @@ import java.util.Date
 import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
 import cats.syntax.all._
-import com.github.f4b6a3.uuid.UuidCreator
 import retry._
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
@@ -36,10 +35,10 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 class KCLTests extends AwsFunctionalTests {
-  override val munitTimeout = 2.minutes
+  override val munitIOTimeout = 2.minutes
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =
-    ResourceFixture(
+    ResourceFunFixture(
       resource.flatMap { resources =>
         for {
           cloudwatchClient <- Resource.fromAutoCloseable(
@@ -71,8 +70,8 @@ class KCLTests extends AwsFunctionalTests {
           resultsQueue <- Resource.eval(
             Queue.unbounded[IO, KinesisClientRecord]
           )
-          appName = s"kinesis-mock-kcl-test-${UuidCreator.toString(UuidCreator.getTimeBased())}"
-          workerId = UuidCreator.toString(UuidCreator.getTimeBased())
+          appName = s"kinesis-mock-kcl-test-${Utils.randomUUIDString}"
+          workerId = Utils.randomUUIDString
           retrievalSpecificConfig = new PollingConfig(
             resources.streamName.streamName,
             resources.kinesisClient

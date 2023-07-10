@@ -154,7 +154,7 @@ object StreamData {
       streamArn: StreamArn,
       streamModeDetails: Option[StreamModeDetails]
   ): StreamData = {
-    val createTime = Instant.now()
+    val createTime = Utils.now
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, createTime, 0)
     StreamData(
@@ -165,7 +165,7 @@ object StreamData {
       minRetentionPeriod,
       shards,
       streamArn,
-      Instant.now(),
+      Utils.now,
       streamModeDetails.getOrElse(StreamModeDetails(StreamMode.PROVISIONED)),
       streamArn.streamName,
       StreamStatus.CREATING,

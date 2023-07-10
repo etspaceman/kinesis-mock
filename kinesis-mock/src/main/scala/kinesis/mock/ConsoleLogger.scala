@@ -9,6 +9,7 @@ import ciris._
 import enumeratum._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
+@SuppressWarnings(Array("scalafix:DisableSyntax.defaultArgs"))
 final class ConsoleLogger[F[_]](
     logLevel: ConsoleLogger.LogLevel,
     loggerName: String

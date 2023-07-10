@@ -1,4 +1,3 @@
-
 package kinesis.mock
 
 import cats.syntax.apply._

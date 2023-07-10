@@ -1,5 +1,3 @@
-
-
 package kinesis.mock
 
 /** MessageDigest is incredibly heavy-weight and has no linkages in ScalaJS. We

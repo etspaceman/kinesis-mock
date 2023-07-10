@@ -19,8 +19,6 @@ package api
 
 import scala.concurrent.duration._
 
-import java.time.Instant
-
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -44,7 +42,7 @@ final case class UpdateShardCountRequest(
       awsAccountId: AwsAccountId
   ): IO[Response[UpdateShardCountResponse]] =
     streamsRef.modify { streams =>
-      val now = Instant.now()
+      val now = Utils.now
       CommonValidations
         .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
         .flatMap { case (name, arn) =>

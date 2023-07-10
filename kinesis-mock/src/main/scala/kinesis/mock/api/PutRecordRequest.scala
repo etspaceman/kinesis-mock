@@ -17,8 +17,6 @@
 package kinesis.mock
 package api
 
-import java.time.Instant
-
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -42,7 +40,7 @@ final case class PutRecordRequest(
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[PutRecordResponse]] = streamsRef.modify { streams =>
-    val now = Instant.now()
+    val now = Utils.now
     CommonValidations
       .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
       .flatMap { case (name, arn) =>

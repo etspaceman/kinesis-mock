@@ -17,8 +17,8 @@
 package kinesis.mock.models
 
 import cats.kernel.Eq
-import io.circe.Encoder
 import ciris.ConfigDecoder
+import io.circe.Encoder
 
 final case class AwsAccountId(accountId: String) {
   override def toString: String = accountId

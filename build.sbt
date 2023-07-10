@@ -21,7 +21,8 @@ lazy val `kinesis-mock` = projectMatrix
       Http4s.dsl.value,
       Log4Cats.core.value,
       Ciris.core.value,
-      FS2.core.value
+      FS2.core.value,
+      ScodecBits.value
     ),
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
@@ -33,6 +34,19 @@ lazy val `kinesis-mock` = projectMatrix
   .jvmPlatform(Seq(Scala213))
   .jsPlatform(Seq(Scala213))
 
+lazy val testkit = projectMatrix
+  .enablePlugins(NoPublishPlugin)
+  .settings(libraryDependencies ++= testDependencies.value)
+  .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
+  .dependsOn(`kinesis-mock`)
+
+lazy val `unit-tests` = projectMatrix
+  .enablePlugins(NoPublishPlugin)
+  .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
+  .dependsOn(testkit % Test)
+
 lazy val `integration-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin, DockerImagePlugin)
   .settings(DockerImagePlugin.settings)
@@ -40,15 +54,18 @@ lazy val `integration-tests` = projectMatrix
     libraryDependencies ++= Seq(
       Aws.kinesis % Test,
       Aws.kpl % Test,
-      Aws.kcl % Test
+      Aws.kcl % Test,
+      Log4Cats.slf4j % Test
     ),
     Test / parallelExecution := false
   )
   .jvmPlatform(Seq(Scala213))
-  .dependsOn(`kinesis-mock` % Test)
+  .dependsOn(testkit % Test)
 
 lazy val allProjects = Seq(
   `kinesis-mock`,
+  testkit,
+  `unit-tests`,
   `integration-tests`
 )
 

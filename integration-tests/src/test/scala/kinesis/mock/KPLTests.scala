@@ -8,7 +8,6 @@ import cats.effect.{IO, Resource, SyncIO}
 import cats.syntax.all._
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.kinesis.producer._
-import com.github.f4b6a3.uuid.UuidCreator
 
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.syntax.javaFuture._
@@ -17,7 +16,7 @@ import kinesis.mock.syntax.scalacheck._
 class KPLTests extends AwsFunctionalTests {
   implicit val E: ExecutionContextExecutor = ExecutionContext.global
 
-  val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFixture(
+  val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFunFixture(
     resource.flatMap { resources =>
       Resource
         .make(
@@ -50,7 +49,7 @@ class KPLTests extends AwsFunctionalTests {
           .addUserRecord(
             new UserRecord(
               resources.functionalTestResources.streamName.streamName,
-              UuidCreator.toString(UuidCreator.getTimeBased()),
+              Utils.randomUUIDString,
               ByteBuffer.wrap(data)
             )
           )

@@ -1,5 +1,3 @@
-
-
 package kinesis.mock.retry
 
 object Fibonacci {
