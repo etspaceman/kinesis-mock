@@ -1,4 +1,4 @@
-FROM node:20 as build
+FROM node:20
 
 ARG DOCKER_SERVICE_FILE
 ENV KINESIS_MOCK_CERT_PATH="server.json"
