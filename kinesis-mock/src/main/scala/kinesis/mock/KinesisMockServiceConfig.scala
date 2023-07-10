@@ -40,8 +40,8 @@ object KinesisMockServiceConfig {
     keyManagerPassword <- env("KINESIS_MOCK_KEYMANAGER_PASSWORD").default(
       "kinesisMock"
     )
-    certPassword <- env("KINESIS_MOCK_PEM_PASSWORD").default(
-      "kinesisMock"
+    certPassword <- env("KINESIS_MOCK_CERT_PASSWORD").default(
+      "password"
     )
     certPath <- env("KINESIS_MOCK_CERT_PATH").default(
       "kinesis-mock/src/main/resources/server.json"
