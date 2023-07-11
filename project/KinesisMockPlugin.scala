@@ -54,6 +54,8 @@ object KinesisMockPlugin extends AutoPlugin {
     crossScalaVersions := Seq(Scala213),
     scalaVersion := Scala213,
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
+    tlCiStewardValidateConfig :=
+      Some(file(".scala-steward.conf")).filter(_.exists()),
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
@@ -185,7 +187,111 @@ object KinesisMockPlugin extends AutoPlugin {
         else Nil
 
       style ++ test ++ integrationTest ++ scalafix ++ mima ++ doc
-    }
+    },
+    githubWorkflowAddedJobs ++= List(
+      WorkflowJob(
+        "publishDocker",
+        "Publish Docker Image",
+        githubWorkflowJobSetup.value.toList ++
+          List(
+            WorkflowStep.Sbt(
+              List("cpl"),
+              name = Some("Compile"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("fullLinkJS"),
+              name = Some("Link JS"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/buildDockerImage"),
+              name = Some("Build Docker Image"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/pushDockerImage"),
+              name = Some("Push Docker Image"),
+              cond = Some(primaryJavaOSCond.value)
+            )
+          ),
+        scalas = Nil,
+        javas = githubWorkflowJavaVersions.value.toList,
+        cond = {
+          val publicationCond =
+            Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+              .map(compileBranchPredicate("github.ref", _))
+              .mkString("(", " || ", ")")
+
+          Some(s"github.event_name != 'pull_request' && $publicationCond")
+        }
+      ),
+      WorkflowJob(
+        "publishJS",
+        "Publish JS Files",
+        githubWorkflowJobSetup.value.toList ++
+          List(
+            WorkflowStep.Sbt(
+              List("cpl"),
+              name = Some("Compile"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("fullLinkJS"),
+              name = Some("Link JS"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("actions", "upload-release-asset", "v1"),
+              name = Some("Upload main.js"),
+              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
+              params = Map(
+                "upload_url" -> "${{ github.event.release.upload_url }}",
+                "asset_path" -> "./docker/image/lib/main.js",
+                "asset_name" -> "main.js",
+                "asset_content_type" -> "text/javascript"
+              )
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("actions", "upload-release-asset", "v1"),
+              name = Some("Upload main.js.map"),
+              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
+              params = Map(
+                "upload_url" -> "${{ github.event.release.upload_url }}",
+                "asset_path" -> "./docker/image/lib/main.js.map",
+                "asset_name" -> "main.js.map",
+                "asset_content_type" -> "application/json"
+              )
+            )
+          ),
+        scalas = Nil,
+        javas = githubWorkflowJavaVersions.value.toList,
+        cond = {
+          val publicationCond =
+            Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+              .map(compileBranchPredicate("github.ref", _))
+              .mkString("(", " || ", ")")
+
+          Some(s"github.event_name != 'pull_request' && $publicationCond")
+        }
+      )
+    ) ++ tlCiStewardValidateConfig.value.toList
+      .map { config =>
+        WorkflowJob(
+          "validate-steward",
+          "Validate Steward Config",
+          WorkflowStep.Checkout ::
+            WorkflowStep.Use(
+              UseRef.Public("coursier", "setup-action", "v1"),
+              Map("apps" -> "scala-steward")
+            ) ::
+            WorkflowStep.Run(
+              List(s"scala-steward validate-repo-config $config")
+            ) :: Nil,
+          scalas = List.empty,
+          javas = List.empty
+        )
+      }
   )
 
   override def projectSettings: Seq[Setting[_]] = Seq(
@@ -246,4 +352,30 @@ object KinesisMockPluginKeys {
       ScalaParserCombinators.value
     )
   )
+
+  def compileRef(ref: Ref): String = ref match {
+    case Ref.Branch(name) => s"refs/heads/$name"
+    case Ref.Tag(name)    => s"refs/tags/$name"
+  }
+
+  def compileBranchPredicate(target: String, pred: RefPredicate): String =
+    pred match {
+      case RefPredicate.Equals(ref) =>
+        s"$target == '${compileRef(ref)}'"
+
+      case RefPredicate.Contains(Ref.Tag(name)) =>
+        s"(startsWith($target, 'refs/tags/') && contains($target, '$name'))"
+
+      case RefPredicate.Contains(Ref.Branch(name)) =>
+        s"(startsWith($target, 'refs/heads/') && contains($target, '$name'))"
+
+      case RefPredicate.StartsWith(ref) =>
+        s"startsWith($target, '${compileRef(ref)}')"
+
+      case RefPredicate.EndsWith(Ref.Tag(name)) =>
+        s"(startsWith($target, 'refs/tags/') && endsWith($target, '$name'))"
+
+      case RefPredicate.EndsWith(Ref.Branch(name)) =>
+        s"(startsWith($target, 'refs/heads/') && endsWith($target, '$name'))"
+    }
 }
