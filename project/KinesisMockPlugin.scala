@@ -54,6 +54,7 @@ object KinesisMockPlugin extends AutoPlugin {
     semanticdbVersion := scalafixSemanticdb.revision,
     crossScalaVersions := Seq(Scala213),
     scalaVersion := Scala213,
+    resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
       "cbor_enabled" -> List("true", "false"),

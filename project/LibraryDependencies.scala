@@ -51,7 +51,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.22"
+    val http4sVersion = "0.23.22-17-acfd8a9-SNAPSHOT"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -84,7 +84,7 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.7.0"
+    val fs2Version = "3.8-201e7db-SNAPSHOT"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
   }
 
