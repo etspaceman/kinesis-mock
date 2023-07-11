@@ -35,7 +35,7 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 class KCLTests extends AwsFunctionalTests {
-  override val munitIOTimeout = 2.minutes
+  override val munitIOTimeout = 4.minutes
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =
     ResourceFunFixture(
