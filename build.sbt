@@ -57,11 +57,23 @@ lazy val testkit = projectMatrix
   .jsPlatform(Seq(Scala213))
   .dependsOn(`kinesis-mock`)
 
+lazy val `testkit-js` = testkit
+  .js(Scala213)
+  .settings(scalaJSLinkerConfig ~= {
+    _.withModuleKind(ModuleKind.CommonJSModule)
+  })
+
 lazy val `unit-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin)
   .jvmPlatform(Seq(Scala213))
   .jsPlatform(Seq(Scala213))
   .dependsOn(testkit % Test)
+
+lazy val `unit-tests-js` = `unit-tests`
+  .js(Scala213)
+  .settings(scalaJSLinkerConfig ~= {
+    _.withModuleKind(ModuleKind.CommonJSModule)
+  })
 
 lazy val `integration-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin)
