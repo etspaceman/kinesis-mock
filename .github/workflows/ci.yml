@@ -75,7 +75,7 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' unit-tests/test
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -85,7 +85,7 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
@@ -96,7 +96,7 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
       - name: Check scalafix lints

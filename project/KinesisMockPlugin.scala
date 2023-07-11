@@ -114,7 +114,7 @@ object KinesisMockPlugin extends AutoPlugin {
         WorkflowStep.Use(
           UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Docker Compose Up"),
-          cond = Some(primaryJavaOSCond.value),
+          cond = Some(onlyScalaJsCond.value),
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
@@ -128,7 +128,7 @@ object KinesisMockPlugin extends AutoPlugin {
             "integration-tests/test"
           ),
           name = Some("Integration Tests"),
-          cond = Some(primaryJavaOSCond.value),
+          cond = Some(onlyScalaJsCond.value),
           env = Map(
             "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
             "SERVICE_PORT" -> "${{ matrix.service_port }}"
@@ -147,7 +147,7 @@ object KinesisMockPlugin extends AutoPlugin {
             "dockerComposeDown"
           ),
           name = Some("Remove docker containers"),
-          cond = Some(primaryJavaOSCond.value)
+          cond = Some(onlyScalaJsCond.value)
         )
       )
 
