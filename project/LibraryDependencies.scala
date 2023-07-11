@@ -8,6 +8,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
   )
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.8"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -84,7 +85,7 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.8-201e7db-SNAPSHOT"
+    val fs2Version = "3.8-d15242a-SNAPSHOT"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
