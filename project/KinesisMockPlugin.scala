@@ -129,10 +129,10 @@ object KinesisMockPlugin extends AutoPlugin {
           ),
           name = Some("Integration Tests"),
           cond = Some(primaryJavaOSCond.value),
-              env = Map(
-                "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
-                "SERVICE_PORT" -> "${{ matrix.service_port }}"
-              )
+          env = Map(
+            "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
+            "SERVICE_PORT" -> "${{ matrix.service_port }}"
+          )
         ),
         WorkflowStep.Sbt(
           List(
