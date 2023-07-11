@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.13.11]
-        java: [temurin@8]
+        java: [temurin@17]
         cbor_enabled: [true, false]
         service_port: [4567, 4568]
         project: [root-jvm-213, root-js-213]
@@ -35,21 +35,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Java (temurin@8)
-        id: download-java-temurin-8
-        if: matrix.java == 'temurin@8'
+      - name: Download Java (temurin@17)
+        id: download-java-temurin-17
+        if: matrix.java == 'temurin@17'
         uses: typelevel/download-java@v2
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
 
-      - name: Setup Java (temurin@8)
-        if: matrix.java == 'temurin@8'
+      - name: Setup Java (temurin@17)
+        if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v3
         with:
           distribution: jdkfile
-          java-version: 8
-          jdkFile: ${{ steps.download-java-temurin-8.outputs.jdkFile }}
+          java-version: 17
+          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
 
       - name: Cache sbt
         uses: actions/cache@v3
@@ -67,15 +67,15 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Link JS
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         run: sbt '++ ${{ matrix.scala }}' Test/fastLinkJS
 
       - name: Unit Tests
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' unit-tests/test
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -85,7 +85,7 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' integration-tests/test
 
       - name: Print docker logs and container listing
@@ -93,9 +93,9 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' dockerComposeDown
 
       - name: Check scalafix lints
-        if: matrix.java == 'temurin@8' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' fixCheck

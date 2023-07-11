@@ -44,7 +44,6 @@ object KinesisMockPlugin extends AutoPlugin {
   override def buildSettings: Seq[Setting[_]] = Seq(
     tlBaseVersion := "0.3",
     tlCiScalafixCheck := true,
-    tlJdkRelease := Some(17),
     tlCiMimaBinaryIssueCheck := false,
     tlCiDocCheck := false,
     organization := "io.github.etspaceman",
@@ -55,6 +54,7 @@ object KinesisMockPlugin extends AutoPlugin {
     crossScalaVersions := Seq(Scala213),
     scalaVersion := Scala213,
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
       "cbor_enabled" -> List("true", "false"),
@@ -194,7 +194,8 @@ object KinesisMockPlugin extends AutoPlugin {
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
-    )
+    ),
+    tlJdkRelease := Some(17)
   ) ++ Seq(
     addCommandAlias("cpl", ";Test / compile"),
     addCommandAlias(
