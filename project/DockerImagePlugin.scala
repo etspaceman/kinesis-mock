@@ -66,7 +66,7 @@ object DockerImagePluginKeys {
   val serviceFileLocation = settingKey[String](
     "Location where the application file exists, e.g. docker/image/lib/"
   )
-    val serviceFileName= settingKey[String](
+  val serviceFileName = settingKey[String](
     "Name of the application file, e.g. main.js"
   )
   val dockerfileLocation =

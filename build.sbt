@@ -40,8 +40,12 @@ lazy val `kinesis-mock-js` =
   `kinesis-mock`
     .js(Scala213)
     .settings(
-      Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file("docker/image/lib"),
-      Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file("docker/image/lib"),
+      Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
+        "docker/image/lib"
+      ),
+      Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file(
+        "docker/image/lib"
+      ),
       scalaJSUseMainModuleInitializer := true,
       scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
     )
