@@ -99,8 +99,18 @@ object KinesisMockPlugin extends AutoPlugin {
 
       val test = List(
         WorkflowStep.Sbt(
-          List("Test/fastLinkJS"),
+          List("cpl"),
+          name = Some("Compile"),
+          cond = Some(primaryJavaOSCond.value)
+        ),
+        WorkflowStep.Sbt(
+          List("fastLinkJS"),
           name = Some("Link JS"),
+          cond = Some(onlyScalaJsCond.value)
+        ),
+        WorkflowStep.Sbt(
+          List("Test/fastLinkJS"),
+          name = Some("Link Test JS"),
           cond = Some(onlyScalaJsCond.value)
         ),
         WorkflowStep.Sbt(

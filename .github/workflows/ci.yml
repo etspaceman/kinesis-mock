@@ -66,7 +66,15 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
+      - name: Compile
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt 'project ${{ matrix.project }}' cpl
+
       - name: Link JS
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        run: sbt 'project ${{ matrix.project }}' fastLinkJS
+
+      - name: Link Test JS
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
