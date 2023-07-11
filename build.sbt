@@ -22,6 +22,7 @@ lazy val `kinesis-mock` = projectMatrix
       Log4Cats.core.value,
       Ciris.core.value,
       FS2.core.value,
+      FS2.io.value,
       ScodecBits.value
     ),
     assembly / test := {},
