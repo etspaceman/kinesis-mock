@@ -11,6 +11,7 @@ import fs2.io.net.tls.TLSContext
 import fs2.text
 
 object TLS {
+  @SuppressWarnings(Array("scalafix:DisableSyntax.asInstanceOf"))
   def context(serviceConfig: KinesisMockServiceConfig): IO[TLSContext[IO]] =
     Files[IO]
       .readAll(Path(serviceConfig.certPath))
