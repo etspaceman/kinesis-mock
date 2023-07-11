@@ -18,8 +18,8 @@ object AES {
       ByteVector(iteratorPwdIv).toUint8Array
     )
 
-    ByteVector.fromUint8Array(cipher.update(str, "utf-8")).toArray ++
-      ByteVector.fromUint8Array(cipher.`final`()).toArray
+    (ByteVector.fromUint8Array(cipher.update(str, "utf-8")) ++
+      ByteVector.fromUint8Array(cipher.`final`())).toArray
   }
 
   def decrypt(
@@ -33,10 +33,9 @@ object AES {
       ByteVector(iteratorPwdIv).toUint8Array
     )
 
-    ByteVector
-      .fromUint8Array(cipher.update(ByteVector(bytes).toUint8Array))
-      .toArray ++
-      ByteVector.fromUint8Array(cipher.`final`()).toArray
+    (ByteVector
+      .fromUint8Array(cipher.update(ByteVector(bytes).toUint8Array)) ++
+      ByteVector.fromUint8Array(cipher.`final`())).toArray
   }
 
   @js.native
