@@ -1,4 +1,5 @@
 import LibraryDependencies._
+import org.scalajs.linker.interface.ESVersion
 
 lazy val `kinesis-mock` = projectMatrix
   .enablePlugins(DockerImagePlugin, NoPublishPlugin)
@@ -30,6 +31,9 @@ lazy val `kinesis-mock` = projectMatrix
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
       case x => MergeStrategy.defaultMergeStrategy(x)
     },
+    assembly / assemblyOutputPath := file(
+      s"docker/image/lib/${name.value}.jar"
+    ),
     Compile / mainClass := Some("kinesis.mock.KinesisMockService")
   )
   .settings(DockerImagePlugin.settings)
@@ -47,7 +51,10 @@ lazy val `kinesis-mock-js` =
         "docker/image/lib"
       ),
       scalaJSUseMainModuleInitializer := true,
-      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
+      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+      scalaJSLinkerConfig ~= {
+        _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+      }
     )
 
 lazy val testkit = projectMatrix
@@ -59,9 +66,12 @@ lazy val testkit = projectMatrix
 
 lazy val `testkit-js` = testkit
   .js(Scala213)
-  .settings(scalaJSLinkerConfig ~= {
-    _.withModuleKind(ModuleKind.CommonJSModule)
-  })
+  .settings(
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    scalaJSLinkerConfig ~= {
+      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+    }
+  )
 
 lazy val `unit-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin)
@@ -71,9 +81,12 @@ lazy val `unit-tests` = projectMatrix
 
 lazy val `unit-tests-js` = `unit-tests`
   .js(Scala213)
-  .settings(scalaJSLinkerConfig ~= {
-    _.withModuleKind(ModuleKind.CommonJSModule)
-  })
+  .settings(
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    scalaJSLinkerConfig ~= {
+      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+    }
+  )
 
 lazy val `integration-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin)

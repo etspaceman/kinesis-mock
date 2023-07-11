@@ -24,6 +24,8 @@ import cats.implicits._
 import com.comcast.ip4s.Host
 import io.circe.syntax._
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.middleware.ErrorAction
+import org.http4s.server.middleware.ErrorHandling
 import org.http4s.server.middleware.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import retry.RetryPolicies.constantDelay
@@ -60,8 +62,22 @@ object KinesisMockService extends IOApp {
       )
       serviceConfig <- KinesisMockServiceConfig.read.load[IO]
       tlsContext <- TLS.context(serviceConfig)
-      app = Logger.httpApp(true, true, _ => false)(
-        new KinesisMockRoutes(cache, logLevel).routes.orNotFound
+      app = ErrorHandling.Recover.total(
+        ErrorAction.log(
+          Logger.httpApp(
+            true,
+            true,
+            _ => false,
+            logAction =
+              Some((msg: String) => logger.trace(context.context)(msg))
+          )(
+            new KinesisMockRoutes(cache, logLevel).routes.orNotFound
+          ),
+          messageFailureLogAction =
+            (t, msg) => logger.error(context.context, t)(msg),
+          serviceErrorLogAction =
+            (t, msg) => logger.error(context.context, t)(msg)
+        )
       )
       host <- IO.fromOption(Host.fromString("0.0.0.0"))(
         new RuntimeException("Invalid hostname")
