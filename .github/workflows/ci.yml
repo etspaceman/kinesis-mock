@@ -68,11 +68,11 @@ jobs:
 
       - name: Link JS
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
-        run: sbt '++ ${{ matrix.scala }}' Test/fastLinkJS
+        run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
       - name: Unit Tests
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' unit-tests/test
+        run: sbt 'project ${{ matrix.project }}' unit-tests/test
 
       - name: Docker Compose Up
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
@@ -86,16 +86,19 @@ jobs:
 
       - name: Integration Tests
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' integration-tests/test
+        env:
+          CBOR_ENABLED: ${{ matrix.cbor_enabled }}
+          SERVICE_PORT: ${{ matrix.service_port }}
+        run: sbt 'project ${{ matrix.project }}' integration-tests/test
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}
-        run: sbt '++ ${{ matrix.scala }}' dockerComposePs dockerComposeLogs
+        run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' dockerComposeDown
+        run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
       - name: Check scalafix lints
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' fixCheck
+        run: sbt 'project ${{ matrix.project }}' fixCheck

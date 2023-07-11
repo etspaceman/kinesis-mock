@@ -60,6 +60,9 @@ object KinesisMockPlugin extends AutoPlugin {
       "cbor_enabled" -> List("true", "false"),
       "service_port" -> List("4567", "4568")
     ),
+    githubWorkflowBuildSbtStepPreamble := Seq(
+      s"project $${{ matrix.project }}"
+    ),
     githubWorkflowBuild := {
       val style = (tlCiHeaderCheck.value, tlCiScalafmtCheck.value) match {
         case (true, true) => // headers + formatting
@@ -125,7 +128,11 @@ object KinesisMockPlugin extends AutoPlugin {
             "integration-tests/test"
           ),
           name = Some("Integration Tests"),
-          cond = Some(primaryJavaOSCond.value)
+          cond = Some(primaryJavaOSCond.value),
+              env = Map(
+                "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
+                "SERVICE_PORT" -> "${{ matrix.service_port }}"
+              )
         ),
         WorkflowStep.Sbt(
           List(
