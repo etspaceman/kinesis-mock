@@ -165,9 +165,13 @@ jobs:
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
-      - name: Push Docker Image
+      - name: Login to registry
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+      - name: Push to registry
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: 'docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}'
 
   publishJS:
     name: Publish JS Files

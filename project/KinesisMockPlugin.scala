@@ -219,9 +219,18 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Sbt(
-              List("kinesis-mockJS/pushDockerImage"),
-              name = Some("Push Docker Image"),
+            WorkflowStep.Run(
+              List(
+                "echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin"
+              ),
+              name = Some("Login to registry"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Run(
+              List(
+                "docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}"
+              ),
+              name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
           ),
