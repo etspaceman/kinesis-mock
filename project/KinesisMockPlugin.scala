@@ -329,8 +329,7 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         scalas = Nil,
-        javas = githubWorkflowJavaVersions.value.toList,
-        cond = Some(primaryJavaOSCond.value)
+        javas = githubWorkflowJavaVersions.value.toList
       )
     ) ++ tlCiStewardValidateConfig.value.toList
       .map { config =>

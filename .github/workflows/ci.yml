@@ -245,7 +245,6 @@ jobs:
 
   publishNPM:
     name: Publish To NPM
-    if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
     strategy:
       matrix:
         os: [ubuntu-latest]
