@@ -61,6 +61,7 @@ lazy val `kinesis-mock-js` =
       npmPackageDescription := description.value,
       npmPackageBinaryEnable := true,
       npmPackageStage := Stage.FullOpt,
+      npmPackageNpmrcScope := Some("etspaceman"),
       npmPackageKeywords := Seq(
         "kinesis mock",
         "kinesis-mock",
