@@ -152,7 +152,7 @@ object KinesisMockPlugin extends AutoPlugin {
         WorkflowStep.Use(
           UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Integration Tests"),
-          cond = Some(primaryJavaOSCond.value),
+          cond = Some(onlyScalaJsCond.value),
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
