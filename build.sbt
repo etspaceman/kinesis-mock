@@ -57,7 +57,8 @@ lazy val `kinesis-mock-js` =
         _.withESFeatures(_.withESVersion(ESVersion.ES2018))
       },
       npmPackageAuthor := "Eric Meisel",
-      npmPackageDescription := description.value
+      npmPackageDescription := description.value,
+      npmPackageBinaryEnable := true
     )
 
 lazy val testkit = projectMatrix
