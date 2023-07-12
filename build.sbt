@@ -60,7 +60,15 @@ lazy val `kinesis-mock-js` =
       npmPackageAuthor := "Eric Meisel",
       npmPackageDescription := description.value,
       npmPackageBinaryEnable := true,
-      npmPackageStage := Stage.FullOpt
+      npmPackageStage := Stage.FullOpt,
+      npmPackageKeywords := Seq(
+        "kinesis mock",
+        "kinesis-mock",
+        "kinesis",
+        "aws kinesis",
+        "aws kinesis mock",
+        "aws-kinesis-mock"
+      )
     )
 
 lazy val testkit = projectMatrix

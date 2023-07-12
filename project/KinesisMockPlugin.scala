@@ -149,15 +149,15 @@ object KinesisMockPlugin extends AutoPlugin {
             "on_retry_command" -> "sbt 'project ${{ matrix.project }}' dockerComposeDown"
           )
         ),
-        WorkflowStep.Sbt(
-          List(
-            "integration-tests/test"
-          ),
+        WorkflowStep.Use(
+          UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Integration Tests"),
-          cond = Some(onlyScalaJsCond.value),
-          env = Map(
-            "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
-            "SERVICE_PORT" -> "${{ matrix.service_port }}"
+          cond = Some(primaryJavaOSCond.value),
+          params = Map(
+            "timeout_minutes" -> "15",
+            "max_attempts" -> "3",
+            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests/test",
+            "retry_on" -> "error"
           )
         ),
         WorkflowStep.Sbt(

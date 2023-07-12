@@ -98,11 +98,13 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
-        env:
-          CBOR_ENABLED: ${{ matrix.cbor_enabled }}
-          SERVICE_PORT: ${{ matrix.service_port }}
-        run: sbt 'project ${{ matrix.project }}' integration-tests/test
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: sbt 'project ${{ matrix.project }}' integration-tests/test
+          retry_on: error
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}
