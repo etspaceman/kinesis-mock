@@ -123,12 +123,16 @@ object KinesisMockPlugin extends AutoPlugin {
           name = Some("Link Test JS"),
           cond = Some(onlyScalaJsCond.value)
         ),
-        WorkflowStep.Sbt(
-          List(
-            "unit-tests/test"
-          ),
+        WorkflowStep.Use(
+          UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Unit Tests"),
-          cond = Some(primaryJavaOSCond.value)
+          cond = Some(primaryJavaOSCond.value),
+          params = Map(
+            "timeout_minutes" -> "15",
+            "max_attempts" -> "3",
+            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests/test",
+            "retry_on" -> "error"
+          )
         )
       )
 

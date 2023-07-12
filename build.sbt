@@ -1,3 +1,4 @@
+import org.scalajs.sbtplugin.Stage
 import LibraryDependencies._
 import org.scalajs.linker.interface.ESVersion
 
@@ -58,7 +59,8 @@ lazy val `kinesis-mock-js` =
       },
       npmPackageAuthor := "Eric Meisel",
       npmPackageDescription := description.value,
-      npmPackageBinaryEnable := true
+      npmPackageBinaryEnable := true,
+      npmPackageStage := Stage.FullOpt
     )
 
 lazy val testkit = projectMatrix
