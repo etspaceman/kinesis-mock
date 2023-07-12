@@ -1,6 +1,6 @@
-import org.scalajs.sbtplugin.Stage
 import LibraryDependencies._
 import org.scalajs.linker.interface.ESVersion
+import org.scalajs.sbtplugin.Stage
 
 lazy val `kinesis-mock` = projectMatrix
   .enablePlugins(DockerImagePlugin, NoPublishPlugin)
