@@ -13,7 +13,7 @@ addSbtPlugin("org.portable-scala" % "sbt-crossproject" % "1.3.1")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.13.2")
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
-
+addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.1.2")
 // Explicitly bumping until sbt-typelevel upgrades.
 // Older versions exit sbt on compilation failures.
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.7")

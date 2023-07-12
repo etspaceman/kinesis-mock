@@ -43,6 +43,7 @@ lazy val `kinesis-mock` = projectMatrix
 lazy val `kinesis-mock-js` =
   `kinesis-mock`
     .js(Scala213)
+    .enablePlugins(NpmPackagePlugin)
     .settings(
       Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
         "docker/image/lib"
@@ -54,7 +55,9 @@ lazy val `kinesis-mock-js` =
       scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
       scalaJSLinkerConfig ~= {
         _.withESFeatures(_.withESVersion(ESVersion.ES2018))
-      }
+      },
+      npmPackageAuthor := "Eric Meisel",
+      npmPackageDescription := description.value
     )
 
 lazy val testkit = projectMatrix

@@ -173,8 +173,8 @@ jobs:
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: 'docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}'
 
-  publishJS:
-    name: Publish JS Files
+  publishJSAssets:
+    name: Publish JS Assets
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
@@ -242,3 +242,71 @@ jobs:
           asset_path: ./docker/image/lib/main.js.map
           asset_name: main.js.map
           asset_content_type: application/json
+
+  publishNPM:
+    name: Publish To NPM
+    if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        java: [temurin@17]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Download Java (temurin@17)
+        id: download-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: typelevel/download-java@v2
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Java (temurin@17)
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v3
+        with:
+          distribution: jdkfile
+          java-version: 17
+          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
+
+      - name: Cache sbt
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+            ~/AppData/Local/Coursier/Cache/v1
+            ~/Library/Caches/Coursier/v1
+          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Compile
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' cpl
+
+      - name: Link JS
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' fullLinkJS
+
+      - name: Setup Node
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        env:
+          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install artifacts to NPM
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' npmPackageInstall
+
+      - name: Publish artifacts to NPM
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: sbt '++ ${{ matrix.scala }}' npmPackageNpmrc npmPackagePublish

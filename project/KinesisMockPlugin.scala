@@ -22,6 +22,7 @@ object KinesisMockPlugin extends AutoPlugin {
   import TypelevelCiPlugin.autoImport._
   import TypelevelSettingsPlugin.autoImport._
   import TypelevelVersioningPlugin.autoImport._
+  import _root_.io.chrisdavenport.npmpackage.sbtplugin.NpmPackagePlugin.autoImport._
   import autoImport._
   import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
   import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
@@ -39,6 +40,15 @@ object KinesisMockPlugin extends AutoPlugin {
 
   private val onlyFailures = Def.setting {
     "${{ failure() }}"
+  }
+
+  private val onlyReleases = Def.setting {
+    val publicationCond =
+      Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+        .map(compileBranchPredicate("github.ref", _))
+        .mkString("(", " || ", ")")
+
+    s"github.event_name != 'pull_request' && $publicationCond"
   }
 
   override def buildSettings: Seq[Setting[_]] = Seq(
@@ -236,18 +246,11 @@ object KinesisMockPlugin extends AutoPlugin {
           ),
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
-        cond = {
-          val publicationCond =
-            Seq(RefPredicate.StartsWith(Ref.Tag("v")))
-              .map(compileBranchPredicate("github.ref", _))
-              .mkString("(", " || ", ")")
-
-          Some(s"github.event_name != 'pull_request' && $publicationCond")
-        }
+        cond = Some(onlyReleases.value)
       ),
       WorkflowJob(
-        "publishJS",
-        "Publish JS Files",
+        "publishJSAssets",
+        "Publish JS Assets",
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
@@ -285,14 +288,49 @@ object KinesisMockPlugin extends AutoPlugin {
           ),
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
-        cond = {
-          val publicationCond =
-            Seq(RefPredicate.StartsWith(Ref.Tag("v")))
-              .map(compileBranchPredicate("github.ref", _))
-              .mkString("(", " || ", ")")
-
-          Some(s"github.event_name != 'pull_request' && $publicationCond")
-        }
+        cond = Some(onlyReleases.value)
+      ),
+      WorkflowJob(
+        "publishNPM",
+        "Publish To NPM",
+        githubWorkflowJobSetup.value.toList ++
+          List(
+            WorkflowStep.Sbt(
+              List("cpl"),
+              name = Some("Compile"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("fullLinkJS"),
+              name = Some("Link JS"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("actions", "setup-node", "v3"),
+              name = Some("Setup Node"),
+              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
+              params = Map(
+                "node-version" -> "18"
+              ),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("npmPackageInstall"),
+              name = Some("Install artifacts to NPM"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("npmPackageNpmrc", "npmPackagePublish"),
+              name = Some("Publish artifacts to NPM"),
+              cond = Some(onlyReleases.value),
+              env = Map(
+                "NPM_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
+              )
+            )
+          ),
+        scalas = Nil,
+        javas = githubWorkflowJavaVersions.value.toList,
+        cond = Some(primaryJavaOSCond.value)
       )
     ) ++ tlCiStewardValidateConfig.value.toList
       .map { config =>
