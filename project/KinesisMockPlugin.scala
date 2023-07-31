@@ -243,7 +243,7 @@ object KinesisMockPlugin extends AutoPlugin {
             ),
             WorkflowStep.Run(
               List(
-                "docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}"
+                "docker push ghcr.io/etspaceman/kinesis-mock:${{ github.ref_name }}"
               ),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
@@ -251,7 +251,8 @@ object KinesisMockPlugin extends AutoPlugin {
           ),
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
-        cond = Some(onlyReleases.value)
+        cond = Some(onlyReleases.value),
+        needs = List("build")
       ),
       WorkflowJob(
         "publishJSAssets",
@@ -293,7 +294,8 @@ object KinesisMockPlugin extends AutoPlugin {
           ),
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
-        cond = Some(onlyReleases.value)
+        cond = Some(onlyReleases.value),
+        needs = List("build")
       ),
       WorkflowJob(
         "publishNPM",
@@ -334,9 +336,11 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         scalas = Nil,
-        javas = githubWorkflowJavaVersions.value.toList
+        javas = githubWorkflowJavaVersions.value.toList,
+        needs = List("build")
       )
-    ) ++ tlCiStewardValidateConfig.value.toList
+    ),
+    githubWorkflowAddedJobs ++= tlCiStewardValidateConfig.value.toList
       .map { config =>
         WorkflowJob(
           "validate-steward",

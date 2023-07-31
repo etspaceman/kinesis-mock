@@ -121,6 +121,7 @@ jobs:
 
   publishDocker:
     name: Publish Docker Image
+    needs: [build]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
@@ -179,10 +180,11 @@ jobs:
 
       - name: Push to registry
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: 'docker push ghcr.io/etspaceman/kinesis-mock:${{ github.event.release.tag_name }}'
+        run: 'docker push ghcr.io/etspaceman/kinesis-mock:${{ github.ref_name }}'
 
   publishJSAssets:
     name: Publish JS Assets
+    needs: [build]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
@@ -253,6 +255,7 @@ jobs:
 
   publishNPM:
     name: Publish To NPM
+    needs: [build]
     strategy:
       matrix:
         os: [ubuntu-latest]
