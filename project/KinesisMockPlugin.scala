@@ -270,11 +270,17 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Use(
+              UseRef.Public("bruceadams", "get-release", "v1"),
+              name = Some("Get upload url for release"),
+              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
+              id = Some("get_release")
+            ),
+            WorkflowStep.Use(
               UseRef.Public("actions", "upload-release-asset", "v1"),
               name = Some("Upload main.js"),
               env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               params = Map(
-                "upload_url" -> "${{ github.event.release.upload_url }}",
+                "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
                 "asset_path" -> "./docker/image/lib/main.js",
                 "asset_name" -> "main.js",
                 "asset_content_type" -> "text/javascript"
@@ -285,7 +291,7 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Upload main.js.map"),
               env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               params = Map(
-                "upload_url" -> "${{ github.event.release.upload_url }}",
+                "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
                 "asset_path" -> "./docker/image/lib/main.js.map",
                 "asset_name" -> "main.js.map",
                 "asset_content_type" -> "application/json"
@@ -331,7 +337,7 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Publish artifacts to NPM"),
               cond = Some(onlyReleases.value),
               env = Map(
-                "NPM_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
+                "NODE_AUTH_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
               )
             )
           ),
