@@ -1,121 +1,172 @@
 import LibraryDependencies._
+import org.scalajs.linker.interface.ESVersion
+import org.scalajs.sbtplugin.Stage
 
-val MUnitFramework = new TestFramework("munit.Framework")
-
-lazy val kinesisMock = project
-  .in(file("."))
-  .enablePlugins(DockerImagePlugin, DockerComposePlugin)
+lazy val `kinesis-mock` = projectMatrix
+  .enablePlugins(DockerImagePlugin, NoPublishPlugin)
   .settings(
-    name := "kinesis-mock",
-    organization := "io.github.etspaceman",
     description := "A Mock API for AWS Kinesis",
-    scalaVersion := "2.13.11",
     libraryDependencies ++= Seq(
-      Aws.utils,
-      Borer.circe,
-      Borer.core,
-      Cats.core,
-      Cats.effect,
-      CatsRetry,
-      Circe.core,
-      Circe.parser,
-      Circe.jackson,
-      PureConfig.core,
-      PureConfig.enumeratum,
-      Enumeratum.cats,
-      Enumeratum.core,
-      Enumeratum.circe,
-      Http4s.emberServer,
-      Http4s.circe,
-      Http4s.dsl,
-      JaxbApi,
-      Logback,
-      Log4Cats.slf4j,
-      GraalSvm % "compile-internal",
-      OsLib,
-      PureConfig.catsEffect,
-      PureConfig.core,
-      PureConfig.enumeratum,
-      UUIDCreator,
-      Enumeratum.scalacheck % Test,
-      Munit.core % Test,
-      Munit.catsEffect2 % Test,
-      Munit.scalacheck % Test,
-      Munit.scalacheckEffect % Test,
-      Refined.scalacheck % Test,
-      ScalacheckGenRegexp % Test,
-      Aws.kinesis % FunctionalTest,
-      Aws.kpl % FunctionalTest,
-      Aws.kcl % FunctionalTest
+      Borer.circe.value,
+      Borer.core.value,
+      Cats.core.value,
+      Cats.effect.value,
+      Circe.core.value,
+      Circe.parser.value,
+      Circe.fs2.value,
+      Ciris.core.value,
+      Enumeratum.cats.value,
+      Enumeratum.core.value,
+      Enumeratum.circe.value,
+      Http4s.emberServer.value,
+      Http4s.circe.value,
+      Http4s.dsl.value,
+      Log4Cats.core.value,
+      Ciris.core.value,
+      FS2.core.value,
+      FS2.io.value,
+      ScodecBits.value
     ),
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision,
-    ThisBuild / scalafixDependencies += OrganizeImports,
-    javacOptions += "-XDignore.symbol.file",
-    scalacOptions ++= ScalacSettings.settings,
-    Compile / console / scalacOptions ~= {
-      _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
-    },
-    addCompilerPlugin(KindProjector cross CrossVersion.full),
-    addCompilerPlugin(BetterMonadicFor),
-    testFrameworks += MUnitFramework,
-    Test / testOptions ++= {
-      List(Tests.Argument(MUnitFramework, "+l"))
-    },
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
       case x => MergeStrategy.defaultMergeStrategy(x)
-    }
-  )
-  .configs(FunctionalTest)
-  .settings(
-    inConfig(FunctionalTest)(
-      ScalafmtPlugin.scalafmtConfigSettings ++
-        scalafixConfigSettings(FunctionalTest) ++
-        BloopSettings.default ++
-        DockerImagePlugin.settings ++
-        DockerComposePlugin.settings(FunctionalTest) ++
-        Defaults.testSettings ++
-        Seq(parallelExecution := false)
-    )
+    },
+    assembly / assemblyOutputPath := file(
+      s"docker/image/lib/${name.value}.jar"
+    ),
+    Compile / mainClass := Some("kinesis.mock.KinesisMockService")
   )
   .settings(DockerImagePlugin.settings)
-  .settings(DockerComposePlugin.settings(FunctionalTest))
-  .settings(
-    Seq(
-      addCommandAlias("cpl", ";Test / compile;Fun / compile"),
-      addCommandAlias(
-        "fixCheck",
-        ";Compile / scalafix --check;Test / scalafix --check;Fun / scalafix --check"
+  .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
+
+lazy val `kinesis-mock-js` =
+  `kinesis-mock`
+    .js(Scala213)
+    .enablePlugins(NpmPackagePlugin)
+    .settings(
+      Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
+        "docker/image/lib"
       ),
-      addCommandAlias(
-        "fix",
-        ";Compile / scalafix;Test / scalafix;Fun / scalafix"
+      Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file(
+        "docker/image/lib"
       ),
-      addCommandAlias(
-        "fmt",
-        ";Compile / scalafmt;Test / scalafmt;Fun / scalafmt;scalafmtSbt"
-      ),
-      addCommandAlias(
-        "fmtCheck",
-        ";Compile / scalafmtCheck;Test / scalafmtCheck;Fun / scalafmtCheck;scalafmtSbtCheck"
-      ),
-      addCommandAlias(
-        "pretty",
-        ";fix;fmt"
-      ),
-      addCommandAlias(
-        "prettyCheck",
-        ";fixCheck;fmtCheck"
-      ),
-      addCommandAlias(
-        "cov",
-        ";clean;test"
-      ),
-      addCommandAlias(
-        "validate",
-        ";Fun / dockerComposeTestQuick;prettyCheck"
+      scalaJSUseMainModuleInitializer := true,
+      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+      scalaJSLinkerConfig ~= {
+        _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+      },
+      npmPackageName := "@etspaceman/kinesis-mock",
+      npmPackageAuthor := "Eric Meisel",
+      npmPackageDescription := description.value,
+      npmPackageBinaryEnable := true,
+      npmPackageStage := Stage.FullOpt,
+      npmPackageNpmrcScope := Some("etspaceman"),
+      npmPackageKeywords := Seq(
+        "kinesis mock",
+        "kinesis-mock",
+        "kinesis",
+        "aws kinesis",
+        "aws kinesis mock",
+        "aws-kinesis-mock"
       )
-    ).flatten
+    )
+
+lazy val testkit = projectMatrix
+  .enablePlugins(NoPublishPlugin)
+  .settings(libraryDependencies ++= testDependencies.value)
+  .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
+  .dependsOn(`kinesis-mock`)
+
+lazy val `testkit-js` = testkit
+  .js(Scala213)
+  .settings(
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    scalaJSLinkerConfig ~= {
+      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+    }
   )
+
+lazy val `unit-tests` = projectMatrix
+  .enablePlugins(NoPublishPlugin)
+  .jvmPlatform(Seq(Scala213))
+  .jsPlatform(Seq(Scala213))
+  .dependsOn(testkit % Test)
+
+lazy val `unit-tests-js` = `unit-tests`
+  .js(Scala213)
+  .settings(
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    scalaJSLinkerConfig ~= {
+      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+    }
+  )
+
+lazy val `integration-tests` = projectMatrix
+  .enablePlugins(NoPublishPlugin)
+  .settings(
+    libraryDependencies ++= Seq(
+      Aws.kinesis % Test,
+      Aws.kpl % Test,
+      Aws.kcl % Test,
+      Log4Cats.slf4j % Test,
+      Logback % Test
+    ),
+    Test / parallelExecution := false
+  )
+  .jvmPlatform(Seq(Scala213))
+  .dependsOn(testkit % Test)
+
+lazy val allProjects = Seq(
+  `kinesis-mock`,
+  testkit,
+  `unit-tests`,
+  `integration-tests`
+)
+
+lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala213))
+
+def commonRootSettings: Seq[Setting[_]] =
+  DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(
+    name := "kinesis-mock-root",
+    ThisBuild / mergifyLabelPaths ++= allProjects.map { x =>
+      x.id -> x.base
+    }.toMap
+  )
+
+lazy val root = project
+  .in(file("."))
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(allProjects.flatMap(_.projectRefs): _*)
+
+lazy val `root-jvm-213` = project
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(
+    allProjects.flatMap(
+      _.filterProjects(
+        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+      ).map(_.project)
+    ): _*
+  )
+
+lazy val `root-js-213` = project
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonRootSettings)
+  .aggregate(
+    allProjects.flatMap(
+      _.filterProjects(
+        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+      ).map(_.project)
+    ): _*
+  )
+
+lazy val rootProjects = List(
+  `root-jvm-213`,
+  `root-js-213`
+).map(_.id)
+
+ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects
