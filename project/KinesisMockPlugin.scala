@@ -52,7 +52,7 @@ object KinesisMockPlugin extends AutoPlugin {
   }
 
   override def buildSettings: Seq[Setting[_]] = Seq(
-    tlBaseVersion := "0.3",
+    tlBaseVersion := "0.4",
     tlCiScalafixCheck := true,
     tlCiMimaBinaryIssueCheck := false,
     tlCiDocCheck := false,
@@ -66,6 +66,7 @@ object KinesisMockPlugin extends AutoPlugin {
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     tlCiStewardValidateConfig :=
       Some(file(".scala-steward.conf")).filter(_.exists()),
+    githubWorkflowTargetTags += "v*",
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
