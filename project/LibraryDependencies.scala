@@ -1,37 +1,38 @@
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
-  val OrganizeImports =
-    "com.github.liancheng" %% "organize-imports" % "0.6.0"
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.8"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val JaxbApi = "javax.xml.bind" % "jaxb-api" % "2.3.1"
-  val ScalacheckGenRegexp =
-    "io.github.wolfendale" %% "scalacheck-gen-regexp" % "1.1.0"
-  val UUIDCreator = "com.github.f4b6a3" % "uuid-creator" % "5.3.2"
-  val GraalSvm = "org.graalvm.nativeimage" % "svm" % "22.3.2"
-  val CatsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
-  val OsLib = "com.lihaoyi" %% "os-lib" % "0.9.1"
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.37")
+  val ScalaParserCombinators = Def.setting(
+    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
+  )
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.8"
 
   object Borer {
     val borerVersion = "1.8.0"
-    val core = "io.bullet" %% "borer-core" % borerVersion
-    val circe = "io.bullet" %% "borer-compat-circe" % borerVersion
+    val core = Def.setting("io.bullet" %%% "borer-core" % borerVersion)
+    val circe = Def.setting("io.bullet" %%% "borer-compat-circe" % borerVersion)
   }
 
   object Log4Cats {
     val log4CatsVersion = "2.6.0"
-    val slf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
+    val core =
+      Def.setting("org.typelevel" %%% "log4cats-core" % log4CatsVersion)
+    val slf4j =
+      "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   }
 
   object Munit {
-    val munitVersion = "0.7.29"
-    val core = "org.scalameta" %% "munit" % munitVersion
-    val scalacheck = "org.scalameta" %% "munit-scalacheck" % munitVersion
-    val catsEffect2 = "org.typelevel" %% "munit-cats-effect-3" % "1.0.7"
+    val munitVersion = "1.0.0-M8"
+    val core = Def.setting("org.scalameta" %%% "munit" % munitVersion)
+    val scalacheck =
+      Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
+    val catsEffect =
+      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.0.0-M3")
     val scalacheckEffect =
-      "org.typelevel" %% "scalacheck-effect-munit" % "1.0.4"
+      Def.setting("org.typelevel" %%% "scalacheck-effect-munit" % "2.0.0-M2")
   }
 
   object Aws {
@@ -45,40 +46,48 @@ object LibraryDependencies {
   object Cats {
     val catsVersion = "2.9.0"
     val catsEffectVersion = "3.4.11"
-    val core = "org.typelevel" %% "cats-core" % catsVersion
-    val effect = "org.typelevel" %% "cats-effect" % catsEffectVersion
+    val core = Def.setting("org.typelevel" %%% "cats-core" % catsVersion)
+    val effect =
+      Def.setting("org.typelevel" %%% "cats-effect" % catsEffectVersion)
   }
 
   object Http4s {
-    val http4sVersion = "0.23.22"
-    val circe = "org.http4s" %% "http4s-circe" % http4sVersion
-    val dsl = "org.http4s" %% "http4s-dsl" % http4sVersion
-    val emberServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
+    val http4sVersion = "0.23.23"
+    val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
+    val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
+    val emberServer =
+      Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
   }
 
   object Circe {
     val circeVersion = "0.14.5"
-    val core = "io.circe" %% "circe-core" % circeVersion
-    val parser = "io.circe" %% "circe-parser" % circeVersion
-    val jackson = "io.circe" %% "circe-jackson212" % "0.14.0"
+    val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
+    val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
+    val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
   }
 
-  object PureConfig {
-    private val pureConfigVersion = "0.17.4"
-    val core = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
-    val enumeratum =
-      "com.github.pureconfig" %% "pureconfig-enumeratum" % pureConfigVersion
-    val catsEffect =
-      "com.github.pureconfig" %% "pureconfig-cats-effect" % pureConfigVersion
+  object Ciris {
+    val cirisVersion = "3.2.0"
+    val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
   }
 
   object Enumeratum {
     val enumeratumVersion = "1.7.2"
-    val cats = "com.beachape" %% "enumeratum-cats" % enumeratumVersion
-    val core = "com.beachape" %% "enumeratum" % enumeratumVersion
-    val circe = "com.beachape" %% "enumeratum-circe" % enumeratumVersion
+    val cats =
+      Def.setting("com.beachape" %%% "enumeratum-cats" % enumeratumVersion)
+    val core = Def.setting("com.beachape" %%% "enumeratum" % enumeratumVersion)
+    val circe =
+      Def.setting("com.beachape" %%% "enumeratum-circe" % enumeratumVersion)
     val scalacheck =
-      "com.beachape" %% "enumeratum-scalacheck" % enumeratumVersion
+      Def.setting(
+        "com.beachape" %%% "enumeratum-scalacheck" % enumeratumVersion
+      )
+  }
+
+  object FS2 {
+    val fs2Version = "3.8.0"
+    val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
+    val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
 
   object Kinesis {
@@ -90,6 +99,7 @@ object LibraryDependencies {
 
   object Refined {
     val refinedVersion = "0.11.0"
-    val scalacheck = "eu.timepit" %% "refined-scalacheck" % refinedVersion
+    val scalacheck =
+      Def.setting("eu.timepit" %%% "refined-scalacheck" % refinedVersion)
   }
 }

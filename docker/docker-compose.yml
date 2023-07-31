@@ -22,7 +22,7 @@ services:
   kinesis-mock:
     image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
     environment:
-      - "LOG_LEVEL=TRACE"
+      - "LOG_LEVEL=DEBUG"
       # This must match 'initializedStreams' variable in AwsFunctionalTests
       - "INITIALIZE_STREAMS=stream1:3,stream2:2,stream3:1,stream4:2,stream5:3,stream6:5,stream7:5,stream8:3,stream9:1,stream10:3,stream11:2"
       - "SHOULD_PERSIST_DATA=true"
@@ -57,5 +57,5 @@ services:
         condition: service_completed_successfully
 networks:
   default:
-    external:
-      name: ${DOCKER_NET_NAME}
+    name: ${DOCKER_NET_NAME}
+    external: true
