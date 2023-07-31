@@ -1,0 +1,18 @@
+package kinesis.mock
+
+import cats.effect.unsafe.IORuntime
+import cats.effect.{Deferred, IO}
+import software.amazon.kinesis.coordinator.WorkerStateChangeListener
+import software.amazon.kinesis.coordinator.WorkerStateChangeListener.WorkerState
+
+final case class WorkerStartedListener(started: Deferred[IO, Unit])(implicit
+    R: IORuntime
+) extends WorkerStateChangeListener {
+  override def onWorkerStateChange(newState: WorkerState): Unit =
+    if (newState == WorkerState.STARTED) {
+
+      val _ = started.complete(()).unsafeRunSync()
+    }
+  override def onAllInitializationAttemptsFailed(e: Throwable): Unit =
+    throw e // scalafix:ok
+}
