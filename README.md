@@ -32,15 +32,8 @@ You can also leverage the following executable options in the release assets:
 
 | File | Description | Launching |
 | ---- | ----------- | --------- |
-| kinesis-mock.jar | Executable JAR file that can be run in any environment with JDK 11 | `java -jar ./kinesis-mock.jar` |
-| kinesis-mock-linux-amd64-dynamic | GraalVM Native Image executable for Linux. Loads dependencies like libc at runtime. Best for non-docker runtimes. | `./kinesis-mock-linux-amd64-dynamic` |
-| kinesis-mock-linux-amd64-static | GraalVM Native Image executable for Linux. All dependencies are statically provided. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
-| kinesis-mock-linux-amd64-mostly-static | GraalVM Native Image executable for Linux. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-linux-amd64-static` |
-| kinesis-mock-macos-amd64-dynamic | GraalVM Native Image executable for MacOS. Loads dependencies like libc at runtime. Best for non-docker runtimes.  | `./kinesis-mock-macos-amd64-dynamic` |
-| kinesis-mock-dynamic.exe | GraalVM Native Image executable for Windows. Loads dependencies like libc at runtime. Best for non-docker runtimes. | `./kinesis-mock-dynamic.exe` |
-| kinesis-mock-mostly-static.exe | GraalVM Native Image executable for Windows. Most dependencies are statically provided, except libc. Good for docker images. | `./kinesis-mock-mostly-static.exe` |
-
-See [the GraalVM documentation](https://www.graalvm.org/reference-manual/native-image/StaticImages/) for more information about static vs non-static Native Image distributions.
+| main.js | Executable NodeJS file that can be run in any NodeJS enabled environment | `node ./main.js` |
+| main.js.map | Source mappings for main.js | |
 
 # Service Configuration
 
@@ -93,7 +86,7 @@ The image exposes 2 ports for interactions:
 
 For an example docker-compose setup which uses this image, check out the [docker-compose.yml](docker/docker-compose.yml) file.
 
-There are examples configuring the KPL, KCL and AWS SDK to use this mock in the [functional tests](src/fun/scala/kinesis/mock).
+There are examples configuring the KPL, KCL and AWS SDK to use this mock in the [integration tests](integration-tests/src/test/scala/kinesis/mock).
 
 ## Configuring AWS SDK Kinesis Client
 
@@ -119,7 +112,7 @@ object MyApp {
 
   object AwsCreds {
     val LocalCreds: AwsCreds =
-      AwsCreds("mock-kinesis-access-key", "mock-kinesis-secret-key")
+      AwsCreds("mockKinesisAccessKey", "mockKinesisSecretKey")
   }
   
   // The kinesis-mock uses a self-signed certificate
@@ -165,7 +158,7 @@ object MyApp {
 
   object AwsCreds {
     val LocalCreds: AwsCreds =
-      AwsCreds("mock-kinesis-access-key", "mock-kinesis-secret-key")
+      AwsCreds("mockKinesisAccessKey", "mockKinesisSecretKey")
   }
   
   val kplProducer = new KinesisProducer(
@@ -217,7 +210,7 @@ object MyApp {
 
   object AwsCreds {
     val LocalCreds: AwsCreds =
-      AwsCreds("mock-kinesis-access-key", "mock-kinesis-secret-key")
+      AwsCreds("mockKinesisAccessKey", "mockKinesisSecretKey")
   }
   
   // The kinesis-mock uses a self-signed certificate

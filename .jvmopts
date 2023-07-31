@@ -1,0 +1,8 @@
+-Dfile.encoding=UTF8
+-Xms1G
+-Xmx6G
+-Xss4M
+-XX:ReservedCodeCacheSize=250M
+-XX:+TieredCompilation
+-XX:+UseG1GC
+-XX:+UseStringDeduplication

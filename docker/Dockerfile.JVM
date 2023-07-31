@@ -1,0 +1,8 @@
+FROM azul/zulu-openjdk-alpine:17
+
+ARG DOCKER_SERVICE_JAR
+COPY docker/image/lib/kinesis-mock.jar ./kinesis-mock.jar
+RUN apk --no-cache add curl
+
+EXPOSE 4567 4568
+CMD ["java", "-jar", "kinesis-mock.jar"]
