@@ -22,12 +22,27 @@ A mock for the [Kinesis](https://docs.aws.amazon.com/kinesis/latest/APIReference
 
 # Starting the service
 
+There are a few ways to start kinesis-mock.
+
+## Docker
+
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
 docker pull ghcr.io/etspaceman/kinesis-mock:0.4.1
 docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.4.1
 ```
+
+## NPM
+
+It is available on [NPM](https://www.npmjs.com/package/kinesis-local) as an executable service.
+
+```shell
+npm i kinesis-local
+npx kinesis-local
+```
+
+## Manual
 
 You can also leverage the following executable options in the release assets:
 
