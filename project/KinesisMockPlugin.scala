@@ -243,7 +243,15 @@ object KinesisMockPlugin extends AutoPlugin {
             ),
             WorkflowStep.Run(
               List(
-                "docker push ghcr.io/etspaceman/kinesis-mock:${{ github.ref_name }}"
+                "VERSION=${{ github.event.release.tag_name }}",
+                """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
+              ),
+              name = Some("Get version"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Run(
+              List(
+                "docker push ghcr.io/etspaceman/kinesis-mock:$VERSION"
               ),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
@@ -270,7 +278,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Use(
-              UseRef.Public("bruceadams", "get-release", "v1"),
+              UseRef.Public("bruceadams", "get-release", "v1.3.2"),
               name = Some("Get upload url for release"),
               env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               id = Some("get_release")
@@ -337,7 +345,7 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Publish artifacts to NPM"),
               cond = Some(onlyReleases.value),
               env = Map(
-                "NODE_AUTH_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
+                "NPM_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
               )
             )
           ),
