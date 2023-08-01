@@ -261,6 +261,14 @@ jobs:
           asset_name: main.js.map
           asset_content_type: application/json
 
+      - name: Upload server.json
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./kinesis-mock/src/main/resources/server.json
+          asset_name: server.json
+          asset_content_type: application/json
+
   publishNPM:
     name: Publish To NPM
     needs: [build]
