@@ -243,7 +243,15 @@ object KinesisMockPlugin extends AutoPlugin {
             ),
             WorkflowStep.Run(
               List(
-                "docker push ghcr.io/etspaceman/kinesis-mock:${{ github.ref_name }}"
+                "VERSION=${{ github.event.release.tag_name }}",
+                """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
+              ),
+              name = Some("Get version"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Run(
+              List(
+                "docker push ghcr.io/etspaceman/kinesis-mock:$VERSION"
               ),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)

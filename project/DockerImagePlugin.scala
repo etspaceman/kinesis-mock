@@ -45,10 +45,7 @@ object DockerImagePlugin extends AutoPlugin {
     Seq(
       buildDockerImage := buildDockerImageTask.value,
       pushDockerImage := pushDockerImageTask.value,
-      imageTag := {
-        val v = (ThisBuild / version).value
-        if (v.startsWith("v")) v.drop(1) else v
-      },
+      imageTag := (ThisBuild / version).value,
       dockerRepository := "ghcr.io",
       dockerNamespace := "etspaceman",
       serviceFileLocation := "docker/image/lib/",
