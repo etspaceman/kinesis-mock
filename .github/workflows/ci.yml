@@ -237,7 +237,7 @@ jobs:
         id: get_release
         env:
           GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
-        uses: bruceadams/get-release@v1
+        uses: bruceadams/get-release@v1.3.2
 
       - name: Upload main.js
         env:
@@ -324,5 +324,5 @@ jobs:
       - name: Publish artifacts to NPM
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: sbt '++ ${{ matrix.scala }}' npmPackageNpmrc npmPackagePublish
