@@ -35,6 +35,7 @@ You can also leverage the following executable options in the release assets:
 | ---- | ----------- | --------- |
 | main.js | Executable NodeJS file that can be run in any NodeJS enabled environment | `node ./main.js` |
 | main.js.map | Source mappings for main.js | |
+| server.json | self-signed certificate for TLS. | |
 
 # Service Configuration
 
@@ -46,6 +47,10 @@ these ports to a local one).
 | INITIALIZE_STREAMS | String | | A comma-delimited string of stream names, its optional corresponding shard count and an optional region to initialize during startup. If the shard count is not provided, the default shard count of 4 is used. If the region is not provided, the default region is used. For example: "my-first-stream:1,my-other-stream::us-west-2,my-last-stream:1" |
 | KINESIS_MOCK_TLS_PORT | Int | 4567 | Https Only                                                                                                                                                                                                                                                                                                                                              |
 | KINESIS_MOCK_PLAIN_PORT | Int | 4568 | Http Only                                                                                                                                                                                                                                                                                                                                               |
+| KINESIS_MOCK_KEYSTORE_PASSWORD | Int | <redacted> | Password for the JKS KeyStore (only for JVM, not JS)
+| KINESIS_MOCK_KEYMANAGER_PASSWORD | Int | <redacted> | Password for the JKS KeyManager (only for JVM, not JS)
+| KINESIS_MOCK_CERT_PASSWORD | Int | <redacted> | Password used for self-signed certificate (only for JS, not JVM)
+| KINESIS_MOCK_CERT_PATH | Int | server.json | Path to certificate file (only for JS, not JVM)
 | CREATE_STREAM_DURATION | Duration | 500ms |                                                                                                                                                                                                                                                                                                                                                         |
 | DELETE_STREAM_DURATION | Duration | 500ms |                                                                                                                                                                                                                                                                                                                                                         |
 | REGISTER_STREAM_CONSUMER_DURATION | Duration | 500ms |                                                                                                                                                                                                                                                                                                                                                         |

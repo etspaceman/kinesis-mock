@@ -302,6 +302,16 @@ object KinesisMockPlugin extends AutoPlugin {
                 "asset_name" -> "main.js.map",
                 "asset_content_type" -> "application/json"
               )
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("actions", "upload-release-asset", "v1"),
+              name = Some("Upload server.json"),
+              params = Map(
+                "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
+                "asset_path" -> "./kinesis-mock/src/main/resources/server.json",
+                "asset_name" -> "server.json",
+                "asset_content_type" -> "application/json"
+              )
             )
           ),
         scalas = Nil,
@@ -415,6 +425,13 @@ object KinesisMockPlugin extends AutoPlugin {
 }
 
 object KinesisMockPluginKeys {
+  def void(a: Any*): Unit = (a, ())._2
+
+  lazy val npmExtraFiles: SettingKey[Seq[File]] =
+    settingKey[Seq[File]]("Extra files to copy to the NPM install directory")
+  lazy val npmCopyExtraFiles =
+    taskKey[Unit]("Copy extra files to the NPM install directory")
+
   val Scala213 = "2.13.11"
 
   val testDependencies = Def.setting(
