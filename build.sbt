@@ -57,7 +57,7 @@ lazy val `kinesis-mock-js` =
       scalaJSLinkerConfig ~= {
         _.withESFeatures(_.withESVersion(ESVersion.ES2018))
       },
-      npmPackageName := "@etspaceman/kinesis-mock",
+      npmPackageName := "kinesis-mock",
       npmPackageAuthor := "Eric Meisel",
       npmPackageDescription := description.value,
       npmPackageLicense := Some("MIT"),
