@@ -44,7 +44,7 @@ object KinesisMockServiceConfig {
       "password"
     )
     certPath <- env("KINESIS_MOCK_CERT_PATH").default(
-      "kinesis-mock/src/main/resources/server.json"
+      "server.json"
     )
   } yield KinesisMockServiceConfig(
     tlsPort,

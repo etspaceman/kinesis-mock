@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
 import LibraryDependencies._
 import org.scalajs.linker.interface.ESVersion
 import org.scalajs.sbtplugin.Stage
@@ -73,7 +76,36 @@ lazy val `kinesis-mock-js` =
         "aws kinesis",
         "aws kinesis mock",
         "aws-kinesis-mock"
-      )
+      ),
+      npmExtraFiles := Seq(
+        file("LICENSE"),
+        file("kinesis-mock/src/main/resources/server.json")
+      ),
+      Compile / npmCopyExtraFiles := Def.task {
+        val targetDir = (Compile / npmPackageOutputDirectory).value
+        val log = streams.value.log
+
+        if (Files.exists(targetDir.toPath())) ()
+        else Files.createDirectories(targetDir.toPath())
+
+        npmExtraFiles.value.foreach { f =>
+          val targetPath = (targetDir / f.name).toPath
+
+          Files.copy(
+            f.toPath,
+            targetPath,
+            StandardCopyOption.REPLACE_EXISTING
+          )
+          log.info(s"Wrote $f to $targetPath")
+        }
+      }.value,
+      Compile / npmPackage := {
+        val b = (Compile / npmPackagePackageJson).value
+        val a = (Compile / npmPackageOutputJS).value
+        val c = (Compile / npmPackageWriteREADME).value
+        val d = (Compile / npmCopyExtraFiles).value
+        void(a, b, c, d)
+      }
     )
 
 lazy val testkit = projectMatrix
