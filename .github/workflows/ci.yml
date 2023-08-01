@@ -181,12 +181,14 @@ jobs:
       - name: Get version
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: |
-          VERSION=${{ github.event.release.tag_name }}
+          VERSION=${{ github.ref_name }}
           echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
 
       - name: Push to registry
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: 'docker push ghcr.io/etspaceman/kinesis-mock:$VERSION'
+        run: |
+          echo "${VERSION}"
+          docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}"
 
   publishJSAssets:
     name: Publish JS Assets
@@ -241,13 +243,9 @@ jobs:
 
       - name: Get upload url for release
         id: get_release
-        env:
-          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
         uses: bruceadams/get-release@v1.3.2
 
       - name: Upload main.js
-        env:
-          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
@@ -256,8 +254,6 @@ jobs:
           asset_content_type: text/javascript
 
       - name: Upload main.js.map
-        env:
-          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
@@ -317,8 +313,6 @@ jobs:
 
       - name: Setup Node
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        env:
-          GITHUB_TOKEN: '{{ secrets.GITHUB_TOKEN }}'
         uses: actions/setup-node@v3
         with:
           node-version: 18

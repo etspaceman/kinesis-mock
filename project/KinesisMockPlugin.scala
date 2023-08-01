@@ -243,7 +243,7 @@ object KinesisMockPlugin extends AutoPlugin {
             ),
             WorkflowStep.Run(
               List(
-                "VERSION=${{ github.event.release.tag_name }}",
+                "VERSION=${{ github.ref_name }}",
                 """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
               ),
               name = Some("Get version"),
@@ -251,7 +251,8 @@ object KinesisMockPlugin extends AutoPlugin {
             ),
             WorkflowStep.Run(
               List(
-                "docker push ghcr.io/etspaceman/kinesis-mock:$VERSION"
+                """echo "${VERSION}"""",
+                """docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}""""
               ),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
@@ -280,13 +281,11 @@ object KinesisMockPlugin extends AutoPlugin {
             WorkflowStep.Use(
               UseRef.Public("bruceadams", "get-release", "v1.3.2"),
               name = Some("Get upload url for release"),
-              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               id = Some("get_release")
             ),
             WorkflowStep.Use(
               UseRef.Public("actions", "upload-release-asset", "v1"),
               name = Some("Upload main.js"),
-              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               params = Map(
                 "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
                 "asset_path" -> "./docker/image/lib/main.js",
@@ -297,7 +296,6 @@ object KinesisMockPlugin extends AutoPlugin {
             WorkflowStep.Use(
               UseRef.Public("actions", "upload-release-asset", "v1"),
               name = Some("Upload main.js.map"),
-              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               params = Map(
                 "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
                 "asset_path" -> "./docker/image/lib/main.js.map",
@@ -329,7 +327,6 @@ object KinesisMockPlugin extends AutoPlugin {
             WorkflowStep.Use(
               UseRef.Public("actions", "setup-node", "v3"),
               name = Some("Setup Node"),
-              env = Map("GITHUB_TOKEN" -> "{{ secrets.GITHUB_TOKEN }}"),
               params = Map(
                 "node-version" -> "18"
               ),
