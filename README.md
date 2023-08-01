@@ -33,9 +33,9 @@ You can also leverage the following executable options in the release assets:
 
 | File | Description | Launching |
 | ---- | ----------- | --------- |
-| main.js | Executable NodeJS file that can be run in any NodeJS enabled environment | `node ./main.js` |
-| main.js.map | Source mappings for main.js | |
-| server.json | self-signed certificate for TLS. | |
+| `main.js` | Executable NodeJS file that can be run in any NodeJS enabled environment | `node ./main.js` |
+| `main.js.map` | Source mappings for main.js | |
+| `server.json` | self-signed certificate for TLS. Should be included in the same area as `main.js` | |
 
 # Service Configuration
 
