@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package kinesis.mock.instances
+package kinesis.mock
+package instances
 
 import scala.collection.SortedMap
 import scala.collection.immutable.Queue
@@ -25,7 +26,6 @@ import java.time.Instant
 import enumeratum.scalacheck._
 import org.scalacheck.{Arbitrary, Gen}
 
-import kinesis.mock.Utils
 import kinesis.mock.api._
 import kinesis.mock.models._
 import kinesis.mock.regexp.RegexpGen

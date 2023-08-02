@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package kinesis.mock.cache
+package kinesis.mock
+package cache
 
 import scala.concurrent.duration._
 
@@ -139,4 +140,13 @@ class PersistenceTests
         )
     }
   )
+
+  test("It should make a root path") {
+    val config = {
+      val orig = persistConfig(Utils.randomUUIDString)
+      orig.copy(path = s"/${orig.path}")
+    }
+
+    assertEquals(config.osPath.absolute.toString, config.path)
+  }
 }
