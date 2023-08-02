@@ -46,7 +46,7 @@ final case class PersistConfig(
     if (!path.startsWith("/")) {
       createPath(Path("."), path)
     } else {
-      createPath(Path("."), path.drop(1))
+      createPath(Path("/"), path.drop(1))
     }
   }
   def osFile = osPath / fileName
