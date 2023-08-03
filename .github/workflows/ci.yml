@@ -100,6 +100,9 @@ jobs:
 
       - name: Integration Tests
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        env:
+          CBOR_ENABLED: ${{ matrix.cbor_enabled }}
+          SERVICE_PORT: ${{ matrix.service_port }}
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
