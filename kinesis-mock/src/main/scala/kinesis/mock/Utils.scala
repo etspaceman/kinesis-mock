@@ -10,7 +10,5 @@ object Utils {
   def randomUUIDString = UUIDGen.randomString[SyncIO].unsafeRunSync()
   def md5(bytes: Array[Byte]): Array[Byte] = MD5.compute(bytes)
   def now =
-    SyncIO.monotonic
-      .map(d => Instant.EPOCH.plusNanos(d.toNanos))
-      .unsafeRunSync()
+    SyncIO.realTime.map(d => Instant.EPOCH.plusNanos(d.toNanos)).unsafeRunSync()
 }
