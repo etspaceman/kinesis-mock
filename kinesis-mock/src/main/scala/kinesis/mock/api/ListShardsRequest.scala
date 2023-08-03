@@ -42,68 +42,81 @@ final case class ListShardsRequest(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): IO[Response[ListShardsResponse]] = streamsRef.get.map { streams =>
-    (
-      exclusiveStartShardId,
-      nextToken,
-      shardFilter,
-      streamCreationTimestamp,
-      streamName,
-      streamArn
-    ) match {
-      case (None, Some(nt), None, None, None, None) =>
-        CommonValidations
-          .validateNextToken(nt)
-          .flatMap(ListShardsRequest.parseNextToken)
-          .flatMap { case (streamName, shardId) =>
-            val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
-            (
-              CommonValidations.validateStreamName(streamName),
-              CommonValidations.validateShardId(shardId),
-              CommonValidations.findStream(streamArn, streams),
-              maxResults match {
-                case Some(l) => CommonValidations.validateMaxResults(l)
-                case _       => Right(())
-              },
-              shardFilter match {
-                case Some(sf) => ListShardsRequest.validateShardFilter(sf)
-                case None     => Right(())
+  ): IO[Response[ListShardsResponse]] = Utils.now.flatMap { now =>
+    streamsRef.get.map { streams =>
+      (
+        exclusiveStartShardId,
+        nextToken,
+        shardFilter,
+        streamCreationTimestamp,
+        streamName,
+        streamArn
+      ) match {
+        case (None, Some(nt), None, None, None, None) =>
+          CommonValidations
+            .validateNextToken(nt)
+            .flatMap(ListShardsRequest.parseNextToken)
+            .flatMap { case (streamName, shardId) =>
+              val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
+              (
+                CommonValidations.validateStreamName(streamName),
+                CommonValidations.validateShardId(shardId),
+                CommonValidations.findStream(streamArn, streams),
+                maxResults match {
+                  case Some(l) => CommonValidations.validateMaxResults(l)
+                  case _       => Right(())
+                },
+                shardFilter match {
+                  case Some(sf) => ListShardsRequest.validateShardFilter(sf)
+                  case None     => Right(())
+                }
+              ).mapN { (_, _, stream, _, _) =>
+                val allShards = stream.shards.keys.toVector
+                val lastShardIndex = allShards.length - 1
+                val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
+                val firstIndex =
+                  allShards.indexWhere(_.shardId.shardId == shardId) + 1
+                val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
+                val shards = allShards.slice(firstIndex, lastIndex)
+                val nextToken =
+                  if (lastShardIndex + 1 == lastIndex) None
+                  else
+                    Some(
+                      ListShardsRequest
+                        .createNextToken(
+                          streamName,
+                          shards.last.shardId.shardId
+                        )
+                    )
+                ListShardsResponse(
+                  nextToken,
+                  shards.map(ShardSummary.fromShard)
+                )
               }
-            ).mapN { (_, _, stream, _, _) =>
-              val allShards = stream.shards.keys.toVector
-              val lastShardIndex = allShards.length - 1
-              val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
-              val firstIndex =
-                allShards.indexWhere(_.shardId.shardId == shardId) + 1
-              val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
-              val shards = allShards.slice(firstIndex, lastIndex)
-              val nextToken =
-                if (lastShardIndex + 1 == lastIndex) None
-                else
-                  Some(
-                    ListShardsRequest
-                      .createNextToken(streamName, shards.last.shardId.shardId)
-                  )
-              ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
             }
-          }
-      case (_, None, _, _, _, Some(sArn)) =>
-        getList(sArn, sArn.streamName, streams)
-      case (_, None, _, _, Some(sName), _) =>
-        val streamArn = StreamArn(awsRegion, sName, awsAccountId)
-        getList(streamArn, sName, streams)
-      case (_, None, _, _, None, None) =>
-        InvalidArgumentException(
-          "StreamName or StreamARN is required if NextToken is not provided"
-        ).asLeft
-      case _ =>
-        InvalidArgumentException(
-          "Cannot define ExclusiveStartShardId, StreamCreationTimestamp or StreamName if NextToken is defined"
-        ).asLeft
+        case (_, None, _, _, _, Some(sArn)) =>
+          getList(sArn, sArn.streamName, streams, now)
+        case (_, None, _, _, Some(sName), _) =>
+          val streamArn = StreamArn(awsRegion, sName, awsAccountId)
+          getList(streamArn, sName, streams, now)
+        case (_, None, _, _, None, None) =>
+          InvalidArgumentException(
+            "StreamName or StreamARN is required if NextToken is not provided"
+          ).asLeft
+        case _ =>
+          InvalidArgumentException(
+            "Cannot define ExclusiveStartShardId, StreamCreationTimestamp or StreamName if NextToken is defined"
+          ).asLeft
+      }
     }
   }
 
-  def getList(streamArn: StreamArn, sName: StreamName, streams: Streams) = CommonValidations
+  def getList(
+      streamArn: StreamArn,
+      sName: StreamName,
+      streams: Streams,
+      now: Instant
+  ) = CommonValidations
     .findStream(streamArn, streams)
     .flatMap(stream =>
       (
@@ -132,7 +145,6 @@ final case class ListShardsRequest(
                   )) =>
             allShards
           case Some(sf) if sf.`type` == ShardFilterType.FROM_TRIM_HORIZON =>
-            val now = Utils.now
             allShards.filter(x =>
               x.closedTimestamp.isEmpty || x.closedTimestamp.exists(x =>
                 x.plusSeconds(stream.retentionPeriod.toSeconds)

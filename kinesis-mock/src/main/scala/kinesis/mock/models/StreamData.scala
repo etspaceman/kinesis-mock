@@ -152,11 +152,11 @@ object StreamData {
   def create(
       shardCount: Int,
       streamArn: StreamArn,
-      streamModeDetails: Option[StreamModeDetails]
+      streamModeDetails: Option[StreamModeDetails],
+      now: Instant
   ): StreamData = {
-    val createTime = Utils.now
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
-      Shard.newShards(shardCount, createTime, 0)
+      Shard.newShards(shardCount, now, 0)
     StreamData(
       SortedMap.empty,
       EncryptionType.NONE,
@@ -165,7 +165,7 @@ object StreamData {
       minRetentionPeriod,
       shards,
       streamArn,
-      Utils.now,
+      now,
       streamModeDetails.getOrElse(StreamModeDetails(StreamMode.PROVISIONED)),
       streamArn.streamName,
       StreamStatus.CREATING,

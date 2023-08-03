@@ -34,26 +34,26 @@ class ListStreamsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val streamNames = Gen
-        .listOfN(10, Arbitrary.arbitrary[StreamName])
-        .suchThat(x =>
-          x.groupBy(_.streamName)
-            .collect { case (_, y) if y.length > 1 => y }
-            .isEmpty
-        )
-        .one
-        .sorted
-
-      val streams = streamNames.foldLeft(Streams.empty) {
-        case (streams, streamName) =>
-          streams.addStream(
-            1,
-            StreamArn(awsRegion, streamName, awsAccountId),
-            None
-          )
-      }
-
       for {
+        now <- Utils.now
+        streamNames = Gen
+          .listOfN(10, Arbitrary.arbitrary[StreamName])
+          .suchThat(x =>
+            x.groupBy(_.streamName)
+              .collect { case (_, y) if y.length > 1 => y }
+              .isEmpty
+          )
+          .one
+          .sorted
+        streams = streamNames.foldLeft(Streams.empty) {
+          case (streams, streamName) =>
+            streams.addStream(
+              1,
+              StreamArn(awsRegion, streamName, awsAccountId),
+              None,
+              now
+            )
+        }
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, None)
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
@@ -70,28 +70,27 @@ class ListStreamsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val streamNames = Gen
-        .listOfN(10, Arbitrary.arbitrary[StreamName])
-        .suchThat(x =>
-          x.groupBy(_.streamName)
-            .collect { case (_, y) if y.length > 1 => y }
-            .isEmpty
-        )
-        .one
-        .sorted
-
-      val streams = streamNames.foldLeft(Streams.empty) {
-        case (streams, streamName) =>
-          streams.addStream(
-            1,
-            StreamArn(awsRegion, streamName, awsAccountId),
-            None
-          )
-      }
-
-      val exclusiveStartStreamName = streamNames(3)
-
       for {
+        now <- Utils.now
+        streamNames = Gen
+          .listOfN(10, Arbitrary.arbitrary[StreamName])
+          .suchThat(x =>
+            x.groupBy(_.streamName)
+              .collect { case (_, y) if y.length > 1 => y }
+              .isEmpty
+          )
+          .one
+          .sorted
+        streams = streamNames.foldLeft(Streams.empty) {
+          case (streams, streamName) =>
+            streams.addStream(
+              1,
+              StreamArn(awsRegion, streamName, awsAccountId),
+              None,
+              now
+            )
+        }
+        exclusiveStartStreamName = streamNames(3)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
@@ -108,26 +107,26 @@ class ListStreamsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      val streamNames = Gen
-        .listOfN(10, Arbitrary.arbitrary[StreamName])
-        .suchThat(x =>
-          x.groupBy(_.streamName)
-            .collect { case (_, y) if y.length > 1 => y }
-            .isEmpty
-        )
-        .one
-        .sorted
-
-      val streams = streamNames.foldLeft(Streams.empty) {
-        case (streams, streamName) =>
-          streams.addStream(
-            1,
-            StreamArn(awsRegion, streamName, awsAccountId),
-            None
-          )
-      }
-
       for {
+        now <- Utils.now
+        streamNames = Gen
+          .listOfN(10, Arbitrary.arbitrary[StreamName])
+          .suchThat(x =>
+            x.groupBy(_.streamName)
+              .collect { case (_, y) if y.length > 1 => y }
+              .isEmpty
+          )
+          .one
+          .sorted
+        streams = streamNames.foldLeft(Streams.empty) {
+          case (streams, streamName) =>
+            streams.addStream(
+              1,
+              StreamArn(awsRegion, streamName, awsAccountId),
+              None,
+              now
+            )
+        }
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, Some(5))
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)

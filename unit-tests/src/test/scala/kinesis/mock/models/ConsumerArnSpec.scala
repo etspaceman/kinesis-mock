@@ -17,38 +17,46 @@
 package kinesis.mock.models
 
 import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary._
 
-class ConsumerArnSpec extends munit.ScalaCheckSuite {
-  property("It should convert to a proper ARN format")(forAll {
+class ConsumerArnSpec extends munit.ScalaCheckEffectSuite {
+  test("It should convert to a proper ARN format")(PropF.forAllF {
     (
         streamArn: StreamArn,
         consumerName: ConsumerName
     ) =>
-      val creationTime = Utils.now
-      val consumerArn = ConsumerArn(streamArn, consumerName, creationTime)
+      Utils.now.map { now =>
+        val consumerArn = ConsumerArn(streamArn, consumerName, now)
 
-      val expected =
-        s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
+        val expected =
+          s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${now.getEpochSecond}"
 
-      (consumerArn.consumerArn == expected) :| s"Calculated: ${consumerArn}\nExpected: ${expected}"
+        assert(
+          consumerArn.consumerArn == expected,
+          s"Calculated: ${consumerArn}\nExpected: ${expected}"
+        )
+      }
   })
 
-  property("It should be constructed by an ARN string")(forAll {
+  test("It should be constructed by an ARN string")(PropF.forAllF {
     (
         streamArn: StreamArn,
         consumerName: ConsumerName
     ) =>
-      val creationTime = Utils.now
-      val expected =
-        s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${creationTime.getEpochSecond}"
-      val consumerArn = ConsumerArn.fromArn(expected)
+      Utils.now.map { now =>
+        val expected =
+          s"arn:${streamArn.awsRegion.awsArnPiece}:kinesis:${streamArn.awsRegion.entryName}:${streamArn.awsAccountId}:stream/${streamArn.streamName}/consumer/$consumerName:${now.getEpochSecond}"
+        val consumerArn = ConsumerArn.fromArn(expected)
 
-      (consumerArn.exists(
-        _.consumerArn == expected
-      )) :| s"Calculated: ${consumerArn}\nExpected: ${expected}\n"
+        assert(
+          consumerArn.exists(
+            _.consumerArn == expected
+          ),
+          s"Calculated: ${consumerArn}\nExpected: ${expected}\n"
+        )
+      }
   })
 }

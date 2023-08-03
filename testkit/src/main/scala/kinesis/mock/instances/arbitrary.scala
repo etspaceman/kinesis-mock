@@ -69,7 +69,7 @@ object arbitrary {
       if (streamName.isEmpty) streamArnGen.map(Some(_)) else Gen.const(None)
   } yield (streamName, streamArn)
 
-  val nowGen: Gen[Instant] = Gen.delay(Gen.const(Utils.now))
+  val nowGen: Gen[Instant] = Gen.delay(Gen.const(Instant.now))
 
   implicit val sequenceNumberArbitrary: Arbitrary[SequenceNumber] = Arbitrary(
     Gen.option(Arbitrary.arbitrary[SequenceNumberConstant]).flatMap {
@@ -568,16 +568,18 @@ object arbitrary {
     streamName <- streamNameGen
     shardId <- shardIdArbitrary.arbitrary
     sequenceNumber <- sequenceNumberArbitrary.arbitrary
-  } yield ShardIterator.create(streamName, shardId.shardId, sequenceNumber)
+    now <- nowGen
+  } yield ShardIterator.create(streamName, shardId.shardId, sequenceNumber, now)
 
   implicit val getRecordsRequestArb: Arbitrary[GetRecordsRequest] = Arbitrary(
     for {
       limit <- Gen.option(limitGen)
       shardIterator <- shardIteratorGen
+      now <- nowGen
       streamArn <- Gen.option(
         streamArnGen.map(x =>
           x.copy(streamName =
-            shardIterator.parse.map(_.streamName).getOrElse(x.streamName)
+            shardIterator.parse(now).map(_.streamName).getOrElse(x.streamName)
           )
         )
       )

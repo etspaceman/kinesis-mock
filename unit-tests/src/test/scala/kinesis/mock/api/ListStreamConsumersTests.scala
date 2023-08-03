@@ -36,26 +36,23 @@ class ListStreamConsumersTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val consumers = SortedMap.from(
-        Gen
-          .listOfN(5, consumerArbitrary.arbitrary)
-          .suchThat(x =>
-            x.groupBy(_.consumerName)
-              .collect { case (_, y) if y.length > 1 => x }
-              .isEmpty
-          )
-          .one
-          .map(c => c.consumerName -> c)
-      )
-
-      val withConsumers = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(consumers = consumers)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        consumers = SortedMap.from(
+          Gen
+            .listOfN(5, consumerArbitrary.arbitrary)
+            .suchThat(x =>
+              x.groupBy(_.consumerName)
+                .collect { case (_, y) if y.length > 1 => x }
+                .isEmpty
+            )
+            .one
+            .map(c => c.consumerName -> c)
+        )
+        withConsumers = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(consumers = consumers)
+        )
         streamsRef <- Ref.of[IO, Streams](withConsumers)
         req = ListStreamConsumersRequest(None, None, streamArn, None)
         res <- req.listStreamConsumers(streamsRef)
@@ -73,9 +70,9 @@ class ListStreamConsumersTests
     (
       streamArn: StreamArn
     ) =>
-      val streams = Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamConsumersRequest(None, None, streamArn, None)
         res <- req.listStreamConsumers(streamsRef)
@@ -90,25 +87,23 @@ class ListStreamConsumersTests
     (
       streamArn: StreamArn
     ) =>
-      val streams = Streams.empty.addStream(100, streamArn, None)
-
-      val consumers = SortedMap.from(
-        Gen
-          .listOfN(10, consumerArbitrary.arbitrary)
-          .suchThat(x =>
-            x.groupBy(_.consumerName)
-              .collect { case (_, y) if y.length > 1 => x }
-              .isEmpty
-          )
-          .one
-          .map(c => c.consumerName -> c)
-      )
-
-      val withConsumers = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(consumers = consumers)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        consumers = SortedMap.from(
+          Gen
+            .listOfN(10, consumerArbitrary.arbitrary)
+            .suchThat(x =>
+              x.groupBy(_.consumerName)
+                .collect { case (_, y) if y.length > 1 => x }
+                .isEmpty
+            )
+            .one
+            .map(c => c.consumerName -> c)
+        )
+        withConsumers = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(consumers = consumers)
+        )
         streamsRef <- Ref.of[IO, Streams](withConsumers)
         req = ListStreamConsumersRequest(Some(5), None, streamArn, None)
         res <- req.listStreamConsumers(streamsRef)

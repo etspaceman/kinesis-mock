@@ -35,10 +35,9 @@ class AddTagsToStreamTests
         streamArn: StreamArn,
         tags: Tags
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = AddTagsToStreamRequest(None, Some(streamArn), tags)
         res <- req.addTagsToStream(
@@ -59,19 +58,17 @@ class AddTagsToStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val tagKey = tagKeyGen.one
-      val tagValue = tagValueGen.one
-      val tags = Tags(SortedMap(tagKey -> tagValue))
-      val initialTags = Tags(SortedMap(tagKey -> "initial"))
-
-      val streamsWithTag = streams.findAndUpdateStream(streamArn)(stream =>
-        stream.copy(tags = initialTags)
-      )
-
       for {
+        now <- Utils.now
+        streams =
+          Streams.empty.addStream(1, streamArn, None, now)
+        tagKey = tagKeyGen.one
+        tagValue = tagValueGen.one
+        tags = Tags(SortedMap(tagKey -> tagValue))
+        initialTags = Tags(SortedMap(tagKey -> "initial"))
+        streamsWithTag = streams.findAndUpdateStream(streamArn)(stream =>
+          stream.copy(tags = initialTags)
+        )
         streamsRef <- Ref.of[IO, Streams](streamsWithTag)
         req = AddTagsToStreamRequest(None, Some(streamArn), tags)
         res <- req.addTagsToStream(

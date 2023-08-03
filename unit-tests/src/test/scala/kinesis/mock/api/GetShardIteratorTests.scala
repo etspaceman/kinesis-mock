@@ -36,14 +36,15 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
-      val records: Vector[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-          case (record, index) =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
+        records = kinesisRecordArbitrary.arbitrary
+          .take(50)
+          .toVector
+          .zipWithIndex
+          .map { case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
                 shard.createdAtTimestamp,
@@ -53,16 +54,13 @@ class GetShardIteratorTests
                 Some(record.approximateArrivalTimestamp)
               )
             )
+          }
+        withRecords = streams.findAndUpdateStream(streamArn) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
         }
-
-      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-        s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
-          streamStatus = StreamStatus.ACTIVE
-        )
-      }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -77,7 +75,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        parsed = res.flatMap(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
@@ -92,14 +90,15 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
-      val records: Vector[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-          case (record, index) =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
+        records = kinesisRecordArbitrary.arbitrary
+          .take(50)
+          .toVector
+          .zipWithIndex
+          .map { case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
                 shard.createdAtTimestamp,
@@ -109,16 +108,13 @@ class GetShardIteratorTests
                 Some(record.approximateArrivalTimestamp)
               )
             )
+          }
+        withRecords = streams.findAndUpdateStream(streamArn) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
         }
-
-      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-        s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
-          streamStatus = StreamStatus.ACTIVE
-        )
-      }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -133,7 +129,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        parsed = res.flatMap(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records.last.sequenceNumber &&
@@ -148,37 +144,32 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
-      val startingInstant = Instant.parse("2021-01-01T00:00:00.00Z")
-
-      val records: Vector[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-          case (record, index) =>
-            val newTimestamp = startingInstant.plusSeconds(index.toLong)
-            record.copy(
-              approximateArrivalTimestamp = newTimestamp,
-              sequenceNumber = SequenceNumber.create(
-                shard.createdAtTimestamp,
-                shard.shardId.index,
-                None,
-                Some(index),
-                Some(newTimestamp)
-              )
-            )
-        }
-
-      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-        s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
-          streamStatus = StreamStatus.ACTIVE
-        )
-      }
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
+        startingInstant = Instant.parse("2021-01-01T00:00:00.00Z")
+        records =
+          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
+            case (record, index) =>
+              val newTimestamp = startingInstant.plusSeconds(index.toLong)
+              record.copy(
+                approximateArrivalTimestamp = newTimestamp,
+                sequenceNumber = SequenceNumber.create(
+                  shard.createdAtTimestamp,
+                  shard.shardId.index,
+                  None,
+                  Some(index),
+                  Some(newTimestamp)
+                )
+              )
+          }
+        withRecords = streams.findAndUpdateStream(streamArn) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
+        }
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -193,7 +184,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        parsed = res.flatMap(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
@@ -212,14 +203,15 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
-      val records: Vector[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-          case (record, index) =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
+        records = kinesisRecordArbitrary.arbitrary
+          .take(50)
+          .toVector
+          .zipWithIndex
+          .map { case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
                 shard.createdAtTimestamp,
@@ -229,16 +221,13 @@ class GetShardIteratorTests
                 Some(record.approximateArrivalTimestamp)
               )
             )
+          }
+        withRecords = streams.findAndUpdateStream(streamArn) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
         }
-
-      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-        s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
-          streamStatus = StreamStatus.ACTIVE
-        )
-      }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -253,7 +242,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        parsed = res.flatMap(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
@@ -270,14 +259,15 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
-      val records: Vector[KinesisRecord] =
-        kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-          case (record, index) =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
+        records = kinesisRecordArbitrary.arbitrary
+          .take(50)
+          .toVector
+          .zipWithIndex
+          .map { case (record, index) =>
             record.copy(sequenceNumber =
               SequenceNumber.create(
                 shard.createdAtTimestamp,
@@ -287,16 +277,13 @@ class GetShardIteratorTests
                 Some(record.approximateArrivalTimestamp)
               )
             )
+          }
+        withRecords = streams.findAndUpdateStream(streamArn) { s =>
+          s.copy(
+            shards = SortedMap(s.shards.head._1 -> records),
+            streamStatus = StreamStatus.ACTIVE
+          )
         }
-
-      val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-        s.copy(
-          shards = SortedMap(s.shards.head._1 -> records),
-          streamStatus = StreamStatus.ACTIVE
-        )
-      }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withRecords)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -311,7 +298,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-        parsed = res.flatMap(_.shardIterator.parse)
+        parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
       } yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
@@ -327,14 +314,15 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val shard = streams.streams(streamArn).shards.head._1
-
-        val records: Vector[KinesisRecord] =
-          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-            case (record, index) =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          shard = streams.streams(streamArn).shards.head._1
+          records = kinesisRecordArbitrary.arbitrary
+            .take(50)
+            .toVector
+            .zipWithIndex
+            .map { case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
                   shard.createdAtTimestamp,
@@ -344,16 +332,13 @@ class GetShardIteratorTests
                   Some(record.approximateArrivalTimestamp)
                 )
               )
+            }
+          withRecords = streams.findAndUpdateStream(streamArn) { s =>
+            s.copy(
+              shards = SortedMap(s.shards.head._1 -> records),
+              streamStatus = StreamStatus.ACTIVE
+            )
           }
-
-        val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-          s.copy(
-            shards = SortedMap(s.shards.head._1 -> records),
-            streamStatus = StreamStatus.ACTIVE
-          )
-        }
-
-        for {
           streamsRef <- Ref.of[IO, Streams](withRecords)
           req = GetShardIteratorRequest(
             shard.shardId.shardId,
@@ -368,7 +353,7 @@ class GetShardIteratorTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-          parsed = res.flatMap(_.shardIterator.parse)
+          parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
         } yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == records(25).sequenceNumber &&
@@ -387,14 +372,15 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val shard = streams.streams(streamArn).shards.head._1
-
-        val records: Vector[KinesisRecord] =
-          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-            case (record, index) =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          shard = streams.streams(streamArn).shards.head._1
+          records = kinesisRecordArbitrary.arbitrary
+            .take(50)
+            .toVector
+            .zipWithIndex
+            .map { case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
                   shard.createdAtTimestamp,
@@ -404,16 +390,13 @@ class GetShardIteratorTests
                   Some(record.approximateArrivalTimestamp)
                 )
               )
+            }
+          withRecords = streams.findAndUpdateStream(streamArn) { s =>
+            s.copy(
+              shards = SortedMap(s.shards.head._1 -> records),
+              streamStatus = StreamStatus.ACTIVE
+            )
           }
-
-        val withRecords = streams.findAndUpdateStream(streamArn) { s =>
-          s.copy(
-            shards = SortedMap(s.shards.head._1 -> records),
-            streamStatus = StreamStatus.ACTIVE
-          )
-        }
-
-        for {
           streamsRef <- Ref.of[IO, Streams](withRecords)
           req = GetShardIteratorRequest(
             shard.shardId.shardId,
@@ -428,7 +411,7 @@ class GetShardIteratorTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-          parsed = res.flatMap(_.shardIterator.parse)
+          parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
         } yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
@@ -444,12 +427,10 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val shard = streams.streams(streamArn).shards.head._1
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        shard = streams.streams(streamArn).shards.head._1
         streamsRef <- Ref.of[IO, Streams](streams)
         req = GetShardIteratorRequest(
           shard.shardId.shardId,
@@ -472,12 +453,10 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val shard = streams.streams(streamArn).shards.head._1
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          shard = streams.streams(streamArn).shards.head._1
           streamsRef <- Ref.of[IO, Streams](streams)
           req = GetShardIteratorRequest(
             shard.shardId.shardId,
@@ -485,7 +464,7 @@ class GetShardIteratorTests
             None,
             None,
             Some(streamArn),
-            Some(Utils.now.plusSeconds(30))
+            Some(now.plusSeconds(30))
           )
           res <- req.getShardIterator(
             streamsRef,
@@ -501,12 +480,10 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val shard = streams.streams(streamArn).shards.head._1
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          shard = streams.streams(streamArn).shards.head._1
           streamsRef <- Ref.of[IO, Streams](streams)
           req = GetShardIteratorRequest(
             shard.shardId.shardId,
@@ -530,12 +507,10 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val shard = streams.streams(streamArn).shards.head._1
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          shard = streams.streams(streamArn).shards.head._1
           streamsRef <- Ref.of[IO, Streams](streams)
           req = GetShardIteratorRequest(
             shard.shardId.shardId,

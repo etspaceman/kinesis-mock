@@ -31,18 +31,16 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
-          s.copy(streamStatus = StreamStatus.ACTIVE)
-        )
-      val shards = active.streams(streamArn).shards.keys.toVector
-
-      val shardToMerge = shards.head
-      val adjacentShardToMerge = shards(1)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active =
+          streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+        shards = active.streams(streamArn).shards.keys.toVector
+        shardToMerge = shards.head
+        adjacentShardToMerge = shards(1)
         streamsRef <- Ref.of[IO, Streams](active)
         req = MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
@@ -75,23 +73,18 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-
-      val shards = streams.streams(streamArn).shards.keys.toVector
-
-      val shardToMerge = shards.head
-      val adjacentShardToMerge = shards(1)
-
-      val req =
-        MergeShardsRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        shards = streams.streams(streamArn).shards.keys.toVector
+        shardToMerge = shards.head
+        adjacentShardToMerge = shards(1)
+        req = MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
@@ -105,25 +98,22 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-      val shards = active.streams(streamArn).shards.keys.toVector
-      val shardToMerge = shards.head
-      val adjacentShardToMerge =
-        ShardId.create(shards.map(_.shardId.index).max + 1)
-
-      val req =
-        MergeShardsRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(streamStatus = StreamStatus.ACTIVE)
+        )
+        shards = active.streams(streamArn).shards.keys.toVector
+        shardToMerge = shards.head
+        adjacentShardToMerge =
+          ShardId.create(shards.map(_.shardId.index).max + 1)
+        req = MergeShardsRequest(
           adjacentShardToMerge.shardId,
           shardToMerge.shardId.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
@@ -137,26 +127,22 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-      val shards = active.streams(streamArn).shards.keys.toVector
-      val shardToMerge =
-        ShardId.create(shards.map(_.shardId.index).max + 1)
-
-      val adjacentShardToMerge = shards(1)
-
-      val req =
-        MergeShardsRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(streamStatus = StreamStatus.ACTIVE)
+        )
+        shards = active.streams(streamArn).shards.keys.toVector
+        shardToMerge =
+          ShardId.create(shards.map(_.shardId.index).max + 1)
+        adjacentShardToMerge = shards(1)
+        req = MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
@@ -170,24 +156,21 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-      val shards = streams.streams(streamArn).shards.keys.toVector
-      val shardToMerge = shards.head
-      val adjacentShardToMerge = shards(2)
-
-      val req =
-        MergeShardsRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(streamStatus = StreamStatus.ACTIVE)
+        )
+        shards = streams.streams(streamArn).shards.keys.toVector
+        shardToMerge = shards.head
+        adjacentShardToMerge = shards(2)
+        req = MergeShardsRequest(
           adjacentShardToMerge.shardId.shardId,
           shardToMerge.shardId.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)

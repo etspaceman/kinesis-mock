@@ -19,6 +19,8 @@ package api
 
 import scala.concurrent.duration._
 
+import java.time.Instant
+
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -41,87 +43,92 @@ final case class UpdateShardCountRequest(
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[UpdateShardCountResponse]] =
-    streamsRef.modify { streams =>
-      val now = Utils.now
-      CommonValidations
-        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
-        .flatMap { case (name, arn) =>
-          CommonValidations
-            .validateStreamName(name)
-            .flatMap(_ =>
-              CommonValidations
-                .findStream(arn, streams)
-                .flatMap { stream =>
-                  (
-                    CommonValidations.isStreamActive(arn, streams),
-                    if (
-                      targetShardCount > stream.shards.keys.count(_.isOpen) * 2
-                    )
-                      InvalidArgumentException(
-                        "Cannot update shard count beyond 2x current shard count"
-                      ).asLeft
-                    else if (
-                      targetShardCount < stream.shards.keys.count(_.isOpen) / 2
-                    )
-                      InvalidArgumentException(
-                        "Cannot update shard count below 50% of the current shard count"
-                      ).asLeft
-                    else if (targetShardCount > 10000)
-                      InvalidArgumentException(
-                        "Cannot scale a stream beyond 10000 shards"
-                      ).asLeft
-                    else if (
-                      streams.streams.values
-                        .map(_.shards.size)
-                        .sum + (targetShardCount - stream.shards.size) > shardLimit
-                    )
-                      LimitExceededException(
-                        "Operation would result more shards than the configured shard limit for this account"
-                      ).asLeft
-                    else Right(targetShardCount),
-                    if (
-                      stream.shardCountUpdates.count(ts =>
-                        ts.toEpochMilli > now
-                          .minusMillis(1.day.toMillis)
-                          .toEpochMilli
-                      ) >= 10
-                    )
-                      LimitExceededException(
-                        "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
-                      ).asLeft
-                    else Right(())
-                  ).mapN((_, _, _) => stream)
-                }
-            )
-            .map { stream =>
-              val openShards = stream.shards.toList.filter(_._1.isOpen)
-              val scalingUp = openShards.size < targetShardCount
+    Utils.now.flatMap { now =>
+      streamsRef.modify { streams =>
+        CommonValidations
+          .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+          .flatMap { case (name, arn) =>
+            CommonValidations
+              .validateStreamName(name)
+              .flatMap(_ =>
+                CommonValidations
+                  .findStream(arn, streams)
+                  .flatMap { stream =>
+                    (
+                      CommonValidations.isStreamActive(arn, streams),
+                      if (
+                        targetShardCount > stream.shards.keys
+                          .count(_.isOpen) * 2
+                      )
+                        InvalidArgumentException(
+                          "Cannot update shard count beyond 2x current shard count"
+                        ).asLeft
+                      else if (
+                        targetShardCount < stream.shards.keys
+                          .count(_.isOpen) / 2
+                      )
+                        InvalidArgumentException(
+                          "Cannot update shard count below 50% of the current shard count"
+                        ).asLeft
+                      else if (targetShardCount > 10000)
+                        InvalidArgumentException(
+                          "Cannot scale a stream beyond 10000 shards"
+                        ).asLeft
+                      else if (
+                        streams.streams.values
+                          .map(_.shards.size)
+                          .sum + (targetShardCount - stream.shards.size) > shardLimit
+                      )
+                        LimitExceededException(
+                          "Operation would result more shards than the configured shard limit for this account"
+                        ).asLeft
+                      else Right(targetShardCount),
+                      if (
+                        stream.shardCountUpdates.count(ts =>
+                          ts.toEpochMilli > now
+                            .minusMillis(1.day.toMillis)
+                            .toEpochMilli
+                        ) >= 10
+                      )
+                        LimitExceededException(
+                          "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
+                        ).asLeft
+                      else Right(())
+                    ).mapN((_, _, _) => stream)
+                  }
+              )
+              .map { stream =>
+                val openShards = stream.shards.toList.filter(_._1.isOpen)
+                val scalingUp = openShards.size < targetShardCount
 
-              val newStreamData = if (scalingUp) {
-                UpdateShardCountRequest.splitShards(
-                  stream,
-                  openShards,
-                  targetShardCount
-                )
-              } else {
-                UpdateShardCountRequest.mergeShards(
-                  stream,
-                  openShards,
-                  targetShardCount
+                val newStreamData = if (scalingUp) {
+                  UpdateShardCountRequest.splitShards(
+                    stream,
+                    openShards,
+                    targetShardCount,
+                    now
+                  )
+                } else {
+                  UpdateShardCountRequest.mergeShards(
+                    stream,
+                    openShards,
+                    targetShardCount,
+                    now
+                  )
+                }
+
+                (
+                  streams.updateStream(newStreamData),
+                  UpdateShardCountResponse(
+                    openShards.length,
+                    name,
+                    targetShardCount
+                  )
                 )
               }
-
-              (
-                streams.updateStream(newStreamData),
-                UpdateShardCountResponse(
-                  openShards.length,
-                  name,
-                  targetShardCount
-                )
-              )
-            }
-        }
-        .sequenceWithDefault(streams)
+          }
+          .sequenceWithDefault(streams)
+      }
     }
 }
 
@@ -130,7 +137,8 @@ object UpdateShardCountRequest {
   def mergeShards(
       streamData: StreamData,
       openShards: List[(Shard, Vector[KinesisRecord])],
-      targetShardCount: Int
+      targetShardCount: Int,
+      now: Instant
   ): StreamData = openShards match {
     case _
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
@@ -149,19 +157,21 @@ object UpdateShardCountRequest {
               adjacentShard,
               adjacentData,
               oldShard,
-              oldShardData
+              oldShardData,
+              now
             ),
             t.filterNot(_._1.shardId == adjacentShard.shardId)
           )
         }
-      mergeShards(newStreamData, newOpenShards, targetShardCount)
+      mergeShards(newStreamData, newOpenShards, targetShardCount, now)
   }
 
   @annotation.tailrec
   def splitShards(
       streamData: StreamData,
       openShards: List[(Shard, Vector[KinesisRecord])],
-      targetShardCount: Int
+      targetShardCount: Int,
+      now: Instant
   ): StreamData = openShards match {
     case _
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
@@ -175,10 +185,12 @@ object UpdateShardCountRequest {
             .toString(),
           oldShard,
           oldShardData,
-          streamData
+          streamData,
+          now
         ),
         t,
-        targetShardCount
+        targetShardCount,
+        now
       )
   }
 

@@ -17,6 +17,8 @@
 package kinesis.mock
 package api
 
+import java.time.Instant
+
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -38,85 +40,88 @@ final case class MergeShardsRequest(
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
-    streamsRef.modify(streams =>
-      CommonValidations
-        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
-        .flatMap { case (name, arn) =>
-          CommonValidations
-            .validateStreamName(name)
-            .flatMap(_ =>
-              CommonValidations
-                .findStream(arn, streams)
-                .flatMap { stream =>
-                  (
-                    CommonValidations.isStreamActive(arn, streams),
-                    CommonValidations.validateShardId(shardToMerge),
-                    CommonValidations.validateShardId(adjacentShardToMerge),
-                    CommonValidations
-                      .findShard(adjacentShardToMerge, stream)
-                      .flatMap { case (adjacentShard, adjacentData) =>
-                        CommonValidations.isShardOpen(adjacentShard).flatMap {
-                          _ =>
-                            CommonValidations
-                              .findShard(shardToMerge, stream)
-                              .flatMap { case (shard, shardData) =>
-                                CommonValidations.isShardOpen(shard).flatMap {
-                                  _ =>
-                                    if (
-                                      adjacentShard.hashKeyRange
-                                        .isAdjacent(shard.hashKeyRange)
-                                    )
-                                      Right(
-                                        (
-                                          (adjacentShard, adjacentData),
-                                          (shard, shardData)
-                                        )
+    Utils.now.flatMap { now =>
+      streamsRef.modify(streams =>
+        CommonValidations
+          .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+          .flatMap { case (name, arn) =>
+            CommonValidations
+              .validateStreamName(name)
+              .flatMap(_ =>
+                CommonValidations
+                  .findStream(arn, streams)
+                  .flatMap { stream =>
+                    (
+                      CommonValidations.isStreamActive(arn, streams),
+                      CommonValidations.validateShardId(shardToMerge),
+                      CommonValidations.validateShardId(adjacentShardToMerge),
+                      CommonValidations
+                        .findShard(adjacentShardToMerge, stream)
+                        .flatMap { case (adjacentShard, adjacentData) =>
+                          CommonValidations.isShardOpen(adjacentShard).flatMap {
+                            _ =>
+                              CommonValidations
+                                .findShard(shardToMerge, stream)
+                                .flatMap { case (shard, shardData) =>
+                                  CommonValidations.isShardOpen(shard).flatMap {
+                                    _ =>
+                                      if (
+                                        adjacentShard.hashKeyRange
+                                          .isAdjacent(shard.hashKeyRange)
                                       )
-                                    else
-                                      InvalidArgumentException(
-                                        "Provided shards are not adjacent"
-                                      ).asLeft
+                                        Right(
+                                          (
+                                            (adjacentShard, adjacentData),
+                                            (shard, shardData)
+                                          )
+                                        )
+                                      else
+                                        InvalidArgumentException(
+                                          "Provided shards are not adjacent"
+                                        ).asLeft
+                                  }
                                 }
-                              }
+                          }
                         }
-                      }
-                  ).mapN {
-                    case (
-                          _,
-                          _,
-                          _,
-                          ((adjacentShard, adjacentData), (shard, shardData))
-                        ) =>
-                      (
-                        stream,
-                        (adjacentShard, adjacentData),
-                        (shard, shardData)
-                      )
+                    ).mapN {
+                      case (
+                            _,
+                            _,
+                            _,
+                            ((adjacentShard, adjacentData), (shard, shardData))
+                          ) =>
+                        (
+                          stream,
+                          (adjacentShard, adjacentData),
+                          (shard, shardData)
+                        )
+                    }
                   }
-                }
-            )
-            .map {
-              case (
-                    stream,
-                    (adjacentShard, adjacentData),
-                    (shard, shardData)
-                  ) =>
-                (
-                  streams.updateStream(
-                    MergeShardsRequest.mergeShards(
+              )
+              .map {
+                case (
                       stream,
-                      adjacentShard,
-                      adjacentData,
-                      shard,
-                      shardData
-                    )
-                  ),
-                  ()
-                )
-            }
-        }
-        .sequenceWithDefault(streams)
-    )
+                      (adjacentShard, adjacentData),
+                      (shard, shardData)
+                    ) =>
+                  (
+                    streams.updateStream(
+                      MergeShardsRequest.mergeShards(
+                        stream,
+                        adjacentShard,
+                        adjacentData,
+                        shard,
+                        shardData,
+                        now
+                      )
+                    ),
+                    ()
+                  )
+              }
+          }
+          .sequenceWithDefault(streams)
+      )
+    }
 }
 
 object MergeShardsRequest {
@@ -126,9 +131,9 @@ object MergeShardsRequest {
       adjacentShard: Shard,
       adjacentData: Vector[KinesisRecord],
       shard: Shard,
-      shardData: Vector[KinesisRecord]
+      shardData: Vector[KinesisRecord],
+      now: Instant
   ): StreamData = {
-    val now = Utils.now
     val newShardIndex =
       stream.shards.keys.map(_.shardId.index).max + 1
     val newShard: (Shard, Vector[KinesisRecord]) = Shard(

@@ -31,23 +31,20 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val initialShardCount = 5
-      val streams =
-        Streams.empty.addStream(initialShardCount, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        initialShardCount = 5
+        streams = Streams.empty
+          .addStream(initialShardCount, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      val req =
-        UpdateShardCountRequest(
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           10
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.updateShardCount(
           streamsRef,
@@ -85,23 +82,20 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val initialShardCount = 10
-      val streams =
-        Streams.empty.addStream(initialShardCount, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        initialShardCount = 10
+        streams = Streams.empty
+          .addStream(initialShardCount, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      val req =
-        UpdateShardCountRequest(
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           5
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.updateShardCount(
           streamsRef,
@@ -141,26 +135,23 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val initialShardCount = 10
-      val streams =
-        Streams.empty.addStream(initialShardCount, streamArn, None)
-      val active: Streams =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        initialShardCount = 10
+        streams = Streams.empty
+          .addStream(initialShardCount, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      val firstRoundShardCount = 6
-      val req =
-        UpdateShardCountRequest(
+        firstRoundShardCount = 6
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           firstRoundShardCount
         )
-      val finalShardCount = req.targetShardCount / 2
-      val req2 = req.copy(targetShardCount = finalShardCount)
-
-      for {
+        finalShardCount = req.targetShardCount / 2
+        req2 = req.copy(targetShardCount = finalShardCount)
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.updateShardCount(
           streamsRef,
@@ -235,26 +226,23 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val initialShardCount = 10
-      val streams =
-        Streams.empty.addStream(initialShardCount, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        initialShardCount = 10
+        streams = Streams.empty
+          .addStream(initialShardCount, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      val firstRoundShardCount = 20
-      val req =
-        UpdateShardCountRequest(
+        firstRoundShardCount = 20
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           firstRoundShardCount
         )
-      val finalShardCount = req.targetShardCount * 2
-      val req2 = req.copy(targetShardCount = finalShardCount)
-
-      for {
+        finalShardCount = req.targetShardCount * 2
+        req2 = req.copy(targetShardCount = finalShardCount)
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.updateShardCount(
           streamsRef,
@@ -329,22 +317,18 @@ class UpdateShardCountTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(5, streamArn, None)
-        val active =
-          streams.findAndUpdateStream(streamArn)(s =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(5, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
-
-        val req =
-          UpdateShardCountRequest(
+          req = UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
             None,
             Some(streamArn),
             11
           )
-
-        for {
           streamsRef <- Ref.of[IO, Streams](active)
           res <- req.updateShardCount(
             streamsRef,
@@ -361,22 +345,18 @@ class UpdateShardCountTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(10, streamArn, None)
-        val active =
-          streams.findAndUpdateStream(streamArn)(s =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(10, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
-
-        val req =
-          UpdateShardCountRequest(
+          req = UpdateShardCountRequest(
             ScalingType.UNIFORM_SCALING,
             None,
             Some(streamArn),
             4
           )
-
-        for {
           streamsRef <- Ref.of[IO, Streams](active)
           res <- req.updateShardCount(
             streamsRef,
@@ -392,22 +372,18 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      val req =
-        UpdateShardCountRequest(
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           10
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.updateShardCount(
           streamsRef,
@@ -422,18 +398,15 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-
-      val req =
-        UpdateShardCountRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        req = UpdateShardCountRequest(
           ScalingType.UNIFORM_SCALING,
           None,
           Some(streamArn),
           10
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.updateShardCount(
           streamsRef,
