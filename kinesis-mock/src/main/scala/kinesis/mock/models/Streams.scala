@@ -19,6 +19,8 @@ package models
 
 import scala.collection.SortedMap
 
+import java.time.Instant
+
 import cats.Eq
 import cats.syntax.all._
 import io.circe._
@@ -39,11 +41,17 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
   def addStream(
       shardCount: Int,
       streamArn: StreamArn,
-      streamModeDetails: Option[StreamModeDetails]
+      streamModeDetails: Option[StreamModeDetails],
+      now: Instant
   ): Streams =
     copy(streams =
       streams ++ Seq(
-        streamArn -> StreamData.create(shardCount, streamArn, streamModeDetails)
+        streamArn -> StreamData.create(
+          shardCount,
+          streamArn,
+          streamModeDetails,
+          now
+        )
       )
     )
 

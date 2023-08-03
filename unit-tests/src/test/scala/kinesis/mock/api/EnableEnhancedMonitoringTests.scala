@@ -32,10 +32,9 @@ class EnableEnhancedMonitoringTests
         streamArn: StreamArn,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = EnableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,

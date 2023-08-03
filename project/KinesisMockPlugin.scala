@@ -159,6 +159,10 @@ object KinesisMockPlugin extends AutoPlugin {
             "max_attempts" -> "3",
             "command" -> "sbt 'project ${{ matrix.project }}' integration-tests/test",
             "retry_on" -> "error"
+          ),
+          env = Map(
+            "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
+            "SERVICE_PORT" -> "${{ matrix.service_port }}"
           )
         ),
         WorkflowStep.Sbt(

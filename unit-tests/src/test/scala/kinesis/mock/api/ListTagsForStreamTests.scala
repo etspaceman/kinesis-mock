@@ -36,13 +36,12 @@ class ListTagsForStreamTests
         streamArn: StreamArn,
         tags: Tags
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val withTags =
-        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        withTags = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(tags = tags)
+        )
         streamsRef <- Ref.of[IO, Streams](withTags)
         req = ListTagsForStreamRequest(None, None, None, Some(streamArn))
         res <- req.listTagsForStream(
@@ -62,21 +61,19 @@ class ListTagsForStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val tags: Tags = Gen
-        .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
-        .map(Tags.apply)
-        .one
-
-      val exclusiveStartTagKey = tags.tags.keys.toVector(3)
-
-      val withTags =
-        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
-
       for {
+        now <- Utils.now
+        streams =
+          Streams.empty.addStream(100, streamArn, None, now)
+        tags = Gen
+          .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
+          .map(x => SortedMap.from(x))
+          .map(Tags.apply)
+          .one
+        exclusiveStartTagKey = tags.tags.keys.toVector(3)
+        withTags = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(tags = tags)
+        )
         streamsRef <- Ref.of[IO, Streams](withTags)
         req = ListTagsForStreamRequest(
           Some(exclusiveStartTagKey),
@@ -103,19 +100,18 @@ class ListTagsForStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val tags: Tags = Gen
-        .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
-        .map(Tags.apply)
-        .one
-
-      val withTags =
-        streams.findAndUpdateStream(streamArn)(s => s.copy(tags = tags))
-
       for {
+        now <- Utils.now
+        streams =
+          Streams.empty.addStream(100, streamArn, None, now)
+        tags = Gen
+          .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
+          .map(x => SortedMap.from(x))
+          .map(Tags.apply)
+          .one
+        withTags = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(tags = tags)
+        )
         streamsRef <- Ref.of[IO, Streams](withTags)
         req = ListTagsForStreamRequest(None, Some(5), None, Some(streamArn))
         res <- req.listTagsForStream(

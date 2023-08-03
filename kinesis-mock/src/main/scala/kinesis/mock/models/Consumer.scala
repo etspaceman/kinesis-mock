@@ -34,8 +34,11 @@ final case class Consumer(
 )
 
 object Consumer {
-  def create(streamArn: StreamArn, consumerName: ConsumerName): Consumer = {
-    val consumerCreationTimestamp = Utils.now
+  def create(
+      streamArn: StreamArn,
+      consumerName: ConsumerName,
+      consumerCreationTimestamp: Instant
+  ): Consumer =
     Consumer(
       ConsumerArn(streamArn, consumerName, consumerCreationTimestamp),
       consumerCreationTimestamp,
@@ -43,7 +46,6 @@ object Consumer {
       ConsumerStatus.CREATING,
       streamArn
     )
-  }
   def consumerCirceEncoder(implicit
       EI: circe.Encoder[Instant]
   ): circe.Encoder[Consumer] = circe.Encoder.forProduct5(

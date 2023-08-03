@@ -16,32 +16,39 @@
 
 package kinesis.mock.models
 
-import org.scalacheck.Prop._
+import org.scalacheck.effect.PropF
 
+import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary._
 
-class ShardIteratorTests extends munit.ScalaCheckSuite {
-  property("It should createt and parse correctly")(forAll {
+class ShardIteratorTests extends munit.ScalaCheckEffectSuite {
+  test("It should createt and parse correctly")(PropF.forAllF {
     (
         streamName: StreamName,
         shardId: ShardId,
         sequenceNumber: SequenceNumber
     ) =>
-      val iterator: ShardIterator = ShardIterator.create(
-        streamName,
-        shardId.shardId,
-        sequenceNumber
-      )
-      val parsed = iterator.parse
+      Utils.now.map { now =>
+        val iterator: ShardIterator = ShardIterator.create(
+          streamName,
+          shardId.shardId,
+          sequenceNumber,
+          now
+        )
+        val parsed = iterator.parse(now)
 
-      parsed.exists { parts =>
-        parts.sequenceNumber == sequenceNumber &&
-        parts.shardId == shardId.shardId &&
-        parts.streamName == streamName
-      } :| s"streamName: $streamName\n" +
-        s"shardId: $shardId\n" +
-        s"sequenceNumber: $sequenceNumber\n" +
-        s"shardIterator: $iterator\n" +
-        s"parsed: $parsed"
+        assert(
+          parsed.exists { parts =>
+            parts.sequenceNumber == sequenceNumber &&
+            parts.shardId == shardId.shardId &&
+            parts.streamName == streamName
+          },
+          s"streamName: $streamName\n" +
+            s"shardId: $shardId\n" +
+            s"sequenceNumber: $sequenceNumber\n" +
+            s"shardIterator: $iterator\n" +
+            s"parsed: $parsed"
+        )
+      }
   })
 }

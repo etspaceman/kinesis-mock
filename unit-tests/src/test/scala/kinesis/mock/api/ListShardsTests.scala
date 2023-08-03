@@ -36,10 +36,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -70,10 +69,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -105,10 +103,9 @@ class ListShardsTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(100, streamArn, None)
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(100, streamArn, None, now)
           streamsRef <- Ref.of[IO, Streams](streams)
           req = ListShardsRequest(
             None,
@@ -140,10 +137,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -203,12 +199,10 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val exclusiveStartShardId = ShardId.create(10)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        exclusiveStartShardId = ShardId.create(10)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           Some(exclusiveStartShardId.shardId),
@@ -240,27 +234,25 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val updated = streams.findAndUpdateStream(streamArn) { s =>
-        val shards = s.shards.toList
-        s.copy(
-          shards = SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
-            case (shard, recs) =>
-              shard.copy(sequenceNumberRange =
-                shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                )
-              ) -> recs
-          })
-        )
-      }
-
-      val filter = ShardFilter(None, None, ShardFilterType.AT_LATEST)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        updated = streams.findAndUpdateStream(streamArn) { s =>
+          val shards = s.shards.toList
+          s.copy(
+            shards = SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
+              case (shard, recs) =>
+                shard.copy(sequenceNumberRange =
+                  shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  )
+                ) -> recs
+            })
+          )
+        }
+
+        filter = ShardFilter(None, None, ShardFilterType.AT_LATEST)
         streamsRef <- Ref.of[IO, Streams](updated)
         req = ListShardsRequest(
           None,
@@ -295,27 +287,24 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val updated = streams.findAndUpdateStream(streamArn) { s =>
-        val shards = s.shards.toList
-        s.copy(
-          shards = SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
-            case (shard, recs) =>
-              shard.copy(sequenceNumberRange =
-                shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                )
-              ) -> recs
-          })
-        )
-      }
-
-      val filter = ShardFilter(None, None, ShardFilterType.AT_TRIM_HORIZON)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        updated = streams.findAndUpdateStream(streamArn) { s =>
+          val shards = s.shards.toList
+          s.copy(
+            shards = SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
+              case (shard, recs) =>
+                shard.copy(sequenceNumberRange =
+                  shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  )
+                ) -> recs
+            })
+          )
+        }
+        filter = ShardFilter(None, None, ShardFilterType.AT_TRIM_HORIZON)
         streamsRef <- Ref.of[IO, Streams](updated)
         req = ListShardsRequest(
           None,
@@ -349,30 +338,27 @@ class ListShardsTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(100, streamArn, None)
-
-        val updated = streams.findAndUpdateStream(streamArn) { s =>
-          val shards = s.shards.toList
-          s.copy(shards =
-            SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
-              case (shard, recs) =>
-                shard.copy(
-                  sequenceNumberRange = shard.sequenceNumberRange.copy(
-                    Some(SequenceNumber.shardEnd),
-                    shard.sequenceNumberRange.startingSequenceNumber
-                  ),
-                  closedTimestamp = Some(
-                    Utils.now.minusSeconds(s.retentionPeriod.toSeconds + 2)
-                  )
-                ) -> recs
-            })
-          )
-        }
-
-        val filter = ShardFilter(None, None, ShardFilterType.FROM_TRIM_HORIZON)
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(100, streamArn, None, now)
+          updated = streams.findAndUpdateStream(streamArn) { s =>
+            val shards = s.shards.toList
+            s.copy(shards =
+              SortedMap.from(shards.takeRight(95) ++ shards.take(5).map {
+                case (shard, recs) =>
+                  shard.copy(
+                    sequenceNumberRange = shard.sequenceNumberRange.copy(
+                      Some(SequenceNumber.shardEnd),
+                      shard.sequenceNumberRange.startingSequenceNumber
+                    ),
+                    closedTimestamp = Some(
+                      now.minusSeconds(s.retentionPeriod.toSeconds + 2)
+                    )
+                  ) -> recs
+              })
+            )
+          }
+          filter = ShardFilter(None, None, ShardFilterType.FROM_TRIM_HORIZON)
           streamsRef <- Ref.of[IO, Streams](updated)
           req = ListShardsRequest(
             None,
@@ -407,15 +393,17 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val shards = streams.streams(streamArn).shards.keys.toVector
-      val shardId = shards(4).shardId
-      val filter =
-        ShardFilter(Some(shardId.shardId), None, ShardFilterType.AFTER_SHARD_ID)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        shards = streams.streams(streamArn).shards.keys.toVector
+        shardId = shards(4).shardId
+        filter =
+          ShardFilter(
+            Some(shardId.shardId),
+            None,
+            ShardFilterType.AFTER_SHARD_ID
+          )
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -452,46 +440,43 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
-      val updated = streams.findAndUpdateStream(streamArn) { s =>
-        val shards = s.shards.toVector
-        s.copy(
-          streamCreationTimestamp = requestTimestamp.minusSeconds(600),
-          shards = SortedMap.from(shards.takeRight(90) ++ shards.take(5).map {
-            case (shard, recs) =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
+        updated = streams.findAndUpdateStream(streamArn) { s =>
+          val shards = s.shards.toVector
+          s.copy(
+            streamCreationTimestamp = requestTimestamp.minusSeconds(600),
+            shards = SortedMap.from(shards.takeRight(90) ++ shards.take(5).map {
+              case (shard, recs) =>
+                shard.copy(
+                  sequenceNumberRange = shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  ),
+                  closedTimestamp = Some(
+                    requestTimestamp.minusSeconds(5)
+                  )
+                ) -> recs
+            } ++ shards.slice(5, 10).map { case (shard, recs) =>
               shard.copy(
                 sequenceNumberRange = shard.sequenceNumberRange.copy(
                   Some(SequenceNumber.shardEnd),
                   shard.sequenceNumberRange.startingSequenceNumber
                 ),
                 closedTimestamp = Some(
-                  requestTimestamp.minusSeconds(5)
+                  requestTimestamp.plusSeconds(5)
                 )
               ) -> recs
-          } ++ shards.slice(5, 10).map { case (shard, recs) =>
-            shard.copy(
-              sequenceNumberRange = shard.sequenceNumberRange.copy(
-                Some(SequenceNumber.shardEnd),
-                shard.sequenceNumberRange.startingSequenceNumber
-              ),
-              closedTimestamp = Some(
-                requestTimestamp.plusSeconds(5)
-              )
-            ) -> recs
-          })
+            })
+          )
+        }
+        filter = ShardFilter(
+          None,
+          Some(requestTimestamp),
+          ShardFilterType.FROM_TIMESTAMP
         )
-      }
-
-      val filter = ShardFilter(
-        None,
-        Some(requestTimestamp),
-        ShardFilterType.FROM_TIMESTAMP
-      )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](updated)
         req = ListShardsRequest(
           None,
@@ -525,50 +510,47 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
-      val requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
-      val updated = streams.findAndUpdateStream(streamArn) { s =>
-        val shards = s.shards.toVector
-        s.copy(
-          streamCreationTimestamp = requestTimestamp.minusSeconds(600),
-          shards =
-            SortedMap.from(shards.takeRight(90).map { case (shard, data) =>
-              shard.copy(createdAtTimestamp = requestTimestamp) -> data
-            } ++ shards.take(5).map { case (shard, recs) =>
-              shard.copy(
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                ),
-                closedTimestamp = Some(
-                  requestTimestamp.minusSeconds(5)
-                )
-              ) -> recs
-
-            } ++ shards.slice(5, 10).map { case (shard, recs) =>
-              shard.copy(
-                sequenceNumberRange = shard.sequenceNumberRange.copy(
-                  Some(SequenceNumber.shardEnd),
-                  shard.sequenceNumberRange.startingSequenceNumber
-                ),
-                closedTimestamp = Some(
-                  requestTimestamp.plusSeconds(5)
-                ),
-                createdAtTimestamp = requestTimestamp
-              ) -> recs
-            })
-        )
-      }
-
-      val filter = ShardFilter(
-        None,
-        Some(requestTimestamp),
-        ShardFilterType.AT_TIMESTAMP
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
+        requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
+        updated = streams.findAndUpdateStream(streamArn) { s =>
+          val shards = s.shards.toVector
+          s.copy(
+            streamCreationTimestamp = requestTimestamp.minusSeconds(600),
+            shards =
+              SortedMap.from(shards.takeRight(90).map { case (shard, data) =>
+                shard.copy(createdAtTimestamp = requestTimestamp) -> data
+              } ++ shards.take(5).map { case (shard, recs) =>
+                shard.copy(
+                  sequenceNumberRange = shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  ),
+                  closedTimestamp = Some(
+                    requestTimestamp.minusSeconds(5)
+                  )
+                ) -> recs
+
+              } ++ shards.slice(5, 10).map { case (shard, recs) =>
+                shard.copy(
+                  sequenceNumberRange = shard.sequenceNumberRange.copy(
+                    Some(SequenceNumber.shardEnd),
+                    shard.sequenceNumberRange.startingSequenceNumber
+                  ),
+                  closedTimestamp = Some(
+                    requestTimestamp.plusSeconds(5)
+                  ),
+                  createdAtTimestamp = requestTimestamp
+                ) -> recs
+              })
+          )
+        }
+        filter = ShardFilter(
+          None,
+          Some(requestTimestamp),
+          ShardFilterType.AT_TIMESTAMP
+        )
         streamsRef <- Ref.of[IO, Streams](updated)
         req = ListShardsRequest(
           None,
@@ -604,10 +586,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -632,10 +613,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,
@@ -660,10 +640,9 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(100, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListShardsRequest(
           None,

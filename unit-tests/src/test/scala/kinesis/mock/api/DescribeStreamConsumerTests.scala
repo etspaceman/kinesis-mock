@@ -33,24 +33,22 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-      val updated =
-        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
             streamStatus = StreamStatus.ACTIVE,
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(stream.streamArn, consumerArn.consumerName)
+                .create(stream.streamArn, consumerArn.consumerName, now)
                 .copy(consumerStatus = ConsumerStatus.ACTIVE)
             )
           )
         }
-      val consumer = updated.streams
-        .get(consumerArn.streamArn)
-        .flatMap(s => s.consumers.get(consumerArn.consumerName))
-
-      for {
+        consumer = updated.streams
+          .get(consumerArn.streamArn)
+          .flatMap(s => s.consumers.get(consumerArn.consumerName))
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(
           None,
@@ -70,26 +68,23 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-
-      val updated =
-        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+      for {
+        now <- Utils.now
+        streams =
+          Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
             streamStatus = StreamStatus.ACTIVE,
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(stream.streamArn, consumerArn.consumerName)
+                .create(stream.streamArn, consumerArn.consumerName, now)
                 .copy(consumerStatus = ConsumerStatus.ACTIVE)
             )
           )
         }
-
-      val consumer = updated.streams
-        .get(consumerArn.streamArn)
-        .flatMap(s => s.consumers.get(consumerArn.consumerName))
-
-      for {
+        consumer = updated.streams
+          .get(consumerArn.streamArn)
+          .flatMap(s => s.consumers.get(consumerArn.consumerName))
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.describeStreamConsumer(streamsRef)
@@ -105,13 +100,10 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-
-      val streamArn =
-        streams.streams.get(consumerArn.streamArn).map(_.streamArn)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        streamArn = streams.streams.get(consumerArn.streamArn).map(_.streamArn)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamConsumerRequest(
           None,
@@ -128,21 +120,19 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-      val updated =
-        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
             streamStatus = StreamStatus.ACTIVE,
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(stream.streamArn, consumerArn.consumerName)
+                .create(stream.streamArn, consumerArn.consumerName, now)
                 .copy(consumerStatus = ConsumerStatus.ACTIVE)
             )
           )
         }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(
           None,
@@ -159,21 +149,19 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-      val updated =
-        streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
           stream.copy(
             streamStatus = StreamStatus.ACTIVE,
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(stream.streamArn, consumerArn.consumerName)
+                .create(stream.streamArn, consumerArn.consumerName, now)
                 .copy(consumerStatus = ConsumerStatus.ACTIVE)
             )
           )
         }
-
-      for {
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(
           None,

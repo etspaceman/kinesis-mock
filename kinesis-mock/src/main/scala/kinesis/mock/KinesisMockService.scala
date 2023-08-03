@@ -88,12 +88,14 @@ object KinesisMockService extends IOApp {
         .withHost(host)
         .withTLS(tlsContext)
         .withHttpApp(app)
+        .withHttp2
         .build
       plainServer = EmberServerBuilder
         .default[IO]
         .withPort(serviceConfig.plainPort)
         .withHost(host)
         .withHttpApp(app)
+        .withHttp2
         .build
       _ <- logger.info(
         s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"

@@ -17,6 +17,8 @@
 package kinesis.mock
 package api
 
+import java.time.Instant
+
 import cats.Eq
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
@@ -39,68 +41,72 @@ final case class SplitShardRequest(
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
-    streamsRef.modify { streams =>
-      CommonValidations
-        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
-        .flatMap { case (name, arn) =>
-          CommonValidations
-            .validateStreamName(name)
-            .flatMap(_ =>
-              CommonValidations
-                .findStream(arn, streams)
-                .flatMap { stream =>
-                  (
-                    CommonValidations.isStreamActive(arn, streams),
-                    CommonValidations.validateShardId(shardToSplit),
-                    if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
-                      InvalidArgumentException(
-                        "NewStartingHashKey contains invalid characters"
-                      ).asLeft
-                    } else Right(newStartingHashKey),
-                    if (
-                      streams.streams.values
-                        .map(_.shards.size)
-                        .sum + 1 > shardLimit
-                    )
-                      LimitExceededException(
-                        "Operation would exceed the configured shard limit for the account"
-                      ).asLeft
-                    else Right(()),
-                    CommonValidations.findShard(shardToSplit, stream).flatMap {
-                      case (shard, shardData) =>
-                        CommonValidations.isShardOpen(shard).flatMap { _ =>
-                          val newStartingHashKeyNumber =
-                            BigInt(newStartingHashKey)
-                          if (
-                            newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
-                          )
-                            Right((shard, shardData))
-                          else
-                            InvalidArgumentException(
-                              s"NewStartingHashKey is not within the hash range shard ${shard.shardId}"
-                            ).asLeft
+    Utils.now.flatMap { now =>
+      streamsRef.modify { streams =>
+        CommonValidations
+          .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+          .flatMap { case (name, arn) =>
+            CommonValidations
+              .validateStreamName(name)
+              .flatMap(_ =>
+                CommonValidations
+                  .findStream(arn, streams)
+                  .flatMap { stream =>
+                    (
+                      CommonValidations.isStreamActive(arn, streams),
+                      CommonValidations.validateShardId(shardToSplit),
+                      if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
+                        InvalidArgumentException(
+                          "NewStartingHashKey contains invalid characters"
+                        ).asLeft
+                      } else Right(newStartingHashKey),
+                      if (
+                        streams.streams.values
+                          .map(_.shards.size)
+                          .sum + 1 > shardLimit
+                      )
+                        LimitExceededException(
+                          "Operation would exceed the configured shard limit for the account"
+                        ).asLeft
+                      else Right(()),
+                      CommonValidations
+                        .findShard(shardToSplit, stream)
+                        .flatMap { case (shard, shardData) =>
+                          CommonValidations.isShardOpen(shard).flatMap { _ =>
+                            val newStartingHashKeyNumber =
+                              BigInt(newStartingHashKey)
+                            if (
+                              newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
+                            )
+                              Right((shard, shardData))
+                            else
+                              InvalidArgumentException(
+                                s"NewStartingHashKey is not within the hash range shard ${shard.shardId}"
+                              ).asLeft
+                          }
                         }
+                    ).mapN { case (_, _, _, _, (shard, shardData)) =>
+                      (shard, shardData, stream)
                     }
-                  ).mapN { case (_, _, _, _, (shard, shardData)) =>
-                    (shard, shardData, stream)
                   }
-                }
-            )
-            .map { case (shard, shardData, stream) =>
-              (
-                streams.updateStream(
-                  SplitShardRequest.splitShard(
-                    newStartingHashKey,
-                    shard,
-                    shardData,
-                    stream
-                  )
-                ),
-                ()
               )
-            }
-        }
-        .sequenceWithDefault(streams)
+              .map { case (shard, shardData, stream) =>
+                (
+                  streams.updateStream(
+                    SplitShardRequest.splitShard(
+                      newStartingHashKey,
+                      shard,
+                      shardData,
+                      stream,
+                      now
+                    )
+                  ),
+                  ()
+                )
+              }
+          }
+          .sequenceWithDefault(streams)
+      }
     }
 }
 
@@ -110,9 +116,9 @@ object SplitShardRequest {
       newStartingHashKey: String,
       shard: Shard,
       shardData: Vector[KinesisRecord],
-      stream: StreamData
+      stream: StreamData,
+      now: Instant
   ): StreamData = {
-    val now = Utils.now
     val newStartingHashKeyNumber = BigInt(newStartingHashKey)
     val newShardIndex1 =
       stream.shards.keys.map(_.shardId.index).max + 1

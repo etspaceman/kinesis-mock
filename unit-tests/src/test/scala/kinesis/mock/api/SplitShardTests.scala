@@ -33,32 +33,26 @@ class SplitShardTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-      val shardToSplit =
-        active.streams(streamArn).shards.keys.head
-
-      val newStartingHashKey = Gen
-        .choose(
-          shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
-          shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
-        )
-        .one
-        .toString
-
-      val req =
-        SplitShardRequest(
+        shardToSplit = active.streams(streamArn).shards.keys.head
+        newStartingHashKey = Gen
+          .choose(
+            shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
+            shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
+          )
+          .one
+          .toString
+        req = SplitShardRequest(
           newStartingHashKey,
           shardToSplit.shardId.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.splitShard(
           streamsRef,
@@ -82,29 +76,23 @@ class SplitShardTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-
-      val shardToSplit =
-        streams.streams(streamArn).shards.keys.head
-
-      val newStartingHashKey = Gen
-        .choose(
-          shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
-          shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
-        )
-        .one
-        .toString
-
-      val req =
-        SplitShardRequest(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        shardToSplit = streams.streams(streamArn).shards.keys.head
+        newStartingHashKey = Gen
+          .choose(
+            shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
+            shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
+          )
+          .one
+          .toString
+        req = SplitShardRequest(
           newStartingHashKey,
           shardToSplit.shardId.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.splitShard(
           streamsRef,
@@ -119,13 +107,13 @@ class SplitShardTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(5, streamArn, None)
-      val active = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-      val shardToSplit =
-        ShardId.create(
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(5, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(streamStatus = StreamStatus.ACTIVE)
+        )
+        shardToSplit = ShardId.create(
           active
             .streams(streamArn)
             .shards
@@ -134,16 +122,12 @@ class SplitShardTests
             .map(_.shardId.index)
             .max + 1
         )
-
-      val req =
-        SplitShardRequest(
+        req = SplitShardRequest(
           "0",
           shardToSplit.shardId,
           None,
           Some(streamArn)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.splitShard(
           streamsRef,
@@ -159,32 +143,26 @@ class SplitShardTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(5, streamArn, None)
-        val active =
-          streams.findAndUpdateStream(streamArn)(s =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(5, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
-        val shardToSplit =
-          active.streams(streamArn).shards.keys.head
-
-        val newStartingHashKey = Gen
-          .choose(
-            shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
-            shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
-          )
-          .one
-          .toString
-
-        val req =
-          SplitShardRequest(
+          shardToSplit = active.streams(streamArn).shards.keys.head
+          newStartingHashKey = Gen
+            .choose(
+              shardToSplit.hashKeyRange.startingHashKey + BigInt(1),
+              shardToSplit.hashKeyRange.endingHashKey - BigInt(1)
+            )
+            .one
+            .toString
+          req = SplitShardRequest(
             newStartingHashKey,
             shardToSplit.shardId.shardId,
             None,
             Some(streamArn)
           )
-
-        for {
           streamsRef <- Ref.of[IO, Streams](active)
           res <- req.splitShard(
             streamsRef,

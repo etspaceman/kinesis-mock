@@ -22,6 +22,7 @@ import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
@@ -32,14 +33,12 @@ class IncreaseStreamRetentionPeriodTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val active = streams.findAndUpdateStream(streamArn)(
-        _.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(
+          _.copy(streamStatus = StreamStatus.ACTIVE)
+        )
         streamsRef <- Ref.of[IO, Streams](active)
         req = IncreaseStreamRetentionPeriodRequest(48, None, Some(streamArn))
         res <- req.increaseStreamRetention(
@@ -63,14 +62,12 @@ class IncreaseStreamRetentionPeriodTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val withUpdatedRetention = streams.findAndUpdateStream(streamArn)(s =>
-        s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        withUpdatedRetention = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(retentionPeriod = 72.hours, streamStatus = StreamStatus.ACTIVE)
+        )
         streamsRef <- Ref.of[IO, Streams](withUpdatedRetention)
         req = IncreaseStreamRetentionPeriodRequest(48, None, Some(streamArn))
         res <- req.increaseStreamRetention(

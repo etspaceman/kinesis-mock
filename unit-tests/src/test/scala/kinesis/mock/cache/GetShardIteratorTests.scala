@@ -24,6 +24,7 @@ import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.LoggingContext
+import kinesis.mock.Utils
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
@@ -86,8 +87,9 @@ class GetShardIteratorTests
           )
           .rethrow
           .map(_.shardIterator)
+        now <- Utils.now
       } yield assert(
-        res.parse.isRight,
+        res.parse(now).isRight,
         s"$res"
       )
   })

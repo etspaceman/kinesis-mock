@@ -33,30 +33,27 @@ class PutRecordsTests
         streamArn: StreamArn,
         initReq: PutRecordsRequest
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-      val active =
-        streams.findAndUpdateStream(streamArn)(s =>
-          s.copy(streamStatus = StreamStatus.ACTIVE)
-        )
-
-      val req = initReq.copy(
-        streamArn = Some(streamArn),
-        streamName = None
-      )
-
-      val predictedShards = req.records.map(entry =>
-        CommonValidations
-          .computeShard(
-            entry.partitionKey,
-            entry.explicitHashKey,
-            active.streams(streamArn)
-          )
-          .toOption
-          .map(_._1.shardId.shardId)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        active =
+          streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+        req = initReq.copy(
+          streamArn = Some(streamArn),
+          streamName = None
+        )
+        predictedShards = req.records.map(entry =>
+          CommonValidations
+            .computeShard(
+              entry.partitionKey,
+              entry.explicitHashKey,
+              active.streams(streamArn)
+            )
+            .toOption
+            .map(_._1.shardId.shardId)
+        )
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req.putRecords(
           streamsRef,
@@ -82,15 +79,13 @@ class PutRecordsTests
           streamArn: StreamArn,
           initReq: PutRecordsRequest
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val req = initReq.copy(
-          streamArn = Some(streamArn),
-          streamName = None
-        )
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          req = initReq.copy(
+            streamArn = Some(streamArn),
+            streamName = None
+          )
           streamsRef <- Ref.of[IO, Streams](streams)
           res <- req.putRecords(
             streamsRef,
@@ -107,25 +102,22 @@ class PutRecordsTests
           streamArn: StreamArn,
           initReq: PutRecordsRequest
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val updated = streams.findAndUpdateStream(streamArn)(s =>
-          s.copy(shards = s.shards.map { case (shard, recs) =>
-            shard.copy(sequenceNumberRange =
-              shard.sequenceNumberRange.copy(endingSequenceNumber =
-                Some(SequenceNumber.shardEnd)
-              )
-            ) -> recs
-          })
-        )
-
-        val req = initReq.copy(
-          streamArn = Some(streamArn),
-          streamName = None
-        )
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          updated = streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(shards = s.shards.map { case (shard, recs) =>
+              shard.copy(sequenceNumberRange =
+                shard.sequenceNumberRange.copy(endingSequenceNumber =
+                  Some(SequenceNumber.shardEnd)
+                )
+              ) -> recs
+            })
+          )
+          req = initReq.copy(
+            streamArn = Some(streamArn),
+            streamName = None
+          )
           streamsRef <- Ref.of[IO, Streams](updated)
           res <- req
             .putRecords(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)

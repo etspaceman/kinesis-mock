@@ -32,28 +32,26 @@ class DisableEnhancedMonitoringTests
         streamArn: StreamArn,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val updated = streams.findAndUpdateStream(streamArn)(stream =>
-        stream.copy(enhancedMonitoring =
-          Vector(
-            ShardLevelMetrics(
-              Vector(
-                ShardLevelMetric.IncomingBytes,
-                ShardLevelMetric.IncomingRecords,
-                ShardLevelMetric.OutgoingBytes,
-                ShardLevelMetric.OutgoingRecords,
-                ShardLevelMetric.WriteProvisionedThroughputExceeded,
-                ShardLevelMetric.ReadProvisionedThroughputExceeded,
-                ShardLevelMetric.IteratorAgeMilliseconds
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        updated = streams.findAndUpdateStream(streamArn)(stream =>
+          stream.copy(enhancedMonitoring =
+            Vector(
+              ShardLevelMetrics(
+                Vector(
+                  ShardLevelMetric.IncomingBytes,
+                  ShardLevelMetric.IncomingRecords,
+                  ShardLevelMetric.OutgoingBytes,
+                  ShardLevelMetric.OutgoingRecords,
+                  ShardLevelMetric.WriteProvisionedThroughputExceeded,
+                  ShardLevelMetric.ReadProvisionedThroughputExceeded,
+                  ShardLevelMetric.IteratorAgeMilliseconds
+                )
               )
             )
           )
         )
-      )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DisableEnhancedMonitoringRequest(
           shardLevelMetrics.shardLevelMetrics,

@@ -19,6 +19,7 @@ package models
 
 import scala.util.Try
 
+import java.time.Instant
 import java.util.Base64
 
 import cats.Eq
@@ -28,9 +29,8 @@ import io.circe._
 import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
-  def parse: Response[ShardIteratorParts] = {
+  def parse(now: Instant): Response[ShardIteratorParts] = {
     val decoded = Base64.getDecoder.decode(value)
-    val now = Utils.now
 
     val decrypted = new String(
       AES.decrypt(
@@ -98,10 +98,11 @@ object ShardIterator {
   def create(
       streamName: StreamName,
       shardId: String,
-      sequenceNumber: SequenceNumber
+      sequenceNumber: SequenceNumber,
+      now: Instant
   ): ShardIterator = {
     val encryptString =
-      (Vector.fill(14)("0").mkString + Utils.now.toEpochMilli)
+      (Vector.fill(14)("0").mkString + now.toEpochMilli)
         .takeRight(14) +
         s"/$streamName" +
         s"/$shardId" +

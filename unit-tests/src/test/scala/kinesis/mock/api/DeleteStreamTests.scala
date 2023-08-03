@@ -22,6 +22,7 @@ import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
+import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._
 
@@ -32,14 +33,12 @@ class DeleteStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val asActive = streams.findAndUpdateStream(streamArn)(x =>
-        x.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        asActive = streams.findAndUpdateStream(streamArn)(x =>
+          x.copy(streamStatus = StreamStatus.ACTIVE)
+        )
         streamsRef <- Ref.of[IO, Streams](asActive)
         req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req.deleteStream(
@@ -75,10 +74,9 @@ class DeleteStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req
@@ -95,21 +93,18 @@ class DeleteStreamTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-
-      val withConsumers =
-        streams.findAndUpdateStream(consumerArn.streamArn)(x =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        withConsumers = streams.findAndUpdateStream(consumerArn.streamArn)(x =>
           x.copy(
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(x.streamArn, consumerArn.consumerName)
+                .create(x.streamArn, consumerArn.consumerName, now)
             ),
             streamStatus = StreamStatus.ACTIVE
           )
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
         req = DeleteStreamRequest(None, Some(consumerArn.streamArn), None)
         res <- req.deleteStream(
@@ -129,21 +124,18 @@ class DeleteStreamTests
     (
       consumerArn: ConsumerArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, consumerArn.streamArn, None)
-
-      val withConsumers =
-        streams.findAndUpdateStream(consumerArn.streamArn)(x =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
+        withConsumers = streams.findAndUpdateStream(consumerArn.streamArn)(x =>
           x.copy(
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(x.streamArn, consumerArn.consumerName)
+                .create(x.streamArn, consumerArn.consumerName, now)
             ),
             streamStatus = StreamStatus.ACTIVE
           )
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](withConsumers)
         req = DeleteStreamRequest(
           None,

@@ -31,15 +31,12 @@ class UpdateStreamModeTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val active: Streams =
-        streams.findAndUpdateStream(streamArn)(s =>
+      for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
           s.copy(streamStatus = StreamStatus.ACTIVE)
         )
-
-      for {
         streamsRef <- Ref.of[IO, Streams](active)
         streamModeDetails = StreamModeDetails(StreamMode.ON_DEMAND)
         req = UpdateStreamModeRequest(streamArn, streamModeDetails)
@@ -58,15 +55,12 @@ class UpdateStreamModeTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val active: Streams =
-          streams.findAndUpdateStream(streamArn)(s =>
+        for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
             s.copy(streamStatus = StreamStatus.ACTIVE)
           )
-
-        for {
           streamsRef <- Ref.of[IO, Streams](active)
           streamModeDetails = StreamModeDetails(StreamMode.ON_DEMAND)
           req = UpdateStreamModeRequest(streamArn, streamModeDetails)

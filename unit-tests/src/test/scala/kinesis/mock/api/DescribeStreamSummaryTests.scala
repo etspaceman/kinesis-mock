@@ -31,10 +31,9 @@ class DescribeStreamSummaryTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamSummaryRequest(None, Some(streamArn))
         res <- req.describeStreamSummary(

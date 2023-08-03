@@ -31,10 +31,9 @@ class DescribeStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamRequest(None, None, None, Some(streamArn))
         res <- req.describeStream(
@@ -57,12 +56,10 @@ class DescribeStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(2, streamArn, None)
-
-      val limit = Some(1)
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(2, streamArn, None, now)
+        limit = Some(1)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamRequest(None, limit, None, Some(streamArn))
         res <- req.describeStream(
@@ -87,14 +84,12 @@ class DescribeStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(4, streamArn, None)
-
-      val exclusiveStartShardId = streams.streams
-        .get(streamArn)
-        .flatMap(_.shards.headOption.map(_._1.shardId.shardId))
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(4, streamArn, None, now)
+        exclusiveStartShardId = streams.streams
+          .get(streamArn)
+          .flatMap(_.shards.headOption.map(_._1.shardId.shardId))
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DescribeStreamRequest(
           exclusiveStartShardId,

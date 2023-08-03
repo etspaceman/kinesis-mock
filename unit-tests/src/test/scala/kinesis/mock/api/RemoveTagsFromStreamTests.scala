@@ -35,21 +35,16 @@ class RemoveTagsFromStreamTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val tags: Tags = Gen
-        .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
-        .map(x => SortedMap.from(x))
-        .map(Tags.apply)
-        .one
-
-      val withTags =
-        streams.findAndUpdateStream(streamArn)(_.copy(tags = tags))
-
-      val removedTags = tags.tags.keys.take(3).toVector
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        tags = Gen
+          .mapOfN(10, Gen.zip(tagKeyGen, tagValueGen))
+          .map(x => SortedMap.from(x))
+          .map(Tags.apply)
+          .one
+        withTags = streams.findAndUpdateStream(streamArn)(_.copy(tags = tags))
+        removedTags = tags.tags.keys.take(3).toVector
         streamsRef <- Ref.of[IO, Streams](withTags)
         req = RemoveTagsFromStreamRequest(None, Some(streamArn), removedTags)
         res <- req.removeTagsFromStream(

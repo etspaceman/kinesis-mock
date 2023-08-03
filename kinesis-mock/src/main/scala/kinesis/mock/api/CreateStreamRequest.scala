@@ -38,44 +38,51 @@ final case class CreateStreamRequest(
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[Unit]] =
-    streamsRef.modify { streams =>
-      val shardCountOrDefault = shardCount.getOrElse(4)
-      val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
-      (
-        CommonValidations.validateStreamName(streamName),
-        if (streams.streams.contains(streamArn))
-          ResourceInUseException(
-            s"Stream $streamName already exists"
-          ).asLeft
-        else Right(()),
-        CommonValidations.validateShardCount(shardCountOrDefault),
-        if (
-          streams.streams.count { case (_, stream) =>
-            stream.streamStatus == StreamStatus.CREATING
-          } >= 5
-        )
-          LimitExceededException(
-            "Limit for streams being created concurrently exceeded"
-          ).asLeft
-        else Right(()),
-        CommonValidations.validateOnDemandStreamCount(
-          streams,
-          onDemandStreamCountLimit
-        ),
-        CommonValidations.validateShardLimit(
-          shardCountOrDefault,
-          streams,
-          shardLimit
-        )
-      ).mapN { (_, _, _, _, _, _) =>
-        val newStream =
-          StreamData.create(shardCountOrDefault, streamArn, streamModeDetails)
+    Utils.now.flatMap { now =>
+      streamsRef.modify { streams =>
+        val shardCountOrDefault = shardCount.getOrElse(4)
+        val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
         (
-          streams
-            .copy(streams = streams.streams ++ Seq(streamArn -> newStream)),
-          ()
-        )
-      }.sequenceWithDefault(streams)
+          CommonValidations.validateStreamName(streamName),
+          if (streams.streams.contains(streamArn))
+            ResourceInUseException(
+              s"Stream $streamName already exists"
+            ).asLeft
+          else Right(()),
+          CommonValidations.validateShardCount(shardCountOrDefault),
+          if (
+            streams.streams.count { case (_, stream) =>
+              stream.streamStatus == StreamStatus.CREATING
+            } >= 5
+          )
+            LimitExceededException(
+              "Limit for streams being created concurrently exceeded"
+            ).asLeft
+          else Right(()),
+          CommonValidations.validateOnDemandStreamCount(
+            streams,
+            onDemandStreamCountLimit
+          ),
+          CommonValidations.validateShardLimit(
+            shardCountOrDefault,
+            streams,
+            shardLimit
+          )
+        ).mapN { (_, _, _, _, _, _) =>
+          val newStream =
+            StreamData.create(
+              shardCountOrDefault,
+              streamArn,
+              streamModeDetails,
+              now
+            )
+          (
+            streams
+              .copy(streams = streams.streams ++ Seq(streamArn -> newStream)),
+            ()
+          )
+        }.sequenceWithDefault(streams)
+      }
     }
 }
 

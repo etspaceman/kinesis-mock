@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package kinesis.mock.api
+package kinesis.mock
+package api
 
 import cats.effect.{IO, Ref}
 import enumeratum.scalacheck._
@@ -31,16 +32,13 @@ class StopStreamEncryptionTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val asActive = streams.findAndUpdateStream(streamArn)(x =>
-        x.copy(streamStatus = StreamStatus.ACTIVE)
-      )
-
-      val keyId = keyIdGen.one
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        asActive = streams.findAndUpdateStream(streamArn)(x =>
+          x.copy(streamStatus = StreamStatus.ACTIVE)
+        )
+        keyId = keyIdGen.one
         streamsRef <- Ref.of[IO, Streams](asActive)
         req = StopStreamEncryptionRequest(
           EncryptionType.KMS,
@@ -71,16 +69,13 @@ class StopStreamEncryptionTests
       (
         streamArn: StreamArn
       ) =>
-        val streams =
-          Streams.empty.addStream(1, streamArn, None)
-
-        val asActive = streams.findAndUpdateStream(streamArn)(x =>
-          x.copy(streamStatus = StreamStatus.ACTIVE)
-        )
-
-        val keyId = keyIdGen.one
-
         for {
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          asActive = streams.findAndUpdateStream(streamArn)(x =>
+            x.copy(streamStatus = StreamStatus.ACTIVE)
+          )
+          keyId = keyIdGen.one
           streamsRef <- Ref.of[IO, Streams](asActive)
           req = StopStreamEncryptionRequest(
             EncryptionType.NONE,
@@ -104,12 +99,10 @@ class StopStreamEncryptionTests
     (
       streamArn: StreamArn
     ) =>
-      val streams =
-        Streams.empty.addStream(1, streamArn, None)
-
-      val keyId = keyIdGen.one
-
       for {
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        keyId = keyIdGen.one
         streamsRef <- Ref.of[IO, Streams](streams)
         req = StopStreamEncryptionRequest(
           EncryptionType.KMS,

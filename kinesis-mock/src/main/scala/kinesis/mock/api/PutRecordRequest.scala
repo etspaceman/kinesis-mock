@@ -39,83 +39,84 @@ final case class PutRecordRequest(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
-  ): IO[Response[PutRecordResponse]] = streamsRef.modify { streams =>
-    val now = Utils.now
-    CommonValidations
-      .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
-      .flatMap { case (name, arn) =>
-        CommonValidations
-          .validateStreamName(name)
-          .flatMap(_ =>
-            CommonValidations
-              .findStream(arn, streams)
-              .flatMap { stream =>
-                (
-                  CommonValidations
-                    .isStreamActiveOrUpdating(arn, streams),
-                  CommonValidations.validateData(data),
-                  sequenceNumberForOrdering match {
-                    case None => Right(())
-                    case Some(seqNo) =>
-                      seqNo.parse.flatMap {
-                        case parts: SequenceNumberParts
-                            if parts.seqTime.toEpochMilli > now.toEpochMilli =>
-                          InvalidArgumentException(
-                            s"Sequence time in the future"
-                          ).asLeft
-                        case x => Right(x)
-                      }
-                  },
-                  CommonValidations.validatePartitionKey(partitionKey),
-                  explicitHashKey match {
-                    case Some(explHashKeh) =>
-                      CommonValidations.validateExplicitHashKey(explHashKeh)
-                    case None => Right(())
-                  },
-                  CommonValidations
-                    .computeShard(partitionKey, explicitHashKey, stream)
-                    .flatMap { case (shard, records) =>
-                      CommonValidations
-                        .isShardOpen(shard)
-                        .map(_ => (shard, records))
+  ): IO[Response[PutRecordResponse]] = Utils.now.flatMap { now =>
+    streamsRef.modify { streams =>
+      CommonValidations
+        .getStreamNameArn(streamName, streamArn, awsRegion, awsAccountId)
+        .flatMap { case (name, arn) =>
+          CommonValidations
+            .validateStreamName(name)
+            .flatMap(_ =>
+              CommonValidations
+                .findStream(arn, streams)
+                .flatMap { stream =>
+                  (
+                    CommonValidations
+                      .isStreamActiveOrUpdating(arn, streams),
+                    CommonValidations.validateData(data),
+                    sequenceNumberForOrdering match {
+                      case None => Right(())
+                      case Some(seqNo) =>
+                        seqNo.parse.flatMap {
+                          case parts: SequenceNumberParts
+                              if parts.seqTime.toEpochMilli > now.toEpochMilli =>
+                            InvalidArgumentException(
+                              s"Sequence time in the future"
+                            ).asLeft
+                          case x => Right(x)
+                        }
+                    },
+                    CommonValidations.validatePartitionKey(partitionKey),
+                    explicitHashKey match {
+                      case Some(explHashKeh) =>
+                        CommonValidations.validateExplicitHashKey(explHashKeh)
+                      case None => Right(())
+                    },
+                    CommonValidations
+                      .computeShard(partitionKey, explicitHashKey, stream)
+                      .flatMap { case (shard, records) =>
+                        CommonValidations
+                          .isShardOpen(shard)
+                          .map(_ => (shard, records))
 
-                    }
-                ).mapN { case (_, _, _, _, _, (shard, records)) =>
-                  (stream, shard, records)
+                      }
+                  ).mapN { case (_, _, _, _, _, (shard, records)) =>
+                    (stream, shard, records)
+                  }
                 }
-              }
-          )
-      }
-      .map { case (stream, shard, records) =>
-        val seqNo = SequenceNumber.create(
-          shard.createdAtTimestamp,
-          shard.shardId.index,
-          None,
-          Some(records.length),
-          Some(now)
-        )
-        (
-          streams.updateStream {
-            stream.copy(
-              shards = stream.shards ++ Map(
-                shard -> (records :+ KinesisRecord(
-                  now,
-                  data,
-                  stream.encryptionType,
-                  partitionKey,
-                  seqNo
-                ))
-              )
             )
-          },
-          PutRecordResponse(
-            stream.encryptionType,
-            seqNo,
-            shard.shardId.shardId
+        }
+        .map { case (stream, shard, records) =>
+          val seqNo = SequenceNumber.create(
+            shard.createdAtTimestamp,
+            shard.shardId.index,
+            None,
+            Some(records.length),
+            Some(now)
           )
-        )
-      }
-      .sequenceWithDefault(streams)
+          (
+            streams.updateStream {
+              stream.copy(
+                shards = stream.shards ++ Map(
+                  shard -> (records :+ KinesisRecord(
+                    now,
+                    data,
+                    stream.encryptionType,
+                    partitionKey,
+                    seqNo
+                  ))
+                )
+              )
+            },
+            PutRecordResponse(
+              stream.encryptionType,
+              seqNo,
+              shard.shardId.shardId
+            )
+          )
+        }
+        .sequenceWithDefault(streams)
+    }
   }
 }
 
