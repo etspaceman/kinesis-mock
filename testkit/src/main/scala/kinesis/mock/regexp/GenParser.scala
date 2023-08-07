@@ -5,6 +5,7 @@ import scala.util.parsing.input.CharSequenceReader
 
 import ast._
 
+@annotation.nowarn("cat=lint-byname-implicit")
 object GenParser extends RegexParsers with PackratParsers {
 
   override def skipWhitespace: Boolean = false

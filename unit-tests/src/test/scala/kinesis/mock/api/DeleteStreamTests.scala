@@ -56,7 +56,7 @@ class DeleteStreamTests
   })
 
   test("It should reject when the stream doesn't exist")(PropF.forAllF {
-    streamArn: StreamArn =>
+    (streamArn: StreamArn) =>
       val streams = Streams.empty
 
       for {

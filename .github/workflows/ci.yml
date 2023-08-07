@@ -17,6 +17,11 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+concurrency:
+  group: ${{ github.workflow }} @ ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and Test
@@ -24,45 +29,31 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.11]
+        scala: [2.13]
         java: [temurin@17]
         cbor_enabled: [true, false]
-        service_port: [4567, 4568]
         project: [root-jvm-213, root-js-213]
+        service_port: [4567, 4568]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - name: Checkout current branch (full)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Download Java (temurin@17)
-        id: download-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: typelevel/download-java@v2
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
         if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v3
         with:
-          distribution: jdkfile
+          distribution: temurin
           java-version: 17
-          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt 'project ${{ matrix.project }}' reload +update
 
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
@@ -122,6 +113,39 @@ jobs:
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt 'project ${{ matrix.project }}' fixCheck
 
+  dependency-submission:
+    name: Submit Dependencies
+    if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        java: [temurin@17]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt reload +update
+
+      - name: Submit Dependencies
+        uses: scalacenter/sbt-dependency-submission@v2
+        with:
+          modules-ignore: unit-tests_sjs1_2.13 kinesis-mock-root_2.13 kinesis-mock_sjs1_2.13 kinesis-mock-root_2.13 testkit_sjs1_2.13 kinesis-mock-root_2.13 unit-tests_2.13 integration-tests_2.13 kinesis-mock_2.13 testkit_2.13
+          configs-ignore: test scala-tool scala-doc-tool test-internal
+
   publishDocker:
     name: Publish Docker Image
     needs: [build]
@@ -137,33 +161,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Java (temurin@17)
-        id: download-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: typelevel/download-java@v2
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
         if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v3
         with:
-          distribution: jdkfile
+          distribution: temurin
           java-version: 17
-          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt '++ ${{ matrix.scala }}' reload +update
 
       - name: Compile
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
@@ -208,33 +217,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Java (temurin@17)
-        id: download-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: typelevel/download-java@v2
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
         if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v3
         with:
-          distribution: jdkfile
+          distribution: temurin
           java-version: 17
-          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt '++ ${{ matrix.scala }}' reload +update
 
       - name: Compile
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
@@ -286,33 +280,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Java (temurin@17)
-        id: download-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: typelevel/download-java@v2
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
         if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v3
         with:
-          distribution: jdkfile
+          distribution: temurin
           java-version: 17
-          jdkFile: ${{ steps.download-java-temurin-17.outputs.jdkFile }}
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt '++ ${{ matrix.scala }}' reload +update
 
       - name: Compile
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'

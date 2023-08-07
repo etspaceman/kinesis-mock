@@ -32,7 +32,7 @@ trait CirceTests extends munit.ScalaCheckSuite {
       CT: ClassTag[A]
   ): Unit =
     property(s"Circe Identity Laws Test for ${CT.runtimeClass.getName}") {
-      forAll { a: A =>
+      forAll { (a: A) =>
         val encoded = a.asJson.noSpaces
         val decoded = parse(encoded).flatMap(_.as[A])
 

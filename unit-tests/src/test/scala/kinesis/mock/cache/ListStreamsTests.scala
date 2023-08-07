@@ -29,7 +29,7 @@ import kinesis.mock.models.AwsRegion
 import kinesis.mock.syntax.scalacheck._
 
 class ListStreamsTests extends munit.CatsEffectSuite {
-  test("It should list streams")(PropF.forAllF { awsRegion: AwsRegion =>
+  test("It should list streams")(PropF.forAllF { (awsRegion: AwsRegion) =>
     for {
       cacheConfig <- CacheConfig.read.load[IO]
       cache <- Cache(cacheConfig)

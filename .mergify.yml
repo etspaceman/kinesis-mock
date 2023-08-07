@@ -10,21 +10,21 @@ pull_request_rules:
   conditions:
   - author=scala-steward
   - body~=labels:.*early-semver-patch
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, true, root-jvm-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, true, root-jvm-213,
     4568)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-js-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, true, root-js-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, true, root-js-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, true, root-js-213,
     4568)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, false, root-jvm-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-jvm-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, false, root-jvm-213,
     4568)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-js-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, false, root-js-213,
     4567)
-  - status-success=Build and Test (ubuntu-latest, 2.13.11, temurin@17, false, root-js-213,
+  - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, false, root-js-213,
     4568)
   actions:
     merge: {}
