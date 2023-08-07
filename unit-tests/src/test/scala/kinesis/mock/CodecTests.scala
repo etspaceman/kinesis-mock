@@ -36,7 +36,7 @@ trait CodecTests extends munit.ScalaCheckSuite {
     property(
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Circe"
     ) {
-      forAll { a: A =>
+      forAll { (a: A) =>
         implicit val E: circe.Encoder[A] = Encoder[A].circeEncoder
         implicit val D: circe.Decoder[A] = Decoder[A].circeDecoder
         val encoded = a.asJson.noSpaces
@@ -50,7 +50,7 @@ trait CodecTests extends munit.ScalaCheckSuite {
     property(
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Circe CBOR"
     ) {
-      forAll { a: A =>
+      forAll { (a: A) =>
         implicit val E: circe.Encoder[A] = Encoder[A].circeCborEncoder
         implicit val D: circe.Decoder[A] = Decoder[A].circeCborDecoder
         val encoded = a.asJson.noSpaces
@@ -64,7 +64,7 @@ trait CodecTests extends munit.ScalaCheckSuite {
     property(
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Borer"
     ) {
-      forAll { a: A =>
+      forAll { (a: A) =>
         implicit val E: borer.Encoder[A] = Encoder[A].borerEncoder
         implicit val D: borer.Decoder[A] = Decoder[A].borerDecoder
         val encoded = Cbor.encode(a).toByteArray
