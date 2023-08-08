@@ -19,6 +19,7 @@ object KinesisMockPlugin extends AutoPlugin {
   val autoImport: KinesisMockPluginKeys.type = KinesisMockPluginKeys
 
   import GenerativePlugin.autoImport._
+  import MergifyPlugin.autoImport._
   import TypelevelCiPlugin.autoImport._
   import TypelevelSettingsPlugin.autoImport._
   import TypelevelVersioningPlugin.autoImport._
@@ -66,6 +67,11 @@ object KinesisMockPlugin extends AutoPlugin {
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     tlCiStewardValidateConfig :=
       Some(file(".scala-steward.conf")).filter(_.exists()),
+    mergifyStewardConfig := Some(
+      MergifyStewardConfig(action =
+        MergifyAction.Merge(method = Some("squash"))
+      )
+    ),
     githubWorkflowTargetTags += "v*",
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
     githubWorkflowBuildMatrixFailFast := Some(false),
