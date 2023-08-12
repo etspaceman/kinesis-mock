@@ -1,0 +1,11 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/java
+{
+	"name": "Scala",
+	"image": "ghcr.io/etspaceman/devcontainer-scala:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": ["scala-lang.scala", "scalameta.metals", "disneystreaming.smithy"]
+        }
+    }
+}
