@@ -20,7 +20,7 @@ services:
     depends_on:
       - dynamodb
   kinesis-mock:
-    image: "ghcr.io/etspaceman/kinesis-mock:${DOCKER_TAG_VERSION}"
+    image: "ghcr.io/mattmoore/kinesis-mock:${DOCKER_TAG_VERSION}"
     environment:
       - "LOG_LEVEL=DEBUG"
       # This must match 'initializedStreams' variable in AwsFunctionalTests

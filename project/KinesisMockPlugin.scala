@@ -144,6 +144,18 @@ object KinesisMockPlugin extends AutoPlugin {
       )
 
       val integrationTest = List(
+        WorkflowStep.Run(
+          List(
+            "echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin"
+          ),
+          name = Some("Login to registry"),
+          cond = Some(primaryJavaOSCond.value)
+        ),
+        WorkflowStep.Sbt(
+          List("kinesis-mockJS/ensureDockerBuildx"),
+          name = Some("Create Docker buildx builder"),
+          cond = Some(primaryJavaOSCond.value)
+        ),
         WorkflowStep.Use(
           UseRef.Public("nick-fields", "retry", "v2"),
           name = Some("Docker Compose Up"),
@@ -239,16 +251,21 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Sbt(
-              List("kinesis-mockJS/buildDockerImage"),
-              name = Some("Build Docker Image"),
-              cond = Some(primaryJavaOSCond.value)
-            ),
             WorkflowStep.Run(
               List(
                 "echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin"
               ),
               name = Some("Login to registry"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/ensureDockerBuildx"),
+              name = Some("Create Docker buildx builder"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/buildDockerImage"),
+              name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Run(
@@ -262,7 +279,7 @@ object KinesisMockPlugin extends AutoPlugin {
             WorkflowStep.Run(
               List(
                 """echo "${VERSION}"""",
-                """docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}""""
+                """docker push "ghcr.io/mattmoore/kinesis-mock:${VERSION}""""
               ),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)

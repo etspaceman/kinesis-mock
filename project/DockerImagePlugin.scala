@@ -16,16 +16,23 @@ object DockerImagePlugin extends AutoPlugin {
     s"${dockerRepository.value}/${dockerNamespace.value}/${name.value}:${imageTag.value}"
   }
 
+  val ensureDockerBuildxTask: Def.Initialize[Task[Unit]] = Def.task {
+    if (s"""docker buildx inspect multi-arch-builder""".! == 1) {
+      s"""docker buildx create --use --name multi-arch-builder""".!
+    }
+  }
+
   val buildDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
     val cmd =
-      s"""docker build \\
+      s"""docker buildx build \\
+         |  --push \\
+         |  --platform linux/amd64,linux/arm64/v8 \\
          |  --build-arg DOCKER_SERVICE_FILE=${serviceFileLocation.value}${serviceFileName.value} \\
          |  -f ${dockerfileLocation.value + dockerfile.value} \\
          |  -t ${dockerTagTask.value} \\
          |  .""".stripMargin
     log.info(s"Running $cmd")
-
     val res = cmd.replace("\\", "").!
     if (res != 0)
       throw new IllegalStateException(s"docker build returned $res")
@@ -43,11 +50,12 @@ object DockerImagePlugin extends AutoPlugin {
 
   def settings: Seq[Setting[_]] =
     Seq(
+      ensureDockerBuildx := ensureDockerBuildxTask.value,
       buildDockerImage := buildDockerImageTask.value,
       pushDockerImage := pushDockerImageTask.value,
       imageTag := (ThisBuild / version).value,
       dockerRepository := "ghcr.io",
-      dockerNamespace := "etspaceman",
+      dockerNamespace := "mattmoore",
       serviceFileLocation := "docker/image/lib/",
       serviceFileName := "main.js",
       dockerfileLocation := "docker/",
@@ -72,6 +80,8 @@ object DockerImagePluginKeys {
   val dockerfileLocation =
     settingKey[String]("Location of the Dockerfile, e.g. docker/")
   val dockerfile = settingKey[String]("Dockerfile to use, e.g. Dockerfile")
+  val ensureDockerBuildx =
+    taskKey[Unit]("Ensures buildx builder exists and creates one if necessary.")
   val buildDockerImage =
     taskKey[Unit]("Builds the docker images defined in the project.")
   val pushDockerImage =

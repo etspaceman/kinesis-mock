@@ -65,7 +65,7 @@ lazy val `kinesis-mock-js` =
       npmPackageDescription := description.value,
       npmPackageLicense := Some("MIT"),
       npmPackageRepository := Some(
-        "https://github.com/etspaceman/kinesis-mock"
+        "https://github.com/mattmoore/kinesis-mock"
       ),
       npmPackageBinaryEnable := true,
       npmPackageStage := Stage.FullOpt,

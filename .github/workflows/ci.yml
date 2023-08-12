@@ -79,6 +79,14 @@ jobs:
           command: sbt 'project ${{ matrix.project }}' unit-tests/test
           retry_on: error
 
+      - name: Login to registry
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+      - name: Create Docker buildx builder
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt 'project ${{ matrix.project }}' kinesis-mockJS/ensureDockerBuildx
+
       - name: Docker Compose Up
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
         uses: nick-fields/retry@v2
@@ -182,13 +190,17 @@ jobs:
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
-      - name: Build Docker Image
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
-
       - name: Login to registry
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+      - name: Create Docker buildx builder
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/ensureDockerBuildx
+
+      - name: Build Docker Image
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
       - name: Get version
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
@@ -200,7 +212,7 @@ jobs:
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
         run: |
           echo "${VERSION}"
-          docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}"
+          docker push "ghcr.io/mattmoore/kinesis-mock:${VERSION}"
 
   publishJSAssets:
     name: Publish JS Assets
