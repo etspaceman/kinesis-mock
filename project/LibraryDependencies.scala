@@ -85,7 +85,7 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.9.1"
+    val fs2Version = "3.9.2"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
