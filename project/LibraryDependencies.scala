@@ -4,7 +4,7 @@ import sbt._
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.37")
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.38")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
   )
