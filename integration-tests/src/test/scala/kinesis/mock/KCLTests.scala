@@ -26,6 +26,7 @@ import software.amazon.kinesis.leases.dynamodb.{
 import software.amazon.kinesis.lifecycle.LifecycleConfig
 import software.amazon.kinesis.metrics.MetricsConfig
 import software.amazon.kinesis.processor.ProcessorConfig
+import software.amazon.kinesis.processor.SingleStreamTracker
 import software.amazon.kinesis.retrieval.polling.PollingConfig
 import software.amazon.kinesis.retrieval.{KinesisClientRecord, RetrievalConfig}
 
@@ -134,9 +135,14 @@ class KCLTests extends AwsFunctionalTests {
                 new ProcessorConfig(KCLRecordProcessorFactory(resultsQueue)),
                 new RetrievalConfig(
                   resources.kinesisClient,
-                  resources.streamName.streamName,
+                  new SingleStreamTracker(
+                    StreamIdentifier.singleStreamInstance(
+                      resources.streamName.streamName
+                    ),
+                    initialPosition
+                  ),
                   appName
-                ).initialPositionInStreamExtended(initialPosition)
+                )
                   .retrievalSpecificConfig(retrievalSpecificConfig)
                   .retrievalFactory(retrievalSpecificConfig.retrievalFactory())
               )
