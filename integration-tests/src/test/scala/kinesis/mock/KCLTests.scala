@@ -111,6 +111,7 @@ class KCLTests extends AwsFunctionalTests {
               defaultLeaseManagement.tableCreatorCallback(),
               defaultLeaseManagement.dynamoDbRequestTimeout(),
               defaultLeaseManagement.billingMode(),
+              defaultLeaseManagement.tags(),
               new DynamoDBLeaseSerializer(),
               defaultLeaseManagement.customShardDetectorProvider(),
               false,
