@@ -8,7 +8,7 @@
 pull_request_rules:
 - name: merge scala-steward's PRs
   conditions:
-  - author=scala-steward
+  - author=etspaceman-scala-steward-app[bot]
   - body~=labels:.*early-semver-patch
   - status-success=Build and Test (ubuntu-latest, 2.13, temurin@17, true, root-jvm-213,
     4567)

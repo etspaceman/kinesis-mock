@@ -68,8 +68,9 @@ object KinesisMockPlugin extends AutoPlugin {
     tlCiStewardValidateConfig :=
       Some(file(".scala-steward.conf")).filter(_.exists()),
     mergifyStewardConfig := Some(
-      MergifyStewardConfig(action =
-        MergifyAction.Merge(method = Some("squash"))
+      MergifyStewardConfig(
+        action = MergifyAction.Merge(method = Some("squash")),
+        author = "etspaceman-scala-steward-app[bot]"
       )
     ),
     githubWorkflowTargetTags += "v*",
