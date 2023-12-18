@@ -41,8 +41,10 @@ services:
       - "AWS_ACCESS_KEY_ID=foo"
       - "AWS_SECRET_ACCESS_KEY=bar"
       - "AWS_DEFAULT_REGION=us-east-1"
-    entrypoint: "bash -c"
-    command: "'aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis list-streams && exit 0 || exit 1'"
+    entrypoint: "bash"
+    command: "/awscli-tests.sh"
+    volumes:
+      - "./scripts/awscli-tests.sh:/awscli-tests.sh"
     depends_on:
       kinesis-mock:
         condition: service_healthy
