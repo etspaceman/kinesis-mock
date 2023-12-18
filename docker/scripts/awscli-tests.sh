@@ -16,3 +16,5 @@ aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis put-reco
 SHARD_ITERATOR=$(aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis get-shard-iterator --shard-id shardId-000000000000 --shard-iterator-type TRIM_HORIZON --stream-name $KINESIS_STREAM_NAME --query 'ShardIterator');
 
 aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis get-records --shard-iterator $SHARD_ITERATOR
+
+aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis delete-stream --stream-name $KINESIS_STREAM_NAME
