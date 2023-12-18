@@ -30,7 +30,7 @@ import kinesis.mock.validations.CommonValidations
 
 final case class ShardIterator(value: String) {
   def parse(now: Instant): Response[ShardIteratorParts] = {
-    val decoded = Base64.getDecoder.decode(value)
+    val decoded = Base64.getDecoder.decode(value.replaceAll("^\"|\"$", ""))
 
     val decrypted = new String(
       AES.decrypt(
