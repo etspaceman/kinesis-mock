@@ -11,7 +11,7 @@ addSbtPlugin("org.typelevel" % "sbt-typelevel-kernel" % "0.6.4")
 addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.6.4")
 addSbtPlugin("org.portable-scala" % "sbt-crossproject" % "1.3.2")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.14.0")
-addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.2")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
 addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.0")
 // Explicitly bumping until sbt-typelevel upgrades.
