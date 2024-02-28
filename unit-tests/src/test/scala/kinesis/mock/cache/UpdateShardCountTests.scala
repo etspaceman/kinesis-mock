@@ -48,7 +48,7 @@ class UpdateShardCountTests
           .createStream(
             CreateStreamRequest(Some(5), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -62,7 +62,7 @@ class UpdateShardCountTests
               10
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -74,7 +74,7 @@ class UpdateShardCountTests
           .describeStreamSummary(
             describeStreamSummaryReq,
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -83,7 +83,7 @@ class UpdateShardCountTests
           .describeStreamSummary(
             describeStreamSummaryReq,
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -99,7 +99,7 @@ class UpdateShardCountTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

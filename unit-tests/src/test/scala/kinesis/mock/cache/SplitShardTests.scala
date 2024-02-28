@@ -48,7 +48,7 @@ class SplitShardTests
           .createStream(
             CreateStreamRequest(Some(5), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -63,7 +63,7 @@ class SplitShardTests
           None
         )
         shardToSplit <- cache
-          .listShards(listShardsReq, context, false, Some(awsRegion))
+          .listShards(listShardsReq, context, isCbor = false, Some(awsRegion))
           .rethrow
           .map(_.shards.head)
         newStartingHashKey = shardToSplit.hashKeyRange.endingHashKey / BigInt(2)
@@ -76,7 +76,7 @@ class SplitShardTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -88,7 +88,7 @@ class SplitShardTests
           .describeStreamSummary(
             describeStreamSummaryReq,
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -97,12 +97,12 @@ class SplitShardTests
           .describeStreamSummary(
             describeStreamSummaryReq,
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
         checkShards <- cache
-          .listShards(listShardsReq, context, false, Some(awsRegion))
+          .listShards(listShardsReq, context, isCbor = false, Some(awsRegion))
           .rethrow
         newShards = checkShards.shards.filter(shard =>
           shard.parentShardId.contains(shardToSplit.shardId)

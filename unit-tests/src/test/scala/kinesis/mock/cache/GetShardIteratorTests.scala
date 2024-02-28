@@ -49,7 +49,7 @@ class GetShardIteratorTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -66,7 +66,7 @@ class GetShardIteratorTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -82,7 +82,7 @@ class GetShardIteratorTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

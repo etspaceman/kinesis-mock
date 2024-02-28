@@ -50,7 +50,7 @@ class GetRecordsTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -62,7 +62,7 @@ class GetRecordsTests
             .map(_.copy(streamName = Some(streamName), streamArn = None))
         )
         _ <- recordRequests.traverse(req =>
-          cache.putRecord(req, context, false, Some(awsRegion)).rethrow
+          cache.putRecord(req, context, isCbor = false, Some(awsRegion)).rethrow
         )
         shard <- cache
           .listShards(
@@ -76,7 +76,7 @@ class GetRecordsTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -92,7 +92,7 @@ class GetRecordsTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -101,7 +101,7 @@ class GetRecordsTests
           .getRecords(
             GetRecordsRequest(None, shardIterator, None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

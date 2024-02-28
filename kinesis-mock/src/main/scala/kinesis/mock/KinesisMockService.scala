@@ -65,8 +65,8 @@ object KinesisMockService extends IOApp {
       app = ErrorHandling.Recover.total(
         ErrorAction.log(
           Logger.httpApp(
-            true,
-            true,
+            logHeaders = true,
+            logBody = true,
             _ => false,
             logAction =
               Some((msg: String) => logger.trace(context.context)(msg))

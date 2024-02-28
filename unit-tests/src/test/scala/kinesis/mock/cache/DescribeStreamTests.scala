@@ -46,7 +46,7 @@ class DescribeStreamTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -54,7 +54,7 @@ class DescribeStreamTests
           .describeStream(
             DescribeStreamRequest(None, None, Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -70,7 +70,7 @@ class DescribeStreamTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -78,7 +78,7 @@ class DescribeStreamTests
         expected = StreamDescription(
           Some(EncryptionType.NONE),
           Vector(ShardLevelMetrics(Vector.empty)),
-          false,
+          hasMoreShards = false,
           None,
           24,
           shardSummary,

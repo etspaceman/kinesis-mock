@@ -19,7 +19,6 @@ package kinesis.mock.api
 import scala.concurrent.duration._
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils

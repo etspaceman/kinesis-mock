@@ -40,8 +40,8 @@ class PersistenceTests
     with munit.ScalaCheckEffectSuite {
 
   def persistConfig(uuid: String) = PersistConfig(
-    true,
-    true,
+    loadIfExists = true,
+    shouldPersist = true,
     "testing/data",
     s"test-$uuid",
     0.millis
@@ -72,7 +72,7 @@ class PersistenceTests
             .createStream(
               CreateStreamRequest(Some(1), None, streamName),
               context,
-              false,
+              isCbor = false,
               Some(awsRegion)
             )
             .rethrow
@@ -84,7 +84,9 @@ class PersistenceTests
               .map(_.copy(streamName = Some(streamName), streamArn = None))
           )
           _ <- recordRequests.traverse(req =>
-            cache.putRecord(req, context, false, Some(awsRegion)).rethrow
+            cache
+              .putRecord(req, context, isCbor = false, Some(awsRegion))
+              .rethrow
           )
           _ <- cache.persistToDisk(context)
           newCache <- Cache.loadFromFile(cacheConfig)
@@ -100,7 +102,7 @@ class PersistenceTests
                 None
               ),
               context,
-              false,
+              isCbor = false,
               Some(awsRegion)
             )
             .rethrow
@@ -116,7 +118,7 @@ class PersistenceTests
                 None
               ),
               context,
-              false,
+              isCbor = false,
               Some(awsRegion)
             )
             .rethrow
@@ -125,7 +127,7 @@ class PersistenceTests
             .getRecords(
               GetRecordsRequest(None, shardIterator, None),
               context,
-              false,
+              isCbor = false,
               Some(awsRegion)
             )
             .rethrow

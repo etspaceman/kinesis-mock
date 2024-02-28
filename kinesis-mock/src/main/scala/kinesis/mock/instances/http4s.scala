@@ -43,7 +43,7 @@ object http4s {
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
             MediaType.application.json
-          ).decode(msg, false)
+          ).decode(msg, strict = false)
 
         case Some(ct) if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
           implicit val D = Decoder[A].borerDecoder

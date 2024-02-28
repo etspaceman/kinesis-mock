@@ -47,7 +47,7 @@ class AddTagsToStreamTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -55,7 +55,7 @@ class AddTagsToStreamTests
           .addTagsToStream(
             AddTagsToStreamRequest(Some(streamName), None, tags),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -68,7 +68,7 @@ class AddTagsToStreamTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

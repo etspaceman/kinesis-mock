@@ -16,7 +16,6 @@
 
 package kinesis.mock.models
 
-import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils

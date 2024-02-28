@@ -51,7 +51,7 @@ class ListStreamsTests extends munit.CatsEffectSuite {
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -60,7 +60,7 @@ class ListStreamsTests extends munit.CatsEffectSuite {
         .listStreams(
           ListStreamsRequest(None, None),
           context,
-          false,
+          isCbor = false,
           Some(awsRegion)
         )
         .rethrow

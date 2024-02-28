@@ -23,7 +23,6 @@ import java.time.Instant
 
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
-import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._

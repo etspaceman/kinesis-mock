@@ -50,7 +50,7 @@ class DeregisterStreamConsumerTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -59,7 +59,7 @@ class DeregisterStreamConsumerTests
           .registerStreamConsumer(
             RegisterStreamConsumerRequest(consumerName, streamArn),
             context,
-            false
+            isCbor = false
           )
           .rethrow
         _ <- IO.sleep(
@@ -73,7 +73,7 @@ class DeregisterStreamConsumerTests
               Some(streamArn)
             ),
             context,
-            false
+            isCbor = false
           )
           .rethrow
         describeStreamConsumerReq = DescribeStreamConsumerRequest(
@@ -85,7 +85,7 @@ class DeregisterStreamConsumerTests
           .describeStreamConsumer(
             describeStreamConsumerReq,
             context,
-            false
+            isCbor = false
           )
           .rethrow
         _ <- IO.sleep(
@@ -94,7 +94,7 @@ class DeregisterStreamConsumerTests
         checkStream2 <- cache.describeStreamConsumer(
           describeStreamConsumerReq,
           context,
-          false
+          isCbor = false
         )
       } yield assert(
         checkStream1.consumerDescription.consumerStatus == ConsumerStatus.DELETING &&

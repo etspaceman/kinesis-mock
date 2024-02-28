@@ -48,7 +48,7 @@ class CreateStreamTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -59,14 +59,14 @@ class CreateStreamTests
         checkStream1 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,
-          false,
+          isCbor = false,
           Some(awsRegion)
         )
         _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
         checkStream2 <- cache.describeStreamSummary(
           describeStreamSummaryReq,
           context,
-          false,
+          isCbor = false,
           Some(awsRegion)
         )
       } yield assert(

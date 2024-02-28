@@ -47,7 +47,7 @@ class RemoveTagsFromStreamTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -55,7 +55,7 @@ class RemoveTagsFromStreamTests
           .addTagsToStream(
             AddTagsToStreamRequest(Some(streamName), None, tags),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -66,14 +66,14 @@ class RemoveTagsFromStreamTests
             tags.tags.keys.toVector
           ),
           context,
-          false,
+          isCbor = false,
           Some(awsRegion)
         )
         res <- cache
           .listTagsForStream(
             ListTagsForStreamRequest(None, None, Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

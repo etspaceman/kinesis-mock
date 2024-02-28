@@ -17,8 +17,6 @@
 package kinesis.mock
 package models
 
-import enumeratum.scalacheck._
-
 import kinesis.mock.instances.arbitrary._
 
 class ModelsCodecTests extends CodecTests {

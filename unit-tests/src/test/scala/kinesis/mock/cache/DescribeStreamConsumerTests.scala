@@ -51,7 +51,7 @@ class DescribeStreamConsumerTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -63,7 +63,7 @@ class DescribeStreamConsumerTests
               streamArn
             ),
             context,
-            false
+            isCbor = false
           )
           .rethrow
 
@@ -75,7 +75,7 @@ class DescribeStreamConsumerTests
               Some(streamArn)
             ),
             context,
-            false
+            isCbor = false
           )
           .rethrow
       } yield assert(

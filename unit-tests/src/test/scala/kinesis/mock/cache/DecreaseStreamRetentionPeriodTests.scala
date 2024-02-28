@@ -48,7 +48,7 @@ class DecreaseStreamRetentionPeriodTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -57,7 +57,7 @@ class DecreaseStreamRetentionPeriodTests
           .increaseStreamRetention(
             IncreaseStreamRetentionPeriodRequest(48, Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -65,7 +65,7 @@ class DecreaseStreamRetentionPeriodTests
           .decreaseStreamRetention(
             DecreaseStreamRetentionPeriodRequest(24, Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -73,7 +73,7 @@ class DecreaseStreamRetentionPeriodTests
           .describeStreamSummary(
             DescribeStreamSummaryRequest(Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
