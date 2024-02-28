@@ -21,7 +21,6 @@ import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
-import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._

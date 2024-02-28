@@ -18,7 +18,6 @@ package kinesis.mock
 package api
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary._

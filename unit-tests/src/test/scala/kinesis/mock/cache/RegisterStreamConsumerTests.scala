@@ -50,7 +50,7 @@ class RegisterStreamConsumerTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -59,7 +59,7 @@ class RegisterStreamConsumerTests
           .registerStreamConsumer(
             RegisterStreamConsumerRequest(consumerName, streamArn),
             context,
-            false
+            isCbor = false
           )
           .rethrow
         describeStreamConsumerReq = DescribeStreamConsumerRequest(
@@ -71,7 +71,7 @@ class RegisterStreamConsumerTests
           .describeStreamConsumer(
             describeStreamConsumerReq,
             context,
-            false
+            isCbor = false
           )
           .rethrow
         _ <- IO.sleep(
@@ -81,7 +81,7 @@ class RegisterStreamConsumerTests
           .describeStreamConsumer(
             describeStreamConsumerReq,
             context,
-            false
+            isCbor = false
           )
           .rethrow
       } yield assert(

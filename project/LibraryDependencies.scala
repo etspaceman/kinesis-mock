@@ -2,13 +2,13 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
-  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.2"
+  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.38")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.4.14"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.1"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "1.0.0-M10"
+    val munitVersion = "1.0.0-M11"
     val core = Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
@@ -52,7 +52,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.24"
+    val http4sVersion = "0.23.25"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -91,14 +91,14 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.5.1"
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.7"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.5.5"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.8"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
-    val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.16.14"
+    val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.24.12"
   }
 
   object Refined {
-    val refinedVersion = "0.11.0"
+    val refinedVersion = "0.11.1"
     val scalacheck =
       Def.setting("eu.timepit" %%% "refined-scalacheck" % refinedVersion)
   }

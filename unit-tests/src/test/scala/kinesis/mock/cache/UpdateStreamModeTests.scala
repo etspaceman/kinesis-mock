@@ -49,7 +49,7 @@ class UpdateStreamModeTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -61,14 +61,14 @@ class UpdateStreamModeTests
               streamModeDetails
             ),
             context,
-            false
+            isCbor = false
           )
           .rethrow
         res1 <- cache
           .describeStreamSummary(
             DescribeStreamSummaryRequest(Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -77,7 +77,7 @@ class UpdateStreamModeTests
           .describeStreamSummary(
             DescribeStreamSummaryRequest(Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

@@ -46,7 +46,7 @@ class ListShardsTests
           .createStream(
             CreateStreamRequest(Some(5), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -62,7 +62,7 @@ class ListShardsTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

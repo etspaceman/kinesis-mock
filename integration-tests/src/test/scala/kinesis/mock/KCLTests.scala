@@ -9,7 +9,6 @@ import java.util.Date
 
 import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
-import cats.syntax.all._
 import retry._
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient

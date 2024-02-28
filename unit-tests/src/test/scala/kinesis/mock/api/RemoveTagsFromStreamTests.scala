@@ -20,7 +20,6 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 

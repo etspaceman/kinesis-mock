@@ -46,7 +46,7 @@ class EnableEnhancedMonitoringTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -58,7 +58,7 @@ class EnableEnhancedMonitoringTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -66,7 +66,7 @@ class EnableEnhancedMonitoringTests
           .describeStreamSummary(
             DescribeStreamSummaryRequest(Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow

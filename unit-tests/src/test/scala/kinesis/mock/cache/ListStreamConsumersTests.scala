@@ -50,7 +50,7 @@ class ListStreamConsumersTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -59,7 +59,7 @@ class ListStreamConsumersTests
           .describeStreamSummary(
             DescribeStreamSummaryRequest(Some(streamName), None),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -80,7 +80,7 @@ class ListStreamConsumersTests
               .registerStreamConsumer(
                 RegisterStreamConsumerRequest(consumerName, streamArn),
                 context,
-                false
+                isCbor = false
               )
               .rethrow
         )
@@ -88,7 +88,7 @@ class ListStreamConsumersTests
           .listStreamConsumers(
             ListStreamConsumersRequest(None, None, streamArn, None),
             context,
-            false
+            isCbor = false
           )
           .rethrow
       } yield assert(

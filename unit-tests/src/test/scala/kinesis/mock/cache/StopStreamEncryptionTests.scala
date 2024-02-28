@@ -49,7 +49,7 @@ class StopStreamEncryptionTests
           .createStream(
             CreateStreamRequest(Some(1), None, streamName),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -64,7 +64,7 @@ class StopStreamEncryptionTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
@@ -80,19 +80,29 @@ class StopStreamEncryptionTests
               None
             ),
             context,
-            false,
+            isCbor = false,
             Some(awsRegion)
           )
           .rethrow
         describeReq = DescribeStreamSummaryRequest(Some(streamName), None)
         checkStream1 <- cache
-          .describeStreamSummary(describeReq, context, false, Some(awsRegion))
+          .describeStreamSummary(
+            describeReq,
+            context,
+            isCbor = false,
+            Some(awsRegion)
+          )
           .rethrow
         _ <- IO.sleep(
           cacheConfig.stopStreamEncryptionDuration.plus(400.millis)
         )
         checkStream2 <- cache
-          .describeStreamSummary(describeReq, context, false, Some(awsRegion))
+          .describeStreamSummary(
+            describeReq,
+            context,
+            isCbor = false,
+            Some(awsRegion)
+          )
           .rethrow
       } yield assert(
         checkStream1.streamDescriptionSummary.encryptionType.contains(
