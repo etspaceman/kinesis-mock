@@ -18,8 +18,9 @@ package kinesis.mock
 
 import scala.concurrent.duration._
 
+import cats.effect.Resource
 import cats.effect.std.Semaphore
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, ResourceApp}
 import cats.implicits._
 import com.comcast.ip4s.Host
 import io.circe.syntax._
@@ -35,33 +36,33 @@ import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
-object KinesisMockService extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] =
+object KinesisMockService extends ResourceApp.Forever {
+  override def run(args: List[String]): Resource[IO, Unit] =
     for {
-      logLevel <- ConsoleLogger.LogLevel.read.load[IO]
+      logLevel <- ConsoleLogger.LogLevel.read.resource[IO]
       logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
-      cacheConfig <- CacheConfig.read.load[IO]
+      cacheConfig <- CacheConfig.read.resource[IO]
       context = LoggingContext.create
-      _ <- logger.info(
-        context.addJson("cacheConfig", cacheConfig.asJson).context
-      )(
-        "Logging Cache Config"
-      )
-      cache <- IO
-        .pure(cacheConfig.persistConfig.loadIfExists)
-        .ifM(
-          Cache.loadFromFile(cacheConfig),
-          Cache(cacheConfig)
+      _ <- logger
+        .info(
+          context.addJson("cacheConfig", cacheConfig.asJson).context
+        )(
+          "Logging Cache Config"
         )
+        .toResource
+      cache <-
+        if (cacheConfig.persistConfig.loadIfExists)
+          Cache.loadFromFile(cacheConfig)
+        else Cache(cacheConfig)
       _ <- initializeStreams(
         cache,
         cacheConfig.createStreamDuration,
         context,
         logger,
         cacheConfig.initializeStreams.getOrElse(Map.empty)
-      )
-      serviceConfig <- KinesisMockServiceConfig.read.load[IO]
-      tlsContext <- TLS.context(serviceConfig)
+      ).toResource
+      serviceConfig <- KinesisMockServiceConfig.read.resource[IO]
+      tlsContext <- TLS.context(serviceConfig).toResource
       app = ErrorHandling.Recover.total(
         ErrorAction.log(
           Logger.httpApp(
@@ -79,9 +80,11 @@ object KinesisMockService extends IOApp {
             (t, msg) => logger.error(context.context, t)(msg)
         )
       )
-      host <- IO.fromOption(Host.fromString("0.0.0.0"))(
-        new RuntimeException("Invalid hostname")
-      )
+      host <- IO
+        .fromOption(Host.fromString("0.0.0.0"))(
+          new RuntimeException("Invalid hostname")
+        )
+        .toResource
       tlsServer = EmberServerBuilder
         .default[IO]
         .withPort(serviceConfig.tlsPort)
@@ -97,12 +100,16 @@ object KinesisMockService extends IOApp {
         .withHttpApp(app)
         .withHttp2
         .build
-      _ <- logger.info(
-        s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
-      )
-      _ <- logger.info(
-        s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
-      )
+      _ <- logger
+        .info(
+          s"Starting Kinesis TLS Mock Service on port ${serviceConfig.tlsPort}"
+        )
+        .toResource
+      _ <- logger
+        .info(
+          s"Starting Kinesis Plain Mock Service on port ${serviceConfig.plainPort}"
+        )
+        .toResource
       res <- tlsServer
         .both(plainServer)
         .both(
@@ -117,8 +124,7 @@ object KinesisMockService extends IOApp {
           IO.pure(cacheConfig.persistConfig.shouldPersist)
             .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
         )
-        .use(_ => IO.never)
-        .as(ExitCode.Success)
+        .void
     } yield res
 
   def initializeStreams(

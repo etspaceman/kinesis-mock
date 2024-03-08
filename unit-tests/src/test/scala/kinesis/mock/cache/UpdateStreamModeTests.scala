@@ -40,52 +40,55 @@ class UpdateStreamModeTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        streamModeDetails = StreamModeDetails(StreamMode.PROVISIONED)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val streamModeDetails = StreamModeDetails(StreamMode.PROVISIONED)
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            _ <- cache
+              .updateStreamMode(
+                UpdateStreamModeRequest(
+                  StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
+                  streamModeDetails
+                ),
+                context,
+                isCbor = false
+              )
+              .rethrow
+            res1 <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.updateStreamModeDuration.plus(400.millis))
+            res2 <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            res1.streamDescriptionSummary.streamModeDetails == streamModeDetails &&
+              res1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
+              res2.streamDescriptionSummary.streamModeDetails == streamModeDetails &&
+              res2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
           )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        _ <- cache
-          .updateStreamMode(
-            UpdateStreamModeRequest(
-              StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
-              streamModeDetails
-            ),
-            context,
-            isCbor = false
-          )
-          .rethrow
-        res1 <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.updateStreamModeDuration.plus(400.millis))
-        res2 <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(
-        res1.streamDescriptionSummary.streamModeDetails == streamModeDetails &&
-          res1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
-          res2.streamDescriptionSummary.streamModeDetails == streamModeDetails &&
-          res2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
-      )
+        }
   })
 }

@@ -38,59 +38,62 @@ class DescribeStreamTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            res <- cache
+              .describeStream(
+                DescribeStreamRequest(None, None, Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            shardSummary <- cache
+              .listShards(
+                ListShardsRequest(
+                  None,
+                  None,
+                  None,
+                  None,
+                  None,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+              .map(x => x.shards)
+            expected = StreamDescription(
+              Some(EncryptionType.NONE),
+              Vector(ShardLevelMetrics(Vector.empty)),
+              hasMoreShards = false,
+              None,
+              24,
+              shardSummary,
+              StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
+              res.streamDescription.streamCreationTimestamp,
+              StreamModeDetails(StreamMode.PROVISIONED),
+              streamName,
+              StreamStatus.CREATING
+            )
+          } yield assert(
+            res.streamDescription == expected,
+            s"$res\n$expected"
           )
-          .rethrow
-        res <- cache
-          .describeStream(
-            DescribeStreamRequest(None, None, Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        shardSummary <- cache
-          .listShards(
-            ListShardsRequest(
-              None,
-              None,
-              None,
-              None,
-              None,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-          .map(x => x.shards)
-        expected = StreamDescription(
-          Some(EncryptionType.NONE),
-          Vector(ShardLevelMetrics(Vector.empty)),
-          hasMoreShards = false,
-          None,
-          24,
-          shardSummary,
-          StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
-          res.streamDescription.streamCreationTimestamp,
-          StreamModeDetails(StreamMode.PROVISIONED),
-          streamName,
-          StreamStatus.CREATING
-        )
-      } yield assert(
-        res.streamDescription == expected,
-        s"$res\n$expected"
-      )
+        }
   })
 }

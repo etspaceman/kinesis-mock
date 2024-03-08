@@ -39,44 +39,47 @@ class RemoveTagsFromStreamTests
         tags: Tags,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- cache
-          .addTagsToStream(
-            AddTagsToStreamRequest(Some(streamName), None, tags),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- cache.removeTagsFromStream(
-          RemoveTagsFromStreamRequest(
-            Some(streamName),
-            None,
-            tags.tags.keys.toVector
-          ),
-          context,
-          isCbor = false,
-          Some(awsRegion)
-        )
-        res <- cache
-          .listTagsForStream(
-            ListTagsForStreamRequest(None, None, Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(res.tags.tags.isEmpty)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig))
+        .use { case cache =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- cache
+              .addTagsToStream(
+                AddTagsToStreamRequest(Some(streamName), None, tags),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- cache.removeTagsFromStream(
+              RemoveTagsFromStreamRequest(
+                Some(streamName),
+                None,
+                tags.tags.keys.toVector
+              ),
+              context,
+              isCbor = false,
+              Some(awsRegion)
+            )
+            res <- cache
+              .listTagsForStream(
+                ListTagsForStreamRequest(None, None, Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(res.tags.tags.isEmpty)
+        }
   })
 }

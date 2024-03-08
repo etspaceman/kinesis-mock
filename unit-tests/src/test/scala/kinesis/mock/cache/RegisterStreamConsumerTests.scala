@@ -41,53 +41,57 @@ class RegisterStreamConsumerTests
         consumerName: ConsumerName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        streamArn = StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          val streamArn =
+            StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            _ <- cache
+              .registerStreamConsumer(
+                RegisterStreamConsumerRequest(consumerName, streamArn),
+                context,
+                isCbor = false
+              )
+              .rethrow
+            describeStreamConsumerReq = DescribeStreamConsumerRequest(
+              None,
+              Some(consumerName),
+              Some(streamArn)
+            )
+            checkStream1 <- cache
+              .describeStreamConsumer(
+                describeStreamConsumerReq,
+                context,
+                isCbor = false
+              )
+              .rethrow
+            _ <- IO.sleep(
+              cacheConfig.registerStreamConsumerDuration.plus(400.millis)
+            )
+            checkStream2 <- cache
+              .describeStreamConsumer(
+                describeStreamConsumerReq,
+                context,
+                isCbor = false
+              )
+              .rethrow
+          } yield assert(
+            checkStream1.consumerDescription.consumerStatus == ConsumerStatus.CREATING &&
+              checkStream2.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE,
+            s"$checkStream1\n$checkStream2"
           )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        _ <- cache
-          .registerStreamConsumer(
-            RegisterStreamConsumerRequest(consumerName, streamArn),
-            context,
-            isCbor = false
-          )
-          .rethrow
-        describeStreamConsumerReq = DescribeStreamConsumerRequest(
-          None,
-          Some(consumerName),
-          Some(streamArn)
-        )
-        checkStream1 <- cache
-          .describeStreamConsumer(
-            describeStreamConsumerReq,
-            context,
-            isCbor = false
-          )
-          .rethrow
-        _ <- IO.sleep(
-          cacheConfig.registerStreamConsumerDuration.plus(400.millis)
-        )
-        checkStream2 <- cache
-          .describeStreamConsumer(
-            describeStreamConsumerReq,
-            context,
-            isCbor = false
-          )
-          .rethrow
-      } yield assert(
-        checkStream1.consumerDescription.consumerStatus == ConsumerStatus.CREATING &&
-          checkStream2.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE,
-        s"$checkStream1\n$checkStream2"
-      )
+        }
   })
 }

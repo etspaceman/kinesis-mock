@@ -7,6 +7,8 @@ KINESIS_STREAM_NAME=test-stream
 
 aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis create-stream --stream-name $KINESIS_STREAM_NAME --shard-count 1 --stream-mode-details StreamMode=PROVISIONED
 
+sleep 3
+
 base64_content=$(echo '{"test": "data"}' | base64)
 
 aws --endpoint-url 'https://kinesis-mock:4567/' --no-verify-ssl kinesis put-record \

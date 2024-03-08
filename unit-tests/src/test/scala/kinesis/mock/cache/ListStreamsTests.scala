@@ -30,43 +30,46 @@ import kinesis.mock.syntax.scalacheck._
 
 class ListStreamsTests extends munit.CatsEffectSuite {
   test("It should list streams")(PropF.forAllF { (awsRegion: AwsRegion) =>
-    for {
-      cacheConfig <- CacheConfig.read.load[IO]
-      cache <- Cache(cacheConfig)
-      context = LoggingContext.create
-      streamNames <- IO(
-        Gen
-          .listOfN(5, streamNameArbitrary.arbitrary)
-          .suchThat(streamNames =>
-            streamNames
-              .groupBy(identity)
-              .collect { case (_, x) if x.length > 1 => x }
-              .isEmpty
+    CacheConfig.read
+      .resource[IO]
+      .flatMap(cacheConfig => Cache(cacheConfig))
+      .use { case cache =>
+        val context = LoggingContext.create
+        for {
+          streamNames <- IO(
+            Gen
+              .listOfN(5, streamNameArbitrary.arbitrary)
+              .suchThat(streamNames =>
+                streamNames
+                  .groupBy(identity)
+                  .collect { case (_, x) if x.length > 1 => x }
+                  .isEmpty
+              )
+              .one
+              .sorted
           )
-          .one
-          .sorted
-      )
-      _ <- streamNames.traverse(streamName =>
-        cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+          _ <- streamNames.traverse(streamName =>
+            cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
           )
-          .rethrow
-      )
-      res <- cache
-        .listStreams(
-          ListStreamsRequest(None, None),
-          context,
-          isCbor = false,
-          Some(awsRegion)
+          res <- cache
+            .listStreams(
+              ListStreamsRequest(None, None),
+              context,
+              isCbor = false,
+              Some(awsRegion)
+            )
+            .rethrow
+        } yield assert(
+          res.streamNames == streamNames,
+          s"${res.streamNames}\n${streamNames}"
         )
-        .rethrow
-    } yield assert(
-      res.streamNames == streamNames,
-      s"${res.streamNames}\n${streamNames}"
-    )
+      }
   })
 }

@@ -40,83 +40,86 @@ class MergeShardsTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(5), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        adjacentParentShardId = ShardId.create(1).shardId
-        parentShardId = ShardId.create(0).shardId
-        _ <- cache
-          .mergeShards(
-            MergeShardsRequest(
-              adjacentParentShardId,
-              parentShardId,
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(5), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            adjacentParentShardId = ShardId.create(1).shardId
+            parentShardId = ShardId.create(0).shardId
+            _ <- cache
+              .mergeShards(
+                MergeShardsRequest(
+                  adjacentParentShardId,
+                  parentShardId,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            describeStreamSummaryReq = DescribeStreamSummaryRequest(
               Some(streamName),
               None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+            )
+            checkStream1 <- cache
+              .describeStreamSummary(
+                describeStreamSummaryReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(500.millis))
+            checkStream2 <- cache
+              .describeStreamSummary(
+                describeStreamSummaryReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            checkShards <- cache
+              .listShards(
+                ListShardsRequest(
+                  None,
+                  None,
+                  None,
+                  None,
+                  None,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
+              checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
+              checkShards.shards.count(!_.isOpen) == 2 &&
+              checkShards.shards.exists(shard =>
+                shard.adjacentParentShardId.contains(
+                  adjacentParentShardId
+                ) && shard.parentShardId.contains(parentShardId)
+              ) && checkShards.shards.length == 6,
+            s"${checkShards.shards.mkString("\n\t")}\n" +
+              s"$checkStream1\n" +
+              s"$checkStream2"
           )
-          .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(
-          Some(streamName),
-          None
-        )
-        checkStream1 <- cache
-          .describeStreamSummary(
-            describeStreamSummaryReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(500.millis))
-        checkStream2 <- cache
-          .describeStreamSummary(
-            describeStreamSummaryReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        checkShards <- cache
-          .listShards(
-            ListShardsRequest(
-              None,
-              None,
-              None,
-              None,
-              None,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(
-        checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
-          checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
-          checkShards.shards.count(!_.isOpen) == 2 &&
-          checkShards.shards.exists(shard =>
-            shard.adjacentParentShardId.contains(
-              adjacentParentShardId
-            ) && shard.parentShardId.contains(parentShardId)
-          ) && checkShards.shards.length == 6,
-        s"${checkShards.shards.mkString("\n\t")}\n" +
-          s"$checkStream1\n" +
-          s"$checkStream2"
-      )
+        }
   })
 }

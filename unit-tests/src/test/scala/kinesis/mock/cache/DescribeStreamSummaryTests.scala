@@ -38,42 +38,45 @@ class DescribeStreamSummaryTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            res <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            expected = StreamDescriptionSummary(
+              Some(0),
+              Some(EncryptionType.NONE),
+              Vector(ShardLevelMetrics(Vector.empty)),
+              None,
+              1,
+              24,
+              StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
+              res.streamDescriptionSummary.streamCreationTimestamp,
+              StreamModeDetails(StreamMode.PROVISIONED),
+              streamName,
+              StreamStatus.CREATING
+            )
+          } yield assert(
+            res.streamDescriptionSummary == expected,
+            s"$res\n$expected"
           )
-          .rethrow
-        res <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        expected = StreamDescriptionSummary(
-          Some(0),
-          Some(EncryptionType.NONE),
-          Vector(ShardLevelMetrics(Vector.empty)),
-          None,
-          1,
-          24,
-          StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
-          res.streamDescriptionSummary.streamCreationTimestamp,
-          StreamModeDetails(StreamMode.PROVISIONED),
-          streamName,
-          StreamStatus.CREATING
-        )
-      } yield assert(
-        res.streamDescriptionSummary == expected,
-        s"$res\n$expected"
-      )
+        }
   })
 }

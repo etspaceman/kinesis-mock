@@ -43,74 +43,79 @@ class PutRecordTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            recordRequests <- IO(
+              putRecordRequestArb.arbitrary
+                .take(5)
+                .toVector
+                .map(_.copy(streamName = Some(streamName), streamArn = None))
+            )
+            _ <- recordRequests.traverse(req =>
+              cache
+                .putRecord(req, context, isCbor = false, Some(awsRegion))
+                .rethrow
+            )
+            shard <- cache
+              .listShards(
+                ListShardsRequest(
+                  None,
+                  None,
+                  None,
+                  None,
+                  None,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+              .map(_.shards.head)
+            shardIterator <- cache
+              .getShardIterator(
+                GetShardIteratorRequest(
+                  shard.shardId,
+                  ShardIteratorType.TRIM_HORIZON,
+                  None,
+                  Some(streamName),
+                  None,
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+              .map(_.shardIterator)
+            res <- cache
+              .getRecords(
+                GetRecordsRequest(None, shardIterator, None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            res.records.length == 5 && res.records.toVector.map(
+              PutRecordResults.fromKinesisRecord
+            ) === recordRequests.map(PutRecordResults.fromPutRecordRequest),
+            s"${res.records}\n$recordRequests"
           )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        recordRequests <- IO(
-          putRecordRequestArb.arbitrary
-            .take(5)
-            .toVector
-            .map(_.copy(streamName = Some(streamName), streamArn = None))
-        )
-        _ <- recordRequests.traverse(req =>
-          cache.putRecord(req, context, isCbor = false, Some(awsRegion)).rethrow
-        )
-        shard <- cache
-          .listShards(
-            ListShardsRequest(
-              None,
-              None,
-              None,
-              None,
-              None,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-          .map(_.shards.head)
-        shardIterator <- cache
-          .getShardIterator(
-            GetShardIteratorRequest(
-              shard.shardId,
-              ShardIteratorType.TRIM_HORIZON,
-              None,
-              Some(streamName),
-              None,
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-          .map(_.shardIterator)
-        res <- cache
-          .getRecords(
-            GetRecordsRequest(None, shardIterator, None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(
-        res.records.length == 5 && res.records.toVector.map(
-          PutRecordResults.fromKinesisRecord
-        ) === recordRequests.map(PutRecordResults.fromPutRecordRequest),
-        s"${res.records}\n$recordRequests"
-      )
+        }
   })
 }
