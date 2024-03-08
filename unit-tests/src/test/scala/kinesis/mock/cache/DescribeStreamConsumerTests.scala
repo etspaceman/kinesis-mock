@@ -42,47 +42,51 @@ class DescribeStreamConsumerTests
         consumerName: ConsumerName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        streamArn = StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        registerRes <- cache
-          .registerStreamConsumer(
-            RegisterStreamConsumerRequest(
-              consumerName,
-              streamArn
-            ),
-            context,
-            isCbor = false
-          )
-          .rethrow
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          val streamArn =
+            StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            registerRes <- cache
+              .registerStreamConsumer(
+                RegisterStreamConsumerRequest(
+                  consumerName,
+                  streamArn
+                ),
+                context,
+                isCbor = false
+              )
+              .rethrow
 
-        res <- cache
-          .describeStreamConsumer(
-            DescribeStreamConsumerRequest(
-              None,
-              Some(consumerName),
-              Some(streamArn)
-            ),
-            context,
-            isCbor = false
+            res <- cache
+              .describeStreamConsumer(
+                DescribeStreamConsumerRequest(
+                  None,
+                  Some(consumerName),
+                  Some(streamArn)
+                ),
+                context,
+                isCbor = false
+              )
+              .rethrow
+          } yield assert(
+            ConsumerSummary.fromConsumer(
+              res.consumerDescription
+            ) === registerRes.consumer && res.consumerDescription.streamArn == streamArn,
+            s"$registerRes\n$res"
           )
-          .rethrow
-      } yield assert(
-        ConsumerSummary.fromConsumer(
-          res.consumerDescription
-        ) === registerRes.consumer && res.consumerDescription.streamArn == streamArn,
-        s"$registerRes\n$res"
-      )
+        }
   })
 }

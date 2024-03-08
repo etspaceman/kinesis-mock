@@ -40,42 +40,45 @@ class CreateStreamTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            describeStreamSummaryReq = DescribeStreamSummaryRequest(
+              Some(streamName),
+              None
+            )
+            checkStream1 <- cache.describeStreamSummary(
+              describeStreamSummaryReq,
+              context,
+              isCbor = false,
+              Some(awsRegion)
+            )
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            checkStream2 <- cache.describeStreamSummary(
+              describeStreamSummaryReq,
+              context,
+              isCbor = false,
+              Some(awsRegion)
+            )
+          } yield assert(
+            checkStream1.exists(
+              _.streamDescriptionSummary.streamStatus == StreamStatus.CREATING
+            ) &&
+              checkStream2.exists(
+                _.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
+              )
           )
-          .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(
-          Some(streamName),
-          None
-        )
-        checkStream1 <- cache.describeStreamSummary(
-          describeStreamSummaryReq,
-          context,
-          isCbor = false,
-          Some(awsRegion)
-        )
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        checkStream2 <- cache.describeStreamSummary(
-          describeStreamSummaryReq,
-          context,
-          isCbor = false,
-          Some(awsRegion)
-        )
-      } yield assert(
-        checkStream1.exists(
-          _.streamDescriptionSummary.streamStatus == StreamStatus.CREATING
-        ) &&
-          checkStream2.exists(
-            _.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
-          )
-      )
+        }
   })
 }

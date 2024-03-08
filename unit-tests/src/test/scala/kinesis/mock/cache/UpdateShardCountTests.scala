@@ -40,81 +40,84 @@ class UpdateShardCountTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(5), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        res <- cache
-          .updateShardCount(
-            UpdateShardCountRequest(
-              ScalingType.UNIFORM_SCALING,
-              Some(streamName),
-              None,
-              10
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        describeStreamSummaryReq = DescribeStreamSummaryRequest(
-          Some(streamName),
-          None
-        )
-        checkStream1 <- cache
-          .describeStreamSummary(
-            describeStreamSummaryReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(400.millis))
-        checkStream2 <- cache
-          .describeStreamSummary(
-            describeStreamSummaryReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        checkShards <- cache
-          .listShards(
-            ListShardsRequest(
-              None,
-              None,
-              None,
-              None,
-              None,
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(5), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            res <- cache
+              .updateShardCount(
+                UpdateShardCountRequest(
+                  ScalingType.UNIFORM_SCALING,
+                  Some(streamName),
+                  None,
+                  10
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            describeStreamSummaryReq = DescribeStreamSummaryRequest(
               Some(streamName),
               None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+            )
+            checkStream1 <- cache
+              .describeStreamSummary(
+                describeStreamSummaryReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(400.millis))
+            checkStream2 <- cache
+              .describeStreamSummary(
+                describeStreamSummaryReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            checkShards <- cache
+              .listShards(
+                ListShardsRequest(
+                  None,
+                  None,
+                  None,
+                  None,
+                  None,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
+              checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
+              checkShards.shards.count(!_.isOpen) == 5 &&
+              checkShards.shards.count(_.isOpen) == 10 &&
+              checkShards.shards.length == 15 &&
+              res.currentShardCount == 5 &&
+              res.streamName == streamName &&
+              res.targetShardCount == 10,
+            s"${checkShards.shards.mkString("\n\t")}\n" +
+              s"$checkStream1\n" +
+              s"$checkStream2"
           )
-          .rethrow
-      } yield assert(
-        checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
-          checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
-          checkShards.shards.count(!_.isOpen) == 5 &&
-          checkShards.shards.count(_.isOpen) == 10 &&
-          checkShards.shards.length == 15 &&
-          res.currentShardCount == 5 &&
-          res.streamName == streamName &&
-          res.targetShardCount == 10,
-        s"${checkShards.shards.mkString("\n\t")}\n" +
-          s"$checkStream1\n" +
-          s"$checkStream2"
-      )
+        }
   })
 }

@@ -40,43 +40,56 @@ class DecreaseStreamRetentionPeriodTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            _ <- cache
+              .increaseStreamRetention(
+                IncreaseStreamRetentionPeriodRequest(
+                  48,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- cache
+              .decreaseStreamRetention(
+                DecreaseStreamRetentionPeriodRequest(
+                  24,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            res <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            res.streamDescriptionSummary.retentionPeriodHours == 24
           )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        _ <- cache
-          .increaseStreamRetention(
-            IncreaseStreamRetentionPeriodRequest(48, Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- cache
-          .decreaseStreamRetention(
-            DecreaseStreamRetentionPeriodRequest(24, Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        res <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(res.streamDescriptionSummary.retentionPeriodHours == 24)
+        }
   })
 }

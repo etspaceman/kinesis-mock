@@ -1572,36 +1572,41 @@ object Cache {
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO]): IO[Cache] = for {
-    ref <- Ref.of[IO, Streams](streams)
-    semaphores <- CacheSemaphores.create
-    semaphoresRef <- Ref.of[IO, Map[AwsRegion, CacheSemaphores]](
-      Map(config.awsRegion -> semaphores)
-    )
-    persistDataSemaphore <- Semaphore[IO](1)
-    supervisorResource = Supervisor[IO]
-    cache <- supervisorResource.use(supervisor =>
-      IO(
-        new Cache(ref, semaphoresRef, persistDataSemaphore, config, supervisor)
+  )(implicit C: Concurrent[IO]): Resource[IO, Cache] = for {
+    ref <- Ref.of[IO, Streams](streams).toResource
+    semaphores <- CacheSemaphores.create.toResource
+    semaphoresRef <- Ref
+      .of[IO, Map[AwsRegion, CacheSemaphores]](
+        Map(config.awsRegion -> semaphores)
       )
-    )
-  } yield cache
+      .toResource
+    persistDataSemaphore <- Semaphore[IO](1).toResource
+    supervisor <- Supervisor[IO]
+  } yield new Cache(
+    ref,
+    semaphoresRef,
+    persistDataSemaphore,
+    config,
+    supervisor
+  )
 
   def loadFromFile(
       config: CacheConfig
-  )(implicit C: Concurrent[IO]): IO[Cache] =
-    Files[IO]
-      .exists(config.persistConfig.osFile)
-      .ifM(
-        for {
-          streams <- Files[IO]
-            .readAll(config.persistConfig.osFile)
-            .through(byteArrayParser)
-            .through(decoder[IO, Streams])
-            .compile
-            .lastOrError
-          res <- apply(config, streams)
-        } yield res,
-        apply(config)
-      )
+  )(implicit C: Concurrent[IO]): Resource[IO, Cache] =
+    for {
+      exists <- Files[IO].exists(config.persistConfig.osFile).toResource
+      res <-
+        if (exists) {
+          for {
+            streams <- Files[IO]
+              .readAll(config.persistConfig.osFile)
+              .through(byteArrayParser)
+              .through(decoder[IO, Streams])
+              .compile
+              .lastOrError
+              .toResource
+            cache <- apply(config, streams)
+          } yield cache
+        } else apply(config)
+    } yield res
 }

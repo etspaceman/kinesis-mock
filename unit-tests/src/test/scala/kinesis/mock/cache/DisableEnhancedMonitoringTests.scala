@@ -38,57 +38,60 @@ class DisableEnhancedMonitoringTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig))
+        .use { cache =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- cache
+              .enableEnhancedMonitoring(
+                EnableEnhancedMonitoringRequest(
+                  Vector(ShardLevelMetric.ALL),
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            res <- cache
+              .disableEnhancedMonitoring(
+                DisableEnhancedMonitoringRequest(
+                  Vector(ShardLevelMetric.IncomingBytes),
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            streamMonitoring <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+              .map(
+                _.streamDescriptionSummary.enhancedMonitoring
+                  .flatMap(_.shardLevelMetrics)
+              )
+          } yield assert(
+            res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
+              .contains(ShardLevelMetric.IncomingBytes)
           )
-          .rethrow
-        _ <- cache
-          .enableEnhancedMonitoring(
-            EnableEnhancedMonitoringRequest(
-              Vector(ShardLevelMetric.ALL),
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        res <- cache
-          .disableEnhancedMonitoring(
-            DisableEnhancedMonitoringRequest(
-              Vector(ShardLevelMetric.IncomingBytes),
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        streamMonitoring <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-          .map(
-            _.streamDescriptionSummary.enhancedMonitoring
-              .flatMap(_.shardLevelMetrics)
-          )
-      } yield assert(
-        res.desiredShardLevelMetrics == streamMonitoring && !res.desiredShardLevelMetrics
-          .contains(ShardLevelMetric.IncomingBytes)
-      )
+        }
   })
 }
