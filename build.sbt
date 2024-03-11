@@ -144,6 +144,7 @@ lazy val `integration-tests` = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       Aws.kinesis % Test,
+      Aws.cloudwatch % Test,
       Aws.kpl % Test,
       Aws.kcl % Test,
       Log4Cats.slf4j % Test,
