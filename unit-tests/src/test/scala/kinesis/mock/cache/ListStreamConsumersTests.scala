@@ -42,60 +42,63 @@ class ListStreamConsumersTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        streamArn <- cache
-          .describeStreamSummary(
-            DescribeStreamSummaryRequest(Some(streamName), None),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-          .map(_.streamDescriptionSummary.streamArn)
-        consumerNames <- IO(
-          Gen
-            .listOfN(3, consumerNameArb.arbitrary)
-            .suchThat(x =>
-              x.groupBy(identity)
-                .collect { case (_, y) if y.length > 1 => x }
-                .isEmpty
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            streamArn <- cache
+              .describeStreamSummary(
+                DescribeStreamSummaryRequest(Some(streamName), None),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+              .map(_.streamDescriptionSummary.streamArn)
+            consumerNames <- IO(
+              Gen
+                .listOfN(3, consumerNameArb.arbitrary)
+                .suchThat(x =>
+                  x.groupBy(identity)
+                    .collect { case (_, y) if y.length > 1 => x }
+                    .isEmpty
+                )
+                .one
             )
-            .one
-        )
-        registerResults <- consumerNames.sorted.toVector.traverse(
-          consumerName =>
-            cache
-              .registerStreamConsumer(
-                RegisterStreamConsumerRequest(consumerName, streamArn),
+            registerResults <- consumerNames.sorted.toVector.traverse(
+              consumerName =>
+                cache
+                  .registerStreamConsumer(
+                    RegisterStreamConsumerRequest(consumerName, streamArn),
+                    context,
+                    isCbor = false
+                  )
+                  .rethrow
+            )
+            res <- cache
+              .listStreamConsumers(
+                ListStreamConsumersRequest(None, None, streamArn, None),
                 context,
                 isCbor = false
               )
               .rethrow
-        )
-        res <- cache
-          .listStreamConsumers(
-            ListStreamConsumersRequest(None, None, streamArn, None),
-            context,
-            isCbor = false
+          } yield assert(
+            res.consumers == registerResults
+              .map(_.consumer),
+            s"${registerResults.map(_.consumer)}\n" +
+              s"${res.consumers}"
           )
-          .rethrow
-      } yield assert(
-        res.consumers == registerResults
-          .map(_.consumer),
-        s"${registerResults.map(_.consumer)}\n" +
-          s"${res.consumers}"
-      )
+        }
   })
 }

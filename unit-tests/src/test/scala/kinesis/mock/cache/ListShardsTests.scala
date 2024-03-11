@@ -38,37 +38,40 @@ class ListShardsTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(5), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig))
+        .use { case cache =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(5), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            res <- cache
+              .listShards(
+                ListShardsRequest(
+                  None,
+                  None,
+                  None,
+                  None,
+                  None,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            res.shards.length == 5,
+            s"$res"
           )
-          .rethrow
-        res <- cache
-          .listShards(
-            ListShardsRequest(
-              None,
-              None,
-              None,
-              None,
-              None,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(
-        res.shards.length == 5,
-        s"$res"
-      )
+        }
   })
 }

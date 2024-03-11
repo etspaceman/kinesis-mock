@@ -41,65 +41,69 @@ class DeregisterStreamConsumerTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        streamArn = StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        _ <- cache
-          .registerStreamConsumer(
-            RegisterStreamConsumerRequest(consumerName, streamArn),
-            context,
-            isCbor = false
-          )
-          .rethrow
-        _ <- IO.sleep(
-          cacheConfig.registerStreamConsumerDuration.plus(400.millis)
-        )
-        _ <- cache
-          .deregisterStreamConsumer(
-            DeregisterStreamConsumerRequest(
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          val streamArn =
+            StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            _ <- cache
+              .registerStreamConsumer(
+                RegisterStreamConsumerRequest(consumerName, streamArn),
+                context,
+                isCbor = false
+              )
+              .rethrow
+            _ <- IO.sleep(
+              cacheConfig.registerStreamConsumerDuration.plus(400.millis)
+            )
+            _ <- cache
+              .deregisterStreamConsumer(
+                DeregisterStreamConsumerRequest(
+                  None,
+                  Some(consumerName),
+                  Some(streamArn)
+                ),
+                context,
+                isCbor = false
+              )
+              .rethrow
+            describeStreamConsumerReq = DescribeStreamConsumerRequest(
               None,
               Some(consumerName),
               Some(streamArn)
-            ),
-            context,
-            isCbor = false
+            )
+            checkStream1 <- cache
+              .describeStreamConsumer(
+                describeStreamConsumerReq,
+                context,
+                isCbor = false
+              )
+              .rethrow
+            _ <- IO.sleep(
+              cacheConfig.deregisterStreamConsumerDuration.plus(400.millis)
+            )
+            checkStream2 <- cache.describeStreamConsumer(
+              describeStreamConsumerReq,
+              context,
+              isCbor = false
+            )
+          } yield assert(
+            checkStream1.consumerDescription.consumerStatus == ConsumerStatus.DELETING &&
+              checkStream2.isLeft,
+            s"$checkStream1\n$checkStream2"
           )
-          .rethrow
-        describeStreamConsumerReq = DescribeStreamConsumerRequest(
-          None,
-          Some(consumerName),
-          Some(streamArn)
-        )
-        checkStream1 <- cache
-          .describeStreamConsumer(
-            describeStreamConsumerReq,
-            context,
-            isCbor = false
-          )
-          .rethrow
-        _ <- IO.sleep(
-          cacheConfig.deregisterStreamConsumerDuration.plus(400.millis)
-        )
-        checkStream2 <- cache.describeStreamConsumer(
-          describeStreamConsumerReq,
-          context,
-          isCbor = false
-        )
-      } yield assert(
-        checkStream1.consumerDescription.consumerStatus == ConsumerStatus.DELETING &&
-          checkStream2.isLeft,
-        s"$checkStream1\n$checkStream2"
-      )
+        }
   })
 }

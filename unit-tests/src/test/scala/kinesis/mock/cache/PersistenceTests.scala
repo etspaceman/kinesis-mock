@@ -61,85 +61,98 @@ class PersistenceTests
           streamName: StreamName,
           awsRegion: AwsRegion
       ) =>
-        for {
-          uuid <- IO(Utils.randomUUIDString)
-          cacheConfig <- CacheConfig.read
-            .load[IO]
-            .map(_.copy(persistConfig = persistConfig(uuid)))
-          cache <- Cache(cacheConfig)
-          context = LoggingContext.create
-          _ <- cache
-            .createStream(
-              CreateStreamRequest(Some(1), None, streamName),
-              context,
-              isCbor = false,
-              Some(awsRegion)
-            )
-            .rethrow
-          _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-          recordRequests <- IO(
-            putRecordRequestArb.arbitrary
-              .take(5)
-              .toVector
-              .map(_.copy(streamName = Some(streamName), streamArn = None))
-          )
-          _ <- recordRequests.traverse(req =>
-            cache
-              .putRecord(req, context, isCbor = false, Some(awsRegion))
-              .rethrow
-          )
-          _ <- cache.persistToDisk(context)
-          newCache <- Cache.loadFromFile(cacheConfig)
-          shard <- newCache
-            .listShards(
-              ListShardsRequest(
-                None,
-                None,
-                None,
-                None,
-                None,
-                Some(streamName),
-                None
+        CacheConfig.read
+          .resource[IO]
+          .both(Resource.pure(Utils.randomUUIDString))
+          .map { case (cacheConfig, uuid) =>
+            cacheConfig.copy(persistConfig = persistConfig(uuid))
+          }
+          .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+          .evalMap { case (cacheConfig, cache) =>
+            val context = LoggingContext.create
+            for {
+              _ <- cache
+                .createStream(
+                  CreateStreamRequest(Some(1), None, streamName),
+                  context,
+                  isCbor = false,
+                  Some(awsRegion)
+                )
+                .rethrow
+              _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+              recordRequests <- IO(
+                putRecordRequestArb.arbitrary
+                  .take(5)
+                  .toVector
+                  .map(_.copy(streamName = Some(streamName), streamArn = None))
+              )
+              _ <- recordRequests.traverse(req =>
+                cache
+                  .putRecord(req, context, isCbor = false, Some(awsRegion))
+                  .rethrow
+              )
+              _ <- cache.persistToDisk(context)
+            } yield (cacheConfig, recordRequests)
+          }
+          .flatMap { case (cacheConfig, recordRequests) =>
+            Cache
+              .loadFromFile(cacheConfig)
+              .map(newCache => (newCache, recordRequests))
+          }
+          .use { case (newCache, recordRequests) =>
+            val context = LoggingContext.create
+            for {
+              shard <- newCache
+                .listShards(
+                  ListShardsRequest(
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    Some(streamName),
+                    None
+                  ),
+                  context,
+                  isCbor = false,
+                  Some(awsRegion)
+                )
+                .rethrow
+                .map(_.shards.head)
+              shardIterator <- newCache
+                .getShardIterator(
+                  GetShardIteratorRequest(
+                    shard.shardId,
+                    ShardIteratorType.TRIM_HORIZON,
+                    None,
+                    Some(streamName),
+                    None,
+                    None
+                  ),
+                  context,
+                  isCbor = false,
+                  Some(awsRegion)
+                )
+                .rethrow
+                .map(_.shardIterator)
+              res <- newCache
+                .getRecords(
+                  GetRecordsRequest(None, shardIterator, None),
+                  context,
+                  isCbor = false,
+                  Some(awsRegion)
+                )
+                .rethrow
+            } yield assert(
+              res.records.length == 5 && res.records.forall(rec =>
+                recordRequests.exists(req =>
+                  req.data.sameElements(rec.data)
+                    && req.partitionKey == rec.partitionKey
+                )
               ),
-              context,
-              isCbor = false,
-              Some(awsRegion)
+              s"${res.records}\n$recordRequests"
             )
-            .rethrow
-            .map(_.shards.head)
-          shardIterator <- newCache
-            .getShardIterator(
-              GetShardIteratorRequest(
-                shard.shardId,
-                ShardIteratorType.TRIM_HORIZON,
-                None,
-                Some(streamName),
-                None,
-                None
-              ),
-              context,
-              isCbor = false,
-              Some(awsRegion)
-            )
-            .rethrow
-            .map(_.shardIterator)
-          res <- newCache
-            .getRecords(
-              GetRecordsRequest(None, shardIterator, None),
-              context,
-              isCbor = false,
-              Some(awsRegion)
-            )
-            .rethrow
-        } yield assert(
-          res.records.length == 5 && res.records.forall(rec =>
-            recordRequests.exists(req =>
-              req.data.sameElements(rec.data)
-                && req.partitionKey == rec.partitionKey
-            )
-          ),
-          s"${res.records}\n$recordRequests"
-        )
+          }
     }
   )
 

@@ -41,76 +41,79 @@ class StopStreamEncryptionTests
         streamName: StreamName,
         awsRegion: AwsRegion
     ) =>
-      for {
-        cacheConfig <- CacheConfig.read.load[IO]
-        cache <- Cache(cacheConfig)
-        context = LoggingContext.create
-        _ <- cache
-          .createStream(
-            CreateStreamRequest(Some(1), None, streamName),
-            context,
-            isCbor = false,
-            Some(awsRegion)
+      CacheConfig.read
+        .resource[IO]
+        .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
+        .use { case (cacheConfig, cache) =>
+          val context = LoggingContext.create
+          for {
+            _ <- cache
+              .createStream(
+                CreateStreamRequest(Some(1), None, streamName),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
+            keyId <- IO(keyIdGen.one)
+            _ <- cache
+              .startStreamEncryption(
+                StartStreamEncryptionRequest(
+                  EncryptionType.KMS,
+                  keyId,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(
+              cacheConfig.startStreamEncryptionDuration.plus(400.millis)
+            )
+            _ <- cache
+              .stopStreamEncryption(
+                StopStreamEncryptionRequest(
+                  EncryptionType.KMS,
+                  keyId,
+                  Some(streamName),
+                  None
+                ),
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            describeReq = DescribeStreamSummaryRequest(Some(streamName), None)
+            checkStream1 <- cache
+              .describeStreamSummary(
+                describeReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+            _ <- IO.sleep(
+              cacheConfig.stopStreamEncryptionDuration.plus(400.millis)
+            )
+            checkStream2 <- cache
+              .describeStreamSummary(
+                describeReq,
+                context,
+                isCbor = false,
+                Some(awsRegion)
+              )
+              .rethrow
+          } yield assert(
+            checkStream1.streamDescriptionSummary.encryptionType.contains(
+              EncryptionType.NONE
+            ) &&
+              checkStream1.streamDescriptionSummary.keyId.isEmpty &&
+              checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
+              checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
           )
-          .rethrow
-        _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
-        keyId <- IO(keyIdGen.one)
-        _ <- cache
-          .startStreamEncryption(
-            StartStreamEncryptionRequest(
-              EncryptionType.KMS,
-              keyId,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(
-          cacheConfig.startStreamEncryptionDuration.plus(400.millis)
-        )
-        _ <- cache
-          .stopStreamEncryption(
-            StopStreamEncryptionRequest(
-              EncryptionType.KMS,
-              keyId,
-              Some(streamName),
-              None
-            ),
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        describeReq = DescribeStreamSummaryRequest(Some(streamName), None)
-        checkStream1 <- cache
-          .describeStreamSummary(
-            describeReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-        _ <- IO.sleep(
-          cacheConfig.stopStreamEncryptionDuration.plus(400.millis)
-        )
-        checkStream2 <- cache
-          .describeStreamSummary(
-            describeReq,
-            context,
-            isCbor = false,
-            Some(awsRegion)
-          )
-          .rethrow
-      } yield assert(
-        checkStream1.streamDescriptionSummary.encryptionType.contains(
-          EncryptionType.NONE
-        ) &&
-          checkStream1.streamDescriptionSummary.keyId.isEmpty &&
-          checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
-          checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE
-      )
+        }
   })
 }

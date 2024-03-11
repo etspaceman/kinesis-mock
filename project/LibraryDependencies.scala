@@ -36,7 +36,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.25.5"
+    val sdkVersion = "2.25.6"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.10"
@@ -45,7 +45,7 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.10.0"
-    val catsEffectVersion = "3.5.3"
+    val catsEffectVersion = "3.5.4"
     val core = Def.setting("org.typelevel" %%% "cats-core" % catsVersion)
     val effect =
       Def.setting("org.typelevel" %%% "cats-effect" % catsEffectVersion)
