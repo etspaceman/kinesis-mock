@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "1.0.0-M11"
+    val munitVersion = "1.0.0-RC1"
     val core = Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
