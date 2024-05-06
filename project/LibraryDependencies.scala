@@ -68,7 +68,7 @@ object LibraryDependencies {
   }
 
   object Ciris {
-    val cirisVersion = "3.5.0"
+    val cirisVersion = "3.6.0"
     val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
   }
 
