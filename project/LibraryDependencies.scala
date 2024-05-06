@@ -36,7 +36,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.25.33"
+    val sdkVersion = "2.25.45"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
@@ -86,7 +86,7 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.9.4"
+    val fs2Version = "3.10.2"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
