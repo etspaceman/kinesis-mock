@@ -6,7 +6,7 @@ object LibraryDependencies {
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.38")
   val ScalaParserCombinators = Def.setting(
-    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0"
+    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.6"
 
@@ -25,12 +25,12 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "1.0.0-M11"
+    val munitVersion = "1.0.0-RC1"
     val core = Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
     val catsEffect =
-      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.0.0-M4")
+      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.0.0-M5")
     val scalacheckEffect =
       Def.setting("org.typelevel" %%% "scalacheck-effect-munit" % "2.0.0-M2")
   }
@@ -53,7 +53,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.26"
+    val http4sVersion = "0.23.27"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -61,7 +61,7 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.6"
+    val circeVersion = "0.14.7"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
