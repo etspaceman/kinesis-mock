@@ -91,6 +91,7 @@ class KCLTests extends AwsFunctionalTests {
               defaultLeaseManagement.workerIdentifier(),
               defaultLeaseManagement.executorService(),
               defaultLeaseManagement.failoverTimeMillis(),
+              defaultLeaseManagement.enablePriorityLeaseAssignment(),
               defaultLeaseManagement.epsilonMillis(),
               defaultLeaseManagement.maxLeasesForWorker(),
               defaultLeaseManagement.maxLeasesToStealAtOneTime(),
