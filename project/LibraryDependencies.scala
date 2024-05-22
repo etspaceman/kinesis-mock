@@ -4,7 +4,7 @@ import sbt._
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.38")
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.0")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val munitVersion = "1.0.0-RC1"
+    val munitVersion = "1.0.0"
     val core = Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
@@ -36,7 +36,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.25.48"
+    val sdkVersion = "2.25.57"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
