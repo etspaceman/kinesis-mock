@@ -4,7 +4,7 @@ import sbt._
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.1.38")
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.0")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
@@ -30,22 +30,22 @@ object LibraryDependencies {
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
     val catsEffect =
-      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.0.0-RC1")
+      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.0.0")
     val scalacheckEffect =
       Def.setting("org.typelevel" %%% "scalacheck-effect-munit" % "2.0.0-M2")
   }
 
   object Aws {
-    val sdkVersion = "2.25.57"
+    val sdkVersion = "2.25.60"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.10"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.5.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.6.0"
   }
 
   object Cats {
-    val catsVersion = "2.10.0"
+    val catsVersion = "2.12.0"
     val catsEffectVersion = "3.5.4"
     val core = Def.setting("org.typelevel" %%% "cats-core" % catsVersion)
     val effect =
@@ -92,7 +92,7 @@ object LibraryDependencies {
   }
 
   object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.5.8"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.6.0"
     val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.10"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.24.12"
