@@ -4,11 +4,11 @@ import sbt._
 object LibraryDependencies {
   val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
-  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.0")
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.1")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.6"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.8"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -36,11 +36,11 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.26.7"
+    val sdkVersion = "2.28.15"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.10"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.11"
     val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.6.0"
   }
 
@@ -53,7 +53,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.27"
+    val http4sVersion = "0.23.28"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -61,7 +61,7 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.8"
+    val circeVersion = "0.14.10"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
@@ -73,7 +73,7 @@ object LibraryDependencies {
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.7.3"
+    val enumeratumVersion = "1.7.5"
     val cats =
       Def.setting("com.beachape" %%% "enumeratum-cats" % enumeratumVersion)
     val core = Def.setting("com.beachape" %%% "enumeratum" % enumeratumVersion)
@@ -86,14 +86,14 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.10.2"
+    val fs2Version = "3.11.0"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
 
   object Kinesis {
     val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "2.6.0"
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.10"
+    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.11"
     val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
     val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.24.12"
   }
