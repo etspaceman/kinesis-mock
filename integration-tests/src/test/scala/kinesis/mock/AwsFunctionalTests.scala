@@ -6,7 +6,7 @@ import scala.util.Try
 import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
-import com.amazonaws.regions.Regions
+import com.amazonaws.regions.RegionUtils
 import munit.{CatsEffectFunFixtures, CatsEffectSuite}
 import org.scalacheck.Gen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -66,7 +66,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .oneOf(
             AwsRegion.values
               .filterNot(_ == AwsRegion.US_EAST_1)
-              .filter(x => Try(Regions.fromName(x.entryName)).isSuccess)
+              .filter(x => Try(RegionUtils.getRegion(x.entryName)).isSuccess)
           )
           .one
       )

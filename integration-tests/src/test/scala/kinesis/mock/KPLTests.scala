@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 
 import cats.effect.{IO, Resource, SyncIO}
 import cats.syntax.all._
-import com.amazonaws.regions.Regions
+import com.amazonaws.regions.RegionUtils
 import com.amazonaws.services.kinesis.producer._
 
 import kinesis.mock.instances.arbitrary._
@@ -25,7 +25,7 @@ class KPLTests extends AwsFunctionalTests {
               new KinesisProducerConfiguration()
                 .setCredentialsProvider(AwsCreds.LocalCreds)
                 .setRegion(
-                  Regions.fromName(resources.awsRegion.entryName).getName
+                  RegionUtils.getRegion(resources.awsRegion.entryName).getName
                 )
                 .setKinesisEndpoint("localhost")
                 .setKinesisPort(4567L) // KPL only supports TLS
