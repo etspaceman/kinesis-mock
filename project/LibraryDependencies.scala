@@ -9,7 +9,6 @@ object LibraryDependencies {
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.12"
-  val Protobuf = "com.google.protobuf" % "protobuf-java" % "4.28.3"
 
   object Borer {
     val borerVersion = "1.8.0"
