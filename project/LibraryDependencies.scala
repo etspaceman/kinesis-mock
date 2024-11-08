@@ -9,6 +9,7 @@ object LibraryDependencies {
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.12"
+  val Protobuf = "com.google.protobuf" % "protobuf-java" % "4.28.3"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -88,13 +89,6 @@ object LibraryDependencies {
     val fs2Version = "3.11.0"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
-  }
-
-  object Kinesis {
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "3.0.0"
-    val kpl = "com.amazonaws" % "amazon-kinesis-producer" % "0.15.12"
-    val sdkV1 = "com.amazonaws" % "aws-java-sdk-kinesis" % "1.11.190"
-    val sdkV2 = "software.amazon.awssdk" % "kinesis" % "2.24.12"
   }
 
   object Refined {

@@ -148,7 +148,8 @@ lazy val `integration-tests` = projectMatrix
       Aws.kpl % Test,
       Aws.kcl % Test,
       Log4Cats.slf4j % Test,
-      Logback % Test
+      Logback % Test,
+      Protobuf % Test
     ),
     Test / parallelExecution := false
   )
