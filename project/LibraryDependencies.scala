@@ -8,7 +8,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.11"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.12"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.28.26"
+    val sdkVersion = "2.29.8"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
@@ -45,14 +45,14 @@ object LibraryDependencies {
 
   object Cats {
     val catsVersion = "2.12.0"
-    val catsEffectVersion = "3.5.4"
+    val catsEffectVersion = "3.5.5"
     val core = Def.setting("org.typelevel" %%% "cats-core" % catsVersion)
     val effect =
       Def.setting("org.typelevel" %%% "cats-effect" % catsEffectVersion)
   }
 
   object Http4s {
-    val http4sVersion = "0.23.28"
+    val http4sVersion = "0.23.29"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
