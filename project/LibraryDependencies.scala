@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.29.16"
+    val sdkVersion = "2.29.17"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
