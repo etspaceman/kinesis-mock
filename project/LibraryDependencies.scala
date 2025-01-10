@@ -8,7 +8,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.12"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.16"
 
   object Borer {
     val borerVersion = "1.8.0"
@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.0.3")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.0.4")
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.0.0")
     val catsEffect =
@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.29.25"
+    val sdkVersion = "2.29.49"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
@@ -52,7 +52,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.29"
+    val http4sVersion = "0.23.30"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -98,7 +98,7 @@ object LibraryDependencies {
   }
 
   object Refined {
-    val refinedVersion = "0.11.2"
+    val refinedVersion = "0.11.3"
     val scalacheck =
       Def.setting("eu.timepit" %%% "refined-scalacheck" % refinedVersion)
   }
