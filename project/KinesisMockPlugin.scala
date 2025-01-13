@@ -398,9 +398,8 @@ object KinesisMockPlugin extends AutoPlugin {
     },
     addCompilerPlugin(KindProjector cross CrossVersion.full),
     addCompilerPlugin(BetterMonadicFor),
-    Test / testOptions ++= {
-      List(Tests.Argument(TestFrameworks.MUnit, "+l"))
-    },
+    Test / testOptions ++=
+      List(Tests.Argument(TestFrameworks.MUnit, "+l")),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
