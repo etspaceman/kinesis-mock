@@ -79,6 +79,7 @@ class KCLTests extends AwsFunctionalTests {
           isStarted <- Resource.eval(Deferred[IO, Unit])
           defaultLeaseManagement = new LeaseManagementConfig(
             appName,
+            appName,
             dynamoClient,
             resources.kinesisClient,
             workerId
@@ -107,11 +108,11 @@ class KCLTests extends AwsFunctionalTests {
               defaultLeaseManagement.cacheMissWarningModulus(),
               defaultLeaseManagement.initialLeaseTableReadCapacity().toLong,
               defaultLeaseManagement.initialLeaseTableWriteCapacity().toLong,
-              defaultLeaseManagement.hierarchicalShardSyncer(),
               defaultLeaseManagement.tableCreatorCallback(),
               defaultLeaseManagement.dynamoDbRequestTimeout(),
               defaultLeaseManagement.billingMode(),
               defaultLeaseManagement.leaseTableDeletionProtectionEnabled(),
+              defaultLeaseManagement.leaseTablePitrEnabled(),
               defaultLeaseManagement.tags(),
               new DynamoDBLeaseSerializer(),
               defaultLeaseManagement.customShardDetectorProvider(),
@@ -121,7 +122,9 @@ class KCLTests extends AwsFunctionalTests {
                 .completedLeaseCleanupIntervalMillis(500L)
                 .garbageLeaseCleanupIntervalMillis(500L)
                 .leaseCleanupIntervalMillis(10.seconds.toMillis)
-                .build()
+                .build(),
+              defaultLeaseManagement.workerUtilizationAwareAssignmentConfig(),
+              defaultLeaseManagement.gracefulLeaseHandoffConfig()
             )
           )
           scheduler <- Resource.eval(
