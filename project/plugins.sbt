@@ -1,6 +1,6 @@
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0")
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.1")
 addSbtPlugin("org.typelevel" % "sbt-typelevel-settings" % "0.7.5")
 addSbtPlugin("org.typelevel" % "sbt-typelevel-github" % "0.7.5")
 addSbtPlugin("org.typelevel" % "sbt-typelevel-versioning" % "0.7.5")
