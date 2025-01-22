@@ -4,12 +4,9 @@ import java.time.Instant
 
 import cats.effect.IO
 import cats.effect.SyncIO
-import cats.effect.std.SecureRandom
 import cats.effect.std.UUIDGen
 
 object Utils {
-  private implicit val syncIOSecureRandom =
-    SecureRandom.javaSecuritySecureRandom[SyncIO].unsafeRunSync()
   def randomUUID =
     UUIDGen.randomUUID[SyncIO].unsafeRunSync()
   def randomUUIDString =

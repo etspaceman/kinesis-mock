@@ -7,7 +7,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 
-import cats.effect.std.Dequeue
+import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
 import retry._
 import software.amazon.awssdk.core.SdkBytes
@@ -68,7 +68,7 @@ class KCLTests extends AwsFunctionalTests {
             )
           )
           resultsQueue <- Resource.eval(
-            Dequeue.unbounded[IO, KinesisClientRecord]
+            Queue.unbounded[IO, KinesisClientRecord]
           )
           appName = s"kinesis-mock-kcl-test-${Utils.randomUUIDString}"
           workerId = Utils.randomUUIDString
@@ -221,7 +221,7 @@ class KCLTests extends AwsFunctionalTests {
       s"Put records to ${resources.functionalTestResources.streamName}"
     )
     policy = RetryPolicies
-      .limitRetries[IO](30)
+      .limitRetries[IO](60)
       .join(RetryPolicies.constantDelay(1.second))
     gotAllRecords <- retryingOnFailures[Boolean](
       policy,

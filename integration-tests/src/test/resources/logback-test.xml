@@ -5,7 +5,7 @@
     </encoder>
   </appender>
   <logger name="kinesis.mock" level="${LOG_LEVEL:-DEBUG}"/>
-  <logger name="software.amazon" level="${AWSV2_LOG_LEVEL:-ERROR}"/>
+  <logger name="software.amazon" level="${AWSV2_LOG_LEVEL:-INFO}"/>
   <root level="${ROOT_LOG_LEVEL:-ERROR}">
     <appender-ref ref="STDOUT" />
   </root>
