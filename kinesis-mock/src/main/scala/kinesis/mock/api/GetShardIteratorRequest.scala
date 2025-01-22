@@ -159,7 +159,8 @@ final case class GetShardIteratorRequest(
                                   ShardIteratorType.AT_SEQUENCE_NUMBER,
                                   Some(seqNo),
                                   _
-                                ) if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                                )
+                                if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
                               Right(
                                 GetShardIteratorResponse(
                                   ShardIterator.create(
@@ -210,7 +211,8 @@ final case class GetShardIteratorRequest(
                                   ShardIteratorType.AFTER_SEQUENCE_NUMBER,
                                   Some(seqNo),
                                   _
-                                ) if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
+                                )
+                                if seqNo == shard.sequenceNumberRange.startingSequenceNumber =>
                               Right(
                                 GetShardIteratorResponse(
                                   ShardIterator.create(

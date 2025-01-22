@@ -193,7 +193,9 @@ class GetShardIteratorTests
         s"req: $req\n" +
           s"res: $res\n" +
           s"parsed: $parsed\n" +
-          s"sequenceIndexInRecords: ${parsed.map(parts => records.indexWhere(r => r.sequenceNumber == parts.sequenceNumber))}\n" +
+          s"sequenceIndexInRecords: ${parsed.map(parts =>
+              records.indexWhere(r => r.sequenceNumber == parts.sequenceNumber)
+            )}\n" +
           s"startingInstant: $startingInstant"
       )
   })

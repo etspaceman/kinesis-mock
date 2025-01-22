@@ -24,11 +24,11 @@ concurrency:
 
 jobs:
   build:
-    name: Build and Test
+    name: Test
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         scala: [2.13]
         java: [temurin@17]
         cbor_enabled: [true, false]
@@ -37,13 +37,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (temurin@17)
         id: setup-java-temurin-17
@@ -62,19 +62,19 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' fastLinkJS
 
       - name: Link Test JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
       - name: Unit Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -83,7 +83,7 @@ jobs:
           retry_on: error
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -93,7 +93,7 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
@@ -109,11 +109,11 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
       - name: Check scalafix lints
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' fixCheck
 
   dependency-submission:
@@ -121,17 +121,17 @@ jobs:
     if: github.event.repository.fork == false && github.event_name != 'pull_request'
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (temurin@17)
         id: setup-java-temurin-17
@@ -158,17 +158,17 @@ jobs:
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (temurin@17)
         id: setup-java-temurin-17
@@ -184,29 +184,29 @@ jobs:
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
       - name: Build Docker Image
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
       - name: Login to registry
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Get version
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: |
           VERSION=${{ github.ref_name }}
           echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
 
       - name: Push to registry
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: |
           echo "${VERSION}"
           docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}"
@@ -217,17 +217,17 @@ jobs:
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (temurin@17)
         id: setup-java-temurin-17
@@ -243,11 +243,11 @@ jobs:
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
       - name: Get upload url for release
@@ -283,17 +283,17 @@ jobs:
     needs: [build]
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (temurin@17)
         id: setup-java-temurin-17
@@ -309,21 +309,21 @@ jobs:
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
       - name: Setup Node
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - name: Install artifacts to NPM
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' npmPackageInstall
 
       - name: Publish artifacts to NPM

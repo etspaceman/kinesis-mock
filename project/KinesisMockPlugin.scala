@@ -398,9 +398,8 @@ object KinesisMockPlugin extends AutoPlugin {
     },
     addCompilerPlugin(KindProjector cross CrossVersion.full),
     addCompilerPlugin(BetterMonadicFor),
-    Test / testOptions ++= {
-      List(Tests.Argument(TestFrameworks.MUnit, "+l"))
-    },
+    Test / testOptions ++=
+      List(Tests.Argument(TestFrameworks.MUnit, "+l")),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
@@ -443,7 +442,7 @@ object KinesisMockPluginKeys {
   lazy val npmCopyExtraFiles =
     taskKey[Unit]("Copy extra files to the NPM install directory")
 
-  val Scala213 = "2.13.15"
+  val Scala213 = "2.13.16"
 
   val testDependencies = Def.setting(
     Seq(
