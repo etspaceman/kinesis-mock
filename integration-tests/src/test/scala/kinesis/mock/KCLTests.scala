@@ -7,7 +7,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 
-import cats.effect.std.Queue
+import cats.effect.std.Dequeue
 import cats.effect.{Deferred, IO, Resource}
 import retry._
 import software.amazon.awssdk.core.SdkBytes
@@ -68,7 +68,7 @@ class KCLTests extends AwsFunctionalTests {
             )
           )
           resultsQueue <- Resource.eval(
-            Queue.unbounded[IO, KinesisClientRecord]
+            Dequeue.unbounded[IO, KinesisClientRecord]
           )
           appName = s"kinesis-mock-kcl-test-${Utils.randomUUIDString}"
           workerId = Utils.randomUUIDString
