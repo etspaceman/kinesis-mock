@@ -123,7 +123,9 @@ class KCLTests extends AwsFunctionalTests {
                 .garbageLeaseCleanupIntervalMillis(500L)
                 .leaseCleanupIntervalMillis(10.seconds.toMillis)
                 .build(),
-              defaultLeaseManagement.workerUtilizationAwareAssignmentConfig(),
+              defaultLeaseManagement
+                .workerUtilizationAwareAssignmentConfig()
+                .disableWorkerMetrics(true),
               defaultLeaseManagement.gracefulLeaseHandoffConfig()
             )
           )
@@ -225,8 +227,10 @@ class KCLTests extends AwsFunctionalTests {
       policy,
       IO.pure,
       { case (_, status) =>
-        resources.functionalTestResources.logger.debug(
-          s"Results queue is not full, retrying. Retry Status: ${status.toString}"
+        resources.resultsQueue.size.flatMap(queueSize =>
+          resources.functionalTestResources.logger.debug(
+            s"Results queue is not full, retrying. Retry Status: ${status.toString}. Result Queue Size: $queueSize"
+          )
         )
       }
     )(
@@ -239,6 +243,9 @@ class KCLTests extends AwsFunctionalTests {
       rec4 <- resources.resultsQueue.take
       rec5 <- resources.resultsQueue.take
     } yield Vector(rec1, rec2, rec3, rec4, rec5)
+    _ <- resources.functionalTestResources.logger.debug(
+      s"Result:\n${resRecords.mkString("\n")}"
+    )
   } yield assert(
     gotAllRecords && resRecords
       .map(_.partitionKey())
