@@ -35,7 +35,7 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 class KCLTests extends AwsFunctionalTests {
-  override val munitIOTimeout = 4.minutes
+  override val munitIOTimeout = 6.minutes
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =
     ResourceFunFixture(
@@ -268,5 +268,5 @@ class KCLTests extends AwsFunctionalTests {
     InitialPositionInStreamExtended.newInitialPositionAtTimestamp(
       Date.from(Instant.now().minusSeconds(30))
     )
-  ).test("it should consume records using AT_TIMESTAMP".ignore)(kclTest)
+  ).test("it should consume records using AT_TIMESTAMP")(kclTest)
 }
