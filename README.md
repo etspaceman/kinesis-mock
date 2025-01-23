@@ -29,8 +29,8 @@ There are a few ways to start kinesis-mock.
 It is available as a docker image in the GitHub Container Registry:
 
 ```shell
-docker pull ghcr.io/etspaceman/kinesis-mock:0.4.1
-docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.4.1
+docker pull ghcr.io/etspaceman/kinesis-mock:0.4.8
+docker run -p 4567:4567 -p 4568:4568 ghcr.io/etspaceman/kinesis-mock:0.4.8
 ```
 
 ## NPM
