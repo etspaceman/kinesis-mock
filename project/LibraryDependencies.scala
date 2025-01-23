@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.0.4")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.1.0")
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.0.0")
     val catsEffect =
@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.30.3"
+    val sdkVersion = "2.30.4"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
