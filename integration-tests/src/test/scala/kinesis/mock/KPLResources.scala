@@ -1,6 +1,6 @@
 package kinesis.mock
 
-import com.amazonaws.services.kinesis.producer.KinesisProducer
+import software.amazon.kinesis.producer.KinesisProducer
 
 final case class KPLResources(
     functionalTestResources: KinesisFunctionalTestResources,

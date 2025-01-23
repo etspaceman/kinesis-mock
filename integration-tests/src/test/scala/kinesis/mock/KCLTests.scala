@@ -79,10 +79,12 @@ class KCLTests extends AwsFunctionalTests {
           isStarted <- Resource.eval(Deferred[IO, Unit])
           defaultLeaseManagement = new LeaseManagementConfig(
             appName,
+            appName,
             dynamoClient,
             resources.kinesisClient,
             workerId
           ).shardSyncIntervalMillis(1000L)
+            .failoverTimeMillis(1000L)
           leaseManagementConfig = defaultLeaseManagement.leaseManagementFactory(
             new DynamoDBLeaseManagementFactory(
               defaultLeaseManagement.kinesisClient(),
@@ -107,11 +109,11 @@ class KCLTests extends AwsFunctionalTests {
               defaultLeaseManagement.cacheMissWarningModulus(),
               defaultLeaseManagement.initialLeaseTableReadCapacity().toLong,
               defaultLeaseManagement.initialLeaseTableWriteCapacity().toLong,
-              defaultLeaseManagement.hierarchicalShardSyncer(),
               defaultLeaseManagement.tableCreatorCallback(),
               defaultLeaseManagement.dynamoDbRequestTimeout(),
               defaultLeaseManagement.billingMode(),
               defaultLeaseManagement.leaseTableDeletionProtectionEnabled(),
+              defaultLeaseManagement.leaseTablePitrEnabled(),
               defaultLeaseManagement.tags(),
               new DynamoDBLeaseSerializer(),
               defaultLeaseManagement.customShardDetectorProvider(),
@@ -121,7 +123,11 @@ class KCLTests extends AwsFunctionalTests {
                 .completedLeaseCleanupIntervalMillis(500L)
                 .garbageLeaseCleanupIntervalMillis(500L)
                 .leaseCleanupIntervalMillis(10.seconds.toMillis)
-                .build()
+                .build(),
+              defaultLeaseManagement
+                .workerUtilizationAwareAssignmentConfig()
+                .disableWorkerMetrics(true),
+              defaultLeaseManagement.gracefulLeaseHandoffConfig()
             )
           )
           scheduler <- Resource.eval(
@@ -216,14 +222,16 @@ class KCLTests extends AwsFunctionalTests {
       s"Put records to ${resources.functionalTestResources.streamName}"
     )
     policy = RetryPolicies
-      .limitRetries[IO](30)
+      .limitRetries[IO](60)
       .join(RetryPolicies.constantDelay(1.second))
     gotAllRecords <- retryingOnFailures[Boolean](
       policy,
       IO.pure,
       { case (_, status) =>
-        resources.functionalTestResources.logger.debug(
-          s"Results queue is not full, retrying. Retry Status: ${status.toString}"
+        resources.resultsQueue.size.flatMap(queueSize =>
+          resources.functionalTestResources.logger.debug(
+            s"Results queue is not full, retrying. Retry Status: ${status.toString}. Result Queue Size: $queueSize"
+          )
         )
       }
     )(
