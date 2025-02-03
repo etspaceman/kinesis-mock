@@ -16,7 +16,7 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
 addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.0")
 // Explicitly bumping until sbt-typelevel upgrades.
 // Older versions exit sbt on compilation failures.
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.6.2")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.6.3")
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "2.0.16"
