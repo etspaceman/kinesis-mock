@@ -178,31 +178,31 @@ lazy val root = project
   .settings(commonRootSettings)
   .aggregate(allProjects.flatMap(_.projectRefs): _*)
 
-lazy val `root-jvm-213` = project
+lazy val `root-jvm-3` = project
   .enablePlugins(NoPublishPlugin)
   .settings(commonRootSettings)
   .aggregate(
     allProjects.flatMap(
       _.filterProjects(
-        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala3, "2.13"))
+        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
       ).map(_.project)
     ): _*
   )
 
-lazy val `root-js-213` = project
+lazy val `root-js-3` = project
   .enablePlugins(NoPublishPlugin)
   .settings(commonRootSettings)
   .aggregate(
     allProjects.flatMap(
       _.filterProjects(
-        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala3, "2.13"))
+        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
       ).map(_.project)
     ): _*
   )
 
 lazy val rootProjects = List(
-  `root-jvm-213`,
-  `root-js-213`
+  `root-jvm-3`,
+  `root-js-3`
 ).map(_.id)
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects
