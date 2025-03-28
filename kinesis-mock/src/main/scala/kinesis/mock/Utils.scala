@@ -16,10 +16,12 @@ object Utils {
   private def randomUUIDSyncIO: SyncIO[UUID] =
     getUUIDGen.flatMap(x => x.randomUUID)
 
-  def randomUUID =
+  def randomUUID: UUID =
     randomUUIDSyncIO.unsafeRunSync()
 
-  def randomUUIDString = randomUUIDSyncIO.map(_.toString).unsafeRunSync()
+  def randomUUIDString: String =
+    randomUUIDSyncIO.map(_.toString).unsafeRunSync()
   def md5(bytes: Array[Byte]): Array[Byte] = MD5.compute(bytes)
-  def now = IO.realTime.map(d => Instant.EPOCH.plusNanos(d.toNanos))
+  def now: IO[Instant] =
+    IO.realTime.map(d => Instant.EPOCH.plusNanos(d.toNanos))
 }

@@ -37,7 +37,7 @@ class PersistenceTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite {
 
-  def persistConfig(uuid: String) = PersistConfig(
+  def persistConfig(uuid: String): PersistConfig = PersistConfig(
     loadIfExists = true,
     shouldPersist = true,
     "testing/data",

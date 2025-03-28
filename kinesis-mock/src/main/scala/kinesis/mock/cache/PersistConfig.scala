@@ -49,7 +49,7 @@ final case class PersistConfig(
       createPath(Path("/"), path.drop(1))
     }
   }
-  def osFile = osPath / fileName
+  def osFile: Path = osPath / fileName
 }
 
 object PersistConfig {

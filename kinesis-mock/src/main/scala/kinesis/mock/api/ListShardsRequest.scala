@@ -116,7 +116,7 @@ final case class ListShardsRequest(
       sName: StreamName,
       streams: Streams,
       now: Instant
-  ) = CommonValidations
+  ): Response[ListShardsResponse] = CommonValidations
     .findStream(streamArn, streams)
     .flatMap(stream =>
       (

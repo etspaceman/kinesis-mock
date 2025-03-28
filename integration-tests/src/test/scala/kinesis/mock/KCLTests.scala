@@ -7,6 +7,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 
+import cats.effect.SyncIO
 import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
 import retry._
@@ -35,9 +36,11 @@ import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._
 
 class KCLTests extends AwsFunctionalTests {
-  override val munitIOTimeout = 4.minutes
+  override val munitIOTimeout: FiniteDuration = 4.minutes
 
-  def kclFixture(initialPosition: InitialPositionInStreamExtended) =
+  def kclFixture(
+      initialPosition: InitialPositionInStreamExtended
+  ): SyncIO[FunFixture[KCLResources]] =
     ResourceFunFixture(
       resource.flatMap { resources =>
         for {

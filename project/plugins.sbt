@@ -21,4 +21,3 @@ libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionSch
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "2.0.17"
 )
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.7.2")

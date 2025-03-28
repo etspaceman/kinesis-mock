@@ -119,7 +119,7 @@ final case class SequenceNumberConstantResult(constant: SequenceNumberConstant)
     extends SequenceNumberParseResult
 
 object SequenceNumber {
-  val shardEndNumber = BigInt("7fffffffffffffff", 16)
+  val shardEndNumber: BigInt = BigInt("7fffffffffffffff", 16)
   val shardEnd: SequenceNumber = SequenceNumber(shardEndNumber.toString)
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L177-L186
   def create(

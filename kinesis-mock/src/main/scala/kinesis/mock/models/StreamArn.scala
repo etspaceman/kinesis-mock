@@ -27,7 +27,7 @@ final case class StreamArn(
     streamName: StreamName,
     awsAccountId: AwsAccountId
 ) {
-  val streamArn =
+  val streamArn: String =
     s"arn:${awsRegion.awsArnPiece}:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName"
   override def toString: String = streamArn
 }

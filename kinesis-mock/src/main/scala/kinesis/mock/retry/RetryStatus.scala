@@ -15,5 +15,5 @@ final case class RetryStatus(
 }
 
 object RetryStatus {
-  val NoRetriesYet = RetryStatus(0, Duration.Zero, None)
+  val NoRetriesYet: RetryStatus = RetryStatus(0, Duration.Zero, None)
 }
