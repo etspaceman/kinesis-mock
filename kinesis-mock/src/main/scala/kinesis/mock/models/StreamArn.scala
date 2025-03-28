@@ -53,20 +53,20 @@ object StreamArn {
       )
     } yield StreamArn(awsRegion, streamName, awsAccountId)
 
-  implicit val streamArnCirceEncoder: Encoder[StreamArn] =
+  given streamArnCirceEncoder: Encoder[StreamArn] =
     Encoder[String].contramap(_.streamArn)
-  implicit val streamArnCirceDecoder: Decoder[StreamArn] =
+  given streamArnCirceDecoder: Decoder[StreamArn] =
     Decoder[String].emap(StreamArn.fromArn)
-  implicit val streamArnCirceKeyEncoder: KeyEncoder[StreamArn] =
+  given streamArnCirceKeyEncoder: KeyEncoder[StreamArn] =
     KeyEncoder[String].contramap(_.streamArn)
-  implicit val streamArnCirceKeyDecoder: KeyDecoder[StreamArn] =
+  given streamArnCirceKeyDecoder: KeyDecoder[StreamArn] =
     KeyDecoder.instance(StreamArn.fromArn(_).toOption)
-  implicit val streamArnEq: Eq[StreamArn] = (x, y) =>
+  given streamArnEq: Eq[StreamArn] = (x, y) =>
     x.awsRegion === y.awsRegion &&
       x.streamName === y.streamName &&
       x.awsAccountId === y.awsAccountId &&
       x.streamArn === y.streamArn
-  implicit val streamArnOrdering: Ordering[StreamArn] =
+  given streamArnOrdering: Ordering[StreamArn] =
     (x: StreamArn, y: StreamArn) =>
       Ordering[String].compare(x.streamArn, y.streamArn)
 }

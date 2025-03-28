@@ -26,7 +26,7 @@ import org.scalacheck.{Gen, Test}
 
 import kinesis.mock.LoggingContext
 import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 

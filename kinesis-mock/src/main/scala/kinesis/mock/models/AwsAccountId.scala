@@ -25,9 +25,9 @@ final case class AwsAccountId(accountId: String) {
 }
 
 object AwsAccountId {
-  implicit val awsAccountIdCirceEncoder: Encoder[AwsAccountId] =
+  given awsAccountIdCirceEncoder: Encoder[AwsAccountId] =
     Encoder[String].contramap(_.accountId)
-  implicit val awsAccountIdConfigDecoder: ConfigDecoder[String, AwsAccountId] =
+  given awsAccountIdConfigDecoder: ConfigDecoder[String, AwsAccountId] =
     ConfigDecoder[String].map(AwsAccountId.apply)
-  implicit val awsAccountIdEq: Eq[AwsAccountId] = Eq.fromUniversalEquals
+  given awsAccountIdEq: Eq[AwsAccountId] = Eq.fromUniversalEquals
 }

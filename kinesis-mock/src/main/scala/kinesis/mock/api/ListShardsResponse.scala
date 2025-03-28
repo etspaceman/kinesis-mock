@@ -29,22 +29,20 @@ final case class ListShardsResponse(
 )
 
 object ListShardsResponse {
-  implicit val listShardsResponseCirceEncoder
-      : circe.Encoder[ListShardsResponse] =
+  given listShardsResponseCirceEncoder: circe.Encoder[ListShardsResponse] =
     circe.Encoder.forProduct2("NextToken", "Shards")(x =>
       (x.nextToken, x.shards)
     )
-  implicit val listShardsResponseCirceDecoder
-      : circe.Decoder[ListShardsResponse] =
+  given listShardsResponseCirceDecoder: circe.Decoder[ListShardsResponse] =
     x =>
       for {
         nextToken <- x.downField("NextToken").as[Option[String]]
         shards <- x.downField("Shards").as[Vector[ShardSummary]]
       } yield ListShardsResponse(nextToken, shards)
-  implicit val listShardsResponseEncoder: Encoder[ListShardsResponse] =
+  given listShardsResponseEncoder: Encoder[ListShardsResponse] =
     Encoder.derive
-  implicit val listShardsResponseDecoder: Decoder[ListShardsResponse] =
+  given listShardsResponseDecoder: Decoder[ListShardsResponse] =
     Decoder.derive
-  implicit val listShardsResponseEq: Eq[ListShardsResponse] =
+  given listShardsResponseEq: Eq[ListShardsResponse] =
     (x, y) => x.nextToken == y.nextToken && x.shards === y.shards
 }

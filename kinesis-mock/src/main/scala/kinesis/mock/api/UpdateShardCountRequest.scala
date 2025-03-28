@@ -194,7 +194,7 @@ object UpdateShardCountRequest {
       )
   }
 
-  implicit val updateShardCountRequestCirceEncoder
+  given updateShardCountRequestCirceEncoder
       : circe.Encoder[UpdateShardCountRequest] =
     circe.Encoder.forProduct4(
       "ScalingType",
@@ -203,7 +203,7 @@ object UpdateShardCountRequest {
       "TargetShardCount"
     )(x => (x.scalingType, x.streamName, x.streamArn, x.targetShardCount))
 
-  implicit val updateShardCountRequestCirceDecoder
+  given updateShardCountRequestCirceDecoder
       : circe.Decoder[UpdateShardCountRequest] = x =>
     for {
       scalingType <- x.downField("ScalingType").as[ScalingType]
@@ -217,11 +217,11 @@ object UpdateShardCountRequest {
       targetShardCount
     )
 
-  implicit val updateShardCountRequestEncoder
-      : Encoder[UpdateShardCountRequest] = Encoder.derive
-  implicit val updateShardCountRequestDecoder
-      : Decoder[UpdateShardCountRequest] = Decoder.derive
+  given updateShardCountRequestEncoder: Encoder[UpdateShardCountRequest] =
+    Encoder.derive
+  given updateShardCountRequestDecoder: Decoder[UpdateShardCountRequest] =
+    Decoder.derive
 
-  implicit val updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
+  given updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
     Eq.fromUniversalEquals
 }

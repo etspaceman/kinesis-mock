@@ -24,16 +24,16 @@ final case class StreamName(streamName: String) {
 }
 
 object StreamName {
-  implicit val streamNameCirceEncoder: Encoder[StreamName] =
+  given streamNameCirceEncoder: Encoder[StreamName] =
     Encoder[String].contramap(_.streamName)
-  implicit val streamNameCirceDecoder: Decoder[StreamName] =
+  given streamNameCirceDecoder: Decoder[StreamName] =
     Decoder[String].map(StreamName.apply)
-  implicit val streamNameCirceKeyEncoder: KeyEncoder[StreamName] =
+  given streamNameCirceKeyEncoder: KeyEncoder[StreamName] =
     KeyEncoder[String].contramap(_.streamName)
-  implicit val streamNameCirceKeyDecoder: KeyDecoder[StreamName] =
+  given streamNameCirceKeyDecoder: KeyDecoder[StreamName] =
     KeyDecoder[String].map(StreamName.apply)
-  implicit val streamNameEq: Eq[StreamName] = Eq.fromUniversalEquals
-  implicit val streamNameOrdering: Ordering[StreamName] =
+  given streamNameEq: Eq[StreamName] = Eq.fromUniversalEquals
+  given streamNameOrdering: Ordering[StreamName] =
     (x: StreamName, y: StreamName) =>
       Ordering[String].compare(x.streamName, y.streamName)
 }

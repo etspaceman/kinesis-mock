@@ -26,7 +26,7 @@ import cats.Eq
 import cats.syntax.all._
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 
 final case class StreamData(
     consumers: SortedMap[ConsumerName, Consumer],
@@ -48,16 +48,16 @@ object StreamData {
   val minRetentionPeriod: FiniteDuration = 24.hours
   val maxRetentionPeriod: FiniteDuration = 365.days
 
-  private implicit val consumerCirceEncoder: circe.Encoder[Consumer] =
+  private given consumerCirceEncoder: circe.Encoder[Consumer] =
     Encoder[Consumer].circeEncoder
-  private implicit val kinesisRecordCirceEncoder: circe.Encoder[KinesisRecord] =
+  private given kinesisRecordCirceEncoder: circe.Encoder[KinesisRecord] =
     Encoder[KinesisRecord].circeEncoder
-  private implicit val consumerCirceDecoder: circe.Decoder[Consumer] =
+  private given consumerCirceDecoder: circe.Decoder[Consumer] =
     Decoder[Consumer].circeDecoder
-  private implicit val kinesisRecordCirceDecoder: circe.Decoder[KinesisRecord] =
+  private given kinesisRecordCirceDecoder: circe.Decoder[KinesisRecord] =
     Decoder[KinesisRecord].circeDecoder
 
-  implicit val streamDataCirceEncoder: circe.Encoder[StreamData] =
+  given streamDataCirceEncoder: circe.Encoder[StreamData] =
     circe.Encoder.forProduct13(
       "consumers",
       "encryptionType",
@@ -89,7 +89,7 @@ object StreamData {
         x.shardCountUpdates
       )
     )
-  implicit val streamDataCirceDecoder: circe.Decoder[StreamData] = { x =>
+  given streamDataCirceDecoder: circe.Decoder[StreamData] = { x =>
     for {
       consumers <- x
         .downField("consumers")
@@ -132,7 +132,7 @@ object StreamData {
 
   }
 
-  implicit val streamDataEq: Eq[StreamData] = (x, y) =>
+  given streamDataEq: Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
       x.encryptionType === y.encryptionType &&
       x.enhancedMonitoring === y.enhancedMonitoring &&

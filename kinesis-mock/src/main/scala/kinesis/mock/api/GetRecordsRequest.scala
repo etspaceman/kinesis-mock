@@ -240,22 +240,22 @@ object GetRecordsRequest {
       )
   }
 
-  implicit val getRecordsRequestCirceEncoder: circe.Encoder[GetRecordsRequest] =
+  given getRecordsRequestCirceEncoder: circe.Encoder[GetRecordsRequest] =
     circe.Encoder.forProduct3("Limit", "ShardIterator", "StreamARN")(x =>
       (x.limit, x.shardIterator, x.streamArn)
     )
 
-  implicit val getRecordsRequestCirceDecoder: circe.Decoder[GetRecordsRequest] =
+  given getRecordsRequestCirceDecoder: circe.Decoder[GetRecordsRequest] =
     x =>
       for {
         limit <- x.downField("Limit").as[Option[Int]]
         shardIterator <- x.downField("ShardIterator").as[ShardIterator]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       } yield GetRecordsRequest(limit, shardIterator, streamArn)
-  implicit val getRecordsRequestEncoder: Encoder[GetRecordsRequest] =
+  given getRecordsRequestEncoder: Encoder[GetRecordsRequest] =
     Encoder.derive
-  implicit val getRecordsRequestDecoder: Decoder[GetRecordsRequest] =
+  given getRecordsRequestDecoder: Decoder[GetRecordsRequest] =
     Decoder.derive
-  implicit val getRecordsRequestEq: Eq[GetRecordsRequest] =
+  given getRecordsRequestEq: Eq[GetRecordsRequest] =
     Eq.fromUniversalEquals
 }

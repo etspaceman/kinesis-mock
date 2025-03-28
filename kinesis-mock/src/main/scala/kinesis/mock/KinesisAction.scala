@@ -55,8 +55,10 @@ object KinesisAction extends Enum[KinesisAction] {
   case object UpdateShardCount extends KinesisAction
   case object UpdateStreamMode extends KinesisAction
 
-  implicit val kinesisActionQueryParamDecoder
-      : QueryParamDecoder[KinesisAction] = QueryParamDecoder[String].emap(x =>
-    KinesisAction.withNameEither(x).leftMap(e => ParseFailure(e.getMessage, ""))
-  )
+  given kinesisActionQueryParamDecoder: QueryParamDecoder[KinesisAction] =
+    QueryParamDecoder[String].emap(x =>
+      KinesisAction
+        .withNameEither(x)
+        .leftMap(e => ParseFailure(e.getMessage, ""))
+    )
 }

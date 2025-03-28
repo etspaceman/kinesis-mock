@@ -17,7 +17,7 @@
 package kinesis.mock
 package models
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
 class ModelsCodecTests extends CodecTests {
   identityLawTest[Consumer]

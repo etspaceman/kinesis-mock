@@ -73,12 +73,12 @@ final case class EnableEnhancedMonitoringRequest(
 }
 
 object EnableEnhancedMonitoringRequest {
-  implicit val enableEnhancedMonitoringRequestCirceEncoder
+  given enableEnhancedMonitoringRequestCirceEncoder
       : circe.Encoder[EnableEnhancedMonitoringRequest] =
     circe.Encoder.forProduct3("ShardLevelMetrics", "StreamName", "StreamARN")(
       x => (x.shardLevelMetrics, x.streamName, x.streamArn)
     )
-  implicit val enableEnhancedMonitoringRequestCirceDecoder
+  given enableEnhancedMonitoringRequestCirceDecoder
       : circe.Decoder[EnableEnhancedMonitoringRequest] = { x =>
     for {
       shardLevelMetrics <- x
@@ -92,10 +92,10 @@ object EnableEnhancedMonitoringRequest {
       streamArn
     )
   }
-  implicit val enableEnhancedMonitoringRequestEncoder
+  given enableEnhancedMonitoringRequestEncoder
       : Encoder[EnableEnhancedMonitoringRequest] = Encoder.derive
-  implicit val enableEnhancedMonitoringRequestDecoder
+  given enableEnhancedMonitoringRequestDecoder
       : Decoder[EnableEnhancedMonitoringRequest] = Decoder.derive
-  implicit val enableEnhancedMonitoringRequestEq
-      : Eq[EnableEnhancedMonitoringRequest] = Eq.fromUniversalEquals
+  given enableEnhancedMonitoringRequestEq: Eq[EnableEnhancedMonitoringRequest] =
+    Eq.fromUniversalEquals
 }

@@ -63,19 +63,19 @@ object GetRecordsResponse {
         records
       )
 
-  implicit val getRecordsResponseEncoder: Encoder[GetRecordsResponse] =
+  given getRecordsResponseEncoder: Encoder[GetRecordsResponse] =
     Encoder.instance(
       getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeEncoder),
       getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeCborEncoder)
     )
 
-  implicit val getRecordsResponseDecoder: Decoder[GetRecordsResponse] =
+  given getRecordsResponseDecoder: Decoder[GetRecordsResponse] =
     Decoder.instance(
       getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeDecoder),
       getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeCborDecoder)
     )
 
-  implicit val getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>
+  given getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>
     x.childShards == y.childShards &&
       x.millisBehindLatest == y.millisBehindLatest &&
       x.nextShardIterator == y.nextShardIterator &&

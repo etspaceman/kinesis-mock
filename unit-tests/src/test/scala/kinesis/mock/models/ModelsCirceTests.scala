@@ -19,7 +19,7 @@ package models
 
 import enumeratum.scalacheck._
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
 class ModelsCirceTests extends CirceTests {
   identityLawTest[AwsRegion]

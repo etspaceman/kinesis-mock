@@ -37,7 +37,7 @@ object DescribeStreamConsumerResponse {
     _.downField("ConsumerDescription")
       .as[Consumer]
       .map(DescribeStreamConsumerResponse.apply)
-  implicit val describeStreamConsumerResponseEncoder
+  given describeStreamConsumerResponseEncoder
       : Encoder[DescribeStreamConsumerResponse] =
     Encoder.instance(
       describeStreamConsumerResponseCirceEncoder(
@@ -47,7 +47,7 @@ object DescribeStreamConsumerResponse {
         Encoder[Consumer].circeCborEncoder
       )
     )
-  implicit val describeStreamConsumerResponseDecoder
+  given describeStreamConsumerResponseDecoder
       : Decoder[DescribeStreamConsumerResponse] =
     Decoder.instance(
       describeStreamConsumerResponseCirceDecoder(
@@ -57,7 +57,6 @@ object DescribeStreamConsumerResponse {
         Decoder[Consumer].circeCborDecoder
       )
     )
-  implicit val describeStreamConsumerResponseEq
-      : Eq[DescribeStreamConsumerResponse] = (x, y) =>
-    x.consumerDescription === y.consumerDescription
+  given describeStreamConsumerResponseEq: Eq[DescribeStreamConsumerResponse] =
+    (x, y) => x.consumerDescription === y.consumerDescription
 }

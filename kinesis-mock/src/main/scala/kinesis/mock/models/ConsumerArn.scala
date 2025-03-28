@@ -67,20 +67,20 @@ object ConsumerArn {
         )
     } yield ConsumerArn(streamArn, consumerName, creationTimestamp)
 
-  implicit val consumerArnCirceEncoder: Encoder[ConsumerArn] =
+  given consumerArnCirceEncoder: Encoder[ConsumerArn] =
     Encoder[String].contramap(_.consumerArn)
-  implicit val consumerArnCirceDecoder: Decoder[ConsumerArn] =
+  given consumerArnCirceDecoder: Decoder[ConsumerArn] =
     Decoder[String].emap(ConsumerArn.fromArn)
-  implicit val consumerArnCirceKeyEncoder: KeyEncoder[ConsumerArn] =
+  given consumerArnCirceKeyEncoder: KeyEncoder[ConsumerArn] =
     KeyEncoder[String].contramap(_.consumerArn)
-  implicit val consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
+  given consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
     KeyDecoder.instance(ConsumerArn.fromArn(_).toOption)
-  implicit val consumerArnEq: Eq[ConsumerArn] = (x, y) =>
+  given consumerArnEq: Eq[ConsumerArn] = (x, y) =>
     x.consumerName === y.consumerName &&
       x.streamArn === y.streamArn &&
       x.creationTime.getEpochSecond() === y.creationTime.getEpochSecond() &&
       x.consumerArn === y.consumerArn
-  implicit val consumerArnOrdering: Ordering[ConsumerArn] =
+  given consumerArnOrdering: Ordering[ConsumerArn] =
     (x: ConsumerArn, y: ConsumerArn) =>
       Ordering[String].compare(x.consumerArn, y.consumerArn)
 }

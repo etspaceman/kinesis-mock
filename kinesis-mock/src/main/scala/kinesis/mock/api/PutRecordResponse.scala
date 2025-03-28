@@ -29,12 +29,12 @@ final case class PutRecordResponse(
 )
 
 object PutRecordResponse {
-  implicit val putRecordResponseCirceEncoder: circe.Encoder[PutRecordResponse] =
+  given putRecordResponseCirceEncoder: circe.Encoder[PutRecordResponse] =
     circe.Encoder.forProduct3("EncryptionType", "SequenceNumber", "ShardId")(
       x => (x.encryptionType, x.sequenceNumber, x.shardId)
     )
 
-  implicit val putRecordResponseCirceDecoder: circe.Decoder[PutRecordResponse] =
+  given putRecordResponseCirceDecoder: circe.Decoder[PutRecordResponse] =
     x =>
       for {
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
@@ -42,11 +42,11 @@ object PutRecordResponse {
         shardId <- x.downField("ShardId").as[String]
       } yield PutRecordResponse(encryptionType, sequenceNumber, shardId)
 
-  implicit val putRecordResponseEncoder: Encoder[PutRecordResponse] =
+  given putRecordResponseEncoder: Encoder[PutRecordResponse] =
     Encoder.derive
-  implicit val putRecordResponseDecoder: Decoder[PutRecordResponse] =
+  given putRecordResponseDecoder: Decoder[PutRecordResponse] =
     Decoder.derive
 
-  implicit val putRecordResponseEq: Eq[PutRecordResponse] =
+  given putRecordResponseEq: Eq[PutRecordResponse] =
     Eq.fromUniversalEquals
 }

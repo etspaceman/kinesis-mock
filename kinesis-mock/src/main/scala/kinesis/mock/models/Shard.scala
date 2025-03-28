@@ -76,7 +76,7 @@ object Shard {
         }
     )
   }
-  implicit val shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
+  given shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
   def shardCirceEncoder(implicit
@@ -130,27 +130,27 @@ object Shard {
     )
   }
 
-  implicit val shardEncoder: Encoder[Shard] = Encoder.instance(
+  given shardEncoder: Encoder[Shard] = Encoder.instance(
     shardCirceEncoder(instantDoubleCirceEncoder),
     shardCirceEncoder(instantLongCirceEncoder)
   )
 
-  implicit val shardDecoder: Decoder[Shard] = Decoder.instance(
+  given shardDecoder: Decoder[Shard] = Decoder.instance(
     shardCirceDecoder(instantDoubleCirceDecoder),
     shardCirceDecoder(instantLongCirceDecoder)
   )
 
-  implicit val shardCirceKeyEncoder: circe.KeyEncoder[Shard] =
+  given shardCirceKeyEncoder: circe.KeyEncoder[Shard] =
     circe
       .KeyEncoder[String]
       .contramap(x => shardCirceEncoder.apply(x).asJson.noSpaces)
 
-  implicit val shardCirceKeyDecoder: circe.KeyDecoder[Shard] =
+  given shardCirceKeyDecoder: circe.KeyDecoder[Shard] =
     circe.KeyDecoder.instance(x =>
       parse(x).flatMap(_.as[Shard](shardCirceDecoder)).toOption
     )
 
-  implicit val shardEq: Eq[Shard] = (x, y) =>
+  given shardEq: Eq[Shard] = (x, y) =>
     x.adjacentParentShardId == y.adjacentParentShardId &&
       x.closedTimestamp.map(_.getEpochSecond()) == y.closedTimestamp.map(
         _.getEpochSecond()

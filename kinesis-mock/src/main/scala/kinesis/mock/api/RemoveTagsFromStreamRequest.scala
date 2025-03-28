@@ -74,12 +74,12 @@ final case class RemoveTagsFromStreamRequest(
 }
 
 object RemoveTagsFromStreamRequest {
-  implicit val removeTagsFromStreamRequestCirceEncoder
+  given removeTagsFromStreamRequestCirceEncoder
       : circe.Encoder[RemoveTagsFromStreamRequest] =
     circe.Encoder.forProduct3("StreamName", "StreamARN", "TagKeys")(x =>
       (x.streamName, x.streamArn, x.tagKeys)
     )
-  implicit val removeTagsFromStreamRequestCirceDecoder
+  given removeTagsFromStreamRequestCirceDecoder
       : circe.Decoder[RemoveTagsFromStreamRequest] = { x =>
     for {
       streamName <- x.downField("StreamName").as[Option[StreamName]]
@@ -87,11 +87,11 @@ object RemoveTagsFromStreamRequest {
       tagKeys <- x.downField("TagKeys").as[Vector[String]]
     } yield RemoveTagsFromStreamRequest(streamName, streamArn, tagKeys)
   }
-  implicit val removeTagsFromStreamRequestEncoder
+  given removeTagsFromStreamRequestEncoder
       : Encoder[RemoveTagsFromStreamRequest] = Encoder.derive
-  implicit val removeTagsFromStreamRequestDecoder
+  given removeTagsFromStreamRequestDecoder
       : Decoder[RemoveTagsFromStreamRequest] = Decoder.derive
-  implicit val removeTagsFromStreamRequestEq: Eq[RemoveTagsFromStreamRequest] =
+  given removeTagsFromStreamRequestEq: Eq[RemoveTagsFromStreamRequest] =
     Eq.fromUniversalEquals
 
 }

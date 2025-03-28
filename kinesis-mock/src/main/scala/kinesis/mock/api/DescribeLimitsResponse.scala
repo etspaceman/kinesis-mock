@@ -56,7 +56,7 @@ object DescribeLimitsResponse {
       )
     }
 
-  implicit val describeLimitsResponseCirceEncoder
+  given describeLimitsResponseCirceEncoder
       : circe.Encoder[DescribeLimitsResponse] =
     circe.Encoder.forProduct4(
       "OnDemandStreamCount",
@@ -71,7 +71,7 @@ object DescribeLimitsResponse {
         x.shardLimit
       )
     )
-  implicit val describeLimitsResponseCirceDecoder
+  given describeLimitsResponseCirceDecoder
       : circe.Decoder[DescribeLimitsResponse] = { x =>
     for {
       onDemandStreamCount <- x.downField("OnDemandStreamCount").as[Int]
@@ -87,10 +87,10 @@ object DescribeLimitsResponse {
       shardLimit
     )
   }
-  implicit val describeLimitsResponseEncoder: Encoder[DescribeLimitsResponse] =
+  given describeLimitsResponseEncoder: Encoder[DescribeLimitsResponse] =
     Encoder.derive
-  implicit val describeLimitsResponseDecoder: Decoder[DescribeLimitsResponse] =
+  given describeLimitsResponseDecoder: Decoder[DescribeLimitsResponse] =
     Decoder.derive
-  implicit val describeLimitsResponseEq: Eq[DescribeLimitsResponse] =
+  given describeLimitsResponseEq: Eq[DescribeLimitsResponse] =
     Eq.fromUniversalEquals
 }

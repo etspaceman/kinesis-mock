@@ -30,7 +30,7 @@ final case class EnableEnhancedMonitoringResponse(
 )
 
 object EnableEnhancedMonitoringResponse {
-  implicit val enableEnhancedMonitoringResponseCirceEncoder
+  given enableEnhancedMonitoringResponseCirceEncoder
       : circe.Encoder[EnableEnhancedMonitoringResponse] =
     circe.Encoder.forProduct4(
       "CurrentShardLevelMetrics",
@@ -46,7 +46,7 @@ object EnableEnhancedMonitoringResponse {
       )
     )
 
-  implicit val enableEnhancedMonitoringResponseCirceDecoder
+  given enableEnhancedMonitoringResponseCirceDecoder
       : circe.Decoder[EnableEnhancedMonitoringResponse] = { x =>
     for {
       currentShardLevelMetrics <- x
@@ -64,10 +64,10 @@ object EnableEnhancedMonitoringResponse {
       streamArn
     )
   }
-  implicit val enableEnhancedMonitoringResponseEncoder
+  given enableEnhancedMonitoringResponseEncoder
       : Encoder[EnableEnhancedMonitoringResponse] = Encoder.derive
-  implicit val enableEnhancedMonitoringResponseDecoder
+  given enableEnhancedMonitoringResponseDecoder
       : Decoder[EnableEnhancedMonitoringResponse] = Decoder.derive
-  implicit val enableEnhancedMonitoringResponseEq
+  given enableEnhancedMonitoringResponseEq
       : Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
 }

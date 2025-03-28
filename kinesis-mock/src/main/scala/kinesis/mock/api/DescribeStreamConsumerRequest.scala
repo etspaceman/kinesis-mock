@@ -55,12 +55,12 @@ final case class DescribeStreamConsumerRequest(
 }
 
 object DescribeStreamConsumerRequest {
-  implicit val describeStreamConsumerRequestCirceEncoder
+  given describeStreamConsumerRequestCirceEncoder
       : circe.Encoder[DescribeStreamConsumerRequest] =
     circe.Encoder.forProduct3("ConsumerARN", "ConsumerName", "StreamARN")(x =>
       (x.consumerArn, x.consumerName, x.streamArn)
     )
-  implicit val describeStreamConsumerRequestCirceDecoder
+  given describeStreamConsumerRequestCirceDecoder
       : circe.Decoder[DescribeStreamConsumerRequest] = { x =>
     for {
       consumerArn <- x.downField("ConsumerARN").as[Option[ConsumerArn]]
@@ -72,13 +72,13 @@ object DescribeStreamConsumerRequest {
       streamArn
     )
   }
-  implicit val describeStreamConsumerRequestEncoder
+  given describeStreamConsumerRequestEncoder
       : Encoder[DescribeStreamConsumerRequest] =
     Encoder.derive
-  implicit val describeStreamConsumerRequestDecoder
+  given describeStreamConsumerRequestDecoder
       : Decoder[DescribeStreamConsumerRequest] =
     Decoder.derive
-  implicit val describeStreamConsumerEq: Eq[DescribeStreamConsumerRequest] =
+  given describeStreamConsumerEq: Eq[DescribeStreamConsumerRequest] =
     (x, y) =>
       x.consumerArn === y.consumerArn &&
         x.consumerName === y.consumerName &&

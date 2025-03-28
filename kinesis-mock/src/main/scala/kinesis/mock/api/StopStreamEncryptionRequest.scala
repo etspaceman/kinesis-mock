@@ -72,7 +72,7 @@ final case class StopStreamEncryptionRequest(
 }
 
 object StopStreamEncryptionRequest {
-  implicit val stopStreamEncryptionRequestCirceEncoder
+  given stopStreamEncryptionRequestCirceEncoder
       : circe.Encoder[StopStreamEncryptionRequest] =
     circe.Encoder.forProduct4(
       "EncryptionType",
@@ -81,7 +81,7 @@ object StopStreamEncryptionRequest {
       "StreamARN"
     )(x => (x.encryptionType, x.keyId, x.streamName, x.streamArn))
 
-  implicit val stopStreamEncryptionRequestCirceDecoder
+  given stopStreamEncryptionRequestCirceDecoder
       : circe.Decoder[StopStreamEncryptionRequest] = x =>
     for {
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
@@ -95,11 +95,11 @@ object StopStreamEncryptionRequest {
       streamArn
     )
 
-  implicit val stopStreamEncryptionRequestEncoder
+  given stopStreamEncryptionRequestEncoder
       : Encoder[StopStreamEncryptionRequest] = Encoder.derive
-  implicit val stopStreamEncryptionRequestDecoder
+  given stopStreamEncryptionRequestDecoder
       : Decoder[StopStreamEncryptionRequest] = Decoder.derive
 
-  implicit val stopStreamEncryptionRequestEq: Eq[StopStreamEncryptionRequest] =
+  given stopStreamEncryptionRequestEq: Eq[StopStreamEncryptionRequest] =
     Eq.fromUniversalEquals
 }

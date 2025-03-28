@@ -125,18 +125,18 @@ object ListStreamConsumersRequest {
       streamCreationTimestamp
     )
 
-  implicit val listStreamConsumersRequestEncoder
-      : Encoder[ListStreamConsumersRequest] = Encoder.instance(
-    listStreamConsumersRequestCirceEncoder(instantBigDecimalCirceEncoder),
-    listStreamConsumersRequestCirceEncoder(instantLongCirceEncoder)
-  )
-  implicit val listStreamConsumersRequestDecoder
-      : Decoder[ListStreamConsumersRequest] = Decoder.instance(
-    listStreamConsumersRequestCirceDecoder(instantBigDecimalCirceDecoder),
-    listStreamConsumersRequestCirceDecoder(instantLongCirceDecoder)
-  )
+  given listStreamConsumersRequestEncoder: Encoder[ListStreamConsumersRequest] =
+    Encoder.instance(
+      listStreamConsumersRequestCirceEncoder(instantBigDecimalCirceEncoder),
+      listStreamConsumersRequestCirceEncoder(instantLongCirceEncoder)
+    )
+  given listStreamConsumersRequestDecoder: Decoder[ListStreamConsumersRequest] =
+    Decoder.instance(
+      listStreamConsumersRequestCirceDecoder(instantBigDecimalCirceDecoder),
+      listStreamConsumersRequestCirceDecoder(instantLongCirceDecoder)
+    )
 
-  implicit val listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
+  given listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
     (x, y) =>
       x.maxResults == y.maxResults && x.nextToken == y.nextToken && x.streamArn == y.streamArn && x.streamCreationTimestamp
         .map(_.toEpochMilli) == y.streamCreationTimestamp.map(_.toEpochMilli)

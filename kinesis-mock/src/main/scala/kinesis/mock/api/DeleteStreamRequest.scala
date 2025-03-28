@@ -84,27 +84,30 @@ final case class DeleteStreamRequest(
 }
 
 object DeleteStreamRequest {
-  implicit val deleteStreamRequestCirceEncoder
-      : circe.Encoder[DeleteStreamRequest] =
+  given deleteStreamRequestCirceEncoder: circe.Encoder[DeleteStreamRequest] =
     circe.Encoder.forProduct3(
       "StreamName",
       "StreamARN",
       "EnforceConsumerDeletion"
     )(x => (x.streamName, x.streamArn, x.enforceConsumerDeletion))
-  implicit val deleteStreamRequestCirceDecoder
-      : circe.Decoder[DeleteStreamRequest] = { x =>
-    for {
-      streamName <- x.downField("StreamName").as[Option[StreamName]]
-      streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      enforceConsumerDeletion <- x
-        .downField("EnforceConsumerDeletion")
-        .as[Option[Boolean]]
-    } yield DeleteStreamRequest(streamName, streamArn, enforceConsumerDeletion)
+  given deleteStreamRequestCirceDecoder: circe.Decoder[DeleteStreamRequest] = {
+    x =>
+      for {
+        streamName <- x.downField("StreamName").as[Option[StreamName]]
+        streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
+        enforceConsumerDeletion <- x
+          .downField("EnforceConsumerDeletion")
+          .as[Option[Boolean]]
+      } yield DeleteStreamRequest(
+        streamName,
+        streamArn,
+        enforceConsumerDeletion
+      )
   }
-  implicit val deleteStreamRequestEncoder: Encoder[DeleteStreamRequest] =
+  given deleteStreamRequestEncoder: Encoder[DeleteStreamRequest] =
     Encoder.derive
-  implicit val deleteStreamRequestDecoder: Decoder[DeleteStreamRequest] =
+  given deleteStreamRequestDecoder: Decoder[DeleteStreamRequest] =
     Decoder.derive
-  implicit val deleteStreamRequestEq: Eq[DeleteStreamRequest] =
+  given deleteStreamRequestEq: Eq[DeleteStreamRequest] =
     Eq.fromUniversalEquals
 }

@@ -19,7 +19,7 @@ package kinesis.mock.models
 import enumeratum.scalacheck._
 import org.scalacheck.Prop._
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
 class StreamArnSpec extends munit.ScalaCheckSuite {
   property("It should convert to a proper ARN format")(forAll {

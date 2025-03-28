@@ -71,7 +71,7 @@ final case class StartStreamEncryptionRequest(
 }
 
 object StartStreamEncryptionRequest {
-  implicit val startStreamEncryptionRequestCirceEncoder
+  given startStreamEncryptionRequestCirceEncoder
       : circe.Encoder[StartStreamEncryptionRequest] =
     circe.Encoder.forProduct4(
       "EncryptionType",
@@ -80,7 +80,7 @@ object StartStreamEncryptionRequest {
       "StreamARN"
     )(x => (x.encryptionType, x.keyId, x.streamName, x.streamArn))
 
-  implicit val startStreamEncryptionRequestCirceDecoder
+  given startStreamEncryptionRequestCirceDecoder
       : circe.Decoder[StartStreamEncryptionRequest] = x =>
     for {
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
@@ -94,11 +94,11 @@ object StartStreamEncryptionRequest {
       streamArn
     )
 
-  implicit val startStreamEncryptionRequestEncoder
+  given startStreamEncryptionRequestEncoder
       : Encoder[StartStreamEncryptionRequest] = Encoder.derive
-  implicit val startStreamEncryptionRequestDecoder
+  given startStreamEncryptionRequestDecoder
       : Decoder[StartStreamEncryptionRequest] = Decoder.derive
 
-  implicit val startStreamEncryptionRequestEq
-      : Eq[StartStreamEncryptionRequest] = Eq.fromUniversalEquals
+  given startStreamEncryptionRequestEq: Eq[StartStreamEncryptionRequest] =
+    Eq.fromUniversalEquals
 }

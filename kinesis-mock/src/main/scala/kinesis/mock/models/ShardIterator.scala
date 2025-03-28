@@ -115,11 +115,11 @@ object ShardIterator {
     ShardIterator(Base64.getEncoder.encodeToString(encryptedBytes))
   }
 
-  implicit val shardIteratorCirceEncoder: Encoder[ShardIterator] =
+  given shardIteratorCirceEncoder: Encoder[ShardIterator] =
     Encoder[String].contramap(_.value)
 
-  implicit val shardIteratorCirceDecoder: Decoder[ShardIterator] =
+  given shardIteratorCirceDecoder: Decoder[ShardIterator] =
     Decoder[String].map(ShardIterator.apply)
 
-  implicit val shardIteratorEq: Eq[ShardIterator] = Eq.fromUniversalEquals
+  given shardIteratorEq: Eq[ShardIterator] = Eq.fromUniversalEquals
 }

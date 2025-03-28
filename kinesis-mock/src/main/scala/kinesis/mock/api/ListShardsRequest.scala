@@ -251,7 +251,7 @@ object ListShardsRequest {
       streamArn
     )
   }
-  implicit val listShardsRequestEncoder: Encoder[ListShardsRequest] =
+  given listShardsRequestEncoder: Encoder[ListShardsRequest] =
     Encoder.instance(
       listShardsRequestCirceEncoder(
         Encoder[ShardFilter].circeEncoder,
@@ -262,7 +262,7 @@ object ListShardsRequest {
         instantLongCirceEncoder
       )
     )
-  implicit val listShardsRequestDecoder: Decoder[ListShardsRequest] =
+  given listShardsRequestDecoder: Decoder[ListShardsRequest] =
     Decoder.instance(
       listShardsRequestCirceDecoder(
         Decoder[ShardFilter].circeDecoder,
@@ -274,7 +274,7 @@ object ListShardsRequest {
       )
     )
 
-  implicit val listShardsRequestEq: Eq[ListShardsRequest] =
+  given listShardsRequestEq: Eq[ListShardsRequest] =
     (x, y) =>
       x.exclusiveStartShardId == y.exclusiveStartShardId &&
         x.maxResults == y.maxResults &&

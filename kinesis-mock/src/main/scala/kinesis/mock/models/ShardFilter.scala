@@ -47,16 +47,16 @@ object ShardFilter {
       `type` <- x.downField("Type").as[ShardFilterType]
     } yield ShardFilter(shardId, timestamp, `type`)
 
-  implicit val shardFilterEncoder: Encoder[ShardFilter] = Encoder.instance(
+  given shardFilterEncoder: Encoder[ShardFilter] = Encoder.instance(
     shardFilterCirceEncoder(instantBigDecimalCirceEncoder),
     shardFilterCirceEncoder(instantLongCirceEncoder)
   )
-  implicit val shardFilterDecoder: Decoder[ShardFilter] = Decoder.instance(
+  given shardFilterDecoder: Decoder[ShardFilter] = Decoder.instance(
     shardFilterCirceDecoder(instantBigDecimalCirceDecoder),
     shardFilterCirceDecoder(instantLongCirceDecoder)
   )
 
-  implicit val shardFilterEq: Eq[ShardFilter] = (x, y) =>
+  given shardFilterEq: Eq[ShardFilter] = (x, y) =>
     x.shardId == y.shardId &&
       x.timestamp.map(_.getEpochSecond()) == y.timestamp.map(
         _.getEpochSecond()

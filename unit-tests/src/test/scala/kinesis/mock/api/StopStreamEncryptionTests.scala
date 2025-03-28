@@ -20,7 +20,7 @@ package api
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.{given, _}
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 

@@ -86,23 +86,22 @@ final case class RegisterStreamConsumerRequest(
 }
 
 object RegisterStreamConsumerRequest {
-  implicit val registerStreamConsumerRequestCirceEncoder
+  given registerStreamConsumerRequestCirceEncoder
       : circe.Encoder[RegisterStreamConsumerRequest] =
     circe.Encoder.forProduct2("ConsumerName", "StreamARN")(x =>
       (x.consumerName, x.streamArn)
     )
-  implicit val registerStreamConsumerRequestCirceDecoder
+  given registerStreamConsumerRequestCirceDecoder
       : circe.Decoder[RegisterStreamConsumerRequest] = { x =>
     for {
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       streamArn <- x.downField("StreamARN").as[StreamArn]
     } yield RegisterStreamConsumerRequest(consumerName, streamArn)
   }
-  implicit val registerStreamConsumerRequestEncoder
+  given registerStreamConsumerRequestEncoder
       : Encoder[RegisterStreamConsumerRequest] = Encoder.derive
-  implicit val registerStreamConsumerRequestDecoder
+  given registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
-  implicit val registerStreamConsumerRequestEq
-      : Eq[RegisterStreamConsumerRequest] = (x, y) =>
-    x.consumerName === y.consumerName && x.streamArn === y.streamArn
+  given registerStreamConsumerRequestEq: Eq[RegisterStreamConsumerRequest] =
+    (x, y) => x.consumerName === y.consumerName && x.streamArn === y.streamArn
 }

@@ -23,16 +23,16 @@ import io.circe
 final case class ShardLevelMetrics(shardLevelMetrics: Vector[ShardLevelMetric])
 
 object ShardLevelMetrics {
-  implicit val shardLevelMetricsCirceEncoder: circe.Encoder[ShardLevelMetrics] =
+  given shardLevelMetricsCirceEncoder: circe.Encoder[ShardLevelMetrics] =
     circe.Encoder.forProduct1("ShardLevelMetrics")(_.shardLevelMetrics)
-  implicit val shardLevelMetricsCirceDecoder: circe.Decoder[ShardLevelMetrics] =
+  given shardLevelMetricsCirceDecoder: circe.Decoder[ShardLevelMetrics] =
     _.downField("ShardLevelMetrics")
       .as[Vector[ShardLevelMetric]]
       .map(ShardLevelMetrics.apply)
-  implicit val shardLevelMetricsEncoder: Encoder[ShardLevelMetrics] =
+  given shardLevelMetricsEncoder: Encoder[ShardLevelMetrics] =
     Encoder.derive
-  implicit val shardLevelMetricsDecoder: Decoder[ShardLevelMetrics] =
+  given shardLevelMetricsDecoder: Decoder[ShardLevelMetrics] =
     Decoder.derive
-  implicit val shardLevelMetricsEq: Eq[ShardLevelMetrics] =
+  given shardLevelMetricsEq: Eq[ShardLevelMetrics] =
     Eq.fromUniversalEquals
 }

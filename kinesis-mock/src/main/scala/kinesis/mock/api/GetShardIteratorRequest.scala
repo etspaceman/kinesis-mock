@@ -308,19 +308,19 @@ object GetShardIteratorRequest {
         timestamp
       )
 
-  implicit val getShardIteratorRequestEncoder
-      : Encoder[GetShardIteratorRequest] = Encoder.instance(
-    getShardIteratorRequestCirceEncoder(instantBigDecimalCirceEncoder),
-    getShardIteratorRequestCirceEncoder(instantLongCirceEncoder)
-  )
+  given getShardIteratorRequestEncoder: Encoder[GetShardIteratorRequest] =
+    Encoder.instance(
+      getShardIteratorRequestCirceEncoder(instantBigDecimalCirceEncoder),
+      getShardIteratorRequestCirceEncoder(instantLongCirceEncoder)
+    )
 
-  implicit val getShardIteratorRequestDecoder
-      : Decoder[GetShardIteratorRequest] = Decoder.instance(
-    getShardIteratorRequestCirceDecoder(instantBigDecimalCirceDecoder),
-    getShardIteratorRequestCirceDecoder(instantLongCirceDecoder)
-  )
+  given getShardIteratorRequestDecoder: Decoder[GetShardIteratorRequest] =
+    Decoder.instance(
+      getShardIteratorRequestCirceDecoder(instantBigDecimalCirceDecoder),
+      getShardIteratorRequestCirceDecoder(instantLongCirceDecoder)
+    )
 
-  implicit val getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
+  given getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
     (x, y) =>
       x.shardId == y.shardId &&
         x.shardIteratorType == y.shardIteratorType &&

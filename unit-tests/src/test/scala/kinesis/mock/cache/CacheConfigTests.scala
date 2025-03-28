@@ -20,7 +20,7 @@ import enumeratum.scalacheck._
 import org.scalacheck.{Gen, Prop, Test}
 
 import kinesis.mock.api.CreateStreamRequest
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models.{AwsRegion, StreamName}
 import kinesis.mock.syntax.scalacheck._
 

@@ -119,19 +119,19 @@ object StreamDescriptionSummary {
       streamStatus
     )
 
-  implicit val streamDescriptionSummaryEncoder
-      : Encoder[StreamDescriptionSummary] = Encoder.instance(
-    streamDescriptionSummaryCirceEncoder(instantDoubleCirceEncoder),
-    streamDescriptionSummaryCirceEncoder(instantLongCirceEncoder)
-  )
+  given streamDescriptionSummaryEncoder: Encoder[StreamDescriptionSummary] =
+    Encoder.instance(
+      streamDescriptionSummaryCirceEncoder(instantDoubleCirceEncoder),
+      streamDescriptionSummaryCirceEncoder(instantLongCirceEncoder)
+    )
 
-  implicit val streamDescriptionSummaryDecoder
-      : Decoder[StreamDescriptionSummary] = Decoder.instance(
-    streamDescriptionSummaryCirceDecoder(instantDoubleCirceDecoder),
-    streamDescriptionSummaryCirceDecoder(instantLongCirceDecoder)
-  )
+  given streamDescriptionSummaryDecoder: Decoder[StreamDescriptionSummary] =
+    Decoder.instance(
+      streamDescriptionSummaryCirceDecoder(instantDoubleCirceDecoder),
+      streamDescriptionSummaryCirceDecoder(instantLongCirceDecoder)
+    )
 
-  implicit val streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
+  given streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
     (x, y) =>
       x.consumerCount == y.consumerCount &&
         x.encryptionType == y.encryptionType &&

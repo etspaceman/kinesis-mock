@@ -22,7 +22,7 @@ import ciris._
 import fs2.io.file.Path
 import io.circe.Encoder
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 
 final case class PersistConfig(
     loadIfExists: Boolean,
@@ -53,7 +53,7 @@ final case class PersistConfig(
 }
 
 object PersistConfig {
-  implicit val persistConfigCirceEncoder: Encoder[PersistConfig] =
+  given persistConfigCirceEncoder: Encoder[PersistConfig] =
     Encoder.forProduct5(
       "loadIfExists",
       "shouldPersist",

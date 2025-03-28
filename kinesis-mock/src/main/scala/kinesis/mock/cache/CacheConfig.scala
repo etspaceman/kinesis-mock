@@ -24,7 +24,7 @@ import ciris._
 import io.circe.Encoder
 
 import kinesis.mock.api.CreateStreamRequest
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 import kinesis.mock.models._
 
 final case class CacheConfig(
@@ -184,7 +184,7 @@ object CacheConfig {
     }
   )
 
-  implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] =
+  given cacheConfigCirceEncoder: Encoder[CacheConfig] =
     Encoder.forProduct16(
       "initializeStreams",
       "createStreamDuration",

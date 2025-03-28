@@ -28,23 +28,21 @@ final case class ListStreamsResponse(
 )
 
 object ListStreamsResponse {
-  implicit val listStreamsResponseCirceEncoder
-      : circe.Encoder[ListStreamsResponse] =
+  given listStreamsResponseCirceEncoder: circe.Encoder[ListStreamsResponse] =
     circe.Encoder.forProduct2("HasMoreStreams", "StreamNames")(x =>
       (x.hasMoreStreams, x.streamNames)
     )
 
-  implicit val listStreamsResponseCirceDecoder
-      : circe.Decoder[ListStreamsResponse] =
+  given listStreamsResponseCirceDecoder: circe.Decoder[ListStreamsResponse] =
     x =>
       for {
         hasMoreStreams <- x.downField("HasMoreStreams").as[Boolean]
         streamNames <- x.downField("StreamNames").as[Vector[StreamName]]
       } yield ListStreamsResponse(hasMoreStreams, streamNames)
-  implicit val listStreamsResponseEncoder: Encoder[ListStreamsResponse] =
+  given listStreamsResponseEncoder: Encoder[ListStreamsResponse] =
     Encoder.derive
-  implicit val listStreamsResponseDecoder: Decoder[ListStreamsResponse] =
+  given listStreamsResponseDecoder: Decoder[ListStreamsResponse] =
     Decoder.derive
-  implicit val listStreamsResponseEq: Eq[ListStreamsResponse] =
+  given listStreamsResponseEq: Eq[ListStreamsResponse] =
     Eq.fromUniversalEquals
 }

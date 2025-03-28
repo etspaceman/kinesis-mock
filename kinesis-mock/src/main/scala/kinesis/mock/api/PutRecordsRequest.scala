@@ -157,12 +157,12 @@ object PutRecordsRequest {
     }
   }
 
-  implicit val putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
+  given putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
     circe.Encoder.forProduct3("Records", "StreamName", "StreamARN")(x =>
       (x.records, x.streamName, x.streamArn)
     )
 
-  implicit val putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
+  given putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
     x =>
       for {
         records <- x.downField("Records").as[Vector[PutRecordsRequestEntry]]
@@ -170,12 +170,12 @@ object PutRecordsRequest {
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       } yield PutRecordsRequest(records, streamName, streamArn)
 
-  implicit val putRecordsRequestEncoder: Encoder[PutRecordsRequest] =
+  given putRecordsRequestEncoder: Encoder[PutRecordsRequest] =
     Encoder.derive
-  implicit val putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
+  given putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
     Decoder.derive
 
-  implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
+  given putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
     x.records === y.records &&
       x.streamName == y.streamName &&
       x.streamArn == y.streamArn

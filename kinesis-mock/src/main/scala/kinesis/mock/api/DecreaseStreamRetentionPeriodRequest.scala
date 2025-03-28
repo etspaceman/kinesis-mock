@@ -74,14 +74,14 @@ final case class DecreaseStreamRetentionPeriodRequest(
 }
 
 object DecreaseStreamRetentionPeriodRequest {
-  implicit val decreaseStreamRetentionPeriodRequestCirceEncoder
+  given decreaseStreamRetentionPeriodRequestCirceEncoder
       : circe.Encoder[DecreaseStreamRetentionPeriodRequest] =
     circe.Encoder.forProduct3(
       "RetentionPeriodHours",
       "StreamName",
       "StreamARN"
     )(x => (x.retentionPeriodHours, x.streamName, x.streamArn))
-  implicit val decreaseStreamRetentionPeriodRequestCirceDecoder
+  given decreaseStreamRetentionPeriodRequestCirceDecoder
       : circe.Decoder[DecreaseStreamRetentionPeriodRequest] = { x =>
     for {
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
@@ -93,13 +93,12 @@ object DecreaseStreamRetentionPeriodRequest {
       streamArn
     )
   }
-  implicit val decreaseStreamRetentionPeriodRequestEncoder
+  given decreaseStreamRetentionPeriodRequestEncoder
       : Encoder[DecreaseStreamRetentionPeriodRequest] =
     Encoder.derive
-  implicit val decreaseStreamRetentionPeriodRequestDecoder
+  given decreaseStreamRetentionPeriodRequestDecoder
       : Decoder[DecreaseStreamRetentionPeriodRequest] =
     Decoder.derive
-  implicit val decreaseStreamRetentionEq
-      : Eq[DecreaseStreamRetentionPeriodRequest] =
+  given decreaseStreamRetentionEq: Eq[DecreaseStreamRetentionPeriodRequest] =
     Eq.fromUniversalEquals
 }

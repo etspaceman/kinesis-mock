@@ -25,18 +25,18 @@ import kinesis.mock.models.ShardIterator
 final case class GetShardIteratorResponse(shardIterator: ShardIterator)
 
 object GetShardIteratorResponse {
-  implicit val getShardIteratorResponseCirceEncoder
+  given getShardIteratorResponseCirceEncoder
       : circe.Encoder[GetShardIteratorResponse] =
     circe.Encoder.forProduct1("ShardIterator")(_.shardIterator)
-  implicit val getShardIteratorResponseCirceDecoder
+  given getShardIteratorResponseCirceDecoder
       : circe.Decoder[GetShardIteratorResponse] =
     _.downField("ShardIterator")
       .as[ShardIterator]
       .map(GetShardIteratorResponse.apply)
-  implicit val getShardIteratorResponseEncoder
-      : Encoder[GetShardIteratorResponse] = Encoder.derive
-  implicit val getShardIteratorResponseDecoder
-      : Decoder[GetShardIteratorResponse] = Decoder.derive
-  implicit val getShardIteratorResponseEq: Eq[GetShardIteratorResponse] =
+  given getShardIteratorResponseEncoder: Encoder[GetShardIteratorResponse] =
+    Encoder.derive
+  given getShardIteratorResponseDecoder: Decoder[GetShardIteratorResponse] =
+    Decoder.derive
+  given getShardIteratorResponseEq: Eq[GetShardIteratorResponse] =
     Eq.fromUniversalEquals
 }

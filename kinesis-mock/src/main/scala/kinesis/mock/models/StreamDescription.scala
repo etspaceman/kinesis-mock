@@ -145,19 +145,19 @@ object StreamDescription {
     )
   }
 
-  implicit val streamDescriptionEncoder: Encoder[StreamDescription] =
+  given streamDescriptionEncoder: Encoder[StreamDescription] =
     Encoder.instance(
       streamDescriptionCirceEncoder(instantDoubleCirceEncoder),
       streamDescriptionCirceEncoder(instantLongCirceEncoder)
     )
 
-  implicit val streamDescriptionDecoder: Decoder[StreamDescription] =
+  given streamDescriptionDecoder: Decoder[StreamDescription] =
     Decoder.instance(
       streamDescriptionCirceDecoder(instantDoubleCirceDecoder),
       streamDescriptionCirceDecoder(instantLongCirceDecoder)
     )
 
-  implicit val streamDescriptionEq: Eq[StreamDescription] =
+  given streamDescriptionEq: Eq[StreamDescription] =
     (x, y) =>
       x.encryptionType == y.encryptionType &&
         x.enhancedMonitoring == y.enhancedMonitoring &&

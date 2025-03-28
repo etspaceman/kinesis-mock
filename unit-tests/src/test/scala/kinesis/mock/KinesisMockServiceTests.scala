@@ -24,7 +24,7 @@ import org.scalacheck.effect.PropF
 
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.cache.{Cache, CacheConfig}
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.instances.http4s._
 import kinesis.mock.models.StreamName
 

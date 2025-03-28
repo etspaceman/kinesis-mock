@@ -22,10 +22,10 @@ import io.circe._
 final case class TagList(tags: Vector[TagListEntry])
 
 object TagList {
-  implicit val tagListEq: Eq[TagList] = Eq.fromUniversalEquals
-  implicit val tagListCirceEncoder: Encoder[TagList] =
+  given tagListEq: Eq[TagList] = Eq.fromUniversalEquals
+  given tagListCirceEncoder: Encoder[TagList] =
     Encoder.encodeVector[TagListEntry].contramap(_.tags)
-  implicit val tagListCirceDecoder: Decoder[TagList] =
+  given tagListCirceDecoder: Decoder[TagList] =
     Decoder[Vector[TagListEntry]].map(TagList.apply)
   def fromTags(tags: Tags): TagList = TagList(
     tags.tags.toVector.map { case (key, value) => TagListEntry(key, value) }

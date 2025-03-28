@@ -29,7 +29,7 @@ final case class PutRecordsRequestEntry(
 )
 
 object PutRecordsRequestEntry {
-  implicit val putRecordsRequestEntryCirceEncoder
+  given putRecordsRequestEntryCirceEncoder
       : circe.Encoder[PutRecordsRequestEntry] =
     circe.Encoder.forProduct3(
       "Data",
@@ -37,7 +37,7 @@ object PutRecordsRequestEntry {
       "PartitionKey"
     )(x => (x.data, x.explicitHashKey, x.partitionKey))
 
-  implicit val putRecordsRequestEntryCirceDecoder
+  given putRecordsRequestEntryCirceDecoder
       : circe.Decoder[PutRecordsRequestEntry] =
     x =>
       for {
@@ -50,12 +50,12 @@ object PutRecordsRequestEntry {
         partitionKey
       )
 
-  implicit val putRecordsRequestEntryEncoder: Encoder[PutRecordsRequestEntry] =
+  given putRecordsRequestEntryEncoder: Encoder[PutRecordsRequestEntry] =
     Encoder.derive
-  implicit val putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
+  given putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
     Decoder.derive
 
-  implicit val putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
+  given putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey

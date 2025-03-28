@@ -37,7 +37,7 @@ object DescribeStreamResponse {
     _.downField("StreamDescription")
       .as[StreamDescription]
       .map(DescribeStreamResponse.apply)
-  implicit val describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
+  given describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
     Encoder.instance(
       describeStreamResponseCirceEncoder(
         Encoder[StreamDescription].circeEncoder
@@ -46,7 +46,7 @@ object DescribeStreamResponse {
         Encoder[StreamDescription].circeCborEncoder
       )
     )
-  implicit val describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
+  given describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
     Decoder.instance(
       describeStreamResponseCirceDecoder(
         Decoder[StreamDescription].circeDecoder
@@ -55,6 +55,6 @@ object DescribeStreamResponse {
         Decoder[StreamDescription].circeCborDecoder
       )
     )
-  implicit val describeStreamResponseEq: Eq[DescribeStreamResponse] =
+  given describeStreamResponseEq: Eq[DescribeStreamResponse] =
     (x, y) => x.streamDescription === y.streamDescription
 }

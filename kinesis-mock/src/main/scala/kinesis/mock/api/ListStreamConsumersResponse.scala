@@ -45,7 +45,7 @@ object ListStreamConsumersResponse {
         nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       } yield ListStreamConsumersResponse(consumers, nextToken)
 
-  implicit val listStreamConsumersResponseEncoder
+  given listStreamConsumersResponseEncoder
       : Encoder[ListStreamConsumersResponse] = Encoder.instance(
     listStreamConsumersResponseCirceEncoder(
       Encoder[ConsumerSummary].circeEncoder
@@ -54,7 +54,7 @@ object ListStreamConsumersResponse {
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
-  implicit val listStreamConsumersResponseDecoder
+  given listStreamConsumersResponseDecoder
       : Decoder[ListStreamConsumersResponse] = Decoder.instance(
     listStreamConsumersResponseCirceDecoder(
       Decoder[ConsumerSummary].circeDecoder
@@ -63,6 +63,6 @@ object ListStreamConsumersResponse {
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
+  given listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
     (x, y) => x.consumers === y.consumers && x.nextToken == y.nextToken
 }

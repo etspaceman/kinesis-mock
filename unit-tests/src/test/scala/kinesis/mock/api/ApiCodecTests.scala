@@ -17,7 +17,7 @@
 package kinesis.mock
 package api
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
 class ApiCodecTests extends CodecTests {
   identityLawTest[AddTagsToStreamRequest]

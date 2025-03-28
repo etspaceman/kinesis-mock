@@ -22,7 +22,7 @@ import enumeratum.scalacheck._
 import org.scalacheck.effect.PropF
 import org.scalacheck.{Arbitrary, Gen}
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 

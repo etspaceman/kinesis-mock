@@ -19,7 +19,7 @@ package kinesis.mock.models
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
 class ShardIteratorTests extends munit.ScalaCheckEffectSuite {
   test("It should createt and parse correctly")(PropF.forAllF {

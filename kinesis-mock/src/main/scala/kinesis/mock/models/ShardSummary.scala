@@ -39,7 +39,7 @@ object ShardSummary {
     shard.shardId.shardId
   )
 
-  implicit val shardSummaryCirceEncoder: circe.Encoder[ShardSummary] =
+  given shardSummaryCirceEncoder: circe.Encoder[ShardSummary] =
     circe.Encoder.forProduct5(
       "AdjacentParentShardId",
       "HashKeyRange",
@@ -56,7 +56,7 @@ object ShardSummary {
       )
     )
 
-  implicit val shardSummaryCirceDecoder: circe.Decoder[ShardSummary] = { x =>
+  given shardSummaryCirceDecoder: circe.Decoder[ShardSummary] = { x =>
     for {
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
@@ -76,7 +76,7 @@ object ShardSummary {
     )
   }
 
-  implicit val shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
-  implicit val shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
-  implicit val shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
+  given shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
+  given shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
+  given shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
 }

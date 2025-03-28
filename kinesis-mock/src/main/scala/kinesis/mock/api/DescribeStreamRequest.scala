@@ -70,7 +70,7 @@ final case class DescribeStreamRequest(
 }
 
 object DescribeStreamRequest {
-  implicit val describeStreamRequestCirceEncoder
+  given describeStreamRequestCirceEncoder
       : circe.Encoder[DescribeStreamRequest] =
     circe.Encoder.forProduct4(
       "ExclusiveStartShardId",
@@ -78,7 +78,7 @@ object DescribeStreamRequest {
       "StreamName",
       "StreamARN"
     )(x => (x.exclusiveStartShardId, x.limit, x.streamName, x.streamArn))
-  implicit val describeStreamRequestCirceDecoder
+  given describeStreamRequestCirceDecoder
       : circe.Decoder[DescribeStreamRequest] = { x =>
     for {
       exclusiveStartShardId <- x
@@ -94,10 +94,10 @@ object DescribeStreamRequest {
       streamArn
     )
   }
-  implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
+  given describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
     Encoder.derive
-  implicit val describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
+  given describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
     Decoder.derive
-  implicit val describeStreamRequestEq: Eq[DescribeStreamRequest] =
+  given describeStreamRequestEq: Eq[DescribeStreamRequest] =
     Eq.fromUniversalEquals
 }

@@ -22,7 +22,7 @@ import cats.effect.{IO, Ref}
 import cats.syntax.all._
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 import kinesis.mock.models._
 import kinesis.mock.syntax.either._
 import kinesis.mock.validations.CommonValidations
@@ -121,7 +121,7 @@ final case class PutRecordRequest(
 }
 
 object PutRecordRequest {
-  implicit val purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
+  given purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
     circe.Encoder.forProduct6(
       "Data",
       "ExplicitHashKey",
@@ -140,7 +140,7 @@ object PutRecordRequest {
       )
     )
 
-  implicit val putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
+  given putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
     x =>
       for {
         data <- x.downField("Data").as[Array[Byte]]
@@ -160,12 +160,12 @@ object PutRecordRequest {
         streamArn
       )
 
-  implicit val putRecordRequestEncoder: Encoder[PutRecordRequest] =
+  given putRecordRequestEncoder: Encoder[PutRecordRequest] =
     Encoder.derive
-  implicit val putRecordRequestDecoder: Decoder[PutRecordRequest] =
+  given putRecordRequestDecoder: Decoder[PutRecordRequest] =
     Decoder.derive
 
-  implicit val putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
+  given putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey &&

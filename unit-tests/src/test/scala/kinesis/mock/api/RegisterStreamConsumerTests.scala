@@ -23,7 +23,7 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models._
 import kinesis.mock.syntax.scalacheck._
 

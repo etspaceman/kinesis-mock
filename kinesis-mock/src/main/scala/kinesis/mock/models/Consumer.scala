@@ -84,17 +84,17 @@ object Consumer {
     )
   }
 
-  implicit val consumerEncoder: Encoder[Consumer] = Encoder.instance(
+  given consumerEncoder: Encoder[Consumer] = Encoder.instance(
     consumerCirceEncoder(instantDoubleCirceEncoder),
     consumerCirceEncoder(instantLongCirceEncoder)
   )
 
-  implicit val consumerDecoder: Decoder[Consumer] = Decoder.instance(
+  given consumerDecoder: Decoder[Consumer] = Decoder.instance(
     consumerCirceDecoder(instantDoubleCirceDecoder),
     consumerCirceDecoder(instantLongCirceDecoder)
   )
 
-  implicit val consumerEq: Eq[Consumer] = (x, y) =>
+  given consumerEq: Eq[Consumer] = (x, y) =>
     x.consumerArn === y.consumerArn &&
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&

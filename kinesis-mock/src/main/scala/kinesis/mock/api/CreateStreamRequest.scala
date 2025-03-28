@@ -87,26 +87,25 @@ final case class CreateStreamRequest(
 }
 
 object CreateStreamRequest {
-  implicit val createStreamRequestCirceEncoder
-      : circe.Encoder[CreateStreamRequest] =
+  given createStreamRequestCirceEncoder: circe.Encoder[CreateStreamRequest] =
     circe.Encoder.forProduct3("ShardCount", "StreamModeDetails", "StreamName")(
       x => (x.shardCount, x.streamModeDetails, x.streamName)
     )
-  implicit val createStreamRequestCirceDecoder
-      : circe.Decoder[CreateStreamRequest] = { x =>
-    for {
-      shardCount <- x.downField("ShardCount").as[Option[Int]]
-      streamModeDetails <- x
-        .downField("StreamModeDetails")
-        .as[Option[StreamModeDetails]]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
+  given createStreamRequestCirceDecoder: circe.Decoder[CreateStreamRequest] = {
+    x =>
+      for {
+        shardCount <- x.downField("ShardCount").as[Option[Int]]
+        streamModeDetails <- x
+          .downField("StreamModeDetails")
+          .as[Option[StreamModeDetails]]
+        streamName <- x.downField("StreamName").as[StreamName]
+      } yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
   }
-  implicit val createStreamRequestEncoder: Encoder[CreateStreamRequest] =
+  given createStreamRequestEncoder: Encoder[CreateStreamRequest] =
     Encoder.derive
-  implicit val createStreamRequestDecoder: Decoder[CreateStreamRequest] =
+  given createStreamRequestDecoder: Decoder[CreateStreamRequest] =
     Decoder.derive
 
-  implicit val createStreamRequestEq: Eq[CreateStreamRequest] =
+  given createStreamRequestEq: Eq[CreateStreamRequest] =
     Eq.fromUniversalEquals
 }

@@ -7,7 +7,7 @@ import cats.syntax.all._
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.kinesis.model._
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._

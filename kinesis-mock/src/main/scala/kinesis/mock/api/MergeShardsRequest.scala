@@ -179,8 +179,7 @@ object MergeShardsRequest {
     )
   }
 
-  implicit val mergeShardsRequestCirceEncoder
-      : circe.Encoder[MergeShardsRequest] =
+  given mergeShardsRequestCirceEncoder: circe.Encoder[MergeShardsRequest] =
     circe.Encoder.forProduct4(
       "AdjacentShardToMerge",
       "ShardToMerge",
@@ -188,8 +187,7 @@ object MergeShardsRequest {
       "StreamARN"
     )(x => (x.adjacentShardToMerge, x.shardToMerge, x.streamName, x.streamArn))
 
-  implicit val mergeShardsRequestCirceDecoder
-      : circe.Decoder[MergeShardsRequest] =
+  given mergeShardsRequestCirceDecoder: circe.Decoder[MergeShardsRequest] =
     x =>
       for {
         adjacentShardToMerge <- x.downField("AdjacentShardToMerge").as[String]
@@ -202,10 +200,10 @@ object MergeShardsRequest {
         streamName,
         streamArn
       )
-  implicit val mergeShardsRequestEncoder: Encoder[MergeShardsRequest] =
+  given mergeShardsRequestEncoder: Encoder[MergeShardsRequest] =
     Encoder.derive
-  implicit val mergeShardsRequestDecoder: Decoder[MergeShardsRequest] =
+  given mergeShardsRequestDecoder: Decoder[MergeShardsRequest] =
     Decoder.derive
-  implicit val mergeShardsRequestEq: Eq[MergeShardsRequest] =
+  given mergeShardsRequestEq: Eq[MergeShardsRequest] =
     Eq.fromUniversalEquals
 }

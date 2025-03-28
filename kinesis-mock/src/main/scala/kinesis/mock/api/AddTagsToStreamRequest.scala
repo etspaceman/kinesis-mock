@@ -93,12 +93,12 @@ final case class AddTagsToStreamRequest(
 }
 
 object AddTagsToStreamRequest {
-  implicit val addTagsToStreamRequestCirceEncoder
+  given addTagsToStreamRequestCirceEncoder
       : circe.Encoder[AddTagsToStreamRequest] =
     circe.Encoder.forProduct3("StreamName", "StreamARN", "Tags")(x =>
       (x.streamName, x.streamArn, x.tags)
     )
-  implicit val addTagsToStreamRequestCirceDecoder
+  given addTagsToStreamRequestCirceDecoder
       : circe.Decoder[AddTagsToStreamRequest] = { x =>
     for {
       streamName <- x.downField("StreamName").as[Option[StreamName]]
@@ -106,10 +106,10 @@ object AddTagsToStreamRequest {
       tags <- x.downField("Tags").as[Tags]
     } yield AddTagsToStreamRequest(streamName, streamArn, tags)
   }
-  implicit val addTagsToStreamRequestEncoder: Encoder[AddTagsToStreamRequest] =
+  given addTagsToStreamRequestEncoder: Encoder[AddTagsToStreamRequest] =
     Encoder.derive
-  implicit val addTagsToStreamRequestDecoder: Decoder[AddTagsToStreamRequest] =
+  given addTagsToStreamRequestDecoder: Decoder[AddTagsToStreamRequest] =
     Decoder.derive
-  implicit val addTagsToStreamRequestEq: Eq[AddTagsToStreamRequest] =
+  given addTagsToStreamRequestEq: Eq[AddTagsToStreamRequest] =
     Eq.fromUniversalEquals
 }

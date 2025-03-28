@@ -28,7 +28,7 @@ final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
 }
 
 object HashKeyRange {
-  implicit val hashKeyRangeCirceEncoder: circe.Encoder[HashKeyRange] = x =>
+  given hashKeyRangeCirceEncoder: circe.Encoder[HashKeyRange] = x =>
     circe
       .JsonObject(
         "EndingHashKey" -> x.endingHashKey.toString.asJson,
@@ -36,7 +36,7 @@ object HashKeyRange {
       )
       .asJson
 
-  implicit val hashKeyRangeCirceDecoder: circe.Decoder[HashKeyRange] = { x =>
+  given hashKeyRangeCirceDecoder: circe.Decoder[HashKeyRange] = { x =>
     for {
       endingHashKey <- x.downField("EndingHashKey").as[String].map(BigInt.apply)
       startingHashKey <- x
@@ -46,10 +46,10 @@ object HashKeyRange {
     } yield HashKeyRange(endingHashKey, startingHashKey)
   }
 
-  implicit val hashKeyRangeEncoder: Encoder[HashKeyRange] =
+  given hashKeyRangeEncoder: Encoder[HashKeyRange] =
     Encoder.derive
-  implicit val hashKeyRangeDecoder: Decoder[HashKeyRange] =
+  given hashKeyRangeDecoder: Decoder[HashKeyRange] =
     Decoder.derive
 
-  implicit val hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
+  given hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
 }

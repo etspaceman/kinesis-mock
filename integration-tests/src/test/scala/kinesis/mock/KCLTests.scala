@@ -30,7 +30,7 @@ import software.amazon.kinesis.processor.SingleStreamTracker
 import software.amazon.kinesis.retrieval.polling.PollingConfig
 import software.amazon.kinesis.retrieval.{KinesisClientRecord, RetrievalConfig}
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.syntax.id._
 import kinesis.mock.syntax.javaFuture._
 import kinesis.mock.syntax.scalacheck._

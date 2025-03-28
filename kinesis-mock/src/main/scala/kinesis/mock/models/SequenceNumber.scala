@@ -149,9 +149,9 @@ object SequenceNumber {
       ).toString()
     )
 
-  implicit val sequenceNumberCirceEncoder: Encoder[SequenceNumber] =
+  given sequenceNumberCirceEncoder: Encoder[SequenceNumber] =
     Encoder[String].contramap(_.value)
-  implicit val sequenceNumberCirceDecoder: Decoder[SequenceNumber] =
+  given sequenceNumberCirceDecoder: Decoder[SequenceNumber] =
     Decoder[String].map(SequenceNumber.apply)
-  implicit val sequenceNumberEq: Eq[SequenceNumber] = Eq.fromUniversalEquals
+  given sequenceNumberEq: Eq[SequenceNumber] = Eq.fromUniversalEquals
 }

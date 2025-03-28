@@ -172,7 +172,7 @@ object SplitShardRequest {
     )
   }
 
-  implicit val splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
+  given splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
     circe.Encoder.forProduct4(
       "NewStartingHashKey",
       "ShardToSplit",
@@ -180,7 +180,7 @@ object SplitShardRequest {
       "StreamARN"
     )(x => (x.newStartingHashKey, x.shardToSplit, x.streamName, x.streamArn))
 
-  implicit val splitShardRequestCirceDecoder: circe.Decoder[SplitShardRequest] =
+  given splitShardRequestCirceDecoder: circe.Decoder[SplitShardRequest] =
     x =>
       for {
         newStartingHashKey <- x.downField("NewStartingHashKey").as[String]
@@ -194,11 +194,11 @@ object SplitShardRequest {
         streamArn
       )
 
-  implicit val splitShardRequestEncoder: Encoder[SplitShardRequest] =
+  given splitShardRequestEncoder: Encoder[SplitShardRequest] =
     Encoder.derive
-  implicit val splitShardRequestDecoder: Decoder[SplitShardRequest] =
+  given splitShardRequestDecoder: Decoder[SplitShardRequest] =
     Decoder.derive
 
-  implicit val splitShardRequestEq: Eq[SplitShardRequest] =
+  given splitShardRequestEq: Eq[SplitShardRequest] =
     Eq.fromUniversalEquals
 }

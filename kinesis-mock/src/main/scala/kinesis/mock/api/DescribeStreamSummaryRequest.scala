@@ -54,21 +54,21 @@ final case class DescribeStreamSummaryRequest(
 }
 
 object DescribeStreamSummaryRequest {
-  implicit val describeStreamSummaryRequestCirceEncoder
+  given describeStreamSummaryRequestCirceEncoder
       : circe.Encoder[DescribeStreamSummaryRequest] =
     circe.Encoder.forProduct2("StreamName", "StreamARN")(x =>
       (x.streamName, x.streamArn)
     )
-  implicit val describeStreamSummaryRequestCirceDecoder
+  given describeStreamSummaryRequestCirceDecoder
       : circe.Decoder[DescribeStreamSummaryRequest] = x =>
     for {
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
     } yield DescribeStreamSummaryRequest(streamName, streamArn)
-  implicit val describeStreamSummaryRequestEncoder
+  given describeStreamSummaryRequestEncoder
       : Encoder[DescribeStreamSummaryRequest] = Encoder.derive
-  implicit val describeStreamSummaryRequestDecoder
+  given describeStreamSummaryRequestDecoder
       : Decoder[DescribeStreamSummaryRequest] = Decoder.derive
-  implicit val describeStreamSummaryRequestEq
-      : Eq[DescribeStreamSummaryRequest] = Eq.fromUniversalEquals
+  given describeStreamSummaryRequestEq: Eq[DescribeStreamSummaryRequest] =
+    Eq.fromUniversalEquals
 }

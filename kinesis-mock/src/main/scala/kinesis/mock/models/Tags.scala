@@ -35,12 +35,12 @@ object Tags {
   def fromTagList(tagList: TagList): Tags = Tags(
     SortedMap.from(tagList.tags.map(x => (x.key, x.value)))
   )
-  implicit val tagsCirceEncoder: Encoder[Tags] =
+  given tagsCirceEncoder: Encoder[Tags] =
     Encoder[SortedMap[String, String]].contramap(_.tags)
-  implicit val tagsCirceDecoder: Decoder[Tags] =
+  given tagsCirceDecoder: Decoder[Tags] =
     Decoder[SortedMap[String, String]].map(Tags.apply)
-  implicit val tagsEq: Eq[Tags] = Eq.fromUniversalEquals
-  implicit val tagsMonoid: Monoid[Tags] = new Monoid[Tags] {
+  given tagsEq: Eq[Tags] = Eq.fromUniversalEquals
+  given tagsMonoid: Monoid[Tags] = new Monoid[Tags] {
     override def combine(x: Tags, y: Tags): Tags = Tags(x.tags ++ y.tags)
 
     override def empty: Tags = Tags.empty

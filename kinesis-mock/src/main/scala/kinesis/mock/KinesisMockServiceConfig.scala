@@ -19,7 +19,7 @@ package kinesis.mock
 import ciris._
 import com.comcast.ip4s.Port
 
-import kinesis.mock.instances.ciris._
+import kinesis.mock.instances.ciris.given
 
 final case class KinesisMockServiceConfig(
     tlsPort: Port,

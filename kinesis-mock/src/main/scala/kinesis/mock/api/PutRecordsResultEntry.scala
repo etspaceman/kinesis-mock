@@ -30,7 +30,7 @@ final case class PutRecordsResultEntry(
 )
 
 object PutRecordsResultEntry {
-  implicit val putRecordsResultEntryCirceEncoder
+  given putRecordsResultEntryCirceEncoder
       : circe.Encoder[PutRecordsResultEntry] =
     circe.Encoder.forProduct4(
       "ErrorCode",
@@ -39,7 +39,7 @@ object PutRecordsResultEntry {
       "ShardId"
     )(x => (x.errorCode, x.errorMessage, x.sequenceNumber, x.shardId))
 
-  implicit val putRecordsResultEntryCirceDecoder
+  given putRecordsResultEntryCirceDecoder
       : circe.Decoder[PutRecordsResultEntry] =
     x =>
       for {
@@ -55,11 +55,11 @@ object PutRecordsResultEntry {
         sequenceNumber,
         shardId
       )
-  implicit val putRecordsResultEntryEncoder: Encoder[PutRecordsResultEntry] =
+  given putRecordsResultEntryEncoder: Encoder[PutRecordsResultEntry] =
     Encoder.derive
-  implicit val putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
+  given putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
     Decoder.derive
 
-  implicit val putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
+  given putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
     Eq.fromUniversalEquals
 }

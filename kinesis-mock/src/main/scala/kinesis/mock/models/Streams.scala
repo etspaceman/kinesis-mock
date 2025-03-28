@@ -80,13 +80,12 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
 
 object Streams {
   val empty: Streams = Streams(SortedMap.empty)
-  implicit val streamsCirceEncoder: Encoder[Streams] =
+  given streamsCirceEncoder: Encoder[Streams] =
     Encoder.forProduct1("streams")(x => x.streams)
-  implicit val streamsCirceDecoder: Decoder[Streams] = { x =>
+  given streamsCirceDecoder: Decoder[Streams] = { x =>
     for {
       streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
     } yield Streams(streams)
   }
-  implicit val streamsEq: Eq[Streams] = (x, y) =>
-    x.streams.toMap === y.streams.toMap
+  given streamsEq: Eq[Streams] = (x, y) => x.streams.toMap === y.streams.toMap
 }

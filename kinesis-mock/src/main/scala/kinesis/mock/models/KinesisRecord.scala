@@ -78,17 +78,17 @@ object KinesisRecord {
         sequenceNumber
       )
 
-  implicit val kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
+  given kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
     kinesisRecordCirceEncoder(instantDoubleCirceEncoder),
     kinesisRecordCirceEncoder(instantLongCirceEncoder)
   )
 
-  implicit val kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
+  given kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
     kinesisRecordCirceDecoder(instantDoubleCirceDecoder),
     kinesisRecordCirceDecoder(instantLongCirceDecoder)
   )
 
-  implicit val kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
+  given kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
     x.approximateArrivalTimestamp.getEpochSecond == y.approximateArrivalTimestamp.getEpochSecond &&
       x.data.sameElements(y.data) &&
       x.encryptionType == y.encryptionType &&

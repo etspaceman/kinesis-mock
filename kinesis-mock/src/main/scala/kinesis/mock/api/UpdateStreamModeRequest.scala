@@ -67,13 +67,13 @@ final case class UpdateStreamModeRequest(
 }
 
 object UpdateStreamModeRequest {
-  implicit val updateStreamModeRequestCirceEncoder
+  given updateStreamModeRequestCirceEncoder
       : circe.Encoder[UpdateStreamModeRequest] =
     circe.Encoder.forProduct2("StreamARN", "StreamModeDetails")(x =>
       (x.streamArn, x.streamModeDetails)
     )
 
-  implicit val updateStreamModeRequestCirceDecoder
+  given updateStreamModeRequestCirceDecoder
       : circe.Decoder[UpdateStreamModeRequest] = x =>
     for {
       streamArn <- x.downField("StreamARN").as[StreamArn]
@@ -82,11 +82,11 @@ object UpdateStreamModeRequest {
         .as[StreamModeDetails]
     } yield UpdateStreamModeRequest(streamArn, streamModeDetails)
 
-  implicit val updateStreamModeRequestEncoder
-      : Encoder[UpdateStreamModeRequest] = Encoder.derive
-  implicit val updateStreamModeRequestDecoder
-      : Decoder[UpdateStreamModeRequest] = Decoder.derive
+  given updateStreamModeRequestEncoder: Encoder[UpdateStreamModeRequest] =
+    Encoder.derive
+  given updateStreamModeRequestDecoder: Decoder[UpdateStreamModeRequest] =
+    Decoder.derive
 
-  implicit val updateStreamModeRequestEq: Eq[UpdateStreamModeRequest] =
+  given updateStreamModeRequestEq: Eq[UpdateStreamModeRequest] =
     Eq.fromUniversalEquals
 }

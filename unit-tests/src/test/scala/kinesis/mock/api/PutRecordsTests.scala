@@ -20,7 +20,7 @@ package api
 import cats.effect._
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models._
 import kinesis.mock.validations.CommonValidations
 

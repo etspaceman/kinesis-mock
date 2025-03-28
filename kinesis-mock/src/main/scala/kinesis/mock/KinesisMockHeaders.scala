@@ -26,7 +26,7 @@ import org.typelevel.ci._
 
 final case class AmazonAuthorization(value: String)
 object AmazonAuthorization {
-  implicit val amazonAuthorizationHeaderInstance
+  given amazonAuthorizationHeaderInstance
       : Header[AmazonAuthorization, Header.Single] =
     Header.create(
       ci"Authorization",
@@ -37,7 +37,7 @@ object AmazonAuthorization {
 
 final case class AmazonId2(value: String)
 object AmazonId2 {
-  implicit val amazonId2HeaderInstance: Header[AmazonId2, Header.Single] =
+  given amazonId2HeaderInstance: Header[AmazonId2, Header.Single] =
     Header.create(
       ci"x-amz-id-2",
       _.value,
@@ -47,8 +47,7 @@ object AmazonId2 {
 
 final case class AmazonRequestId(value: UUID)
 object AmazonRequestId {
-  implicit val amazonRequestIdHeaderInstance
-      : Header[AmazonRequestId, Header.Single] =
+  given amazonRequestIdHeaderInstance: Header[AmazonRequestId, Header.Single] =
     Header.create(
       ci"x-amzn-RequestId",
       x => x.value.toString,
@@ -60,7 +59,7 @@ object AmazonRequestId {
 
 final case class AmazonTarget(value: String)
 object AmazonTarget {
-  implicit val amazonTargetHeaderInstance: Header[AmazonTarget, Header.Single] =
+  given amazonTargetHeaderInstance: Header[AmazonTarget, Header.Single] =
     Header.create(
       ci"x-amz-target",
       _.value,
@@ -70,8 +69,7 @@ object AmazonTarget {
 
 final case class AmazonDateHeader(value: String)
 object AmazonDateHeader {
-  implicit val amazonDateHeaderInstance
-      : Header[AmazonDateHeader, Header.Single] =
+  given amazonDateHeaderInstance: Header[AmazonDateHeader, Header.Single] =
     Header.create(
       ci"x-amz-date",
       _.value,
@@ -81,7 +79,7 @@ object AmazonDateHeader {
 
 final case class AccessControlRequestHeaders(value: String)
 object AccessControlRequestHeaders {
-  implicit val accessControlRequestHeadersHeaderInstance
+  given accessControlRequestHeadersHeaderInstance
       : Header[AccessControlRequestHeaders, Header.Single] =
     Header.create(
       ci"access-control-request-headers",
@@ -92,7 +90,7 @@ object AccessControlRequestHeaders {
 
 final case class AccessControlRequestMethod(value: String)
 object AccessControlRequestMethod {
-  implicit val accessControlRequestMethodHeaderInstance
+  given accessControlRequestMethodHeaderInstance
       : Header[AccessControlRequestMethod, Header.Single] =
     Header.create(
       ci"access-control-request-method",
@@ -103,7 +101,7 @@ object AccessControlRequestMethod {
 
 final case class AccessControlExposeHeaders(value: String)
 object AccessControlExposeHeaders {
-  implicit val accessControlExposeHeadersHeaderInstance
+  given accessControlExposeHeadersHeaderInstance
       : Header[AccessControlExposeHeaders, Header.Single] =
     Header.create(
       ci"Access-Control-Expose-Headers",
@@ -114,7 +112,7 @@ object AccessControlExposeHeaders {
 
 final case class AccessControlAllowOrigin(value: String)
 object AccessControlAllowOrigin {
-  implicit val accessControlAllowOriginHeaderInstance
+  given accessControlAllowOriginHeaderInstance
       : Header[AccessControlAllowOrigin, Header.Single] =
     Header.create(
       ci"Access-Control-Allow-Origin",
@@ -125,7 +123,7 @@ object AccessControlAllowOrigin {
 
 final case class AccessControlAllowHeaders(value: String)
 object AccessControlAllowHeaders {
-  implicit val accessControlAllowHeadersHeaderInstance
+  given accessControlAllowHeadersHeaderInstance
       : Header[AccessControlAllowHeaders, Header.Single] =
     Header.create(
       ci"Access-Control-Allow-Headers",
@@ -136,7 +134,7 @@ object AccessControlAllowHeaders {
 
 final case class AccessControlAllowMethods(value: String)
 object AccessControlAllowMethods {
-  implicit val accessControlAllowMethodsHeaderInstance
+  given accessControlAllowMethodsHeaderInstance
       : Header[AccessControlAllowMethods, Header.Single] =
     Header.create(
       ci"Access-Control-Allow-Methods",
@@ -147,7 +145,7 @@ object AccessControlAllowMethods {
 
 final case class AccessControlMaxAge(value: String)
 object AccessControlMaxAge {
-  implicit val accessControlMaxAgeHeaderInstance
+  given accessControlMaxAgeHeaderInstance
       : Header[AccessControlMaxAge, Header.Single] =
     Header.create(
       ci"Access-Control-Max-Age",

@@ -64,25 +64,25 @@ object circe {
       )
     )
 
-  implicit val timeUnitCirceEncoder: Encoder[TimeUnit] =
+  given timeUnitCirceEncoder: Encoder[TimeUnit] =
     Encoder[String].contramap(_.name())
-  implicit val timeUnitCirceDecoder: Decoder[TimeUnit] =
+  given timeUnitCirceDecoder: Decoder[TimeUnit] =
     Decoder[String].emapTry(x => Try(TimeUnit.valueOf(x)))
 
-  implicit val finiteDurationCirceEncoder: Encoder[FiniteDuration] =
+  given finiteDurationCirceEncoder: Encoder[FiniteDuration] =
     x => JsonObject("length" -> x.length.asJson, "unit" -> x.unit.asJson).asJson
 
-  implicit val finiteDurationCirceDecoder: Decoder[FiniteDuration] = x =>
+  given finiteDurationCirceDecoder: Decoder[FiniteDuration] = x =>
     for {
       length <- x.downField("length").as[Long]
       unit <- x.downField("unit").as[TimeUnit]
     } yield FiniteDuration(length, unit)
 
-  implicit val arrayBytesCirceEncoder: Encoder[Array[Byte]] =
+  given arrayBytesCirceEncoder: Encoder[Array[Byte]] =
     Encoder[String].contramap(str =>
       new String(Base64.getEncoder.encode(str), "UTF-8")
     )
 
-  implicit val arrayBytesCirceDecoder: Decoder[Array[Byte]] =
+  given arrayBytesCirceDecoder: Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))
 }

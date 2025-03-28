@@ -64,14 +64,12 @@ final case class ListStreamsRequest(
 }
 
 object ListStreamsRequest {
-  implicit val listStreamsRequestCirceEncoder
-      : circe.Encoder[ListStreamsRequest] =
+  given listStreamsRequestCirceEncoder: circe.Encoder[ListStreamsRequest] =
     circe.Encoder.forProduct2("ExclusiveStartStreamName", "Limit")(x =>
       (x.exclusiveStartStreamName, x.limit)
     )
 
-  implicit val listStreamsRequestCirceDecoder
-      : circe.Decoder[ListStreamsRequest] =
+  given listStreamsRequestCirceDecoder: circe.Decoder[ListStreamsRequest] =
     x =>
       for {
         exclusiveStartStreamName <- x
@@ -80,10 +78,10 @@ object ListStreamsRequest {
         limit <- x.downField("Limit").as[Option[Int]]
       } yield ListStreamsRequest(exclusiveStartStreamName, limit)
 
-  implicit val listStreamsRequestEncoder: Encoder[ListStreamsRequest] =
+  given listStreamsRequestEncoder: Encoder[ListStreamsRequest] =
     Encoder.derive
-  implicit val listStreamsRequestDecoder: Decoder[ListStreamsRequest] =
+  given listStreamsRequestDecoder: Decoder[ListStreamsRequest] =
     Decoder.derive
-  implicit val listStreamsRequestEq: Eq[ListStreamsRequest] =
+  given listStreamsRequestEq: Eq[ListStreamsRequest] =
     Eq.fromUniversalEquals
 }

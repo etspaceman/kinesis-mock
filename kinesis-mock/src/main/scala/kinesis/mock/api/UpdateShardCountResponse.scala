@@ -29,14 +29,14 @@ final case class UpdateShardCountResponse(
 )
 
 object UpdateShardCountResponse {
-  implicit val updateShardCountResponseCirceEncoder
+  given updateShardCountResponseCirceEncoder
       : circe.Encoder[UpdateShardCountResponse] =
     circe.Encoder.forProduct3(
       "CurrentShardCount",
       "StreamName",
       "TargetShardCount"
     )(x => (x.currentShardCount, x.streamName, x.targetShardCount))
-  implicit val updateShardCountResponseCirceDecoder
+  given updateShardCountResponseCirceDecoder
       : circe.Decoder[UpdateShardCountResponse] = x =>
     for {
       currentShardCount <- x.downField("CurrentShardCount").as[Int]
@@ -47,10 +47,10 @@ object UpdateShardCountResponse {
       streamName,
       targetShardCount
     )
-  implicit val updateShardCountResponseEncoder
-      : Encoder[UpdateShardCountResponse] = Encoder.derive
-  implicit val updateShardCountResponseDecoder
-      : Decoder[UpdateShardCountResponse] = Decoder.derive
-  implicit val updateShardCountResponseEq: Eq[UpdateShardCountResponse] =
+  given updateShardCountResponseEncoder: Encoder[UpdateShardCountResponse] =
+    Encoder.derive
+  given updateShardCountResponseDecoder: Decoder[UpdateShardCountResponse] =
+    Decoder.derive
+  given updateShardCountResponseEq: Eq[UpdateShardCountResponse] =
     Eq.fromUniversalEquals
 }

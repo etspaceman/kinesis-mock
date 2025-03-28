@@ -83,7 +83,7 @@ final case class ListTagsForStreamRequest(
 }
 
 object ListTagsForStreamRequest {
-  implicit val listTagsForStreamRequestCirceEncoder
+  given listTagsForStreamRequestCirceEncoder
       : circe.Encoder[ListTagsForStreamRequest] =
     circe.Encoder.forProduct4(
       "ExclusiveStartTagKey",
@@ -92,7 +92,7 @@ object ListTagsForStreamRequest {
       "StreamARN"
     )(x => (x.exclusiveStartTagKey, x.limit, x.streamName, x.streamArn))
 
-  implicit val listTagsForStreamRequestCirceDecoder
+  given listTagsForStreamRequestCirceDecoder
       : circe.Decoder[ListTagsForStreamRequest] =
     x =>
       for {
@@ -109,10 +109,10 @@ object ListTagsForStreamRequest {
         streamArn
       )
 
-  implicit val listTagsForStreamRequestEncoder
-      : Encoder[ListTagsForStreamRequest] = Encoder.derive
-  implicit val listTagsForStreamRequestDecoder
-      : Decoder[ListTagsForStreamRequest] = Decoder.derive
-  implicit val listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
+  given listTagsForStreamRequestEncoder: Encoder[ListTagsForStreamRequest] =
+    Encoder.derive
+  given listTagsForStreamRequestDecoder: Decoder[ListTagsForStreamRequest] =
+    Decoder.derive
+  given listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
     Eq.fromUniversalEquals
 }
