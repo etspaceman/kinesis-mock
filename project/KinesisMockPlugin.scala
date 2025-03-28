@@ -62,8 +62,8 @@ object KinesisMockPlugin extends AutoPlugin {
     licenses := Seq(License.MIT),
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    crossScalaVersions := Seq(Scala213),
-    scalaVersion := Scala213,
+    crossScalaVersions := Seq(Scala3),
+    scalaVersion := Scala3,
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     tlCiStewardValidateConfig :=
       Some(file(".scala-steward.conf")).filter(_.exists()),
@@ -393,11 +393,6 @@ object KinesisMockPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Setting[_]] = Seq(
     scalacOptions ++= ScalacSettings.settings,
-    Compile / console / scalacOptions ~= {
-      _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
-    },
-    addCompilerPlugin(KindProjector cross CrossVersion.full),
-    addCompilerPlugin(BetterMonadicFor),
     Test / testOptions ++=
       List(Tests.Argument(TestFrameworks.MUnit, "+l")),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
@@ -442,7 +437,7 @@ object KinesisMockPluginKeys {
   lazy val npmCopyExtraFiles =
     taskKey[Unit]("Copy extra files to the NPM install directory")
 
-  val Scala213 = "2.13.16"
+  val Scala3 = "3.3.5"
 
   val testDependencies = Def.setting(
     Seq(

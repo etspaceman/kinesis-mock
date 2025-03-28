@@ -130,8 +130,8 @@ object ConsoleLogger {
   sealed trait LogLevel extends EnumEntry with EnumEntry.Uppercase
   object LogLevel
       extends Enum[LogLevel]
-      with CirisEnum[LogLevel]
-      with CirceEnum[LogLevel] {
+      with CirceEnum[LogLevel]
+      with CirisEnum[LogLevel] {
     override val values = findValues
 
     case object Error extends LogLevel

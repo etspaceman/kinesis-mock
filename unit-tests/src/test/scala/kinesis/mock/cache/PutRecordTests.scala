@@ -25,7 +25,6 @@ import enumeratum.scalacheck._
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.LoggingContext
 import kinesis.mock.api._
 import kinesis.mock.instances.arbitrary._
 import kinesis.mock.models._

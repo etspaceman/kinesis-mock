@@ -18,7 +18,6 @@ package kinesis.mock.models
 
 import java.time.Instant
 
-import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.Interval
 import eu.timepit.refined.scalacheck.numeric._
@@ -28,16 +27,18 @@ import org.scalacheck.Prop._
 class SequenceNumberTests extends munit.ScalaCheckSuite {
   property("It should create and parse correctly")(forAll {
     (
-        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
-          W.`0L`.T,
-          W.`16025174999L`.T
-        ],
-        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
+        shardCreateTimeEpochSeconds: Long Refined
+          Interval.Closed[
+            0L,
+            16025174999L
+          ],
+        shardIndex: Int Refined Interval.Closed[0, 1000],
         seqIndex: PosInt,
-        seqTimeEpochSeconds: Long Refined Interval.Closed[
-          W.`0L`.T,
-          W.`16025174999L`.T
-        ]
+        seqTimeEpochSeconds: Long Refined
+          Interval.Closed[
+            0L,
+            16025174999L
+          ]
     ) =>
       val shardCreateTime =
         Instant.ofEpochSecond(shardCreateTimeEpochSeconds.value.toLong)
@@ -73,11 +74,12 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
 
   property("It should substitute shardCreateTime for seqTime")(forAll {
     (
-        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
-          W.`0L`.T,
-          W.`16025174999L`.T
-        ],
-        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
+        shardCreateTimeEpochSeconds: Long Refined
+          Interval.Closed[
+            0L,
+            16025174999L
+          ],
+        shardIndex: Int Refined Interval.Closed[0, 1000],
         seqIndex: PosInt
     ) =>
       val shardCreateTime =
@@ -111,15 +113,17 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
 
   property("It should substitute 0 for seqIndex")(forAll {
     (
-        shardCreateTimeEpochSeconds: Long Refined Interval.Closed[
-          W.`0L`.T,
-          W.`16025174999L`.T
-        ],
-        shardIndex: Int Refined Interval.Closed[W.`0`.T, W.`1000`.T],
-        seqTimeEpochSeconds: Long Refined Interval.Closed[
-          W.`0L`.T,
-          W.`16025174999L`.T
-        ]
+        shardCreateTimeEpochSeconds: Long Refined
+          Interval.Closed[
+            0L,
+            16025174999L
+          ],
+        shardIndex: Int Refined Interval.Closed[0, 1000],
+        seqTimeEpochSeconds: Long Refined
+          Interval.Closed[
+            0L,
+            16025174999L
+          ]
     ) =>
       val shardCreateTime =
         Instant.ofEpochSecond(shardCreateTimeEpochSeconds.value.toLong)

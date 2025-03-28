@@ -17,7 +17,6 @@
 package kinesis.mock.instances
 
 import scala.annotation.switch
-import scala.collection.Factory
 
 import io.bullet.borer.encodings.BaseEncoding
 import io.bullet.borer.{compat, _}
@@ -31,13 +30,12 @@ object borer {
     compat.circe.borerEncoderFromCirceEncoder
   private def defaultDecodeByteArray: Array[Byte] => Json =
     bytes => Json.fromString(new String(BaseEncoding.base64.encode(bytes)))
-  val circeJsonAstDecoder: Decoder[Json] =
-    new Decoder[Json] {
+  def circeJsonAstDecoder: Decoder[Json] =
+    new Decoder[Json] { self =>
       import DataItem.{Shifts => DIS}
 
-      private[this] val arrayDecoder =
-        Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder = Decoder.forListMap(Decoder.forString, this)
+      private[this] val arrayDecoder = Decoder.fromFactory[Json, Vector]
+      private[this] val mapDecoder = Decoder.forListMap[String, Json]
 
       def read(r: Reader) =
         (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match {

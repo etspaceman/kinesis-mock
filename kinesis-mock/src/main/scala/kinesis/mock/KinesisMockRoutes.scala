@@ -24,10 +24,16 @@ import java.util.Base64
 import cats.effect.IO
 import cats.effect.std.UUIDGen
 import cats.syntax.all._
-import org.http4s._
+import org.http4s.DecodeFailure
+import org.http4s.EntityEncoder
+import org.http4s.Header
+import org.http4s.HttpRoutes
+import org.http4s.Request
+//import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.syntax.header._
+import org.http4s.{Response => HResponse}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 import kinesis.mock.api._
@@ -467,7 +473,7 @@ object KinesisMockRoutes {
       responseHeaders: Vector[Header.ToRaw]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ): IO[Response[IO]] =
+  ): IO[HResponse[IO]] =
     BadRequest(
       ErrorResponse("SerializationException", err.getMessage),
       responseHeaders: _*
@@ -478,7 +484,7 @@ object KinesisMockRoutes {
       responseHeaders: Vector[Header.ToRaw]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ): IO[Response[IO]] =
+  ): IO[HResponse[IO]] =
     BadRequest(
       ErrorResponse(err.getClass.getSimpleName, err.getMessage),
       responseHeaders: _*
@@ -510,7 +516,7 @@ object KinesisMockRoutes {
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
       updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
-  ): IO[Response[IO]] =
+  ): IO[HResponse[IO]] =
     action match {
       case KinesisAction.AddTagsToStream =>
         request
