@@ -18,23 +18,23 @@ package kinesis.mock
 package api
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.effect.PropF
 import org.scalacheck.{Arbitrary, Gen}
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class ListStreamsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should list streams")(PropF.forAllF {
     (
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      for {
+      for
         now <- Utils.now
         streamNames = Gen
           .listOfN(10, Arbitrary.arbitrary[StreamName])
@@ -57,7 +57,7 @@ class ListStreamsTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, None)
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamNames == response.streamNames
         },
@@ -70,7 +70,7 @@ class ListStreamsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      for {
+      for
         now <- Utils.now
         streamNames = Gen
           .listOfN(10, Arbitrary.arbitrary[StreamName])
@@ -94,7 +94,7 @@ class ListStreamsTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(Some(exclusiveStartStreamName), None)
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamNames.takeRight(6) == response.streamNames
         },
@@ -107,7 +107,7 @@ class ListStreamsTests
         awsRegion: AwsRegion,
         awsAccountId: AwsAccountId
     ) =>
-      for {
+      for
         now <- Utils.now
         streamNames = Gen
           .listOfN(10, Arbitrary.arbitrary[StreamName])
@@ -130,7 +130,7 @@ class ListStreamsTests
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamsRequest(None, Some(5))
         res <- req.listStreams(streamsRef, awsRegion, awsAccountId)
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamNames.take(5) == response.streamNames &&
           response.hasMoreStreams
@@ -138,4 +138,3 @@ class ListStreamsTests
         s"diff: ${res.map(r => r.streamNames.diff(r.streamNames))}"
       )
   })
-}

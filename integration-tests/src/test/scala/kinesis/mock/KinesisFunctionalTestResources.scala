@@ -17,6 +17,5 @@ case class KinesisFunctionalTestResources(
     httpProtocol: String,
     logger: SelfAwareStructuredLogger[IO],
     awsRegion: AwsRegion
-) {
+):
   val sdkRegion: Region = Region.of(awsRegion.entryName)
-}

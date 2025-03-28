@@ -19,11 +19,11 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class StopStreamEncryptionRequest(
@@ -31,7 +31,7 @@ final case class StopStreamEncryptionRequest(
     keyId: String,
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def stopStreamEncryption(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -69,9 +69,8 @@ final case class StopStreamEncryptionRequest(
         }
         .sequenceWithDefault(streams)
     )
-}
 
-object StopStreamEncryptionRequest {
+object StopStreamEncryptionRequest:
   given stopStreamEncryptionRequestCirceEncoder
       : circe.Encoder[StopStreamEncryptionRequest] =
     circe.Encoder.forProduct4(
@@ -83,12 +82,12 @@ object StopStreamEncryptionRequest {
 
   given stopStreamEncryptionRequestCirceDecoder
       : circe.Decoder[StopStreamEncryptionRequest] = x =>
-    for {
+    for
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
       keyId <- x.downField("KeyId").as[String]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield StopStreamEncryptionRequest(
+    yield StopStreamEncryptionRequest(
       encryptionType,
       keyId,
       streamName,
@@ -102,4 +101,3 @@ object StopStreamEncryptionRequest {
 
   given stopStreamEncryptionRequestEq: Eq[StopStreamEncryptionRequest] =
     Eq.fromUniversalEquals
-}

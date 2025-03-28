@@ -16,7 +16,7 @@
 
 package kinesis.mock.cache
 
-import cats.effect._
+import cats.effect.*
 import cats.effect.std.Semaphore
 
 final case class CacheSemaphores private (
@@ -38,8 +38,8 @@ final case class CacheSemaphores private (
     splitShard: Semaphore[IO]
 )
 
-object CacheSemaphores {
-  def create(implicit C: Concurrent[IO]): IO[CacheSemaphores] = for {
+object CacheSemaphores:
+  def create(implicit C: Concurrent[IO]): IO[CacheSemaphores] = for
     addTagsToStream <- Semaphore[IO](5)
     removeTagsFromStream <- Semaphore[IO](5)
     createStream <- Semaphore[IO](5)
@@ -56,7 +56,7 @@ object CacheSemaphores {
     listTagsForStream <- Semaphore[IO](5)
     mergeShards <- Semaphore[IO](5)
     splitShard <- Semaphore[IO](5)
-  } yield new CacheSemaphores(
+  yield new CacheSemaphores(
     addTagsToStream,
     removeTagsFromStream,
     createStream,
@@ -74,4 +74,3 @@ object CacheSemaphores {
     mergeShards,
     splitShard
   )
-}

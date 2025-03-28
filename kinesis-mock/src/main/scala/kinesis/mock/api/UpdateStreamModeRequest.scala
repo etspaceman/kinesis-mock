@@ -19,18 +19,18 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateStreamMode.html
 final case class UpdateStreamModeRequest(
     streamArn: StreamArn,
     streamModeDetails: StreamModeDetails
-) {
+):
   def updateStreamMode(
       streamsRef: Ref[IO, Streams],
       onDemandStreamCountLimit: Int
@@ -64,9 +64,8 @@ final case class UpdateStreamModeRequest(
         }
         .sequenceWithDefault(streams)
     }
-}
 
-object UpdateStreamModeRequest {
+object UpdateStreamModeRequest:
   given updateStreamModeRequestCirceEncoder
       : circe.Encoder[UpdateStreamModeRequest] =
     circe.Encoder.forProduct2("StreamARN", "StreamModeDetails")(x =>
@@ -75,12 +74,12 @@ object UpdateStreamModeRequest {
 
   given updateStreamModeRequestCirceDecoder
       : circe.Decoder[UpdateStreamModeRequest] = x =>
-    for {
+    for
       streamArn <- x.downField("StreamARN").as[StreamArn]
       streamModeDetails <- x
         .downField("StreamModeDetails")
         .as[StreamModeDetails]
-    } yield UpdateStreamModeRequest(streamArn, streamModeDetails)
+    yield UpdateStreamModeRequest(streamArn, streamModeDetails)
 
   given updateStreamModeRequestEncoder: Encoder[UpdateStreamModeRequest] =
     Encoder.derive
@@ -89,4 +88,3 @@ object UpdateStreamModeRequest {
 
   given updateStreamModeRequestEq: Eq[UpdateStreamModeRequest] =
     Eq.fromUniversalEquals
-}

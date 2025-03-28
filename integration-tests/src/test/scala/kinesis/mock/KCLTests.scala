@@ -1,7 +1,7 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
+import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
 import java.net.URI
 import java.time.Instant
@@ -10,13 +10,13 @@ import java.util.Date
 import cats.effect.SyncIO
 import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
-import retry._
+import retry.*
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 import software.amazon.kinesis.checkpoint.CheckpointConfig
-import software.amazon.kinesis.common._
+import software.amazon.kinesis.common.*
 import software.amazon.kinesis.coordinator.{CoordinatorConfig, Scheduler}
 import software.amazon.kinesis.leases.LeaseManagementConfig
 import software.amazon.kinesis.leases.dynamodb.{
@@ -31,11 +31,11 @@ import software.amazon.kinesis.retrieval.polling.PollingConfig
 import software.amazon.kinesis.retrieval.{KinesisClientRecord, RetrievalConfig}
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.syntax.id._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.id.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class KCLTests extends AwsFunctionalTests {
+class KCLTests extends AwsFunctionalTests:
   override val munitIOTimeout: FiniteDuration = 4.minutes
 
   def kclFixture(
@@ -43,7 +43,7 @@ class KCLTests extends AwsFunctionalTests {
   ): SyncIO[FunFixture[KCLResources]] =
     ResourceFunFixture(
       resource.flatMap { resources =>
-        for {
+        for
           cloudwatchClient <- Resource.fromAutoCloseable(
             IO(
               CloudWatchAsyncClient
@@ -159,30 +159,30 @@ class KCLTests extends AwsFunctionalTests {
               )
             )
           )
-          _ <- for {
+          _ <- for
             _ <- Resource.eval(resources.logger.info("Starting KCL Scheduler"))
             _ <- IO.blocking(scheduler.run()).background
             _ <- Resource.onFinalize(
-              for {
+              for
                 _ <- resources.logger.info("Shutting down KCL Scheduler")
                 _ <- scheduler.startGracefulShutdown().toIO
                 _ <- resources.logger.info("KCL Scheduler has been shut down")
                 _ <- IO.blocking(scheduler.shutdown())
-              } yield ()
+              yield ()
             )
             _ <- Resource.eval(
-              for {
+              for
                 _ <- resources.logger.info("Checking if KCL is started")
                 _ <- isStarted.get
                 _ <- resources.logger.info("KCL is started")
-              } yield ()
+              yield ()
             )
-          } yield ()
-        } yield KCLResources(resources, resultsQueue)
+          yield ()
+        yield KCLResources(resources, resultsQueue)
       }
     )
 
-  def kclTest(resources: KCLResources): IO[Unit] = for {
+  def kclTest(resources: KCLResources): IO[Unit] = for
     req <- IO(
       PutRecordsRequest
         .builder()
@@ -240,14 +240,14 @@ class KCLTests extends AwsFunctionalTests {
     )(
       resources.resultsQueue.size.map(_ == 5)
     )
-    resRecords <- for {
+    resRecords <- for
       rec1 <- resources.resultsQueue.take
       rec2 <- resources.resultsQueue.take
       rec3 <- resources.resultsQueue.take
       rec4 <- resources.resultsQueue.take
       rec5 <- resources.resultsQueue.take
-    } yield Vector(rec1, rec2, rec3, rec4, rec5)
-  } yield assert(
+    yield Vector(rec1, rec2, rec3, rec4, rec5)
+  yield assert(
     gotAllRecords && resRecords
       .map(_.partitionKey())
       .diff(req.records().asScala.toVector.map(_.partitionKey()))
@@ -266,4 +266,3 @@ class KCLTests extends AwsFunctionalTests {
       Date.from(Instant.now().minusSeconds(30))
     )
   ).test("it should consume records using AT_TIMESTAMP")(kclTest)
-}

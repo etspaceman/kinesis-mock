@@ -19,11 +19,11 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DeregisterStreamConsumer.html
@@ -31,12 +31,12 @@ final case class DeregisterStreamConsumerRequest(
     consumerArn: Option[ConsumerArn],
     consumerName: Option[ConsumerName],
     streamArn: Option[StreamArn]
-) {
+):
   private def deregister(
       streams: Streams,
       consumer: Consumer,
       stream: StreamData
-  ): (Streams, Consumer) = {
+  ): (Streams, Consumer) =
     val newConsumer =
       consumer.copy(consumerStatus = ConsumerStatus.DELETING)
 
@@ -48,12 +48,11 @@ final case class DeregisterStreamConsumerRequest(
       ),
       newConsumer
     )
-  }
 
   def deregisterStreamConsumer(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[Consumer]] = streamsRef.modify { streams =>
-    (consumerArn, consumerName, streamArn) match {
+    (consumerArn, consumerName, streamArn) match
       case (Some(cArn), _, _) =>
         CommonValidations
           .findStreamByConsumerArn(cArn, streams)
@@ -96,28 +95,25 @@ final case class DeregisterStreamConsumerRequest(
             "ConsumerArn or both ConsumerName and StreamARN are required for this request."
           ).asLeft
         )
-    }
   }
-}
 
-object DeregisterStreamConsumerRequest {
+object DeregisterStreamConsumerRequest:
   given deregisterStreamConsumerRequestCirceEncoder
       : circe.Encoder[DeregisterStreamConsumerRequest] =
     circe.Encoder.forProduct3("ConsumerARN", "ConsumerName", "StreamARN")(x =>
       (x.consumerArn, x.consumerName, x.streamArn)
     )
   given deregisterStreamConsumerRequestCirceDecoder
-      : circe.Decoder[DeregisterStreamConsumerRequest] = { x =>
-    for {
+      : circe.Decoder[DeregisterStreamConsumerRequest] = x =>
+    for
       consumerArn <- x.downField("ConsumerARN").as[Option[ConsumerArn]]
       consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DeregisterStreamConsumerRequest(
+    yield DeregisterStreamConsumerRequest(
       consumerArn,
       consumerName,
       streamArn
     )
-  }
   given deregisterStreamConsumerRequestEncoder
       : Encoder[DeregisterStreamConsumerRequest] =
     Encoder.derive
@@ -129,4 +125,3 @@ object DeregisterStreamConsumerRequest {
       x.consumerArn === y.consumerArn &&
         x.consumerName === y.consumerName &&
         x.streamArn === y.streamArn
-}

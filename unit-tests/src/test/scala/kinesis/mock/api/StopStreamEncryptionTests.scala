@@ -20,18 +20,18 @@ package api
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary.{given, _}
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.{given, *}
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class StopStreamEncryptionTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should stop stream encryption")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         asActive = streams.findAndUpdateStream(streamArn)(x =>
@@ -51,7 +51,7 @@ class StopStreamEncryptionTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams
           .get(streamArn)
           .exists { s =>
@@ -68,7 +68,7 @@ class StopStreamEncryptionTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           asActive = streams.findAndUpdateStream(streamArn)(x =>
@@ -87,7 +87,7 @@ class StopStreamEncryptionTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(
+        yield assert(
           res.isLeft,
           s"req: $req\nres: $res\nstreams: $asActive"
         )
@@ -98,7 +98,7 @@ class StopStreamEncryptionTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         keyId = keyIdGen.one
@@ -114,9 +114,8 @@ class StopStreamEncryptionTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })
-}

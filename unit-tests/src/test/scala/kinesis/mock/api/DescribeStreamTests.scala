@@ -18,20 +18,20 @@ package kinesis.mock
 package api
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class DescribeStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should describe a stream")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -44,7 +44,7 @@ class DescribeStreamTests
         streamDescription = streams.streams
           .get(streamArn)
           .map(s => StreamDescription.fromStreamData(s, None, None))
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamDescription.contains(response.streamDescription)
         },
@@ -56,7 +56,7 @@ class DescribeStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(2, streamArn, None, now)
         limit = Some(1)
@@ -70,7 +70,7 @@ class DescribeStreamTests
         streamDescription = streams.streams
           .get(streamArn)
           .map(s => StreamDescription.fromStreamData(s, None, limit))
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamDescription.contains(
             response.streamDescription
@@ -84,7 +84,7 @@ class DescribeStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(4, streamArn, None, now)
         exclusiveStartShardId = streams.streams
@@ -107,7 +107,7 @@ class DescribeStreamTests
           .map(s =>
             StreamDescription.fromStreamData(s, exclusiveStartShardId, None)
           )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamDescription.contains(response.streamDescription) &&
           response.streamDescription.shards.size == 3 &&
@@ -127,9 +127,8 @@ class DescribeStreamTests
     ) =>
       val streams = Streams.empty
 
-      for {
+      for
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.describeStream(streamsRef, awsRegion, awsAccountId)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
-}

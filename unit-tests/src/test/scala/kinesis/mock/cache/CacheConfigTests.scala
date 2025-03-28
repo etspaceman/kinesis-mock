@@ -16,17 +16,17 @@
 
 package kinesis.mock.cache
 
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.{Gen, Prop, Test}
 
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models.{AwsRegion, StreamName}
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.scalacheck.*
 
 class CacheConfigTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -174,4 +174,3 @@ class CacheConfigTests
         assert(res.forall(_.isLeft), s"${res.map(_.isLeft)}")
     }
   )
-}

@@ -17,21 +17,21 @@
 package kinesis.mock
 package api
 
-import cats.effect._
+import cats.effect.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class PutRecordTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should put a record")(PropF.forAllF {
     (
         streamArn: StreamArn,
         initReq: PutRecordRequest
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         active =
@@ -49,7 +49,7 @@ class PutRecordTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.values.toVector.flatten.exists { rec =>
             rec.data.sameElements(initReq.data)
@@ -65,7 +65,7 @@ class PutRecordTests
           streamArn: StreamArn,
           initReq: PutRecordRequest
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           req = initReq.copy(
@@ -78,7 +78,7 @@ class PutRecordTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -88,7 +88,7 @@ class PutRecordTests
           streamArn: StreamArn,
           initReq: PutRecordRequest
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           updated = streams.findAndUpdateStream(streamArn)(s =>
@@ -110,7 +110,6 @@ class PutRecordTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
-}

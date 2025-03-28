@@ -1,21 +1,21 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import cats.syntax.all._
+import cats.syntax.all.*
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.syntax.id._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.id.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class GetRecordsTests extends AwsFunctionalTests {
+class GetRecordsTests extends AwsFunctionalTests:
 
   fixture.test("It should get records") { resources =>
-    for {
+    for
       recordRequests <- IO(
         putRecordRequestArb.arbitrary
           .take(5)
@@ -69,7 +69,7 @@ class GetRecordsTests extends AwsFunctionalTests {
           .toIO
       )
       res = gets.flatMap(_.records().asScala.toVector)
-    } yield assert(
+    yield assert(
       res.length == 5 && res.forall(rec =>
         recordRequests.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
@@ -82,7 +82,7 @@ class GetRecordsTests extends AwsFunctionalTests {
 
   fixture.test("It should get records with quotes around shard iterator") {
     resources =>
-      for {
+      for
         recordRequests <- IO(
           putRecordRequestArb.arbitrary
             .take(1)
@@ -140,7 +140,7 @@ class GetRecordsTests extends AwsFunctionalTests {
             .toIO
         )
         res = gets.flatMap(_.records().asScala.toVector)
-      } yield assert(
+      yield assert(
         res.length == 1 && res.forall(rec =>
           recordRequests.exists(req =>
             req.data.asByteArray.sameElements(rec.data.asByteArray)
@@ -150,4 +150,3 @@ class GetRecordsTests extends AwsFunctionalTests {
         s"$res\n$recordRequests"
       )
   }
-}

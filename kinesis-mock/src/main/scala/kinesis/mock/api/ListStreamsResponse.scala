@@ -27,7 +27,7 @@ final case class ListStreamsResponse(
     streamNames: Vector[StreamName]
 )
 
-object ListStreamsResponse {
+object ListStreamsResponse:
   given listStreamsResponseCirceEncoder: circe.Encoder[ListStreamsResponse] =
     circe.Encoder.forProduct2("HasMoreStreams", "StreamNames")(x =>
       (x.hasMoreStreams, x.streamNames)
@@ -35,14 +35,13 @@ object ListStreamsResponse {
 
   given listStreamsResponseCirceDecoder: circe.Decoder[ListStreamsResponse] =
     x =>
-      for {
+      for
         hasMoreStreams <- x.downField("HasMoreStreams").as[Boolean]
         streamNames <- x.downField("StreamNames").as[Vector[StreamName]]
-      } yield ListStreamsResponse(hasMoreStreams, streamNames)
+      yield ListStreamsResponse(hasMoreStreams, streamNames)
   given listStreamsResponseEncoder: Encoder[ListStreamsResponse] =
     Encoder.derive
   given listStreamsResponseDecoder: Decoder[ListStreamsResponse] =
     Decoder.derive
   given listStreamsResponseEq: Eq[ListStreamsResponse] =
     Eq.fromUniversalEquals
-}

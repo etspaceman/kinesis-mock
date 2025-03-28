@@ -16,23 +16,23 @@
 
 package kinesis.mock.api
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class DecreaseStreamRetentionPeriodTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should decrease the stream retention period")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         withIncreasedRetention = streams.findAndUpdateStream(streamArn)(
@@ -50,7 +50,7 @@ class DecreaseStreamRetentionPeriodTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.retentionPeriod == 24.hours
         },
@@ -64,7 +64,7 @@ class DecreaseStreamRetentionPeriodTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -75,11 +75,10 @@ class DecreaseStreamRetentionPeriodTests
           streamArn.awsAccountId
         )
         streams <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isLeft && streams.streams.get(streamArn).exists { stream =>
           stream.retentionPeriod == 24.hours
         },
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })
-}

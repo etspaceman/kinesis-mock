@@ -21,10 +21,10 @@ import scala.collection.SortedMap
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 final case class ListTagsForStreamRequest(
@@ -32,7 +32,7 @@ final case class ListTagsForStreamRequest(
     limit: Option[Int],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def listTagsForStream(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -49,15 +49,14 @@ final case class ListTagsForStreamRequest(
                 .findStream(arn, streams)
                 .flatMap(stream =>
                   (
-                    exclusiveStartTagKey match {
+                    exclusiveStartTagKey match
                       case Some(tagKey) =>
                         CommonValidations.validateTagKeys(Vector(tagKey))
                       case None => Right(())
-                    },
-                    limit match {
+                    ,
+                    limit match
                       case Some(l) => CommonValidations.validateLimit(l)
                       case None    => Right(())
-                    }
                   ).mapN { (_, _) =>
                     val allTags = stream.tags.toVector
                     val lastTagIndex = allTags.length - 1
@@ -69,7 +68,7 @@ final case class ListTagsForStreamRequest(
                     val tags =
                       SortedMap.from(allTags.slice(firstIndex, lastIndex))
                     val hasMoreTags =
-                      if (lastTagIndex + 1 == lastIndex) false
+                      if lastTagIndex + 1 == lastIndex then false
                       else true
                     ListTagsForStreamResponse(
                       hasMoreTags,
@@ -80,9 +79,8 @@ final case class ListTagsForStreamRequest(
             )
         }
     )
-}
 
-object ListTagsForStreamRequest {
+object ListTagsForStreamRequest:
   given listTagsForStreamRequestCirceEncoder
       : circe.Encoder[ListTagsForStreamRequest] =
     circe.Encoder.forProduct4(
@@ -95,14 +93,14 @@ object ListTagsForStreamRequest {
   given listTagsForStreamRequestCirceDecoder
       : circe.Decoder[ListTagsForStreamRequest] =
     x =>
-      for {
+      for
         exclusiveStartTagKey <- x
           .downField("ExclusiveStartTagKey")
           .as[Option[String]]
         limit <- x.downField("Limit").as[Option[Int]]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield ListTagsForStreamRequest(
+      yield ListTagsForStreamRequest(
         exclusiveStartTagKey,
         limit,
         streamName,
@@ -115,4 +113,3 @@ object ListTagsForStreamRequest {
     Decoder.derive
   given listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
     Eq.fromUniversalEquals
-}

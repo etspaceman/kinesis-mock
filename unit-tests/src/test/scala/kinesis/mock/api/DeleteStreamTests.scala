@@ -23,16 +23,16 @@ import org.scalacheck.effect.PropF
 
 import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class DeleteStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should delete a stream")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         asActive = streams.findAndUpdateStream(streamArn)(x =>
@@ -46,7 +46,7 @@ class DeleteStreamTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams
           .get(streamArn)
           .exists(_.streamStatus == StreamStatus.DELETING),
@@ -58,12 +58,12 @@ class DeleteStreamTests
     (streamArn: StreamArn) =>
       val streams = Streams.empty
 
-      for {
+      for
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req
           .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
@@ -73,14 +73,14 @@ class DeleteStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = DeleteStreamRequest(None, Some(streamArn), None)
         res <- req
           .deleteStream(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
@@ -92,7 +92,7 @@ class DeleteStreamTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         withConsumers = streams.findAndUpdateStream(consumerArn.streamArn)(x =>
@@ -111,7 +111,7 @@ class DeleteStreamTests
           consumerArn.streamArn.awsRegion,
           consumerArn.streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
@@ -123,7 +123,7 @@ class DeleteStreamTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         withConsumers = streams.findAndUpdateStream(consumerArn.streamArn)(x =>
@@ -146,9 +146,8 @@ class DeleteStreamTests
           consumerArn.streamArn.awsRegion,
           consumerArn.streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res\nstreams: $streams"
       )
   })
-}

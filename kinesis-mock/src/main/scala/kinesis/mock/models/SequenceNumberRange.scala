@@ -25,23 +25,22 @@ final case class SequenceNumberRange(
     startingSequenceNumber: SequenceNumber
 )
 
-object SequenceNumberRange {
+object SequenceNumberRange:
   given sequenceNumberRangeCirceEncoder: circe.Encoder[SequenceNumberRange] =
     circe.Encoder.forProduct2("EndingSequenceNumber", "StartingSequenceNumber")(
       x => (x.endingSequenceNumber, x.startingSequenceNumber)
     )
 
-  given sequenceNumberRangeCirceDecoder: circe.Decoder[SequenceNumberRange] = {
+  given sequenceNumberRangeCirceDecoder: circe.Decoder[SequenceNumberRange] =
     x =>
-      for {
+      for
         endingSequenceNumber <- x
           .downField("EndingSequenceNumber")
           .as[Option[SequenceNumber]]
         startingSequenceNumber <- x
           .downField("StartingSequenceNumber")
           .as[SequenceNumber]
-      } yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
-  }
+      yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
 
   given sequenceNumberRangeEncoder: Encoder[SequenceNumberRange] =
     Encoder.derive
@@ -51,4 +50,3 @@ object SequenceNumberRange {
 
   given sequenceNumberRangeEq: Eq[SequenceNumberRange] =
     Eq.fromUniversalEquals
-}

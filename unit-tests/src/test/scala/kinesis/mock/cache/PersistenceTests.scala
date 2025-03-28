@@ -17,25 +17,25 @@
 package kinesis.mock
 package cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
 import cats.effect.SyncIO
 import cats.effect.kernel.Resource
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
 import fs2.io.file.Files
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.api._
+import kinesis.mock.api.*
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class PersistenceTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   def persistConfig(uuid: String): PersistConfig = PersistConfig(
     loadIfExists = true,
@@ -68,7 +68,7 @@ class PersistenceTests
           .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
           .evalMap { case (cacheConfig, cache) =>
             val context = LoggingContext.create
-            for {
+            for
               _ <- cache
                 .createStream(
                   CreateStreamRequest(Some(1), None, streamName),
@@ -90,7 +90,7 @@ class PersistenceTests
                   .rethrow
               )
               _ <- cache.persistToDisk(context)
-            } yield (cacheConfig, recordRequests)
+            yield (cacheConfig, recordRequests)
           }
           .flatMap { case (cacheConfig, recordRequests) =>
             Cache
@@ -99,7 +99,7 @@ class PersistenceTests
           }
           .use { case (newCache, recordRequests) =>
             val context = LoggingContext.create
-            for {
+            for
               shard <- newCache
                 .listShards(
                   ListShardsRequest(
@@ -141,7 +141,7 @@ class PersistenceTests
                   Some(awsRegion)
                 )
                 .rethrow
-            } yield assert(
+            yield assert(
               res.records.length == 5 && res.records.forall(rec =>
                 recordRequests.exists(req =>
                   req.data.sameElements(rec.data)
@@ -155,11 +155,9 @@ class PersistenceTests
   )
 
   test("It should make a root path") {
-    val config = {
+    val config =
       val orig = persistConfig(Utils.randomUUIDString)
       orig.copy(path = s"/${orig.path}")
-    }
 
     assertEquals(config.osPath.absolute.toString, config.path)
   }
-}

@@ -17,22 +17,22 @@
 package kinesis.mock
 package api
 
-import cats.effect._
+import cats.effect.*
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class SplitShardTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should split shards")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -60,7 +60,7 @@ class SplitShardTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.keys.toVector.count(shard =>
             shard.parentShardId.contains(shardToSplit.shardId.shardId)
@@ -75,7 +75,7 @@ class SplitShardTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         shardToSplit = streams.streams(streamArn).shards.keys.head
@@ -99,14 +99,14 @@ class SplitShardTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the shard is not found")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -134,7 +134,7 @@ class SplitShardTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the operation would exceed the shard limit")(
@@ -142,7 +142,7 @@ class SplitShardTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(5, streamArn, None, now)
           active = streams.findAndUpdateStream(streamArn)(s =>
@@ -169,7 +169,6 @@ class SplitShardTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
-}

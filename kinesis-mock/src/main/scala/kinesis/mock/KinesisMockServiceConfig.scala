@@ -16,7 +16,7 @@
 
 package kinesis.mock
 
-import ciris._
+import ciris.*
 import com.comcast.ip4s.Port
 
 import kinesis.mock.instances.ciris.given
@@ -30,8 +30,8 @@ final case class KinesisMockServiceConfig(
     certPath: String
 )
 
-object KinesisMockServiceConfig {
-  def read: ConfigValue[Effect, KinesisMockServiceConfig] = for {
+object KinesisMockServiceConfig:
+  def read: ConfigValue[Effect, KinesisMockServiceConfig] = for
     tlsPort <- env("KINESIS_MOCK_TLS_PORT").default("4567").as[Port]
     plainPort <- env("KINESIS_MOCK_PLAIN_PORT").default("4568").as[Port]
     keyStorePassword <- env("KINESIS_MOCK_KEYSTORE_PASSWORD").default(
@@ -46,7 +46,7 @@ object KinesisMockServiceConfig {
     certPath <- env("KINESIS_MOCK_CERT_PATH").default(
       "server.json"
     )
-  } yield KinesisMockServiceConfig(
+  yield KinesisMockServiceConfig(
     tlsPort,
     plainPort,
     keyStorePassword,
@@ -54,4 +54,3 @@ object KinesisMockServiceConfig {
     certPassword,
     certPath
   )
-}

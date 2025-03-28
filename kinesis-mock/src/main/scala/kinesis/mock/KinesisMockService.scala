@@ -16,29 +16,29 @@
 
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.Resource
 import cats.effect.std.Semaphore
 import cats.effect.{IO, ResourceApp}
-import cats.implicits._
+import cats.implicits.*
 import com.comcast.ip4s.Host
-import io.circe.syntax._
+import io.circe.syntax.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.ErrorAction
 import org.http4s.server.middleware.ErrorHandling
 import org.http4s.server.middleware.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import retry.RetryPolicies.constantDelay
-import retry._
+import retry.*
 
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
 import kinesis.mock.models.{AwsRegion, StreamName, StreamStatus}
 
-object KinesisMockService extends ResourceApp.Forever {
+object KinesisMockService extends ResourceApp.Forever:
   override def run(args: List[String]): Resource[IO, Unit] =
-    for {
+    for
       logLevel <- ConsoleLogger.LogLevel.read.resource[IO]
       logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
       cacheConfig <- CacheConfig.read.resource[IO]
@@ -51,7 +51,7 @@ object KinesisMockService extends ResourceApp.Forever {
         )
         .toResource
       cache <-
-        if (cacheConfig.persistConfig.loadIfExists)
+        if cacheConfig.persistConfig.loadIfExists then
           Cache.loadFromFile(cacheConfig)
         else Cache(cacheConfig)
       _ <- initializeStreams(
@@ -125,7 +125,7 @@ object KinesisMockService extends ResourceApp.Forever {
             .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
         )
         .void
-    } yield res
+    yield res
 
   def initializeStreams(
       cache: Cache,
@@ -133,11 +133,11 @@ object KinesisMockService extends ResourceApp.Forever {
       context: LoggingContext,
       logger: SelfAwareStructuredLogger[IO],
       streams: Map[AwsRegion, List[CreateStreamRequest]]
-  ): IO[Unit] = {
+  ): IO[Unit] =
     def isInitStreamDone(
         streamName: StreamName,
         region: AwsRegion
-    ): IO[Boolean] = {
+    ): IO[Boolean] =
       val descReq = DescribeStreamSummaryRequest(Some(streamName), None)
       cache
         .describeStreamSummary(descReq, context, isCbor = false, Some(region))
@@ -146,10 +146,9 @@ object KinesisMockService extends ResourceApp.Forever {
           case Right(v) =>
             v.streamDescriptionSummary.streamStatus != StreamStatus.CREATING
         }
-    }
 
     def initStream(req: CreateStreamRequest, region: AwsRegion): IO[Unit] =
-      for {
+      for
         _ <- logger.info(
           s"Initializing stream '${req.streamName}' " +
             s"(shardCount=${req.shardCount})"
@@ -162,25 +161,24 @@ object KinesisMockService extends ResourceApp.Forever {
           IO.pure,
           noop[IO, Boolean]
         )(isInitStreamDone(req.streamName, region))
-      } yield {}
+      yield {}
 
     streams.toList
       .parTraverse_ { case (region, s) =>
-        for {
+        for
           semaphore <- Semaphore[IO](5)
           _ <- s.parTraverse { stream =>
             semaphore.permit.use(_ => initStream(stream, region).void)
           }
-        } yield ()
+        yield ()
       }
-  }
 
   def persistDataLoop(
       shouldPersist: Boolean,
       interval: FiniteDuration,
       cache: Cache,
       logger: SelfAwareStructuredLogger[IO]
-  ): IO[Unit] = {
+  ): IO[Unit] =
     val context = LoggingContext.create
     IO.pure(shouldPersist)
       .ifM(
@@ -196,5 +194,3 @@ object KinesisMockService extends ResourceApp.Forever {
           "Not configured to persist data, persist loop not started"
         )
       )
-  }
-}

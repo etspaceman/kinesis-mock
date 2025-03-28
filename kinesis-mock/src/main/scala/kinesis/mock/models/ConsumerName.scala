@@ -19,13 +19,12 @@ package kinesis.mock.models
 import scala.math.Ordering
 
 import cats.Eq
-import io.circe._
+import io.circe.*
 
-final case class ConsumerName(consumerName: String) {
+final case class ConsumerName(consumerName: String):
   override def toString: String = consumerName
-}
 
-object ConsumerName {
+object ConsumerName:
   given consumerNameOrdering: Ordering[ConsumerName] =
     (x: ConsumerName, y: ConsumerName) =>
       Ordering[String].compare(x.consumerName, y.consumerName)
@@ -38,4 +37,3 @@ object ConsumerName {
   given consumerNameCirceKeyDecoder: KeyDecoder[ConsumerName] =
     KeyDecoder[String].map(ConsumerName.apply)
   given consumerNameEq: Eq[ConsumerName] = Eq.fromUniversalEquals
-}

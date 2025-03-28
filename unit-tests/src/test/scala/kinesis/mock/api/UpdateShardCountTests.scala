@@ -17,20 +17,20 @@
 package kinesis.mock
 package api
 
-import cats.effect._
+import cats.effect.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class UpdateShardCountTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should increase the shard count")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         initialShardCount = 5
         streams = Streams.empty
@@ -52,7 +52,7 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 10 &&
@@ -81,7 +81,7 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         initialShardCount = 10
         streams = Streams.empty
@@ -103,7 +103,7 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           val shards = stream.shards.keys.toVector
           shards.count(_.isOpen) == 5 &&
@@ -134,7 +134,7 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         initialShardCount = 10
         streams = Streams.empty
@@ -171,7 +171,7 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         s2 <- streamsRef.get
-      } yield {
+      yield
         assert(
           res.isRight && s.streams.get(streamArn).exists { stream =>
             val shards = stream.shards.keys.toVector
@@ -216,7 +216,6 @@ class UpdateShardCountTests
             s"inputShards: ${s.streams(streamArn).shards.keys.toVector.map(_.shardId)}\n" +
             s"finalShardCount: ${finalShardCount}"
         )
-      }
   })
 
   test(
@@ -225,7 +224,7 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         initialShardCount = 10
         streams = Streams.empty
@@ -262,7 +261,7 @@ class UpdateShardCountTests
           streamArn.awsAccountId
         )
         s2 <- streamsRef.get
-      } yield {
+      yield
         assert(
           res.isRight && s.streams.get(streamArn).exists { stream =>
             val shards = stream.shards.keys.toVector
@@ -308,7 +307,6 @@ class UpdateShardCountTests
             s"inputShards2: ${s.streams(streamArn).shards.keys.toVector.map(_.shardId)}\n" +
             s"finalShardCount: ${finalShardCount}"
         )
-      }
   })
 
   test("It should reject an increase > 2x the current shard count")(
@@ -316,7 +314,7 @@ class UpdateShardCountTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(5, streamArn, None, now)
           active = streams.findAndUpdateStream(streamArn)(s =>
@@ -335,7 +333,7 @@ class UpdateShardCountTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -344,7 +342,7 @@ class UpdateShardCountTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(10, streamArn, None, now)
           active = streams.findAndUpdateStream(streamArn)(s =>
@@ -363,7 +361,7 @@ class UpdateShardCountTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -371,7 +369,7 @@ class UpdateShardCountTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -390,14 +388,14 @@ class UpdateShardCountTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject if the stream is not active")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         req = UpdateShardCountRequest(
@@ -413,6 +411,5 @@ class UpdateShardCountTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
-}

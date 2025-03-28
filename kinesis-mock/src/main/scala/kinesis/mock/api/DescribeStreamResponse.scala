@@ -18,14 +18,14 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.StreamDescription
 
 final case class DescribeStreamResponse(streamDescription: StreamDescription)
 
-object DescribeStreamResponse {
+object DescribeStreamResponse:
   def describeStreamResponseCirceEncoder(implicit
       ESD: circe.Encoder[StreamDescription]
   ): circe.Encoder[DescribeStreamResponse] =
@@ -57,4 +57,3 @@ object DescribeStreamResponse {
     )
   given describeStreamResponseEq: Eq[DescribeStreamResponse] =
     (x, y) => x.streamDescription === y.streamDescription
-}

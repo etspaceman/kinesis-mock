@@ -16,10 +16,10 @@
 
 package kinesis.mock
 
-import org.http4s.syntax.literals._
+import org.http4s.syntax.literals.*
 import org.http4s.{MediaRange, MediaType}
 
-object KinesisMockMediaTypes {
+object KinesisMockMediaTypes:
   val amazonJson: MediaType = mediaType"application/x-amz-json-1.1"
   val amazonCbor: MediaType = mediaType"application/x-amz-cbor-1.1"
   val validContentTypes: Set[MediaRange] = Set(
@@ -27,4 +27,3 @@ object KinesisMockMediaTypes {
     amazonJson,
     amazonCbor
   )
-}

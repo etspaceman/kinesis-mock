@@ -1,18 +1,18 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class ListTagsForStreamTests extends AwsFunctionalTests {
+class ListTagsForStreamTests extends AwsFunctionalTests:
 
   fixture.test("It should list tags for a stream") { resources =>
-    for {
+    for
       tags <- IO(tagsGen.one)
       _ <- resources.kinesisClient
         .addTagsToStream(
@@ -24,11 +24,10 @@ class ListTagsForStreamTests extends AwsFunctionalTests {
         )
         .toIO
       res <- listTagsForStream(resources)
-    } yield assert(
+    yield assert(
       Map.from(
         res.tags().asScala.map(tag => tag.key() -> tag.value())
       ) == tags.tags,
       res
     )
   }
-}

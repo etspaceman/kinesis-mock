@@ -21,22 +21,21 @@ import scala.util.Try
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
 final case class ConsumerArn(
     streamArn: StreamArn,
     consumerName: ConsumerName,
     creationTime: Instant
-) {
+):
   val consumerArn: String =
     s"$streamArn/consumer/$consumerName:${creationTime.getEpochSecond}"
   override def toString: String = consumerArn
-}
 
-object ConsumerArn {
+object ConsumerArn:
   def fromArn(consumerArn: String): Either[String, ConsumerArn] =
-    for {
+    for
       streamArn <- Try(consumerArn.split("/consumer")(0)).toEither
         .leftMap(e =>
           s"Could not get stream arn part from consumer arn: ${e.getMessage}"
@@ -65,7 +64,7 @@ object ConsumerArn {
               s"Could not convert timestamp from ARN to Instant: ${e.getMessage}"
             )
         )
-    } yield ConsumerArn(streamArn, consumerName, creationTimestamp)
+    yield ConsumerArn(streamArn, consumerName, creationTimestamp)
 
   given consumerArnCirceEncoder: Encoder[ConsumerArn] =
     Encoder[String].contramap(_.consumerArn)
@@ -83,4 +82,3 @@ object ConsumerArn {
   given consumerArnOrdering: Ordering[ConsumerArn] =
     (x: ConsumerArn, y: ConsumerArn) =>
       Ordering[String].compare(x.consumerArn, y.consumerArn)
-}

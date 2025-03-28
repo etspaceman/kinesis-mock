@@ -2,14 +2,14 @@ package kinesis.mock
 
 import java.util.Collections
 
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class DescribeStreamTests extends AwsFunctionalTests {
+class DescribeStreamTests extends AwsFunctionalTests:
 
   fixture.test("It should describe a stream") { resources =>
-    for {
+    for
       res <- resources.kinesisClient
         .describeStream(
           DescribeStreamRequest
@@ -42,9 +42,8 @@ class DescribeStreamTests extends AwsFunctionalTests {
           StreamModeDetails.builder().streamMode(StreamMode.PROVISIONED).build()
         )
         .build()
-    } yield assert(
+    yield assert(
       res.streamDescription == expected,
       s"${res.streamDescription()}\n$expected"
     )
   }
-}

@@ -20,10 +20,10 @@ package api
 import scala.collection.immutable.Queue
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class GetRecordsResponse(
     childShards: Option[Vector[ChildShard]],
@@ -32,7 +32,7 @@ final case class GetRecordsResponse(
     records: Queue[KinesisRecord]
 )
 
-object GetRecordsResponse {
+object GetRecordsResponse:
   def getRecordsResponseCirceEncoder(implicit
       EKR: circe.Encoder[KinesisRecord]
   ): circe.Encoder[GetRecordsResponse] =
@@ -49,14 +49,14 @@ object GetRecordsResponse {
       DKR: circe.Decoder[KinesisRecord]
   ): circe.Decoder[GetRecordsResponse] =
     x =>
-      for {
+      for
         childShards <- x.downField("ChildShards").as[Option[Vector[ChildShard]]]
         millisBehindLatest <- x.downField("MillisBehindLatest").as[Long]
         nextShardIterator <- x
           .downField("NextShardIterator")
           .as[Option[ShardIterator]]
         records <- x.downField("Records").as[Queue[KinesisRecord]]
-      } yield GetRecordsResponse(
+      yield GetRecordsResponse(
         childShards,
         millisBehindLatest,
         nextShardIterator,
@@ -80,4 +80,3 @@ object GetRecordsResponse {
       x.millisBehindLatest == y.millisBehindLatest &&
       x.nextShardIterator == y.nextShardIterator &&
       x.records === y.records
-}

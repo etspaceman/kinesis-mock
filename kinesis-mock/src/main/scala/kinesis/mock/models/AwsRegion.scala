@@ -17,7 +17,7 @@
 package kinesis.mock
 package models
 
-import enumeratum._
+import enumeratum.*
 import io.circe.{KeyDecoder, KeyEncoder}
 
 sealed abstract class AwsRegion(
@@ -29,7 +29,7 @@ object AwsRegion
     extends Enum[AwsRegion]
     with CirceEnum[AwsRegion]
     with CatsEnum[AwsRegion]
-    with CirisEnum[AwsRegion] {
+    with CirisEnum[AwsRegion]:
   override val values: IndexedSeq[AwsRegion] = findValues
   case object US_GOV_EAST_1 extends AwsRegion("us-gov-east-1", "aws-us-gov")
   case object US_GOV_WEST_1 extends AwsRegion("us-gov-west-1", "aws-us-gov")
@@ -64,4 +64,3 @@ object AwsRegion
     KeyEncoder.instance(_.entryName)
   given awsRegionCirceKeyDecoder: KeyDecoder[AwsRegion] =
     KeyDecoder.instance(AwsRegion.withNameOption)
-}

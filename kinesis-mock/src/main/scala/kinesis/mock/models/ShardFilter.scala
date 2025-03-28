@@ -22,7 +22,7 @@ import java.time.Instant
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class ShardFilter(
     shardId: Option[String],
@@ -30,7 +30,7 @@ final case class ShardFilter(
     `type`: ShardFilterType
 )
 
-object ShardFilter {
+object ShardFilter:
   def shardFilterCirceEncoder(implicit
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ShardFilter] =
@@ -41,11 +41,11 @@ object ShardFilter {
   def shardFilterCirceDecoder(implicit
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ShardFilter] = x =>
-    for {
+    for
       shardId <- x.downField("ShardId").as[Option[String]]
       timestamp <- x.downField("Timestamp").as[Option[Instant]]
       `type` <- x.downField("Type").as[ShardFilterType]
-    } yield ShardFilter(shardId, timestamp, `type`)
+    yield ShardFilter(shardId, timestamp, `type`)
 
   given shardFilterEncoder: Encoder[ShardFilter] = Encoder.instance(
     shardFilterCirceEncoder(instantBigDecimalCirceEncoder),
@@ -62,4 +62,3 @@ object ShardFilter {
         _.getEpochSecond()
       ) &&
       x.`type` == y.`type`
-}

@@ -18,15 +18,15 @@ package kinesis.mock
 package api
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class CreateStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should create a stream")(PropF.forAllF {
     (
         req: CreateStreamRequest,
@@ -35,7 +35,7 @@ class CreateStreamTests
     ) =>
       val streams = Streams.empty
       val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
-      for {
+      for
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.createStream(
           streamsRef,
@@ -45,7 +45,7 @@ class CreateStreamTests
           awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.size == req.shardCount.getOrElse(4)
         },
@@ -62,7 +62,7 @@ class CreateStreamTests
       ) =>
         val streams = Streams.empty
 
-        for {
+        for
           streamsRef <- Ref.of[IO, Streams](streams)
           res <- req.createStream(
             streamsRef,
@@ -71,7 +71,7 @@ class CreateStreamTests
             awsRegion,
             awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -87,7 +87,7 @@ class CreateStreamTests
           Some(StreamModeDetails(StreamMode.ON_DEMAND))
         )
 
-        for {
+        for
           streamsRef <- Ref.of[IO, Streams](streams)
           res <- reqForTest.createStream(
             streamsRef,
@@ -96,7 +96,6 @@ class CreateStreamTests
             awsRegion,
             awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
-}

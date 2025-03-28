@@ -20,12 +20,12 @@ import scala.util.Try
 
 import java.util.UUID
 
-import cats.syntax.all._
+import cats.syntax.all.*
 import org.http4s.{Header, ParseFailure}
-import org.typelevel.ci._
+import org.typelevel.ci.*
 
 final case class AmazonAuthorization(value: String)
-object AmazonAuthorization {
+object AmazonAuthorization:
   given amazonAuthorizationHeaderInstance
       : Header[AmazonAuthorization, Header.Single] =
     Header.create(
@@ -33,20 +33,18 @@ object AmazonAuthorization {
       _.value,
       x => Right(AmazonAuthorization(x))
     )
-}
 
 final case class AmazonId2(value: String)
-object AmazonId2 {
+object AmazonId2:
   given amazonId2HeaderInstance: Header[AmazonId2, Header.Single] =
     Header.create(
       ci"x-amz-id-2",
       _.value,
       x => Right(AmazonId2(x))
     )
-}
 
 final case class AmazonRequestId(value: UUID)
-object AmazonRequestId {
+object AmazonRequestId:
   given amazonRequestIdHeaderInstance: Header[AmazonRequestId, Header.Single] =
     Header.create(
       ci"x-amzn-RequestId",
@@ -55,30 +53,27 @@ object AmazonRequestId {
         Try(UUID.fromString(x)).toEither
           .bimap(e => ParseFailure(e.getMessage(), ""), AmazonRequestId.apply)
     )
-}
 
 final case class AmazonTarget(value: String)
-object AmazonTarget {
+object AmazonTarget:
   given amazonTargetHeaderInstance: Header[AmazonTarget, Header.Single] =
     Header.create(
       ci"x-amz-target",
       _.value,
       x => Right(AmazonTarget(x))
     )
-}
 
 final case class AmazonDateHeader(value: String)
-object AmazonDateHeader {
+object AmazonDateHeader:
   given amazonDateHeaderInstance: Header[AmazonDateHeader, Header.Single] =
     Header.create(
       ci"x-amz-date",
       _.value,
       x => Right(AmazonDateHeader(x))
     )
-}
 
 final case class AccessControlRequestHeaders(value: String)
-object AccessControlRequestHeaders {
+object AccessControlRequestHeaders:
   given accessControlRequestHeadersHeaderInstance
       : Header[AccessControlRequestHeaders, Header.Single] =
     Header.create(
@@ -86,10 +81,9 @@ object AccessControlRequestHeaders {
       _.value,
       x => Right(AccessControlRequestHeaders(x))
     )
-}
 
 final case class AccessControlRequestMethod(value: String)
-object AccessControlRequestMethod {
+object AccessControlRequestMethod:
   given accessControlRequestMethodHeaderInstance
       : Header[AccessControlRequestMethod, Header.Single] =
     Header.create(
@@ -97,10 +91,9 @@ object AccessControlRequestMethod {
       _.value,
       x => Right(AccessControlRequestMethod(x))
     )
-}
 
 final case class AccessControlExposeHeaders(value: String)
-object AccessControlExposeHeaders {
+object AccessControlExposeHeaders:
   given accessControlExposeHeadersHeaderInstance
       : Header[AccessControlExposeHeaders, Header.Single] =
     Header.create(
@@ -108,10 +101,9 @@ object AccessControlExposeHeaders {
       _.value,
       x => Right(AccessControlExposeHeaders(x))
     )
-}
 
 final case class AccessControlAllowOrigin(value: String)
-object AccessControlAllowOrigin {
+object AccessControlAllowOrigin:
   given accessControlAllowOriginHeaderInstance
       : Header[AccessControlAllowOrigin, Header.Single] =
     Header.create(
@@ -119,10 +111,9 @@ object AccessControlAllowOrigin {
       _.value,
       x => Right(AccessControlAllowOrigin(x))
     )
-}
 
 final case class AccessControlAllowHeaders(value: String)
-object AccessControlAllowHeaders {
+object AccessControlAllowHeaders:
   given accessControlAllowHeadersHeaderInstance
       : Header[AccessControlAllowHeaders, Header.Single] =
     Header.create(
@@ -130,10 +121,9 @@ object AccessControlAllowHeaders {
       _.value,
       x => Right(AccessControlAllowHeaders(x))
     )
-}
 
 final case class AccessControlAllowMethods(value: String)
-object AccessControlAllowMethods {
+object AccessControlAllowMethods:
   given accessControlAllowMethodsHeaderInstance
       : Header[AccessControlAllowMethods, Header.Single] =
     Header.create(
@@ -141,10 +131,9 @@ object AccessControlAllowMethods {
       _.value,
       x => Right(AccessControlAllowMethods(x))
     )
-}
 
 final case class AccessControlMaxAge(value: String)
-object AccessControlMaxAge {
+object AccessControlMaxAge:
   given accessControlMaxAgeHeaderInstance
       : Header[AccessControlMaxAge, Header.Single] =
     Header.create(
@@ -152,4 +141,3 @@ object AccessControlMaxAge {
       _.value,
       x => Right(AccessControlMaxAge(x))
     )
-}

@@ -19,7 +19,7 @@ package models
 
 import kinesis.mock.instances.arbitrary.given
 
-class ModelsCodecTests extends CodecTests {
+class ModelsCodecTests extends CodecTests:
   identityLawTest[Consumer]
   identityLawTest[ConsumerSummary]
   identityLawTest[HashKeyRange]
@@ -32,4 +32,3 @@ class ModelsCodecTests extends CodecTests {
   identityLawTest[StreamDescription]
   identityLawTest[StreamDescriptionSummary]
   identityLawTest[TagListEntry]
-}

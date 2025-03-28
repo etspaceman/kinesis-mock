@@ -18,14 +18,14 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class RegisterStreamConsumerResponse(consumer: ConsumerSummary)
 
-object RegisterStreamConsumerResponse {
+object RegisterStreamConsumerResponse:
   def registerStreamConsumerResponseCirceEncoder(implicit
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[RegisterStreamConsumerResponse] =
@@ -55,4 +55,3 @@ object RegisterStreamConsumerResponse {
   )
   given registerStreamConsumerResponseEq: Eq[RegisterStreamConsumerResponse] =
     (x, y) => x.consumer === y.consumer
-}

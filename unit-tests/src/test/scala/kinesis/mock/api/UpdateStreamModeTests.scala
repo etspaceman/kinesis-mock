@@ -21,16 +21,16 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class UpdateStreamModeTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should update the stream mode of a stream")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -41,7 +41,7 @@ class UpdateStreamModeTests
         req = UpdateStreamModeRequest(streamArn, streamModeDetails)
         res <- req.updateStreamMode(streamsRef, 10)
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.streamModeDetails == streamModeDetails
         },
@@ -54,7 +54,7 @@ class UpdateStreamModeTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           active = streams.findAndUpdateStream(streamArn)(s =>
@@ -64,7 +64,6 @@ class UpdateStreamModeTests
           streamModeDetails = StreamModeDetails(StreamMode.ON_DEMAND)
           req = UpdateStreamModeRequest(streamArn, streamModeDetails)
           res <- req.updateStreamMode(streamsRef, 0)
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
-}

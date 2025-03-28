@@ -25,17 +25,17 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class GetShardIteratorTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should get a shard iterator for TRIM_HORIZON")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -75,7 +75,7 @@ class GetShardIteratorTests
           streamArn.awsAccountId
         )
         parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-      } yield assert(
+      yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
@@ -89,7 +89,7 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -129,7 +129,7 @@ class GetShardIteratorTests
           streamArn.awsAccountId
         )
         parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-      } yield assert(
+      yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records.last.sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
@@ -143,7 +143,7 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -184,7 +184,7 @@ class GetShardIteratorTests
           streamArn.awsAccountId
         )
         parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-      } yield assert(
+      yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
@@ -204,7 +204,7 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -244,7 +244,7 @@ class GetShardIteratorTests
           streamArn.awsAccountId
         )
         parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-      } yield assert(
+      yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == records(24).sequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
@@ -260,7 +260,7 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -300,7 +300,7 @@ class GetShardIteratorTests
           streamArn.awsAccountId
         )
         parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-      } yield assert(
+      yield assert(
         parsed.isRight && parsed.exists { parts =>
           parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
           parts.shardId == shard.shardId.shardId &&
@@ -315,7 +315,7 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
@@ -355,7 +355,7 @@ class GetShardIteratorTests
             streamArn.awsAccountId
           )
           parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-        } yield assert(
+        yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == records(25).sequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
@@ -373,7 +373,7 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
@@ -413,7 +413,7 @@ class GetShardIteratorTests
             streamArn.awsAccountId
           )
           parsed = res.flatMap(_.shardIterator.parse(now.plusSeconds(2)))
-        } yield assert(
+        yield assert(
           parsed.isRight && parsed.exists { parts =>
             parts.sequenceNumber == shard.sequenceNumberRange.startingSequenceNumber &&
             parts.shardId == shard.shardId.shardId &&
@@ -428,7 +428,7 @@ class GetShardIteratorTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
@@ -446,7 +446,7 @@ class GetShardIteratorTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req")
+      yield assert(res.isLeft, s"req: $req")
   })
 
   test("It should reject for AT_TIMESTAMP with a timestamp in the future")(
@@ -454,7 +454,7 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
@@ -472,7 +472,7 @@ class GetShardIteratorTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req")
+        yield assert(res.isLeft, s"req: $req")
     }
   )
 
@@ -481,7 +481,7 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
@@ -499,7 +499,7 @@ class GetShardIteratorTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req")
+        yield assert(res.isLeft, s"req: $req")
     }
   )
 
@@ -508,7 +508,7 @@ class GetShardIteratorTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
@@ -526,8 +526,6 @@ class GetShardIteratorTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req")
+        yield assert(res.isLeft, s"req: $req")
     }
   )
-
-}

@@ -19,10 +19,10 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamConsumer.html
@@ -30,12 +30,12 @@ final case class DescribeStreamConsumerRequest(
     consumerArn: Option[ConsumerArn],
     consumerName: Option[ConsumerName],
     streamArn: Option[StreamArn]
-) {
+):
   def describeStreamConsumer(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[DescribeStreamConsumerResponse]] =
     streamsRef.get.map { streams =>
-      (consumerArn, consumerName, streamArn) match {
+      (consumerArn, consumerName, streamArn) match
         case (Some(cArn), _, _) =>
           CommonValidations.findStreamByConsumerArn(cArn, streams).map {
             case (consumer, _) => DescribeStreamConsumerResponse(consumer)
@@ -50,28 +50,25 @@ final case class DescribeStreamConsumerRequest(
           InvalidArgumentException(
             "ConsumerArn or both ConsumerName and StreamARN are required for this request."
           ).asLeft
-      }
     }
-}
 
-object DescribeStreamConsumerRequest {
+object DescribeStreamConsumerRequest:
   given describeStreamConsumerRequestCirceEncoder
       : circe.Encoder[DescribeStreamConsumerRequest] =
     circe.Encoder.forProduct3("ConsumerARN", "ConsumerName", "StreamARN")(x =>
       (x.consumerArn, x.consumerName, x.streamArn)
     )
   given describeStreamConsumerRequestCirceDecoder
-      : circe.Decoder[DescribeStreamConsumerRequest] = { x =>
-    for {
+      : circe.Decoder[DescribeStreamConsumerRequest] = x =>
+    for
       consumerArn <- x.downField("ConsumerARN").as[Option[ConsumerArn]]
       consumerName <- x.downField("ConsumerName").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DescribeStreamConsumerRequest(
+    yield DescribeStreamConsumerRequest(
       consumerArn,
       consumerName,
       streamArn
     )
-  }
   given describeStreamConsumerRequestEncoder
       : Encoder[DescribeStreamConsumerRequest] =
     Encoder.derive
@@ -83,4 +80,3 @@ object DescribeStreamConsumerRequest {
       x.consumerArn === y.consumerArn &&
         x.consumerName === y.consumerName &&
         x.streamArn === y.streamArn
-}

@@ -19,12 +19,12 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.instances.circe.given
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordRequest(
@@ -34,7 +34,7 @@ final case class PutRecordRequest(
     sequenceNumberForOrdering: Option[SequenceNumber],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def putRecord(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -54,7 +54,7 @@ final case class PutRecordRequest(
                     CommonValidations
                       .isStreamActiveOrUpdating(arn, streams),
                     CommonValidations.validateData(data),
-                    sequenceNumberForOrdering match {
+                    sequenceNumberForOrdering match
                       case None => Right(())
                       case Some(seqNo) =>
                         seqNo.parse.flatMap {
@@ -65,13 +65,13 @@ final case class PutRecordRequest(
                             ).asLeft
                           case x => Right(x)
                         }
-                    },
+                    ,
                     CommonValidations.validatePartitionKey(partitionKey),
-                    explicitHashKey match {
+                    explicitHashKey match
                       case Some(explHashKeh) =>
                         CommonValidations.validateExplicitHashKey(explHashKeh)
                       case None => Right(())
-                    },
+                    ,
                     CommonValidations
                       .computeShard(partitionKey, explicitHashKey, stream)
                       .flatMap { case (shard, records) =>
@@ -118,9 +118,8 @@ final case class PutRecordRequest(
         .sequenceWithDefault(streams)
     }
   }
-}
 
-object PutRecordRequest {
+object PutRecordRequest:
   given purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
     circe.Encoder.forProduct6(
       "Data",
@@ -142,7 +141,7 @@ object PutRecordRequest {
 
   given putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
     x =>
-      for {
+      for
         data <- x.downField("Data").as[Array[Byte]]
         explicitHashKey <- x.downField("ExplicitHashKey").as[Option[String]]
         partitionKey <- x.downField("PartitionKey").as[String]
@@ -151,7 +150,7 @@ object PutRecordRequest {
           .as[Option[SequenceNumber]]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield PutRecordRequest(
+      yield PutRecordRequest(
         data,
         explicitHashKey,
         partitionKey,
@@ -172,4 +171,3 @@ object PutRecordRequest {
       x.sequenceNumberForOrdering == y.sequenceNumberForOrdering &&
       x.streamName == y.streamName &&
       x.streamArn == y.streamArn
-}

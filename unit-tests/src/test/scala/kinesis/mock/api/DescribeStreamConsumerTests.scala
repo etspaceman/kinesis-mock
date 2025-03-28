@@ -23,16 +23,16 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class DescribeStreamConsumerTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should describe stream consumers by consumerName")(PropF.forAllF {
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -55,7 +55,7 @@ class DescribeStreamConsumerTests
           Some(consumerArn.streamArn)
         )
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
@@ -67,7 +67,7 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams =
           Streams.empty.addStream(1, consumerArn.streamArn, None, now)
@@ -87,7 +87,7 @@ class DescribeStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DescribeStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           consumer.contains(response.consumerDescription)
         },
@@ -99,7 +99,7 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         streamArn = streams.streams.get(consumerArn.streamArn).map(_.streamArn)
@@ -110,7 +110,7 @@ class DescribeStreamConsumerTests
           streamArn
         )
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -119,7 +119,7 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -139,7 +139,7 @@ class DescribeStreamConsumerTests
           None
         )
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -148,7 +148,7 @@ class DescribeStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -168,6 +168,5 @@ class DescribeStreamConsumerTests
           Some(consumerArn.streamArn)
         )
         res <- req.describeStreamConsumer(streamsRef)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
-}

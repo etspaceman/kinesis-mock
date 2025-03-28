@@ -21,18 +21,18 @@ import scala.collection.SortedMap
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class DeleteStreamRequest(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn],
     enforceConsumerDeletion: Option[Boolean]
-) {
+):
   def deleteStream(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -50,10 +50,9 @@ final case class DeleteStreamRequest(
                 .flatMap(stream =>
                   (
                     CommonValidations.isStreamActive(arn, streams),
-                    if (
-                      !enforceConsumerDeletion
+                    if !enforceConsumerDeletion
                         .getOrElse(false) && stream.consumers.nonEmpty
-                    )
+                    then
                       ResourceInUseException(
                         s"Consumers exist in stream $name and enforceConsumerDeletion is either not set or is false"
                       ).asLeft
@@ -81,33 +80,30 @@ final case class DeleteStreamRequest(
         }
         .sequenceWithDefault(streams)
     }
-}
 
-object DeleteStreamRequest {
+object DeleteStreamRequest:
   given deleteStreamRequestCirceEncoder: circe.Encoder[DeleteStreamRequest] =
     circe.Encoder.forProduct3(
       "StreamName",
       "StreamARN",
       "EnforceConsumerDeletion"
     )(x => (x.streamName, x.streamArn, x.enforceConsumerDeletion))
-  given deleteStreamRequestCirceDecoder: circe.Decoder[DeleteStreamRequest] = {
+  given deleteStreamRequestCirceDecoder: circe.Decoder[DeleteStreamRequest] =
     x =>
-      for {
+      for
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
         enforceConsumerDeletion <- x
           .downField("EnforceConsumerDeletion")
           .as[Option[Boolean]]
-      } yield DeleteStreamRequest(
+      yield DeleteStreamRequest(
         streamName,
         streamArn,
         enforceConsumerDeletion
       )
-  }
   given deleteStreamRequestEncoder: Encoder[DeleteStreamRequest] =
     Encoder.derive
   given deleteStreamRequestDecoder: Decoder[DeleteStreamRequest] =
     Decoder.derive
   given deleteStreamRequestEq: Eq[DeleteStreamRequest] =
     Eq.fromUniversalEquals
-}

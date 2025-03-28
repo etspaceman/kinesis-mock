@@ -19,14 +19,14 @@ package kinesis.mock
 import scala.reflect.ClassTag
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe.parser._
-import io.circe.syntax._
-import io.circe.{Decoder => CDecoder, Encoder => CEncoder}
+import cats.syntax.all.*
+import io.circe.parser.*
+import io.circe.syntax.*
+import io.circe.{Decoder as CDecoder, Encoder as CEncoder}
 import org.scalacheck.Arbitrary
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 
-trait CirceTests extends munit.ScalaCheckSuite {
+trait CirceTests extends munit.ScalaCheckSuite:
   def identityLawTest[A: CEncoder: CDecoder: Arbitrary: Eq](implicit
       loc: munit.Location,
       CT: ClassTag[A]
@@ -41,5 +41,3 @@ trait CirceTests extends munit.ScalaCheckSuite {
       }
 
     }
-
-}

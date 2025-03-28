@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class UpdateShardCountResponse(
     currentShardCount: Int,
@@ -28,7 +28,7 @@ final case class UpdateShardCountResponse(
     targetShardCount: Int
 )
 
-object UpdateShardCountResponse {
+object UpdateShardCountResponse:
   given updateShardCountResponseCirceEncoder
       : circe.Encoder[UpdateShardCountResponse] =
     circe.Encoder.forProduct3(
@@ -38,11 +38,11 @@ object UpdateShardCountResponse {
     )(x => (x.currentShardCount, x.streamName, x.targetShardCount))
   given updateShardCountResponseCirceDecoder
       : circe.Decoder[UpdateShardCountResponse] = x =>
-    for {
+    for
       currentShardCount <- x.downField("CurrentShardCount").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
-    } yield UpdateShardCountResponse(
+    yield UpdateShardCountResponse(
       currentShardCount,
       streamName,
       targetShardCount
@@ -53,4 +53,3 @@ object UpdateShardCountResponse {
     Decoder.derive
   given updateShardCountResponseEq: Eq[UpdateShardCountResponse] =
     Eq.fromUniversalEquals
-}

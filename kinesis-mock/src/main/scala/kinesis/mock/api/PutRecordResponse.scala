@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class PutRecordResponse(
     encryptionType: EncryptionType,
@@ -28,7 +28,7 @@ final case class PutRecordResponse(
     shardId: String
 )
 
-object PutRecordResponse {
+object PutRecordResponse:
   given putRecordResponseCirceEncoder: circe.Encoder[PutRecordResponse] =
     circe.Encoder.forProduct3("EncryptionType", "SequenceNumber", "ShardId")(
       x => (x.encryptionType, x.sequenceNumber, x.shardId)
@@ -36,11 +36,11 @@ object PutRecordResponse {
 
   given putRecordResponseCirceDecoder: circe.Decoder[PutRecordResponse] =
     x =>
-      for {
+      for
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
         sequenceNumber <- x.downField("SequenceNumber").as[SequenceNumber]
         shardId <- x.downField("ShardId").as[String]
-      } yield PutRecordResponse(encryptionType, sequenceNumber, shardId)
+      yield PutRecordResponse(encryptionType, sequenceNumber, shardId)
 
   given putRecordResponseEncoder: Encoder[PutRecordResponse] =
     Encoder.derive
@@ -49,4 +49,3 @@ object PutRecordResponse {
 
   given putRecordResponseEq: Eq[PutRecordResponse] =
     Eq.fromUniversalEquals
-}

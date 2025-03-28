@@ -20,11 +20,11 @@ import java.time.Instant
 
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.Interval
-import eu.timepit.refined.scalacheck.numeric._
+import eu.timepit.refined.scalacheck.numeric.*
 import eu.timepit.refined.types.numeric.PosInt
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 
-class SequenceNumberTests extends munit.ScalaCheckSuite {
+class SequenceNumberTests extends munit.ScalaCheckSuite:
   property("It should create and parse correctly")(forAll {
     (
         shardCreateTimeEpochSeconds: Long Refined
@@ -155,4 +155,3 @@ class SequenceNumberTests extends munit.ScalaCheckSuite {
         s"Parsed: $parsed\n" +
         s"SequenceNumber: $sequenceNumber"
   })
-}

@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
@@ -28,7 +28,7 @@ final case class PutRecordsRequestEntry(
     partitionKey: String
 )
 
-object PutRecordsRequestEntry {
+object PutRecordsRequestEntry:
   given putRecordsRequestEntryCirceEncoder
       : circe.Encoder[PutRecordsRequestEntry] =
     circe.Encoder.forProduct3(
@@ -40,11 +40,11 @@ object PutRecordsRequestEntry {
   given putRecordsRequestEntryCirceDecoder
       : circe.Decoder[PutRecordsRequestEntry] =
     x =>
-      for {
+      for
         data <- x.downField("Data").as[Array[Byte]]
         explicitHashKey <- x.downField("ExplicitHashKey").as[Option[String]]
         partitionKey <- x.downField("PartitionKey").as[String]
-      } yield PutRecordsRequestEntry(
+      yield PutRecordsRequestEntry(
         data,
         explicitHashKey,
         partitionKey
@@ -59,4 +59,3 @@ object PutRecordsRequestEntry {
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey
-}

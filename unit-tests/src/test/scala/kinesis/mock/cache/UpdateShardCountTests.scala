@@ -16,21 +16,21 @@
 
 package kinesis.mock.cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.LoggingContext
-import kinesis.mock.api._
+import kinesis.mock.api.*
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class UpdateShardCountTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -45,7 +45,7 @@ class UpdateShardCountTests
         .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
         .use { case (cacheConfig, cache) =>
           val context = LoggingContext.create
-          for {
+          for
             _ <- cache
               .createStream(
                 CreateStreamRequest(Some(5), None, streamName),
@@ -105,7 +105,7 @@ class UpdateShardCountTests
                 Some(awsRegion)
               )
               .rethrow
-          } yield assert(
+          yield assert(
             checkStream1.streamDescriptionSummary.streamStatus == StreamStatus.UPDATING &&
               checkStream2.streamDescriptionSummary.streamStatus == StreamStatus.ACTIVE &&
               checkShards.shards.count(!_.isOpen) == 5 &&
@@ -120,4 +120,3 @@ class UpdateShardCountTests
           )
         }
   })
-}

@@ -27,7 +27,7 @@ final case class ListTagsForStreamResponse(
     tags: TagList
 )
 
-object ListTagsForStreamResponse {
+object ListTagsForStreamResponse:
   given listTagsForStreamResponseCirceEncoder
       : circe.Encoder[ListTagsForStreamResponse] =
     circe.Encoder.forProduct2("HasMoreTags", "Tags")(x =>
@@ -37,10 +37,10 @@ object ListTagsForStreamResponse {
   given listTagsForStreamResponseCirceDecoder
       : circe.Decoder[ListTagsForStreamResponse] =
     x =>
-      for {
+      for
         hasMoreTags <- x.downField("HasMoreTags").as[Boolean]
         tags <- x.downField("Tags").as[TagList]
-      } yield ListTagsForStreamResponse(hasMoreTags, tags)
+      yield ListTagsForStreamResponse(hasMoreTags, tags)
 
   given listTagsForStreamResponseEncoder: Encoder[ListTagsForStreamResponse] =
     Encoder.derive
@@ -49,4 +49,3 @@ object ListTagsForStreamResponse {
 
   given listTagsForStreamResponseEq: Eq[ListTagsForStreamResponse] =
     Eq.fromUniversalEquals
-}

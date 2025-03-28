@@ -20,10 +20,10 @@ package models
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class Consumer(
     consumerArn: ConsumerArn,
@@ -33,7 +33,7 @@ final case class Consumer(
     streamArn: StreamArn
 )
 
-object Consumer {
+object Consumer:
   def create(
       streamArn: StreamArn,
       consumerName: ConsumerName,
@@ -66,8 +66,8 @@ object Consumer {
 
   def consumerCirceDecoder(implicit
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[Consumer] = { x =>
-    for {
+  ): circe.Decoder[Consumer] = x =>
+    for
       consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
@@ -75,14 +75,13 @@ object Consumer {
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
       streamArn <- x.downField("StreamARN").as[StreamArn]
-    } yield Consumer(
+    yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus,
       streamArn
     )
-  }
 
   given consumerEncoder: Encoder[Consumer] = Encoder.instance(
     consumerCirceEncoder(instantDoubleCirceEncoder),
@@ -100,4 +99,3 @@ object Consumer {
       x.consumerName === y.consumerName &&
       x.consumerStatus === y.consumerStatus &&
       x.streamArn === y.streamArn
-}

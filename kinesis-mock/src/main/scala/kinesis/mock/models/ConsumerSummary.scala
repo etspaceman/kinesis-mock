@@ -20,10 +20,10 @@ package models
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class ConsumerSummary(
     consumerArn: ConsumerArn,
@@ -32,7 +32,7 @@ final case class ConsumerSummary(
     consumerStatus: ConsumerStatus
 )
 
-object ConsumerSummary {
+object ConsumerSummary:
   def fromConsumer(consumer: Consumer): ConsumerSummary = ConsumerSummary(
     consumer.consumerArn,
     consumer.consumerCreationTimestamp,
@@ -57,21 +57,20 @@ object ConsumerSummary {
 
   def consumerSummaryCirceDecoder(implicit
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[ConsumerSummary] = { x =>
-    for {
+  ): circe.Decoder[ConsumerSummary] = x =>
+    for
       consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
         .as[Instant]
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
-    } yield ConsumerSummary(
+    yield ConsumerSummary(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus
     )
-  }
 
   given consumerSummaryEncoder: Encoder[ConsumerSummary] =
     Encoder.instance(
@@ -90,4 +89,3 @@ object ConsumerSummary {
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&
       x.consumerStatus === y.consumerStatus
-}

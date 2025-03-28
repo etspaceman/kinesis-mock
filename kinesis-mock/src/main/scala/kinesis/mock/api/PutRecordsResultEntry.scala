@@ -29,7 +29,7 @@ final case class PutRecordsResultEntry(
     shardId: Option[String]
 )
 
-object PutRecordsResultEntry {
+object PutRecordsResultEntry:
   given putRecordsResultEntryCirceEncoder
       : circe.Encoder[PutRecordsResultEntry] =
     circe.Encoder.forProduct4(
@@ -42,14 +42,14 @@ object PutRecordsResultEntry {
   given putRecordsResultEntryCirceDecoder
       : circe.Decoder[PutRecordsResultEntry] =
     x =>
-      for {
+      for
         errorCode <- x.downField("ErrorCode").as[Option[PutRecordsErrorCode]]
         errorMessage <- x.downField("ErrorMessage").as[Option[String]]
         sequenceNumber <- x
           .downField("SequenceNumber")
           .as[Option[SequenceNumber]]
         shardId <- x.downField("ShardId").as[Option[String]]
-      } yield PutRecordsResultEntry(
+      yield PutRecordsResultEntry(
         errorCode,
         errorMessage,
         sequenceNumber,
@@ -62,4 +62,3 @@ object PutRecordsResultEntry {
 
   given putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
     Eq.fromUniversalEquals
-}

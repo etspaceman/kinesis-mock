@@ -19,20 +19,20 @@ package kinesis.mock
 import scala.reflect.ClassTag
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.bullet.borer
 import io.bullet.borer.Cbor
 import io.circe
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 import org.scalacheck.Arbitrary
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 
-trait CodecTests extends munit.ScalaCheckSuite {
+trait CodecTests extends munit.ScalaCheckSuite:
   def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](implicit
       loc: munit.Location,
       CT: ClassTag[A]
-  ): Unit = {
+  ): Unit =
     property(
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Circe"
     ) {
@@ -74,6 +74,3 @@ trait CodecTests extends munit.ScalaCheckSuite {
             .fold(_.toString, _.toString)}"
       }
     }
-  }
-
-}

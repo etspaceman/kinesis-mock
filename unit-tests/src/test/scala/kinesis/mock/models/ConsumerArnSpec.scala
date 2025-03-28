@@ -21,7 +21,7 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.Utils
 import kinesis.mock.instances.arbitrary.given
 
-class ConsumerArnSpec extends munit.ScalaCheckEffectSuite {
+class ConsumerArnSpec extends munit.ScalaCheckEffectSuite:
   test("It should convert to a proper ARN format")(PropF.forAllF {
     (
         streamArn: StreamArn,
@@ -58,4 +58,3 @@ class ConsumerArnSpec extends munit.ScalaCheckEffectSuite {
         )
       }
   })
-}

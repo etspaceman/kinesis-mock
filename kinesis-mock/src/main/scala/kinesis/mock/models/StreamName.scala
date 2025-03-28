@@ -17,13 +17,12 @@
 package kinesis.mock.models
 
 import cats.Eq
-import io.circe._
+import io.circe.*
 
-final case class StreamName(streamName: String) {
+final case class StreamName(streamName: String):
   override def toString: String = streamName
-}
 
-object StreamName {
+object StreamName:
   given streamNameCirceEncoder: Encoder[StreamName] =
     Encoder[String].contramap(_.streamName)
   given streamNameCirceDecoder: Decoder[StreamName] =
@@ -36,4 +35,3 @@ object StreamName {
   given streamNameOrdering: Ordering[StreamName] =
     (x: StreamName, y: StreamName) =>
       Ordering[String].compare(x.streamName, y.streamName)
-}

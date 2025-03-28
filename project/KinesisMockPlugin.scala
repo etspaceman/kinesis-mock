@@ -52,7 +52,7 @@ object KinesisMockPlugin extends AutoPlugin {
     s"github.event_name != 'pull_request' && $publicationCond"
   }
 
-  override def buildSettings: Seq[Setting[_]] = Seq(
+  override def buildSettings: Seq[Setting[?]] = Seq(
     tlBaseVersion := "0.4",
     tlCiScalafixCheck := true,
     tlCiMimaBinaryIssueCheck := false,
@@ -391,7 +391,7 @@ object KinesisMockPlugin extends AutoPlugin {
       }
   )
 
-  override def projectSettings: Seq[Setting[_]] = Seq(
+  override def projectSettings: Seq[Setting[?]] = Seq(
     scalacOptions ++= ScalacSettings.settings,
     Test / testOptions ++=
       List(Tests.Argument(TestFrameworks.MUnit, "+l")),

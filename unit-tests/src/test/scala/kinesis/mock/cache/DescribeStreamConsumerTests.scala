@@ -16,22 +16,22 @@
 
 package kinesis.mock.cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.LoggingContext
-import kinesis.mock.api._
+import kinesis.mock.api.*
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class DescribeStreamConsumerTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -49,7 +49,7 @@ class DescribeStreamConsumerTests
           val context = LoggingContext.create
           val streamArn =
             StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
-          for {
+          for
             _ <- cache
               .createStream(
                 CreateStreamRequest(Some(1), None, streamName),
@@ -81,7 +81,7 @@ class DescribeStreamConsumerTests
                 isCbor = false
               )
               .rethrow
-          } yield assert(
+          yield assert(
             ConsumerSummary.fromConsumer(
               res.consumerDescription
             ) === registerRes.consumer && res.consumerDescription.streamArn == streamArn,
@@ -89,4 +89,3 @@ class DescribeStreamConsumerTests
           )
         }
   })
-}

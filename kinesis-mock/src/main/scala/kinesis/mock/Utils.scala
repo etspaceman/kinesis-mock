@@ -8,7 +8,7 @@ import cats.effect.SyncIO
 import cats.effect.std.SecureRandom
 import cats.effect.std.UUIDGen
 
-object Utils {
+object Utils:
   private def getUUIDGen: SyncIO[UUIDGen[SyncIO]] = SecureRandom
     .javaSecuritySecureRandom[SyncIO]
     .map(x => UUIDGen.fromSecureRandom[SyncIO](implicitly, x))
@@ -24,4 +24,3 @@ object Utils {
   def md5(bytes: Array[Byte]): Array[Byte] = MD5.compute(bytes)
   def now: IO[Instant] =
     IO.realTime.map(d => Instant.EPOCH.plusNanos(d.toNanos))
-}

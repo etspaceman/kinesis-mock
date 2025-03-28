@@ -21,8 +21,8 @@ import cats.Eq
 import cats.effect.{IO, Ref}
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_EnableEnhancedMonitoring.html
@@ -30,7 +30,7 @@ final case class EnableEnhancedMonitoringRequest(
     shardLevelMetrics: Vector[ShardLevelMetric],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def enableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -47,7 +47,7 @@ final case class EnableEnhancedMonitoringRequest(
               val current =
                 stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
               val desired =
-                if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
+                if shardLevelMetrics.contains(ShardLevelMetric.ALL) then
                   ShardLevelMetric.values
                     .filterNot(_ == ShardLevelMetric.ALL)
                     .toVector
@@ -70,32 +70,29 @@ final case class EnableEnhancedMonitoringRequest(
         }
         .sequenceWithDefault(streams)
     }
-}
 
-object EnableEnhancedMonitoringRequest {
+object EnableEnhancedMonitoringRequest:
   given enableEnhancedMonitoringRequestCirceEncoder
       : circe.Encoder[EnableEnhancedMonitoringRequest] =
     circe.Encoder.forProduct3("ShardLevelMetrics", "StreamName", "StreamARN")(
       x => (x.shardLevelMetrics, x.streamName, x.streamArn)
     )
   given enableEnhancedMonitoringRequestCirceDecoder
-      : circe.Decoder[EnableEnhancedMonitoringRequest] = { x =>
-    for {
+      : circe.Decoder[EnableEnhancedMonitoringRequest] = x =>
+    for
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield EnableEnhancedMonitoringRequest(
+    yield EnableEnhancedMonitoringRequest(
       shardLevelMetrics,
       streamName,
       streamArn
     )
-  }
   given enableEnhancedMonitoringRequestEncoder
       : Encoder[EnableEnhancedMonitoringRequest] = Encoder.derive
   given enableEnhancedMonitoringRequestDecoder
       : Decoder[EnableEnhancedMonitoringRequest] = Decoder.derive
   given enableEnhancedMonitoringRequestEq: Eq[EnableEnhancedMonitoringRequest] =
     Eq.fromUniversalEquals
-}

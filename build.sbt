@@ -164,7 +164,7 @@ lazy val allProjects = Seq(
 
 lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala3))
 
-def commonRootSettings: Seq[Setting[_]] =
+def commonRootSettings: Seq[Setting[?]] =
   DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(
     name := "kinesis-mock-root",
     ThisBuild / mergifyLabelPaths ++= allProjects.map { x =>

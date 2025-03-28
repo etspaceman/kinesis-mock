@@ -22,16 +22,15 @@ import io.circe
 
 final case class TagListEntry(key: String, value: String)
 
-object TagListEntry {
+object TagListEntry:
   given tagListEntryCirceEncoder: circe.Encoder[TagListEntry] =
     circe.Encoder.forProduct2("Key", "Value")(x => (x.key, x.value))
   given tagListEntryCirceDecoder: circe.Decoder[TagListEntry] = x =>
-    for {
+    for
       key <- x.downField("Key").as[String]
       value <- x.downField("Value").as[String]
-    } yield TagListEntry(key, value)
+    yield TagListEntry(key, value)
 
   given tagListEntryEncoder: Encoder[TagListEntry] = Encoder.derive
   given tagListEntryDecoder: Decoder[TagListEntry] = Decoder.derive
   given tagListEntryEq: Eq[TagListEntry] = Eq.fromUniversalEquals
-}

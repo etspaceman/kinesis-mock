@@ -19,22 +19,21 @@ package kinesis.mock.models
 import scala.util.Try
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
 final case class StreamArn(
     awsRegion: AwsRegion,
     streamName: StreamName,
     awsAccountId: AwsAccountId
-) {
+):
   val streamArn: String =
     s"arn:${awsRegion.awsArnPiece}:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName"
   override def toString: String = streamArn
-}
 
-object StreamArn {
+object StreamArn:
   def fromArn(streamArn: String): Either[String, StreamArn] =
-    for {
+    for
       streamName <- Try(streamArn.split("/")(1)).toEither.bimap(
         e => s"Could not get stream name from ARN: ${e.getMessage}",
         StreamName.apply
@@ -51,7 +50,7 @@ object StreamArn {
         e => s"Could not get awsAccountId from ARN: ${e.getMessage}",
         AwsAccountId.apply
       )
-    } yield StreamArn(awsRegion, streamName, awsAccountId)
+    yield StreamArn(awsRegion, streamName, awsAccountId)
 
   given streamArnCirceEncoder: Encoder[StreamArn] =
     Encoder[String].contramap(_.streamArn)
@@ -69,4 +68,3 @@ object StreamArn {
   given streamArnOrdering: Ordering[StreamArn] =
     (x: StreamArn, y: StreamArn) =>
       Ordering[String].compare(x.streamArn, y.streamArn)
-}

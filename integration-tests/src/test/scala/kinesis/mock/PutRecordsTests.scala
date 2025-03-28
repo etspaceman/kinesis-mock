@@ -1,21 +1,21 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import cats.syntax.all._
+import cats.syntax.all.*
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.syntax.id._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.id.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class PutRecordsTests extends AwsFunctionalTests {
+class PutRecordsTests extends AwsFunctionalTests:
 
   fixture.test("It should put records") { resources =>
-    for {
+    for
       reqs <- IO(
         List.fill(10)(
           PutRecordsRequest
@@ -70,7 +70,7 @@ class PutRecordsTests extends AwsFunctionalTests {
       )
       res = gets.flatMap(_.records().asScala.toVector)
       records = reqs.flatMap(_.records.asScala.toVector)
-    } yield assert(
+    yield assert(
       res.length == 50 && res.forall(rec =>
         records.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
@@ -80,4 +80,3 @@ class PutRecordsTests extends AwsFunctionalTests {
       s"$res\n$records"
     )
   }
-}

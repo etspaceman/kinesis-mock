@@ -23,10 +23,10 @@ import java.time.Instant
 
 import cats.Eq
 import io.circe
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class Shard(
     adjacentParentShardId: Option[String],
@@ -36,11 +36,10 @@ final case class Shard(
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
     shardId: ShardId
-) {
+):
   val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
-}
 
-object Shard {
+object Shard:
 
   val minHashKey: BigInt = BigInt(0)
   val maxHashKey: BigInt = BigInt("340282366920938463463374607431768211455")
@@ -49,7 +48,7 @@ object Shard {
       shardCount: Int,
       createTime: Instant,
       startingIndex: Int
-  ): SortedMap[Shard, Vector[KinesisRecord]] = {
+  ): SortedMap[Shard, Vector[KinesisRecord]] =
     val shardHash = maxHashKey / BigInt(shardCount)
     SortedMap.from(
       Vector
@@ -61,7 +60,7 @@ object Shard {
             None,
             createTime,
             HashKeyRange(
-              if (listIndex < shardCount - 1)
+              if listIndex < shardCount - 1 then
                 (shardHash * BigInt(listIndex + 1)) - BigInt(1)
               else maxHashKey,
               shardHash * BigInt(listIndex)
@@ -75,7 +74,6 @@ object Shard {
           ) -> Vector.empty
         }
     )
-  }
   given shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
@@ -105,8 +103,8 @@ object Shard {
 
   def shardCirceDecoder(implicit
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[Shard] = { x =>
-    for {
+  ): circe.Decoder[Shard] = x =>
+    for
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
         .as[Option[String]]
@@ -119,7 +117,7 @@ object Shard {
         .as[SequenceNumberRange]
       shardId <- x.downField("ShardId").as[String]
       shardIndex <- x.downField("ShardIndex").as[Int]
-    } yield Shard(
+    yield Shard(
       adjacentParentShardId,
       closedTimestamp,
       createdAtTimestamp,
@@ -128,7 +126,6 @@ object Shard {
       sequenceNumberRange,
       ShardId(shardId, shardIndex)
     )
-  }
 
   given shardEncoder: Encoder[Shard] = Encoder.instance(
     shardCirceEncoder(instantDoubleCirceEncoder),
@@ -160,4 +157,3 @@ object Shard {
       x.parentShardId == y.parentShardId &&
       x.sequenceNumberRange == y.sequenceNumberRange &&
       x.shardId == y.shardId
-}

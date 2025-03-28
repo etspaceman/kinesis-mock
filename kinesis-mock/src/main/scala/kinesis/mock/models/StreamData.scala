@@ -18,12 +18,12 @@ package kinesis.mock
 package models
 
 import scala.collection.SortedMap
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.instances.circe.given
@@ -44,7 +44,7 @@ final case class StreamData(
     shardCountUpdates: Vector[Instant]
 )
 
-object StreamData {
+object StreamData:
   val minRetentionPeriod: FiniteDuration = 24.hours
   val maxRetentionPeriod: FiniteDuration = 365.days
 
@@ -89,8 +89,8 @@ object StreamData {
         x.shardCountUpdates
       )
     )
-  given streamDataCirceDecoder: circe.Decoder[StreamData] = { x =>
-    for {
+  given streamDataCirceDecoder: circe.Decoder[StreamData] = x =>
+    for
       consumers <- x
         .downField("consumers")
         .as[SortedMap[ConsumerName, Consumer]]
@@ -114,7 +114,7 @@ object StreamData {
       streamStatus <- x.downField("streamStatus").as[StreamStatus]
       tags <- x.downField("tags").as[Tags]
       shardCountUpdates <- x.downField("shardCountUpdates").as[Vector[Instant]]
-    } yield StreamData(
+    yield StreamData(
       consumers,
       encryptionType,
       enhancedMonitoring,
@@ -129,8 +129,6 @@ object StreamData {
       tags,
       shardCountUpdates
     )
-
-  }
 
   given streamDataEq: Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
@@ -154,7 +152,7 @@ object StreamData {
       streamArn: StreamArn,
       streamModeDetails: Option[StreamModeDetails],
       now: Instant
-  ): StreamData = {
+  ): StreamData =
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, now, 0)
     StreamData(
@@ -172,5 +170,3 @@ object StreamData {
       Tags.empty,
       Vector.empty
     )
-  }
-}

@@ -21,11 +21,11 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_MergeShards.html
@@ -34,7 +34,7 @@ final case class MergeShardsRequest(
     shardToMerge: String,
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def mergeShards(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -65,10 +65,9 @@ final case class MergeShardsRequest(
                                 .flatMap { case (shard, shardData) =>
                                   CommonValidations.isShardOpen(shard).flatMap {
                                     _ =>
-                                      if (
-                                        adjacentShard.hashKeyRange
+                                      if adjacentShard.hashKeyRange
                                           .isAdjacent(shard.hashKeyRange)
-                                      )
+                                      then
                                         Right(
                                           (
                                             (adjacentShard, adjacentData),
@@ -122,9 +121,8 @@ final case class MergeShardsRequest(
           .sequenceWithDefault(streams)
       )
     }
-}
 
-object MergeShardsRequest {
+object MergeShardsRequest:
 
   def mergeShards(
       stream: StreamData,
@@ -133,7 +131,7 @@ object MergeShardsRequest {
       shard: Shard,
       shardData: Vector[KinesisRecord],
       now: Instant
-  ): StreamData = {
+  ): StreamData =
     val newShardIndex =
       stream.shards.keys.map(_.shardId.index).max + 1
     val newShard: (Shard, Vector[KinesisRecord]) = Shard(
@@ -149,10 +147,8 @@ object MergeShardsRequest {
       Some(shard.shardId.shardId),
       SequenceNumberRange(
         None,
-        if (
-          adjacentShard.sequenceNumberRange.startingSequenceNumber.numericValue < shard.sequenceNumberRange.startingSequenceNumber.numericValue
-        )
-          adjacentShard.sequenceNumberRange.startingSequenceNumber
+        if adjacentShard.sequenceNumberRange.startingSequenceNumber.numericValue < shard.sequenceNumberRange.startingSequenceNumber.numericValue
+        then adjacentShard.sequenceNumberRange.startingSequenceNumber
         else shard.sequenceNumberRange.startingSequenceNumber
       ),
       ShardId.create(newShardIndex)
@@ -177,7 +173,6 @@ object MergeShardsRequest {
         ++ (oldShards :+ newShard),
       streamStatus = StreamStatus.UPDATING
     )
-  }
 
   given mergeShardsRequestCirceEncoder: circe.Encoder[MergeShardsRequest] =
     circe.Encoder.forProduct4(
@@ -189,12 +184,12 @@ object MergeShardsRequest {
 
   given mergeShardsRequestCirceDecoder: circe.Decoder[MergeShardsRequest] =
     x =>
-      for {
+      for
         adjacentShardToMerge <- x.downField("AdjacentShardToMerge").as[String]
         shardToMerge <- x.downField("ShardToMerge").as[String]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield MergeShardsRequest(
+      yield MergeShardsRequest(
         adjacentShardToMerge,
         shardToMerge,
         streamName,
@@ -206,4 +201,3 @@ object MergeShardsRequest {
     Decoder.derive
   given mergeShardsRequestEq: Eq[MergeShardsRequest] =
     Eq.fromUniversalEquals
-}

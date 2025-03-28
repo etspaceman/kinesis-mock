@@ -24,7 +24,7 @@ import kinesis.mock.models.ShardIterator
 
 final case class GetShardIteratorResponse(shardIterator: ShardIterator)
 
-object GetShardIteratorResponse {
+object GetShardIteratorResponse:
   given getShardIteratorResponseCirceEncoder
       : circe.Encoder[GetShardIteratorResponse] =
     circe.Encoder.forProduct1("ShardIterator")(_.shardIterator)
@@ -39,4 +39,3 @@ object GetShardIteratorResponse {
     Decoder.derive
   given getShardIteratorResponseEq: Eq[GetShardIteratorResponse] =
     Eq.fromUniversalEquals
-}

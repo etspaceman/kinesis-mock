@@ -1,13 +1,12 @@
 package kinesis.mock.regexp.ast
 
-sealed trait RegularExpression {
+sealed trait RegularExpression:
 
   def |(that: RegularExpression): RegularExpression =
     Or(this, that)
 
   def &(that: RegularExpression): RegularExpression =
     And(this, that)
-}
 
 case class Literal(value: String) extends RegularExpression
 
@@ -39,7 +38,7 @@ case class Length(term: RegularExpression, min: Int) extends Quantified
 case class RangeFrom(term: RegularExpression, min: Int) extends Quantified
 case class Range(term: RegularExpression, min: Int, max: Int) extends Quantified
 
-object CharacterClass {
+object CharacterClass:
 
   sealed trait Term
 
@@ -52,6 +51,5 @@ object CharacterClass {
   case object DigitChar extends Term
   case object SpaceChar extends Term
   case object WordBoundary extends Term
-}
 
 case class CharacterClass(terms: CharacterClass.Term*) extends RegularExpression

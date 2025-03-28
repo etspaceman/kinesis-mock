@@ -22,7 +22,7 @@ import io.circe
 
 final case class ShardLevelMetrics(shardLevelMetrics: Vector[ShardLevelMetric])
 
-object ShardLevelMetrics {
+object ShardLevelMetrics:
   given shardLevelMetricsCirceEncoder: circe.Encoder[ShardLevelMetrics] =
     circe.Encoder.forProduct1("ShardLevelMetrics")(_.shardLevelMetrics)
   given shardLevelMetricsCirceDecoder: circe.Decoder[ShardLevelMetrics] =
@@ -35,4 +35,3 @@ object ShardLevelMetrics {
     Decoder.derive
   given shardLevelMetricsEq: Eq[ShardLevelMetrics] =
     Eq.fromUniversalEquals
-}

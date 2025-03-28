@@ -17,11 +17,11 @@
 package kinesis.mock.models
 
 import cats.Eq
-import io.circe._
+import io.circe.*
 
 final case class TagList(tags: Vector[TagListEntry])
 
-object TagList {
+object TagList:
   given tagListEq: Eq[TagList] = Eq.fromUniversalEquals
   given tagListCirceEncoder: Encoder[TagList] =
     Encoder.encodeVector[TagListEntry].contramap(_.tags)
@@ -30,4 +30,3 @@ object TagList {
   def fromTags(tags: Tags): TagList = TagList(
     tags.tags.toVector.map { case (key, value) => TagListEntry(key, value) }
   )
-}

@@ -22,7 +22,7 @@ import java.time.Instant
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class StreamDescriptionSummary(
     consumerCount: Option[Int],
@@ -38,7 +38,7 @@ final case class StreamDescriptionSummary(
     streamStatus: StreamStatus
 )
 
-object StreamDescriptionSummary {
+object StreamDescriptionSummary:
   def fromStreamData(streamData: StreamData): StreamDescriptionSummary =
     StreamDescriptionSummary(
       Some(streamData.consumers.size),
@@ -87,7 +87,7 @@ object StreamDescriptionSummary {
   def streamDescriptionSummaryCirceDecoder(implicit
       DI: circe.Decoder[Instant]
   ): circe.Decoder[StreamDescriptionSummary] = x =>
-    for {
+    for
       consumerCount <- x.downField("ConsumerCount").as[Option[Int]]
       encryptionType <- x.downField("EncryptionType").as[Option[EncryptionType]]
       enhancedMonitoring <- x
@@ -105,7 +105,7 @@ object StreamDescriptionSummary {
         .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
-    } yield StreamDescriptionSummary(
+    yield StreamDescriptionSummary(
       consumerCount,
       encryptionType,
       enhancedMonitoring,
@@ -143,4 +143,3 @@ object StreamDescriptionSummary {
         x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
         x.streamStatus == y.streamStatus
-}

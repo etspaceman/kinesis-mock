@@ -22,46 +22,43 @@ import scala.util.{Success, Try}
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
-final case class SequenceNumber(value: String) {
+final case class SequenceNumber(value: String):
   def numericValue: BigInt =
-    SequenceNumberConstant.withNameOption(value) match {
+    SequenceNumberConstant.withNameOption(value) match
       case None                                      => BigInt(value)
       case Some(SequenceNumberConstant.LATEST)       => BigInt(-1)
       case Some(SequenceNumberConstant.TRIM_HORIZON) => BigInt(-2)
       case Some(SequenceNumberConstant.AT_TIMESTAMP) => BigInt(-3)
       case Some(SequenceNumberConstant.SHARD_END) =>
         SequenceNumber.shardEndNumber
-    }
 
   def parse: Response[SequenceNumberParseResult] =
-    value match {
+    value match
       case x if SequenceNumberConstant.withNameOption(x).nonEmpty =>
         Right(SequenceNumberConstantResult(SequenceNumberConstant.withName(x)))
       case x =>
         val seqNum =
-          if (BigInt(x) < BigInt(2).pow(124))
-            BigInt(x) + BigInt(2).pow(124)
+          if BigInt(x) < BigInt(2).pow(124) then BigInt(x) + BigInt(2).pow(124)
           else BigInt(x)
 
         val hex = seqNum.toString(16)
         val seqIndexHex = hex.slice(11, 27)
         val shardCreateSecsHex = hex.slice(1, 10)
         val seqTimeHex = hex.slice(29, 38)
-        val shardIndexHex = {
+        val shardIndexHex =
           val initial = hex.slice(38, 46)
-          if (Try(BigInt(initial.head.toString, 16)).exists(_ > 7))
+          if Try(BigInt(initial.head.toString, 16)).exists(_ > 7) then
             s"-$initial"
           else initial
-        }
         (
           Try(BigInt(seqIndexHex, 16)),
           Try(BigInt(shardCreateSecsHex, 16)),
           Try(BigInt(seqTimeHex, 16)),
           Try(BigInt(shardIndexHex, 16))
-        ) match {
+        ) match
           case (
                 Success(_),
                 _,
@@ -100,10 +97,6 @@ final case class SequenceNumber(value: String) {
             InvalidArgumentException(
               "SequenceNumber could not be parsed"
             ).asLeft
-        }
-
-    }
-}
 
 sealed trait SequenceNumberParseResult
 
@@ -118,7 +111,7 @@ final case class SequenceNumberParts(
 final case class SequenceNumberConstantResult(constant: SequenceNumberConstant)
     extends SequenceNumberParseResult
 
-object SequenceNumber {
+object SequenceNumber:
   val shardEndNumber: BigInt = BigInt("7fffffffffffffff", 16)
   val shardEnd: SequenceNumber = SequenceNumber(shardEndNumber.toString)
   // See https://github.com/mhart/kinesalite/blob/master/db/index.js#L177-L186
@@ -154,4 +147,3 @@ object SequenceNumber {
   given sequenceNumberCirceDecoder: Decoder[SequenceNumber] =
     Decoder[String].map(SequenceNumber.apply)
   given sequenceNumberEq: Eq[SequenceNumber] = Eq.fromUniversalEquals
-}

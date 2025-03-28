@@ -1,17 +1,17 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import java.util.stream.Collectors
 
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class DisableEnhancedMonitoringTests extends AwsFunctionalTests {
+class DisableEnhancedMonitoringTests extends AwsFunctionalTests:
 
   fixture.test("It should disable enhanced monitoring") { resources =>
-    for {
+    for
       _ <- resources.kinesisClient
         .enableEnhancedMonitoring(
           EnableEnhancedMonitoringRequest
@@ -37,7 +37,7 @@ class DisableEnhancedMonitoringTests extends AwsFunctionalTests {
           .flatMap(x => x.shardLevelMetrics().stream())
           .collect(Collectors.toList[MetricsName])
       )
-    } yield assert(
+    yield assert(
       res.desiredShardLevelMetrics == streamMonitoring && !res
         .desiredShardLevelMetrics()
         .asScala
@@ -45,4 +45,3 @@ class DisableEnhancedMonitoringTests extends AwsFunctionalTests {
       s"$res\n$streamMonitoring"
     )
   }
-}

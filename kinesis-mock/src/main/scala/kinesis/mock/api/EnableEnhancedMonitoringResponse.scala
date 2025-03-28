@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class EnableEnhancedMonitoringResponse(
     currentShardLevelMetrics: Vector[ShardLevelMetric],
@@ -29,7 +29,7 @@ final case class EnableEnhancedMonitoringResponse(
     streamArn: StreamArn
 )
 
-object EnableEnhancedMonitoringResponse {
+object EnableEnhancedMonitoringResponse:
   given enableEnhancedMonitoringResponseCirceEncoder
       : circe.Encoder[EnableEnhancedMonitoringResponse] =
     circe.Encoder.forProduct4(
@@ -47,8 +47,8 @@ object EnableEnhancedMonitoringResponse {
     )
 
   given enableEnhancedMonitoringResponseCirceDecoder
-      : circe.Decoder[EnableEnhancedMonitoringResponse] = { x =>
-    for {
+      : circe.Decoder[EnableEnhancedMonitoringResponse] = x =>
+    for
       currentShardLevelMetrics <- x
         .downField("CurrentShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
@@ -57,17 +57,15 @@ object EnableEnhancedMonitoringResponse {
         .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
       streamArn <- x.downField("StreamARN").as[StreamArn]
-    } yield EnableEnhancedMonitoringResponse(
+    yield EnableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,
       streamName,
       streamArn
     )
-  }
   given enableEnhancedMonitoringResponseEncoder
       : Encoder[EnableEnhancedMonitoringResponse] = Encoder.derive
   given enableEnhancedMonitoringResponseDecoder
       : Decoder[EnableEnhancedMonitoringResponse] = Decoder.derive
   given enableEnhancedMonitoringResponseEq
       : Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
-}

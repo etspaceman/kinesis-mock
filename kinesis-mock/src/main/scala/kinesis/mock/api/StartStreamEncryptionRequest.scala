@@ -19,11 +19,11 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class StartStreamEncryptionRequest(
@@ -31,7 +31,7 @@ final case class StartStreamEncryptionRequest(
     keyId: String,
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def startStreamEncryption(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -68,9 +68,8 @@ final case class StartStreamEncryptionRequest(
       }
       .sequenceWithDefault(streams)
   }
-}
 
-object StartStreamEncryptionRequest {
+object StartStreamEncryptionRequest:
   given startStreamEncryptionRequestCirceEncoder
       : circe.Encoder[StartStreamEncryptionRequest] =
     circe.Encoder.forProduct4(
@@ -82,12 +81,12 @@ object StartStreamEncryptionRequest {
 
   given startStreamEncryptionRequestCirceDecoder
       : circe.Decoder[StartStreamEncryptionRequest] = x =>
-    for {
+    for
       encryptionType <- x.downField("EncryptionType").as[EncryptionType]
       keyId <- x.downField("KeyId").as[String]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield StartStreamEncryptionRequest(
+    yield StartStreamEncryptionRequest(
       encryptionType,
       keyId,
       streamName,
@@ -101,4 +100,3 @@ object StartStreamEncryptionRequest {
 
   given startStreamEncryptionRequestEq: Eq[StartStreamEncryptionRequest] =
     Eq.fromUniversalEquals
-}

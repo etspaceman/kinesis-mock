@@ -20,15 +20,14 @@ import cats.effect.IO
 
 import kinesis.mock.LoggingContext
 
-class DescribeLimitsTests extends munit.CatsEffectSuite {
+class DescribeLimitsTests extends munit.CatsEffectSuite:
   test("It should describe limits")(
     CacheConfig.read
       .resource[IO]
       .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
       .use { case (cacheConfig, cache) =>
-        for {
-          res <- cache.describeLimits(LoggingContext.create, None).rethrow
-        } yield assert(
+        for res <- cache.describeLimits(LoggingContext.create, None).rethrow
+        yield assert(
           res.openShardCount == 0 &&
             res.shardLimit == cacheConfig.shardLimit &&
             res.onDemandStreamCountLimit == cacheConfig.onDemandStreamCountLimit &&
@@ -37,4 +36,3 @@ class DescribeLimitsTests extends munit.CatsEffectSuite {
         )
       }
   )
-}

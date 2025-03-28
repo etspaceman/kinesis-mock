@@ -1,18 +1,18 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class RegisterStreamConsumerTests extends AwsFunctionalTests {
+class RegisterStreamConsumerTests extends AwsFunctionalTests:
 
   fixture.test("It should register a stream consumer") { resources =>
-    for {
+    for
       consumerName <- IO(consumerNameGen.one.consumerName)
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
@@ -34,7 +34,7 @@ class RegisterStreamConsumerTests extends AwsFunctionalTests {
         consumerName,
         streamArn
       )
-    } yield assert(
+    yield assert(
       check1
         .consumerDescription()
         .consumerStatus() == ConsumerStatus.CREATING &&
@@ -44,4 +44,3 @@ class RegisterStreamConsumerTests extends AwsFunctionalTests {
       s"$check1\n$check2"
     )
   }
-}

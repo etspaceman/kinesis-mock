@@ -16,13 +16,13 @@
 
 package kinesis.mock
 
-import cats.syntax.all._
-import enumeratum._
+import cats.syntax.all.*
+import enumeratum.*
 import org.http4s.{ParseFailure, QueryParamDecoder}
 
 sealed trait KinesisAction extends EnumEntry
 
-object KinesisAction extends Enum[KinesisAction] {
+object KinesisAction extends Enum[KinesisAction]:
   override val values: IndexedSeq[KinesisAction] = findValues
 
   case object AddTagsToStream extends KinesisAction
@@ -61,4 +61,3 @@ object KinesisAction extends Enum[KinesisAction] {
         .withNameEither(x)
         .leftMap(e => ParseFailure(e.getMessage, ""))
     )
-}

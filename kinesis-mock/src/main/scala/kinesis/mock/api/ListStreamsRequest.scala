@@ -19,31 +19,30 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 final case class ListStreamsRequest(
     exclusiveStartStreamName: Option[StreamName],
     limit: Option[Int]
-) {
+):
   def listStreams(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): IO[Response[ListStreamsResponse]] = streamsRef.get.map(streams =>
     (
-      exclusiveStartStreamName match {
+      exclusiveStartStreamName match
         case Some(streamName) =>
           CommonValidations.validateStreamName(streamName)
         case None => Right(())
-      },
-      limit match {
+      ,
+      limit match
         case Some(l) => CommonValidations.validateLimit(l)
         case None    => Right(())
-      }
     ).mapN { (_, _) =>
       val allStreams = streams.streams.keys.toVector
         .filter(x => x.awsRegion == awsRegion && x.awsAccountId == awsAccountId)
@@ -56,14 +55,13 @@ final case class ListStreamsRequest(
       val lastIndex = Math.min(firstIndex + lim, lastStreamIndex + 1)
       val streamNames = allStreams.slice(firstIndex, lastIndex)
       val hasMoreStreams =
-        if (lastStreamIndex + 1 == lastIndex) false
+        if lastStreamIndex + 1 == lastIndex then false
         else true
       ListStreamsResponse(hasMoreStreams, streamNames)
     }
   )
-}
 
-object ListStreamsRequest {
+object ListStreamsRequest:
   given listStreamsRequestCirceEncoder: circe.Encoder[ListStreamsRequest] =
     circe.Encoder.forProduct2("ExclusiveStartStreamName", "Limit")(x =>
       (x.exclusiveStartStreamName, x.limit)
@@ -71,12 +69,12 @@ object ListStreamsRequest {
 
   given listStreamsRequestCirceDecoder: circe.Decoder[ListStreamsRequest] =
     x =>
-      for {
+      for
         exclusiveStartStreamName <- x
           .downField("ExclusiveStartStreamName")
           .as[Option[StreamName]]
         limit <- x.downField("Limit").as[Option[Int]]
-      } yield ListStreamsRequest(exclusiveStartStreamName, limit)
+      yield ListStreamsRequest(exclusiveStartStreamName, limit)
 
   given listStreamsRequestEncoder: Encoder[ListStreamsRequest] =
     Encoder.derive
@@ -84,4 +82,3 @@ object ListStreamsRequest {
     Decoder.derive
   given listStreamsRequestEq: Eq[ListStreamsRequest] =
     Eq.fromUniversalEquals
-}

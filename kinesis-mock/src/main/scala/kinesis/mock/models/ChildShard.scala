@@ -26,7 +26,7 @@ final case class ChildShard(
     shardId: String
 )
 
-object ChildShard {
+object ChildShard:
   def fromShard(shard: Shard, parentShards: Vector[Shard]): ChildShard =
     ChildShard(
       shard.hashKeyRange,
@@ -40,14 +40,13 @@ object ChildShard {
     )
 
   given childShardCirceDecoder: circe.Decoder[ChildShard] = x =>
-    for {
+    for
       hashKeyRange <- x.downField("HashKeyRange").as[HashKeyRange]
       parentShards <- x.downField("ParentShards").as[Vector[String]]
       shardId <- x.downField("ShardId").as[String]
-    } yield ChildShard(hashKeyRange, parentShards, shardId)
+    yield ChildShard(hashKeyRange, parentShards, shardId)
   given childShardEncoder: Encoder[ChildShard] =
     Encoder.derive
   given childShardDecoder: Decoder[ChildShard] =
     Decoder.derive
   given childShardEq: Eq[ChildShard] = Eq.fromUniversalEquals
-}

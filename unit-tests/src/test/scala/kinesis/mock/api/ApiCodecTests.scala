@@ -19,7 +19,7 @@ package api
 
 import kinesis.mock.instances.arbitrary.given
 
-class ApiCodecTests extends CodecTests {
+class ApiCodecTests extends CodecTests:
   identityLawTest[AddTagsToStreamRequest]
   identityLawTest[CreateStreamRequest]
   identityLawTest[DecreaseStreamRetentionPeriodRequest]
@@ -63,4 +63,3 @@ class ApiCodecTests extends CodecTests {
   identityLawTest[UpdateShardCountRequest]
   identityLawTest[UpdateShardCountResponse]
   identityLawTest[UpdateStreamModeRequest]
-}

@@ -23,10 +23,10 @@ import java.time.Instant
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 
-import io.circe.syntax._
+import io.circe.syntax.*
 import io.circe.{Decoder, Encoder, JsonObject}
 
-object circe {
+object circe:
   // Used for CBOR
   val instantLongCirceEncoder: Encoder[Instant] =
     Encoder[Long].contramap(_.toEpochMilli)
@@ -73,10 +73,10 @@ object circe {
     x => JsonObject("length" -> x.length.asJson, "unit" -> x.unit.asJson).asJson
 
   given finiteDurationCirceDecoder: Decoder[FiniteDuration] = x =>
-    for {
+    for
       length <- x.downField("length").as[Long]
       unit <- x.downField("unit").as[TimeUnit]
-    } yield FiniteDuration(length, unit)
+    yield FiniteDuration(length, unit)
 
   given arrayBytesCirceEncoder: Encoder[Array[Byte]] =
     Encoder[String].contramap(str =>
@@ -85,4 +85,3 @@ object circe {
 
   given arrayBytesCirceDecoder: Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))
-}

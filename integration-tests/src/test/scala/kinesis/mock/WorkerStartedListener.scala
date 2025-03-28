@@ -7,12 +7,10 @@ import software.amazon.kinesis.coordinator.WorkerStateChangeListener.WorkerState
 
 final case class WorkerStartedListener(started: Deferred[IO, Unit])(implicit
     R: IORuntime
-) extends WorkerStateChangeListener {
+) extends WorkerStateChangeListener:
   override def onWorkerStateChange(newState: WorkerState): Unit =
-    if (newState == WorkerState.STARTED) {
+    if newState == WorkerState.STARTED then
 
       val _ = started.complete(()).unsafeRunSync()
-    }
   override def onAllInitializationAttemptsFailed(e: Throwable): Unit =
     throw e // scalafix:ok
-}

@@ -5,15 +5,15 @@ import scala.concurrent.duration.FiniteDuration
 
 import cats.Show
 import cats.arrow.FunctionK
-import cats.implicits._
+import cats.implicits.*
 import cats.kernel.BoundedSemilattice
 import cats.{Applicative, Apply, Functor, Monad}
 
-import kinesis.mock.retry.PolicyDecision._
+import kinesis.mock.retry.PolicyDecision.*
 
 case class RetryPolicy[M[_]](
     decideNextRetry: RetryStatus => M[PolicyDecision]
-) {
+):
   def show: String = toString
 
   def followedBy(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
@@ -87,9 +87,8 @@ case class RetryPolicy[M[_]](
       status => nt(decideNextRetry(status)),
       show"$show.mapK(<FunctionK>)"
     )
-}
 
-object RetryPolicy {
+object RetryPolicy:
   def lift[M[_]](
       f: RetryStatus => PolicyDecision
   )(implicit
@@ -101,10 +100,9 @@ object RetryPolicy {
       decideNextRetry: RetryStatus => M[PolicyDecision],
       pretty: => String
   ): RetryPolicy[M] =
-    new RetryPolicy[M](decideNextRetry) {
+    new RetryPolicy[M](decideNextRetry):
       override def show: String = pretty
       override def toString: String = pretty
-    }
 
   def liftWithShow[M[_]: Applicative](
       decideNextRetry: RetryStatus => PolicyDecision,
@@ -115,7 +113,7 @@ object RetryPolicy {
   implicit def boundedSemilatticeForRetryPolicy[M[_]](implicit
       M: Applicative[M]
   ): BoundedSemilattice[RetryPolicy[M]] =
-    new BoundedSemilattice[RetryPolicy[M]] {
+    new BoundedSemilattice[RetryPolicy[M]]:
       override def empty: RetryPolicy[M] =
         RetryPolicies.constantDelay[M](Duration.Zero)
 
@@ -123,8 +121,6 @@ object RetryPolicy {
           x: RetryPolicy[M],
           y: RetryPolicy[M]
       ): RetryPolicy[M] = x.join(y)
-    }
 
   implicit def showForRetryPolicy[M[_]]: Show[RetryPolicy[M]] =
     Show.show(_.show)
-}

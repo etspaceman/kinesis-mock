@@ -17,20 +17,20 @@
 package kinesis.mock
 package api
 
-import cats.effect._
+import cats.effect.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 class MergeShardsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should merge shards")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active =
@@ -53,7 +53,7 @@ class MergeShardsTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.keys.toVector.exists(shard =>
             shard.adjacentParentShardId
@@ -72,7 +72,7 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         shards = streams.streams(streamArn).shards.keys.toVector
@@ -87,7 +87,7 @@ class MergeShardsTests
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -97,7 +97,7 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -116,7 +116,7 @@ class MergeShardsTests
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -126,7 +126,7 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -145,7 +145,7 @@ class MergeShardsTests
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -155,7 +155,7 @@ class MergeShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(5, streamArn, None, now)
         active = streams.findAndUpdateStream(streamArn)(s =>
@@ -173,9 +173,8 @@ class MergeShardsTests
         streamsRef <- Ref.of[IO, Streams](active)
         res <- req
           .mergeShards(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
   })
-}

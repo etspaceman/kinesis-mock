@@ -19,10 +19,10 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class DescribeLimitsResponse(
     onDemandStreamCount: Int,
@@ -31,7 +31,7 @@ final case class DescribeLimitsResponse(
     shardLimit: Int
 )
 
-object DescribeLimitsResponse {
+object DescribeLimitsResponse:
   def get(
       shardLimit: Int,
       onDemandStreamCountLimit: Int,
@@ -72,25 +72,23 @@ object DescribeLimitsResponse {
       )
     )
   given describeLimitsResponseCirceDecoder
-      : circe.Decoder[DescribeLimitsResponse] = { x =>
-    for {
+      : circe.Decoder[DescribeLimitsResponse] = x =>
+    for
       onDemandStreamCount <- x.downField("OnDemandStreamCount").as[Int]
       onDemandStreamCountLimit <- x
         .downField("OnDemandStreamCountLimit")
         .as[Int]
       openShardCount <- x.downField("OpenShardCount").as[Int]
       shardLimit <- x.downField("ShardLimit").as[Int]
-    } yield DescribeLimitsResponse(
+    yield DescribeLimitsResponse(
       onDemandStreamCount,
       onDemandStreamCountLimit,
       openShardCount,
       shardLimit
     )
-  }
   given describeLimitsResponseEncoder: Encoder[DescribeLimitsResponse] =
     Encoder.derive
   given describeLimitsResponseDecoder: Decoder[DescribeLimitsResponse] =
     Decoder.derive
   given describeLimitsResponseEq: Eq[DescribeLimitsResponse] =
     Eq.fromUniversalEquals
-}

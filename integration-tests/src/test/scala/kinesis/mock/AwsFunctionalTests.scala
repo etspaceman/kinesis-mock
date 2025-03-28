@@ -1,6 +1,6 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.util.Try
 
 import java.net.URI
@@ -14,16 +14,16 @@ import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 import software.amazon.awssdk.utils.AttributeMap
 
 import kinesis.mock.cache.CacheConfig
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.*
 import kinesis.mock.models.AwsRegion
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
+trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures:
 
   protected val genStreamShardCount = 3
 
@@ -56,9 +56,9 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
       .builder()
       .buildWithDefaults(trustAllCertificates)
 
-  val resource: Resource[IO, KinesisFunctionalTestResources] = for {
+  val resource: Resource[IO, KinesisFunctionalTestResources] = for
     testConfig <- FunctionalTestConfig.read.resource[IO]
-    protocol = if (testConfig.servicePort == 4568) "http" else "https"
+    protocol = if testConfig.servicePort == 4568 then "http" else "https"
     region <- Resource.eval(
       IO(
         Gen
@@ -116,9 +116,9 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
         )
         .flatTap(setup)
     )(teardown)
-  } yield res
+  yield res
 
-  def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+  def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for
     _ <- resources.logger.debug(s"Creating stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .createStream(
@@ -147,9 +147,9 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
     )(
       new RuntimeException(s"StreamStatus was not active: $streamSummary")
     )
-  } yield res
+  yield res
 
-  def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+  def teardown(resources: KinesisFunctionalTestResources): IO[Unit] = for
     _ <- resources.logger.debug(s"Deleting stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .deleteStream(
@@ -178,7 +178,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
         s"StreamSummary unexpectedly succeeded: $streamSummary"
       )
     )
-  } yield res
+  yield res
 
   val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
     ResourceFunFixture(resource)
@@ -230,5 +230,3 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
           .build()
       )
       .toIO
-
-}

@@ -17,11 +17,11 @@
 package kinesis.mock
 package models
 
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 
 import kinesis.mock.instances.arbitrary.given
 
-class ModelsCirceTests extends CirceTests {
+class ModelsCirceTests extends CirceTests:
   identityLawTest[AwsRegion]
   identityLawTest[ConsumerName]
   identityLawTest[ConsumerStatus]
@@ -47,4 +47,3 @@ class ModelsCirceTests extends CirceTests {
   identityLawTest[TagList]
   identityLawTest[TagListEntry]
   identityLawTest[Tags]
-}
