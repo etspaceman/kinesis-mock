@@ -138,7 +138,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests/test",
+            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests3/test",
             "retry_on" -> "error"
           )
         )
@@ -164,7 +164,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests/test",
+            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests3/test",
             "retry_on" -> "error"
           ),
           env = Map(

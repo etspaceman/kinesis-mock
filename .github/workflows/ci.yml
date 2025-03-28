@@ -79,7 +79,7 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' unit-tests/test
+          command: sbt 'project ${{ matrix.project }}' unit-tests3/test
           retry_on: error
 
       - name: Docker Compose Up
@@ -101,7 +101,7 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' integration-tests/test
+          command: sbt 'project ${{ matrix.project }}' integration-tests3/test
           retry_on: error
 
       - name: Print docker logs and container listing
