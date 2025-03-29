@@ -3,14 +3,14 @@ package kinesis.mock
 import scala.scalajs.js
 
 import cats.effect.IO
-import cats.syntax.all._
-import fs2.io.file._
+import cats.syntax.all.*
+import fs2.io.file.*
 import fs2.io.net.Network
 import fs2.io.net.tls.SecureContext
 import fs2.io.net.tls.TLSContext
 import fs2.text
 
-object TLS {
+object TLS:
   @SuppressWarnings(Array("scalafix:DisableSyntax.asInstanceOf"))
   def context(serviceConfig: KinesisMockServiceConfig): IO[TLSContext[IO]] =
     Files[IO]
@@ -33,10 +33,8 @@ object TLS {
           )
         )
       }
-}
 
 @js.native
-trait CertKey extends js.Object {
+trait CertKey extends js.Object:
   def cert: String = js.native
   def key: String = js.native
-}

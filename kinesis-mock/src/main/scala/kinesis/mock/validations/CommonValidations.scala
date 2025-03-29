@@ -22,18 +22,18 @@ import scala.util.Try
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-import cats.syntax.all._
+import cats.syntax.all.*
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
-object CommonValidations {
+object CommonValidations:
   def getStreamNameArn(
       streamName: Option[StreamName],
       streamArn: Option[StreamArn],
       awsRegion: AwsRegion,
       awsAccountId: AwsAccountId
   ): Response[(StreamName, StreamArn)] =
-    (streamName, streamArn) match {
+    (streamName, streamArn) match
       case (_, Some(arn)) =>
         Right((arn.streamName, arn))
       case (Some(name), _) =>
@@ -44,18 +44,18 @@ object CommonValidations {
             "Neither streamArn or streamName was provided"
           )
         )
-    }
 
   def validateStreamName(
       streamName: StreamName
   ): Response[StreamName] =
     (
-      if (!streamName.streamName.matches("[a-zA-Z0-9_.-]+"))
+      if !streamName.streamName.matches("[a-zA-Z0-9_.-]+") then
         InvalidArgumentException(
           s"Stream Name '$streamName' contains invalid characters"
         ).asLeft
       else Right(()),
-      if (streamName.streamName.isEmpty || streamName.streamName.length() > 128)
+      if streamName.streamName.isEmpty || streamName.streamName.length() > 128
+      then
         InvalidArgumentException(
           s"Stream name must be between 1 and 128 characters. Invalid stream name: $streamName"
         ).asLeft
@@ -65,12 +65,13 @@ object CommonValidations {
   def validateStreamArn(
       streamArn: StreamArn
   ): Response[StreamArn] = (
-    if (!streamArn.streamArn.matches("arn:aws.*:kinesis:.*:\\d{12}:stream/.+"))
+    if !streamArn.streamArn.matches("arn:aws.*:kinesis:.*:\\d{12}:stream/.+")
+    then
       InvalidArgumentException(
         s"StreamARN '$streamArn' is not formatted properly"
       ).asLeft
     else Right(()),
-    if (streamArn.streamArn.isEmpty || streamArn.streamArn.length() > 2048)
+    if streamArn.streamArn.isEmpty || streamArn.streamArn.length() > 2048 then
       InvalidArgumentException(
         s"StreamARN must be between 1 and 2048 characters. Invalid StreamARN: $streamArn"
       ).asLeft
@@ -106,11 +107,10 @@ object CommonValidations {
       streamArn: StreamArn,
       streams: Streams
   ): Response[StreamArn] =
-    if (
-      streams.streams
+    if streams.streams
         .get(streamArn)
         .exists(_.streamStatus != StreamStatus.ACTIVE)
-    )
+    then
       ResourceInUseException(
         s"Stream $streamArn is not currently ACTIVE."
       ).asLeft
@@ -120,13 +120,12 @@ object CommonValidations {
       streamArn: StreamArn,
       streams: Streams
   ): Response[StreamArn] =
-    if (
-      streams.streams
+    if streams.streams
         .get(streamArn)
         .exists(x =>
           x.streamStatus != StreamStatus.ACTIVE && x.streamStatus != StreamStatus.UPDATING
         )
-    )
+    then
       ResourceInUseException(
         s"Stream $streamArn is not currently ACTIVE or UPDATING."
       ).asLeft
@@ -137,10 +136,9 @@ object CommonValidations {
       streams: Streams,
       shardLimit: Int
   ): Response[Int] =
-    if (
-      streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum +
+    if streams.streams.values.map(_.shards.keys.count(_.isOpen)).sum +
         shardCountToAdd > shardLimit
-    )
+    then
       LimitExceededException(
         s"Request would exceed the shard limit of $shardLimit"
       ).asLeft
@@ -149,7 +147,7 @@ object CommonValidations {
   def validateShardCount(
       shardCount: Int
   ): Response[Int] =
-    if (shardCount < 1 || shardCount > 1000)
+    if shardCount < 1 || shardCount > 1000 then
       LimitExceededException(
         s"The shard count must be between 1 and 1000"
       ).asLeft
@@ -161,14 +159,14 @@ object CommonValidations {
     (
       {
         val startsWithAws = keys.filter(_.startsWith("aws:"))
-        if (startsWithAws.nonEmpty)
+        if startsWithAws.nonEmpty then
           InvalidArgumentException(
             s"Cannot start tags with 'aws:'. Invalid keys: ${startsWithAws.mkString(", ")}"
           ).asLeft
         else Right(())
       }, {
         val keysTooLong = keys.filter(x => x.isEmpty || x.length > 128)
-        if (keysTooLong.nonEmpty)
+        if keysTooLong.nonEmpty then
           InvalidArgumentException(
             s"Tags must be between 1 and 128 characters. Invalid keys: ${keysTooLong.mkString(", ")}"
           ).asLeft
@@ -176,7 +174,7 @@ object CommonValidations {
       }, {
         val invalidKeyCharacters =
           keys.filterNot(x => x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$"))
-        if (invalidKeyCharacters.nonEmpty)
+        if invalidKeyCharacters.nonEmpty then
           InvalidArgumentException(
             s"Keys contain invalid characters. Invalid keys: ${invalidKeyCharacters.mkString(", ")}"
           ).asLeft
@@ -187,9 +185,8 @@ object CommonValidations {
   def validateRetentionPeriodHours(
       retentionPeriodHours: Int
   ): Response[Int] =
-    if (
-      retentionPeriodHours < StreamData.minRetentionPeriod.toHours || retentionPeriodHours > StreamData.maxRetentionPeriod.toHours
-    )
+    if retentionPeriodHours < StreamData.minRetentionPeriod.toHours || retentionPeriodHours > StreamData.maxRetentionPeriod.toHours
+    then
       InvalidArgumentException(
         s"Retention period hours $retentionPeriodHours must be between ${StreamData.minRetentionPeriod.toHours} and ${StreamData.maxRetentionPeriod.toHours}"
       ).asLeft
@@ -199,12 +196,12 @@ object CommonValidations {
       shardId: String
   ): Response[String] =
     (
-      if (!shardId.matches("[a-zA-Z0-9_.-]+"))
+      if !shardId.matches("[a-zA-Z0-9_.-]+") then
         InvalidArgumentException(
           s"Shard ID '$shardId' contains invalid characters"
         ).asLeft
       else Right(()),
-      if (shardId.isEmpty || shardId.length() > 128)
+      if shardId.isEmpty || shardId.length() > 128 then
         InvalidArgumentException(
           s"Shard ID must be between 1 and 128 characters. Invalid Shard ID: $shardId"
         ).asLeft
@@ -214,15 +211,14 @@ object CommonValidations {
   def validateConsumerName(
       consumerName: ConsumerName
   ): Response[ConsumerName] = (
-    if (!consumerName.consumerName.matches("[a-zA-Z0-9_.-]+"))
+    if !consumerName.consumerName.matches("[a-zA-Z0-9_.-]+") then
       InvalidArgumentException(
         s"ConsumerName '$consumerName' contains invalid characters"
       ).asLeft
     else Right(()),
-    if (
-      consumerName.consumerName.isEmpty || consumerName.consumerName
+    if consumerName.consumerName.isEmpty || consumerName.consumerName
         .length() > 128
-    )
+    then
       InvalidArgumentException(
         s"ConsumerName must be between 1 and 128 characters. Invalid ConsumerName: $consumerName"
       ).asLeft
@@ -244,7 +240,7 @@ object CommonValidations {
   def validateNextToken(
       nextToken: String
   ): Response[String] =
-    if (nextToken.isEmpty || nextToken.length() > 1048576)
+    if nextToken.isEmpty || nextToken.length() > 1048576 then
       InvalidArgumentException(
         s"NextToken length must be between 1 and 1048576"
       ).asLeft
@@ -253,7 +249,7 @@ object CommonValidations {
   def validateMaxResults(
       maxResults: Int
   ): Response[Int] =
-    if (maxResults < 1 || maxResults > 10000)
+    if maxResults < 1 || maxResults > 10000 then
       InvalidArgumentException(
         s"MaxResults must be between 1 and 10000"
       ).asLeft
@@ -262,15 +258,14 @@ object CommonValidations {
   def validateLimit(
       limit: Int
   ): Response[Int] =
-    if (limit < 1 || limit > 10000)
+    if limit < 1 || limit > 10000 then
       InvalidArgumentException(
         s"Limit must be between 1 and 10000"
       ).asLeft
     else Right(limit)
 
   def validateKeyId(keyId: String): Response[String] =
-    if (
-      keyId.startsWith("arn:") && (
+    if keyId.startsWith("arn:") && (
         (
           keyId.matches("arn:aws.*:kms:.*:\\d{12}:key/.+") &&
             Try(UUID.fromString(keyId.takeRight(36))).isFailure
@@ -280,19 +275,18 @@ object CommonValidations {
               !keyId.matches("arn:aws.*:kms:.*:\\d{12}:key/.+")
           )
       )
-    )
+    then
       InvalidArgumentException(
         "Received KeyId ARN is not a properly formatted ARN"
       ).asLeft
-    else if (
-      !keyId.startsWith("alias/") &&
+    else if !keyId.startsWith("alias/") &&
       !keyId.startsWith("arn:") &&
       Try(UUID.fromString(keyId.takeRight(36))).isFailure
-    ) {
+    then
       InvalidArgumentException(
         "Received KeyId is not a properly formatted Alias or GUID"
       ).asLeft
-    } else if (keyId.isEmpty || keyId.length() > 2048)
+    else if keyId.isEmpty || keyId.length() > 2048 then
       InvalidArgumentException(
         "KeyId must be between 1 and 2048 characters"
       ).asLeft
@@ -301,22 +295,20 @@ object CommonValidations {
   def isKmsEncryptionType(
       encryptionType: EncryptionType
   ): Response[EncryptionType] =
-    encryptionType match {
+    encryptionType match
       case EncryptionType.KMS => Right(encryptionType)
       case _ =>
         InvalidArgumentException(
           "KMS is the only valid EncryptionType for this request"
         ).asLeft
-    }
 
   def validateSequenceNumber(
       sequenceNumber: SequenceNumber
   ): Response[SequenceNumber] =
-    if (
-      SequenceNumberConstant
+    if SequenceNumberConstant
         .withNameOption(sequenceNumber.value)
         .isEmpty && !sequenceNumber.value.matches("0|([1-9]\\d{0,128})")
-    )
+    then
       InvalidArgumentException(
         s"SequenceNumber ${sequenceNumber.value} contains invalid characters"
       ).asLeft
@@ -328,27 +320,24 @@ object CommonValidations {
   ): Response[(Shard, Vector[KinesisRecord])] =
     stream.shards.find { case (shard, _) =>
       shard.shardId.shardId == shardId
-    } match {
+    } match
       case None =>
         ResourceNotFoundException(
           s"Could not find shardId $shardId in stream ${stream.streamName}"
         ).asLeft
       case Some(x) => Right(x)
-    }
 
   def computeShard(
       partitionKey: String,
       explicitHashKey: Option[String],
       stream: StreamData
   ): Response[(Shard, Vector[KinesisRecord])] =
-    (explicitHashKey match {
+    (explicitHashKey match
       case Some(ehk) =>
         val hash = BigInt(ehk)
-        if (hash < Shard.minHashKey || hash > Shard.maxHashKey) {
+        if hash < Shard.minHashKey || hash > Shard.maxHashKey then
           InvalidArgumentException("ExplicitHashKey is not valid").asLeft
-        } else {
-          hash.asRight
-        }
+        else hash.asRight
       case None =>
         Try(
           Utils.md5(partitionKey.getBytes(StandardCharsets.UTF_8))
@@ -359,25 +348,24 @@ object CommonValidations {
             ),
           x => BigInt(1, x)
         )
-    }).flatMap { hashInt =>
+    ).flatMap { hashInt =>
       stream.shards
         .collectFirst {
           case (shard, data)
               if shard.isOpen && hashInt >= shard.hashKeyRange.startingHashKey && hashInt <= shard.hashKeyRange.endingHashKey =>
             (shard, data)
-        } match {
+        } match
         case None =>
           InvalidArgumentException(
             "Could not find shard for partitionKey"
           ).asLeft
         case Some(x) => Right(x)
-      }
     }
 
   def validateExplicitHashKey(
       explicitHashKey: String
   ): Response[String] =
-    if (!explicitHashKey.matches("0|([1-9]\\d{0,38})"))
+    if !explicitHashKey.matches("0|([1-9]\\d{0,38})") then
       InvalidArgumentException(
         "ExplicitHashKey contains invalid characters"
       ).asLeft
@@ -386,34 +374,32 @@ object CommonValidations {
   def validatePartitionKey(
       partitionKey: String
   ): Response[String] =
-    if (partitionKey.isEmpty || partitionKey.length > 256)
+    if partitionKey.isEmpty || partitionKey.length > 256 then
       InvalidArgumentException(
         "Partition key must be between 1 and 256 in length"
       ).asLeft
     else Right(partitionKey)
 
   def isShardOpen(shard: Shard): Response[Shard] =
-    if (!shard.isOpen)
+    if !shard.isOpen then
       ResourceInUseException(s"Shard ${shard.shardId} is not active").asLeft
     else Right(shard)
 
   def validateData(
       data: Array[Byte]
   ): Response[Array[Byte]] =
-    if (data.length > 1048576)
+    if data.length > 1048576 then
       InvalidArgumentException("Data object is too large").asLeft
     else Right(data)
 
   def validateOnDemandStreamCount(
       streams: Streams,
       onDemandStreamCountLimit: Int
-  ): Response[Unit] = if (
-    streams.streams.count { case (_, stream) =>
+  ): Response[Unit] = if streams.streams.count { case (_, stream) =>
       stream.streamModeDetails.streamMode === StreamMode.ON_DEMAND
     } >= onDemandStreamCountLimit
-  )
+  then
     LimitExceededException(
       "Limit for on-demand streams has been reached"
     ).asLeft
   else Right(())
-}

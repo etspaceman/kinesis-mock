@@ -23,18 +23,18 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.{given, *}
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class RemoveTagsFromStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should remove tags to a stream")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         tags = Gen
@@ -52,7 +52,7 @@ class RemoveTagsFromStreamTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.tags == tags.copy(tags = tags.tags.filterNot { case (k, _) =>
             removedTags.contains(k)
@@ -61,4 +61,3 @@ class RemoveTagsFromStreamTests
         s"req: $req\nres: $res"
       )
   })
-}

@@ -18,14 +18,14 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.StreamDescription
 
 final case class DescribeStreamResponse(streamDescription: StreamDescription)
 
-object DescribeStreamResponse {
+object DescribeStreamResponse:
   def describeStreamResponseCirceEncoder(implicit
       ESD: circe.Encoder[StreamDescription]
   ): circe.Encoder[DescribeStreamResponse] =
@@ -37,7 +37,7 @@ object DescribeStreamResponse {
     _.downField("StreamDescription")
       .as[StreamDescription]
       .map(DescribeStreamResponse.apply)
-  implicit val describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
+  given describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
     Encoder.instance(
       describeStreamResponseCirceEncoder(
         Encoder[StreamDescription].circeEncoder
@@ -46,7 +46,7 @@ object DescribeStreamResponse {
         Encoder[StreamDescription].circeCborEncoder
       )
     )
-  implicit val describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
+  given describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
     Decoder.instance(
       describeStreamResponseCirceDecoder(
         Decoder[StreamDescription].circeDecoder
@@ -55,6 +55,5 @@ object DescribeStreamResponse {
         Decoder[StreamDescription].circeCborDecoder
       )
     )
-  implicit val describeStreamResponseEq: Eq[DescribeStreamResponse] =
+  given describeStreamResponseEq: Eq[DescribeStreamResponse] =
     (x, y) => x.streamDescription === y.streamDescription
-}

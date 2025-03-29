@@ -1,20 +1,20 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import cats.syntax.all._
-import software.amazon.awssdk.services.kinesis.model._
+import cats.syntax.all.*
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.*
 import kinesis.mock.models.ConsumerArn
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class ListStreamConsumersTests extends AwsFunctionalTests {
+class ListStreamConsumersTests extends AwsFunctionalTests:
 
   fixture.test("It should list stream consumers") { resources =>
-    for {
+    for
       consumerNames <- IO(
         consumerNameGen.take(3).toList.sorted.map(_.consumerName)
       )
@@ -64,9 +64,8 @@ class ListStreamConsumersTests extends AwsFunctionalTests {
             )
           )
         )
-    } yield assert(
+    yield assert(
       resultConsumers === registerResultConsumers,
       s"$res\n$registerRes"
     )
   }
-}
