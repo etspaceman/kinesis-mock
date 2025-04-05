@@ -2,13 +2,13 @@ package kinesis.mock
 
 import java.util.Collections
 
-import cats.syntax.all._
-import software.amazon.awssdk.services.kinesis.model._
+import cats.syntax.all.*
+import software.amazon.awssdk.services.kinesis.model.*
 
-class DescribeStreamSummaryTests extends AwsFunctionalTests {
+class DescribeStreamSummaryTests extends AwsFunctionalTests:
 
   fixture.test("It should describe a stream summary") { resources =>
-    for {
+    for
       res <- describeStreamSummary(resources)
       expected = StreamDescriptionSummary
         .builder()
@@ -34,20 +34,19 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
           StreamModeDetails.builder().streamMode(StreamMode.PROVISIONED).build()
         )
         .build()
-    } yield assert(
+    yield assert(
       res.streamDescriptionSummary == expected,
       s"${res.streamDescriptionSummary()}\n$expected"
     )
   }
 
   fixture.test("It should describe initialized streams") { resources =>
-    for {
-      res <- initializedStreams.parTraverse { case (name, _) =>
+    for res <- initializedStreams.parTraverse { case (name, _) =>
         describeStreamSummary(resources.defaultRegionKinesisClient, name).map(
           _.streamDescriptionSummary()
         )
       }
-    } yield assert(
+    yield assert(
       res.map(s =>
         s.streamName() -> s.openShardCount()
       ) == initializedStreams &&
@@ -55,4 +54,3 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
       s"$res"
     )
   }
-}
