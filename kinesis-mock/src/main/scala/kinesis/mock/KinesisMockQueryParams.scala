@@ -18,7 +18,7 @@ package kinesis.mock
 
 import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
 
-object KinesisMockQueryParams {
+object KinesisMockQueryParams:
   val amazonAuthAlgorithm = "X-Amz-Algorithm"
   val amazonAuthCredential = "X-Amz-Credential"
   val amazonAuthSignature = "X-Amz-Signature"
@@ -43,4 +43,3 @@ object KinesisMockQueryParams {
 
   object Action
       extends OptionalQueryParamDecoderMatcher[KinesisAction](amazonAction)
-}

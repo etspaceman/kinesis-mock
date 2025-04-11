@@ -133,7 +133,7 @@ object DockerComposePlugin extends AutoPlugin {
   def settings(
       build: Boolean,
       projects: List[Project]
-  ): Seq[Setting[_]] =
+  ): Seq[Setting[?]] =
     Seq(
       createNetwork := createNetworkTask.value,
       removeNetwork := removeNetworkTask.value,

@@ -23,28 +23,34 @@ import java.util.Base64
 
 import cats.effect.IO
 import cats.effect.std.UUIDGen
-import cats.syntax.all._
-import org.http4s._
-import org.http4s.dsl.io._
-import org.http4s.headers._
-import org.http4s.syntax.header._
+import cats.syntax.all.*
+import org.http4s.DecodeFailure
+import org.http4s.EntityEncoder
+import org.http4s.Header
+import org.http4s.HttpRoutes
+import org.http4s.Request
+//import org.http4s._
+import org.http4s.dsl.io.*
+import org.http4s.headers.*
+import org.http4s.syntax.header.*
+import org.http4s.Response as HResponse
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
-import kinesis.mock.api._
+import kinesis.mock.api.*
 import kinesis.mock.cache.Cache
-import kinesis.mock.instances.http4s._
+import kinesis.mock.instances.http4s.*
 import kinesis.mock.models.AwsRegion
 
 class KinesisMockRoutes(
     cache: Cache,
     logLevel: ConsoleLogger.LogLevel = ConsoleLogger.LogLevel.Error
-) {
+):
   val logger: SelfAwareStructuredLogger[IO] =
     new ConsoleLogger(logLevel, this.getClass().getName())
 
-  import KinesisMockMediaTypes._
-  import KinesisMockQueryParams._
-  import KinesisMockRoutes._
+  import KinesisMockMediaTypes.*
+  import KinesisMockQueryParams.*
+  import KinesisMockRoutes.*
   // check headers / query params (see what kinesalite does)
   // create a sharded stream cache
   // create service that has methods for each action
@@ -114,12 +120,11 @@ class KinesisMockRoutes(
             request.headers.get[AmazonTarget].flatMap { h =>
               val split =
                 Try(h.value.split("\\.").toVector).toOption.toVector.flatten
-              (split.headOption, split.get(1L)) match {
+              (split.headOption, split.get(1L)) match
                 case (Some(service), Some(act))
                     if service == "Kinesis_20131202" =>
                   KinesisAction.withNameOption(act)
                 case _ => None
-              }
             }
           }
 
@@ -136,14 +141,14 @@ class KinesisMockRoutes(
               request.contentType,
               authorizationHeader,
               queryAuthAlgorith
-            ) match {
+            ) match
               case (None, _, _) =>
                 logger.warn(lcWithHeaders.context)(
                   "No contentType was provided"
                 ) *>
                   NotFound(
                     errorMessage("UnknownOperationException", None),
-                    responseHeaders: _*
+                    responseHeaders*
                   )
               case (Some(contentType), _, _)
                   if !validContentTypes.contains(contentType.mediaType) =>
@@ -154,7 +159,7 @@ class KinesisMockRoutes(
                 ) *>
                   NotFound(
                     errorMessage("UnknownOperationException", None),
-                    responseHeaders: _*
+                    responseHeaders*
                   )
               case (Some(contentType), Some(_), Some(_)) =>
                 implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
@@ -169,7 +174,7 @@ class KinesisMockRoutes(
                       "InvalidSignatureException",
                       "Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header."
                     ),
-                    responseHeaders: _*
+                    responseHeaders*
                   )
               case (Some(contentType), None, None) =>
                 implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
@@ -184,7 +189,7 @@ class KinesisMockRoutes(
                       "MissingAuthenticationTokenException",
                       "Missing Authentication Token"
                     ),
-                    responseHeaders: _*
+                    responseHeaders*
                   )
               case (Some(contentType), Some(authHeader), _) =>
                 implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
@@ -227,24 +232,22 @@ class KinesisMockRoutes(
                     }
 
                   val missingDateMsg =
-                    if (
-                      request.headers
+                    if request.headers
                         .get[AmazonDateHeader]
                         .isEmpty && request.headers.get[Date].isEmpty
-                    )
+                    then
                       Some(
                         "Authorization header requires existence of either a \\'X-Amz-Date\\' or a \\'Date\\' header."
                       )
                     else None
 
-                  val authErrMsg = (missingKeysMsg, missingDateMsg) match {
+                  val authErrMsg = (missingKeysMsg, missingDateMsg) match
                     case (Some(x), Some(y)) => Some(s"$x $y")
                     case (Some(x), _)       => Some(x)
                     case (_, Some(y))       => Some(y)
                     case _                  => None
-                  }
 
-                  authErrMsg match {
+                  authErrMsg match
                     case Some(e) =>
                       val missingAuthContext: (String, String) = (
                         "missingAuthKeys",
@@ -264,10 +267,10 @@ class KinesisMockRoutes(
                       ) *>
                         BadRequest(
                           ErrorResponse("IncompleteSignatureException", e),
-                          responseHeaders: _*
+                          responseHeaders*
                         )
                     case None =>
-                      action match {
+                      action match
                         case Some(ac) =>
                           processAction(
                             request,
@@ -275,12 +278,12 @@ class KinesisMockRoutes(
                             cache,
                             responseHeaders,
                             lcWithContentType,
-                            contentType match {
+                            contentType match
                               case ct
                                   if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
                                 true
                               case _ => false
-                            },
+                            ,
                             Try(
                               authParsed("Credential").split("/")(2)
                             ).toOption.flatMap(AwsRegion.withNameOption)
@@ -294,10 +297,8 @@ class KinesisMockRoutes(
                                 "AccessDeniedException",
                                 "Unable to determine service/operation name to be authorized"
                               ),
-                              responseHeaders: _*
+                              responseHeaders*
                             )
-                      }
-                  }
                 }
               case (Some(contentType), _, Some(_)) =>
                 implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
@@ -336,7 +337,7 @@ class KinesisMockRoutes(
                     case None      => Vector.empty
                   }
 
-                  if (missing.nonEmpty) {
+                  if missing.nonEmpty then
                     val missingAuthContext: (String, String) =
                       (
                         "missingAuthKeys",
@@ -357,10 +358,10 @@ class KinesisMockRoutes(
                         "IncompleteSignatureException",
                         s"${missing.mkString(" ")} Re-examine the query-string parameters."
                       ),
-                      responseHeaders: _*
+                      responseHeaders*
                     )
-                  } else {
-                    action match {
+                  else
+                    action match
                       case Some(ac) =>
                         processAction(
                           request,
@@ -368,12 +369,12 @@ class KinesisMockRoutes(
                           cache,
                           responseHeaders,
                           lcWithContentType,
-                          contentType match {
+                          contentType match
                             case ct
                                 if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
                               true
                             case _ => false
-                          },
+                          ,
                           queryAuthCredential.flatMap(x =>
                             Try(x.split("/")(2)).toOption
                               .flatMap(AwsRegion.withNameOption)
@@ -388,12 +389,9 @@ class KinesisMockRoutes(
                               "AccessDeniedException",
                               "Unable to determine service/operation name to be authorized"
                             ),
-                            responseHeaders: _*
+                            responseHeaders*
                           )
-                    }
-                  }
                 }
-            }
           }
 
         }
@@ -405,7 +403,7 @@ class KinesisMockRoutes(
         val initContext =
           LoggingContext.create + ("requestId" -> requestIdHeader.value)
         logger.debug(initContext.context)("Received OPTIONS request") *> {
-          if (request.headers.get[Origin].isEmpty)
+          if request.headers.get[Origin].isEmpty then
             logger.warn(initContext.context)(
               "Missing required origin header for OPTIONS call"
             ) *>
@@ -418,7 +416,7 @@ class KinesisMockRoutes(
                 ),
                 requestIdHeader
               )
-          else {
+          else
             val responseHeaders: Vector[Header.ToRaw] =
               request.headers
                 .get[Origin]
@@ -448,29 +446,26 @@ class KinesisMockRoutes(
               )).context
             )("Successfully processed OPTIONS call")
 
-            Ok("", responseHeaders: _*)
-          }
+            Ok("", responseHeaders*)
         }
       }
   }
-}
 
-object KinesisMockRoutes {
+object KinesisMockRoutes:
   def errorMessage(`type`: String, message: Option[String]): String =
-    message match {
+    message match
       case Some(msg) => s"<${`type`}>\n <Message>$msg</Message>\n</${`type`}>\n"
       case None      => s"<${`type`}/>\n"
-    }
 
   def handleDecodeError(
       err: DecodeFailure,
       responseHeaders: Vector[Header.ToRaw]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ): IO[Response[IO]] =
+  ): IO[HResponse[IO]] =
     BadRequest(
       ErrorResponse("SerializationException", err.getMessage),
-      responseHeaders: _*
+      responseHeaders*
     )
 
   def handleKinesisMockError(
@@ -478,10 +473,10 @@ object KinesisMockRoutes {
       responseHeaders: Vector[Header.ToRaw]
   )(implicit
       entityEncoder: EntityEncoder[IO, ErrorResponse]
-  ): IO[Response[IO]] =
+  ): IO[HResponse[IO]] =
     BadRequest(
       ErrorResponse(err.getClass.getSimpleName, err.getMessage),
-      responseHeaders: _*
+      responseHeaders*
     )
 
   def processAction(
@@ -510,8 +505,8 @@ object KinesisMockRoutes {
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
       updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
-  ): IO[Response[IO]] =
-    action match {
+  ): IO[HResponse[IO]] =
+    action match
       case KinesisAction.AddTagsToStream =>
         request
           .attemptAs[AddTagsToStreamRequest]
@@ -523,7 +518,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -538,7 +533,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -553,7 +548,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -568,7 +563,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -583,7 +578,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -594,7 +589,7 @@ object KinesisMockRoutes {
             .flatMap(
               _.fold(
                 err => handleKinesisMockError(err, responseHeaders),
-                res => Ok(res, responseHeaders: _*)
+                res => Ok(res, responseHeaders*)
               )
             )
       case KinesisAction.DescribeStream =>
@@ -608,7 +603,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -623,7 +618,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -638,7 +633,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -653,7 +648,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -668,7 +663,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -683,7 +678,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -698,7 +693,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -713,7 +708,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -728,7 +723,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -743,7 +738,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -758,7 +753,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -773,7 +768,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -788,7 +783,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -803,7 +798,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -818,7 +813,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -833,7 +828,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -848,7 +843,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -863,7 +858,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -878,7 +873,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -893,7 +888,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
@@ -903,7 +898,7 @@ object KinesisMockRoutes {
             "ApiNotImplemented",
             "SubscribeToShard is not yet supported"
           ),
-          responseHeaders: _*
+          responseHeaders*
         )
       case KinesisAction.UpdateShardCount =>
         request
@@ -916,7 +911,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    res => Ok(res, responseHeaders: _*)
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -931,9 +926,7 @@ object KinesisMockRoutes {
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders: _*)
+                    _ => Ok("", responseHeaders*)
                   )
                 )
           )
-    }
-}

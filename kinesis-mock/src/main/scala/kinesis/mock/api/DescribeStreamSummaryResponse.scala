@@ -18,7 +18,7 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.StreamDescriptionSummary
@@ -27,7 +27,7 @@ final case class DescribeStreamSummaryResponse(
     streamDescriptionSummary: StreamDescriptionSummary
 )
 
-object DescribeStreamSummaryResponse {
+object DescribeStreamSummaryResponse:
   def describeStreamSummaryResponseCirceEncoder(implicit
       ESDS: circe.Encoder[StreamDescriptionSummary]
   ): circe.Encoder[DescribeStreamSummaryResponse] =
@@ -42,7 +42,7 @@ object DescribeStreamSummaryResponse {
       .as[StreamDescriptionSummary]
       .map(DescribeStreamSummaryResponse.apply)
 
-  implicit val describeStreamSummaryResponseEncoder
+  given describeStreamSummaryResponseEncoder
       : Encoder[DescribeStreamSummaryResponse] = Encoder.instance(
     describeStreamSummaryResponseCirceEncoder(
       Encoder[StreamDescriptionSummary].circeEncoder
@@ -51,7 +51,7 @@ object DescribeStreamSummaryResponse {
       Encoder[StreamDescriptionSummary].circeCborEncoder
     )
   )
-  implicit val describeStreamSummaryResponseDecoder
+  given describeStreamSummaryResponseDecoder
       : Decoder[DescribeStreamSummaryResponse] = Decoder.instance(
     describeStreamSummaryResponseCirceDecoder(
       Decoder[StreamDescriptionSummary].circeDecoder
@@ -60,7 +60,5 @@ object DescribeStreamSummaryResponse {
       Decoder[StreamDescriptionSummary].circeCborDecoder
     )
   )
-  implicit val describeStreamSummaryResponseEq
-      : Eq[DescribeStreamSummaryResponse] = (x, y) =>
-    x.streamDescriptionSummary === y.streamDescriptionSummary
-}
+  given describeStreamSummaryResponseEq: Eq[DescribeStreamSummaryResponse] =
+    (x, y) => x.streamDescriptionSummary === y.streamDescriptionSummary

@@ -1,15 +1,15 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class GetShardIteratorTests extends AwsFunctionalTests {
+class GetShardIteratorTests extends AwsFunctionalTests:
 
   fixture.test("It should get a shard iterator") { resources =>
-    for {
+    for
       shard <- resources.kinesisClient
         .listShards(
           ListShardsRequest
@@ -30,9 +30,8 @@ class GetShardIteratorTests extends AwsFunctionalTests {
         )
         .toIO
         .attempt
-    } yield assert(
+    yield assert(
       res.isRight,
       s"$res"
     )
   }
-}

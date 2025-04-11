@@ -17,35 +17,34 @@
 package kinesis.mock.instances
 
 import scala.annotation.switch
-import scala.collection.Factory
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.{compat, _}
+import io.bullet.borer.{compat, *}
 import io.circe.{Json, JsonNumber}
 
 // See https://github.com/sirthias/borer/issues/418
-object borer {
+object borer:
   implicit def borerEncoderFromCirceEncoder[T](implicit
       ce: io.circe.Encoder[T]
   ): Encoder[T] =
     compat.circe.borerEncoderFromCirceEncoder
   private def defaultDecodeByteArray: Array[Byte] => Json =
     bytes => Json.fromString(new String(BaseEncoding.base64.encode(bytes)))
-  val circeJsonAstDecoder: Decoder[Json] =
-    new Decoder[Json] {
-      import DataItem.{Shifts => DIS}
+  def circeJsonAstDecoder: Decoder[Json] =
+    new Decoder[Json]:
+      self =>
+      import DataItem.Shifts as DIS
 
-      private[this] val arrayDecoder =
-        Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder = Decoder.forListMap(Decoder.forString, this)
+      private[this] val arrayDecoder = Decoder.fromFactory[Json, Vector]
+      private[this] val mapDecoder = Decoder.forListMap[String, Json]
 
       def read(r: Reader) =
-        (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match {
+        (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match
           case DIS.Null => r.readNull(); Json.Null
 
           case DIS.Undefined => Json.Null
 
-          case DIS.Boolean => if (r.readBoolean()) Json.True else Json.False
+          case DIS.Boolean => if r.readBoolean() then Json.True else Json.False
 
           case DIS.Int  => Json.fromInt(r.readInt())
           case DIS.Long => Json.fromLong(r.readLong())
@@ -87,27 +86,23 @@ object borer {
             Json.fromFields(mapDecoder.read(r))
 
           case DIS.Tag =>
-            if (r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum)) {
+            if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) then
               Json.fromBigInt(Decoder.forBigInt.read(r))
-            } else if (r.hasTag(Tag.DecimalFraction)) {
+            else if r.hasTag(Tag.DecimalFraction) then
               Json.fromBigDecimal(Decoder.forBigDecimal.read(r))
-            } else if (r.hasTag(Tag.EpochDateTime)) {
+            else if r.hasTag(Tag.EpochDateTime) then
               Json.fromLong(epochDateTimeDecoder.read(r))
-            } else
+            else
               r.validationFailure(
                 s"CBOR tag `${r.readTag()}` cannot be represented in the circe JSON AST`"
               )
-        }
-    }
   val epochDateTimeDecoder: Decoder[Long] = Decoder { r =>
-    r.dataItem() match {
+    r.dataItem() match
       case DataItem.Long                        => r.readLong()
       case _ if r.tryReadTag(Tag.EpochDateTime) => r.readLong()
       case _ => r.unexpectedDataItem(expected = "Long")
-    }
   }
   implicit def defaultBorerDecoderFromCirceDecoder[T](implicit
       cd: io.circe.Decoder[T]
   ): Decoder[T] =
     compat.circe.borerDecoderFromCirceDecoder(circeJsonAstDecoder)
-}

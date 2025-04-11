@@ -16,6 +16,5 @@
 
 package kinesis
 
-package object mock {
+package object mock:
   type Response[A] = Either[KinesisMockException, A]
-}
