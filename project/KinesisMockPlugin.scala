@@ -387,6 +387,11 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Use(
+              UseRef.Public("bruceadams", "get-release", "v1.3.2"),
+              name = Some("Get upload url for release"),
+              id = Some("get_release")
+            ),
+            WorkflowStep.Use(
               UseRef.Public("actions", "upload-release-asset", "v1"),
               name = Some("Upload kinesis-mock.jar"),
               params = Map(
