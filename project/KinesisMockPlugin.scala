@@ -74,7 +74,7 @@ object KinesisMockPlugin extends AutoPlugin {
       )
     ),
     githubWorkflowTargetTags += "v*",
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21")),
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
       "cbor_enabled" -> List("true", "false"),
@@ -370,6 +370,35 @@ object KinesisMockPlugin extends AutoPlugin {
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
+      ),
+      WorkflowJob(
+        "publishAssembly",
+        "Publish Fat JAR",
+        githubWorkflowJobSetup.value.toList ++
+          List(
+            WorkflowStep.Sbt(
+              List("cpl"),
+              name = Some("Compile"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mock/assembly"),
+              name = Some("Assembly"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("svenstaro", "upload-release-action", "v2"),
+              name = Some("Upload Fat JAR to Release"),
+              params = Map(
+                "file" -> "docker/image/kinesis-mock.jar",
+                "make_latest" -> "false"
+              ),
+              cond = Some(onlyReleases.value)
+            )
+          ),
+        scalas = Nil,
+        javas = githubWorkflowJavaVersions.value.toList,
+        needs = List("build")
       )
     ),
     githubWorkflowAddedJobs ++= tlCiStewardValidateConfig.value.toList
@@ -404,7 +433,7 @@ object KinesisMockPlugin extends AutoPlugin {
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
     ),
-    tlJdkRelease := Some(17)
+    tlJdkRelease := Some(21)
   ) ++ Seq(
     addCommandAlias("cpl", ";Test / compile"),
     addCommandAlias(
