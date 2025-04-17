@@ -387,11 +387,13 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Use(
-              UseRef.Public("svenstaro", "upload-release-action", "v2"),
-              name = Some("Upload Fat JAR to Release"),
+              UseRef.Public("actions", "upload-release-asset", "v1"),
+              name = Some("Upload kinesis-mock.jar"),
               params = Map(
-                "file" -> "docker/image/kinesis-mock.jar",
-                "make_latest" -> "false"
+                "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
+                "asset_path" -> "./docker/image/lib/kinesis-mock.jar",
+                "asset_name" -> "kinesis-mock.jar",
+                "asset_content_type" -> "application/java-archive"
               ),
               cond = Some(onlyReleases.value)
             )
