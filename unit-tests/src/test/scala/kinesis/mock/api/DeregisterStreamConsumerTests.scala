@@ -22,17 +22,17 @@ import scala.collection.SortedMap
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 
 class DeregisterStreamConsumerTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should deregister stream consumers by consumerName")(PropF.forAllF {
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -54,7 +54,7 @@ class DeregisterStreamConsumerTests
         )
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
           stream.consumers
             .get(consumerArn.consumerName)
@@ -68,7 +68,7 @@ class DeregisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -85,7 +85,7 @@ class DeregisterStreamConsumerTests
         req = DeregisterStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
           stream.consumers
             .get(consumerArn.consumerName)
@@ -99,7 +99,7 @@ class DeregisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -114,7 +114,7 @@ class DeregisterStreamConsumerTests
         streamsRef <- Ref.of[IO, Streams](updated)
         req = DeregisterStreamConsumerRequest(Some(consumerArn), None, None)
         res <- req.deregisterStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -124,7 +124,7 @@ class DeregisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -134,7 +134,7 @@ class DeregisterStreamConsumerTests
           Some(consumerArn.streamArn)
         )
         res <- req.deregisterStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -146,7 +146,7 @@ class DeregisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -166,7 +166,7 @@ class DeregisterStreamConsumerTests
           None
         )
         res <- req.deregisterStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
@@ -178,7 +178,7 @@ class DeregisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         updated = streams.findAndUpdateStream(consumerArn.streamArn) { stream =>
@@ -198,9 +198,8 @@ class DeregisterStreamConsumerTests
           Some(consumerArn.streamArn)
         )
         res <- req.deregisterStreamConsumer(streamsRef)
-      } yield assert(
+      yield assert(
         res.isLeft,
         s"req: $req\nres: $res"
       )
   })
-}

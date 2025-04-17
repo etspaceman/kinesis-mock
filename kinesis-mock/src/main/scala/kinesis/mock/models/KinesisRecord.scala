@@ -22,7 +22,7 @@ import java.time.Instant
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class KinesisRecord(
     approximateArrivalTimestamp: Instant,
@@ -30,15 +30,14 @@ final case class KinesisRecord(
     encryptionType: EncryptionType,
     partitionKey: String,
     sequenceNumber: SequenceNumber
-) {
+):
   val size: Int = data.length +
     encryptionType.entryName.getBytes("UTF-8").length +
     partitionKey.getBytes("UTF-8").length +
     sequenceNumber.value.getBytes("UTF-8").length +
     approximateArrivalTimestamp.toString.getBytes("UTF-8").length
-}
 
-object KinesisRecord {
+object KinesisRecord:
   def kinesisRecordCirceEncoder(implicit
       EI: circe.Encoder[Instant]
   ): circe.Encoder[KinesisRecord] =
@@ -62,7 +61,7 @@ object KinesisRecord {
       DI: circe.Decoder[Instant]
   ): circe.Decoder[KinesisRecord] =
     x =>
-      for {
+      for
         approximateArrivalTimestamp <- x
           .downField("ApproximateArrivalTimestamp")
           .as[Instant]
@@ -70,7 +69,7 @@ object KinesisRecord {
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
         partitionKey <- x.downField("PartitionKey").as[String]
         sequenceNumber <- x.downField("SequenceNumber").as[SequenceNumber]
-      } yield KinesisRecord(
+      yield KinesisRecord(
         approximateArrivalTimestamp,
         data,
         encryptionType,
@@ -78,21 +77,19 @@ object KinesisRecord {
         sequenceNumber
       )
 
-  implicit val kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
+  given kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
     kinesisRecordCirceEncoder(instantDoubleCirceEncoder),
     kinesisRecordCirceEncoder(instantLongCirceEncoder)
   )
 
-  implicit val kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
+  given kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
     kinesisRecordCirceDecoder(instantDoubleCirceDecoder),
     kinesisRecordCirceDecoder(instantLongCirceDecoder)
   )
 
-  implicit val kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
+  given kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
     x.approximateArrivalTimestamp.getEpochSecond == y.approximateArrivalTimestamp.getEpochSecond &&
       x.data.sameElements(y.data) &&
       x.encryptionType == y.encryptionType &&
       x.partitionKey == y.partitionKey &&
       x.sequenceNumber == y.sequenceNumber
-
-}

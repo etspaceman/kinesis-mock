@@ -16,14 +16,14 @@
 
 package kinesis.mock.models
 
-import enumeratum._
+import enumeratum.*
 
 sealed trait ShardFilterType extends EnumEntry
 
 object ShardFilterType
     extends Enum[ShardFilterType]
     with CirceEnum[ShardFilterType]
-    with CatsEnum[ShardFilterType] {
+    with CatsEnum[ShardFilterType]:
   override val values: IndexedSeq[ShardFilterType] = findValues
 
   case object AFTER_SHARD_ID extends ShardFilterType
@@ -32,4 +32,3 @@ object ShardFilterType
   case object AT_LATEST extends ShardFilterType
   case object AT_TIMESTAMP extends ShardFilterType
   case object FROM_TIMESTAMP extends ShardFilterType
-}

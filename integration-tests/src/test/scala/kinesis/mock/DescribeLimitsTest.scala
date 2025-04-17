@@ -1,15 +1,14 @@
 package kinesis.mock
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class DescribeLimitsTest extends AwsFunctionalTests {
+class DescribeLimitsTest extends AwsFunctionalTests:
 
   fixture.test("It should describe limits") { resources =>
-    for {
-      res <- resources.kinesisClient
+    for res <- resources.kinesisClient
         .describeLimits()
         .toIO
-    } yield assert(
+    yield assert(
       res.openShardCount() == genStreamShardCount &&
         res.shardLimit() == resources.cacheConfig.shardLimit,
       s"$res"
@@ -18,14 +17,12 @@ class DescribeLimitsTest extends AwsFunctionalTests {
 
   fixture.test("It should describe limits for the initialized streams") {
     resources =>
-      for {
-        res <- resources.defaultRegionKinesisClient
+      for res <- resources.defaultRegionKinesisClient
           .describeLimits()
           .toIO
-      } yield assert(
+      yield assert(
         res.openShardCount() == initializedStreams.map(_._2).sum &&
           res.shardLimit() == resources.cacheConfig.shardLimit,
         s"$res"
       )
   }
-}

@@ -17,20 +17,20 @@
 package kinesis.mock
 
 import cats.effect.IO
-import org.http4s._
-import org.http4s.headers._
-import org.http4s.syntax.all._
+import org.http4s.*
+import org.http4s.headers.*
+import org.http4s.syntax.all.*
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.cache.{Cache, CacheConfig}
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.instances.http4s._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.instances.http4s.*
 import kinesis.mock.models.StreamName
 
 class KinesisMockServiceTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   test("it should accept healthcheck requests") {
     CacheConfig.read
@@ -42,9 +42,8 @@ class KinesisMockServiceTests
           method = Method.GET,
           uri = Uri(path = path"/healthcheck")
         )
-        for {
-          res <- app.run(request)
-        } yield assert(res.status.isSuccess, res)
+        for res <- app.run(request)
+        yield assert(res.status.isSuccess, res)
       }
 
   }
@@ -60,9 +59,8 @@ class KinesisMockServiceTests
           method = Method.OPTIONS,
           headers = Headers.empty.put(origin.toRaw1)
         )
-        for {
-          res <- app.run(request)
-        } yield assert(res.status.isSuccess, res)
+        for res <- app.run(request)
+        yield assert(res.status.isSuccess, res)
       }
   }
 
@@ -75,9 +73,8 @@ class KinesisMockServiceTests
         val request = Request[IO](
           method = Method.OPTIONS
         )
-        for {
-          res <- app.run(request)
-        } yield assert(!res.status.isSuccess, res)
+        for res <- app.run(request)
+        yield assert(!res.status.isSuccess, res)
       }
   }
 
@@ -109,9 +106,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(res.status.isSuccess, res)
         }
     }
   }
@@ -144,9 +140,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(res.status.isSuccess, res)
 
         }
     }
@@ -180,9 +175,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonJson
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(res.status.isSuccess, res)
 
         }
     }
@@ -229,9 +223,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(res.status.isSuccess, request.uri)
+          for res <- app.run(request)
+          yield assert(res.status.isSuccess, request.uri)
         }
     }
   }
@@ -277,9 +270,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonJson
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(res.status.isSuccess, request.uri)
+          for res <- app.run(request)
+          yield assert(res.status.isSuccess, request.uri)
         }
     }
   }
@@ -310,9 +302,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(
+          for res <- app.run(request)
+          yield assert(
             res.status.isSuccess && res.headers.get[AmazonId2].nonEmpty,
             res
           )
@@ -342,9 +333,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -376,9 +366,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -409,9 +398,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -441,9 +429,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -483,9 +470,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, request)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, request)
         }
     }
   }
@@ -522,9 +508,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, request)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, request)
         }
     }
   }
@@ -556,9 +541,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -591,9 +575,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -625,9 +608,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -681,9 +663,8 @@ class KinesisMockServiceTests
               KinesisMockMediaTypes.amazonCbor
             ).toEntity(CreateStreamRequest(Some(1), None, streamName)).body
           )
-          for {
-            res <- app.run(request)
-          } yield assert(!res.status.isSuccess, res)
+          for res <- app.run(request)
+          yield assert(!res.status.isSuccess, res)
         }
     }
   }
@@ -713,9 +694,8 @@ class KinesisMockServiceTests
           ),
           body = EntityEncoder[IO, String].toEntity("thisisn'tright").body
         )
-        for {
-          res <- app.run(request)
-        } yield assert(!res.status.isSuccess, res)
+        for res <- app.run(request)
+        yield assert(!res.status.isSuccess, res)
       }
   }
 
@@ -746,10 +726,7 @@ class KinesisMockServiceTests
             KinesisMockMediaTypes.amazonCbor
           ).toEntity(CreateStreamRequest(Some(1), None, StreamName(""))).body
         )
-        for {
-          res <- app.run(request)
-        } yield assert(!res.status.isSuccess, res)
+        for res <- app.run(request)
+        yield assert(!res.status.isSuccess, res)
       }
   }
-
-}

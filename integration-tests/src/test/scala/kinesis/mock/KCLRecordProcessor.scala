@@ -1,20 +1,20 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
 import cats.effect.std.Queue
 import cats.effect.unsafe.IORuntime
-import cats.syntax.all._
+import cats.syntax.all.*
 import software.amazon.kinesis.common.StreamIdentifier
-import software.amazon.kinesis.lifecycle.events._
-import software.amazon.kinesis.processor._
+import software.amazon.kinesis.lifecycle.events.*
+import software.amazon.kinesis.processor.*
 import software.amazon.kinesis.retrieval.KinesisClientRecord
 
 case class KCLRecordProcessor(
     resultsQueue: Queue[IO, KinesisClientRecord]
 )(implicit R: IORuntime)
-    extends ShardRecordProcessor {
+    extends ShardRecordProcessor:
   override def initialize(x: InitializationInput): Unit = ()
   override def processRecords(x: ProcessRecordsInput): Unit = x
     .records()
@@ -33,15 +33,13 @@ case class KCLRecordProcessor(
 
   override def shutdownRequested(x: ShutdownRequestedInput): Unit =
     x.checkpointer().checkpoint()
-}
 
 case class KCLRecordProcessorFactory(
     resultsQueue: Queue[IO, KinesisClientRecord]
 )(implicit R: IORuntime)
-    extends ShardRecordProcessorFactory {
+    extends ShardRecordProcessorFactory:
   override def shardRecordProcessor(): ShardRecordProcessor =
     KCLRecordProcessor(resultsQueue)
   override def shardRecordProcessor(
       streamIdentifier: StreamIdentifier
   ): ShardRecordProcessor = KCLRecordProcessor(resultsQueue)
-}

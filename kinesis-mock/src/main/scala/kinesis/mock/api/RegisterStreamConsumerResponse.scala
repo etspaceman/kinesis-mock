@@ -18,14 +18,14 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class RegisterStreamConsumerResponse(consumer: ConsumerSummary)
 
-object RegisterStreamConsumerResponse {
+object RegisterStreamConsumerResponse:
   def registerStreamConsumerResponseCirceEncoder(implicit
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[RegisterStreamConsumerResponse] =
@@ -35,7 +35,7 @@ object RegisterStreamConsumerResponse {
   ): circe.Decoder[RegisterStreamConsumerResponse] = _.downField("Consumer")
     .as[ConsumerSummary]
     .map(RegisterStreamConsumerResponse.apply)
-  implicit val registerStreamConsumerResponseEncoder
+  given registerStreamConsumerResponseEncoder
       : Encoder[RegisterStreamConsumerResponse] = Encoder.instance(
     registerStreamConsumerResponseCirceEncoder(
       Encoder[ConsumerSummary].circeEncoder
@@ -44,7 +44,7 @@ object RegisterStreamConsumerResponse {
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
-  implicit val registerStreamConsumerResponseDecoder
+  given registerStreamConsumerResponseDecoder
       : Decoder[RegisterStreamConsumerResponse] = Decoder.instance(
     registerStreamConsumerResponseCirceDecoder(
       Decoder[ConsumerSummary].circeDecoder
@@ -53,6 +53,5 @@ object RegisterStreamConsumerResponse {
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  implicit val registerStreamConsumerResponseEq
-      : Eq[RegisterStreamConsumerResponse] = (x, y) => x.consumer === y.consumer
-}
+  given registerStreamConsumerResponseEq: Eq[RegisterStreamConsumerResponse] =
+    (x, y) => x.consumer === y.consumer

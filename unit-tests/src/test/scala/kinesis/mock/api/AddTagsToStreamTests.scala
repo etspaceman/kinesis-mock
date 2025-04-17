@@ -22,19 +22,19 @@ import scala.collection.SortedMap
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.{given, *}
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class AddTagsToStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should add tags to a stream")(PropF.forAllF {
     (
         streamArn: StreamArn,
         tags: Tags
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -45,7 +45,7 @@ class AddTagsToStreamTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.tags == tags
         },
@@ -57,7 +57,7 @@ class AddTagsToStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams =
           Streams.empty.addStream(1, streamArn, None, now)
@@ -76,11 +76,10 @@ class AddTagsToStreamTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.tags == tags
         },
         s"req: $req\nres: $res"
       )
   })
-}
