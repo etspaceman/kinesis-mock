@@ -372,6 +372,7 @@ jobs:
 
       - name: Get upload url for release
         id: get_release
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         uses: bruceadams/get-release@v1.3.2
 
       - name: Upload kinesis-mock.jar
