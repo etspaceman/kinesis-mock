@@ -389,7 +389,8 @@ object KinesisMockPlugin extends AutoPlugin {
             WorkflowStep.Use(
               UseRef.Public("bruceadams", "get-release", "v1.3.2"),
               name = Some("Get upload url for release"),
-              id = Some("get_release")
+              id = Some("get_release"),
+              cond = Some(onlyReleases.value)
             ),
             WorkflowStep.Use(
               UseRef.Public("actions", "upload-release-asset", "v1"),
