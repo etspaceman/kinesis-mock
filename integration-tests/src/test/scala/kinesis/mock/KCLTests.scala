@@ -127,7 +127,8 @@ class KCLTests extends AwsFunctionalTests {
               defaultLeaseManagement
                 .workerUtilizationAwareAssignmentConfig()
                 .disableWorkerMetrics(true),
-              defaultLeaseManagement.gracefulLeaseHandoffConfig()
+              defaultLeaseManagement.gracefulLeaseHandoffConfig(),
+              defaultLeaseManagement.leaseAssignmentIntervalMillis()
             )
           )
           scheduler <- Resource.eval(
