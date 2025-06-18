@@ -17,7 +17,7 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "2.7.0"
+    val log4CatsVersion = "2.7.1"
     val core =
       Def.setting("org.typelevel" %%% "log4cats-core" % log4CatsVersion)
     val slf4j =
@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.31.46"
+    val sdkVersion = "2.31.65"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
@@ -60,19 +60,19 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.13"
+    val circeVersion = "0.14.14"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
   }
 
   object Ciris {
-    val cirisVersion = "3.8.0"
+    val cirisVersion = "3.9.0"
     val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.7.5"
+    val enumeratumVersion = "1.9.0"
     val cats =
       Def.setting("com.beachape" %%% "enumeratum-cats" % enumeratumVersion)
     val core = Def.setting("com.beachape" %%% "enumeratum" % enumeratumVersion)
