@@ -13,22 +13,42 @@ object DockerImagePlugin extends AutoPlugin {
   import sbtassembly.AssemblyPlugin.autoImport._
 
   val dockerTagTask: Def.Initialize[Task[String]] = Def.task {
-    s"${dockerRepository.value}/${dockerNamespace.value}/${name.value}:${imageTag.value}"
+    val version = sys.env.getOrElse("VERSION", imageTag.value)
+    s"${dockerRepository.value}/${dockerNamespace.value}/${name.value}:$version"
   }
 
-  val buildDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
+    val buildDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
+
+    // Create a new builder instance for multi-platform builds if it doesn't exist
+    val createBuilderCmd = "docker buildx create --name multiarch-builder --driver docker-container --use"
+    log.info(s"Setting up multi-arch builder: $createBuilderCmd")
+    val createRes = createBuilderCmd.!
+    if (createRes != 0 && createRes != 1) { // 1 means builder already exists
+      log.warn(s"Failed to create builder (exit code: $createRes), trying to use existing")
+    }
+
+    // Bootstrap the builder
+    val bootstrapCmd = "docker buildx inspect --bootstrap"
+    log.info(s"Bootstrapping builder: $bootstrapCmd")
+    val bootstrapRes = bootstrapCmd.!
+    if (bootstrapRes != 0) {
+      throw new IllegalStateException(s"Failed to bootstrap builder (exit code: $bootstrapRes)")
+    }
+
     val cmd =
-      s"""docker build \\
+      s"""docker buildx build \\
+         |  --platform linux/amd64,linux/arm64 \\
          |  --build-arg DOCKER_SERVICE_FILE=${serviceFileLocation.value}${serviceFileName.value} \\
          |  -f ${dockerfileLocation.value + dockerfile.value} \\
          |  -t ${dockerTagTask.value} \\
+         |  --push \\
          |  .""".stripMargin
     log.info(s"Running $cmd")
 
     val res = cmd.replace("\\", "").!
     if (res != 0)
-      throw new IllegalStateException(s"docker build returned $res")
+      throw new IllegalStateException(s"docker buildx build returned $res")
   }
 
   val pushDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
