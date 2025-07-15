@@ -252,17 +252,9 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Login to registry"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Run(
-              List(
-                "VERSION=${{ github.ref_name }}",
-                """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
-              ),
-              name = Some("Get version"),
-              cond = Some(primaryJavaOSCond.value)
-            ),
             WorkflowStep.Sbt(
               List("kinesis-mockJS/buildDockerImage"),
-              name = Some("Build Docker Image"),
+              name = Some("Build and push Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             )
           ),
