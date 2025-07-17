@@ -240,9 +240,9 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Sbt(
-              List("kinesis-mockJS/buildDockerImage"),
-              name = Some("Build Docker Image"),
+            WorkflowStep.Use(
+              UseRef.Public("docker", "setup-buildx-action", "v3"),
+              name = Some("Set up Docker Buildx"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Run(
@@ -252,19 +252,13 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Login to registry"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Run(
-              List(
-                "VERSION=${{ github.ref_name }}",
-                """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
-              ),
-              name = Some("Get version"),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/buildDockerImage"),
+              name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Run(
-              List(
-                """echo "${VERSION}"""",
-                """docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}""""
-              ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
