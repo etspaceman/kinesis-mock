@@ -18,27 +18,55 @@ object DockerImagePlugin extends AutoPlugin {
 
   val buildDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
+
+    // Create a new builder instance for multi-platform builds if it doesn't exist
+    val createBuilderCmd = "docker buildx create --name multiarch-builder --driver docker-container --use"
+    log.info(s"Setting up multi-arch builder: $createBuilderCmd")
+    val createRes = createBuilderCmd.!
+    if (createRes != 0 && createRes != 1) { // 1 means builder already exists
+      log.warn(s"Failed to create builder (exit code: $createRes), trying to use existing")
+    }
+
+    // Bootstrap the builder
+    val bootstrapCmd = "docker buildx inspect --bootstrap"
+    log.info(s"Bootstrapping builder: $bootstrapCmd")
+    val bootstrapRes = bootstrapCmd.!
+    if (bootstrapRes != 0) {
+      throw new IllegalStateException(s"Failed to bootstrap builder (exit code: $bootstrapRes)")
+    }
+
+    // load only supports single platform, so omit --platform option
     val cmd =
-      s"""docker build \\
+      s"""docker buildx build \\
          |  --build-arg DOCKER_SERVICE_FILE=${serviceFileLocation.value}${serviceFileName.value} \\
          |  -f ${dockerfileLocation.value + dockerfile.value} \\
          |  -t ${dockerTagTask.value} \\
+         |  --load \\
          |  .""".stripMargin
     log.info(s"Running $cmd")
 
     val res = cmd.replace("\\", "").!
     if (res != 0)
-      throw new IllegalStateException(s"docker build returned $res")
+      throw new IllegalStateException(s"docker buildx build returned $res")
   }
 
   val pushDockerImageTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = sbt.Keys.streams.value.log
-    val cmd = s"""docker push ${dockerTagTask.value}"""
 
+    // For multi-arch images, we need to use buildx to push
+    val cmd =
+      s"""docker buildx build \\
+         |  --platform linux/amd64,linux/arm64 \\
+         |  --build-arg DOCKER_SERVICE_FILE=${serviceFileLocation.value}${serviceFileName.value} \\
+         |  -f ${dockerfileLocation.value + dockerfile.value} \\
+         |  -t ${dockerTagTask.value} \\
+         |  --push \\
+         |  .""".stripMargin
     log.info(s"Running $cmd")
-    val res = cmd.!
+
+    val res = cmd.replace("\\", "").!
     if (res != 0)
-      throw new IllegalStateException(s"docker build returned $res")
+      throw new IllegalStateException(s"docker buildx push returned $res")
   }
 
   def settings: Seq[Setting[_]] =

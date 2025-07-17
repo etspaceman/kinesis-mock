@@ -191,25 +191,21 @@ jobs:
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
-      - name: Build Docker Image
+      - name: Set up Docker Buildx
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
-      - name: Get version
+      - name: Build Docker Image
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: |
-          VERSION=${{ github.ref_name }}
-          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
       - name: Push to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: |
-          echo "${VERSION}"
-          docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}"
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
