@@ -25,7 +25,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.0")
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.1.0")
     val catsEffect =
