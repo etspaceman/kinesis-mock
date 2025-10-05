@@ -2,7 +2,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
-  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
+  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.4"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.4")
   val ScalaParserCombinators = Def.setting(
