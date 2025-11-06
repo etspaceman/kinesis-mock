@@ -32,7 +32,7 @@ final case class SequenceNumber(value: String) {
       case Some(SequenceNumberConstant.LATEST)       => BigInt(-1)
       case Some(SequenceNumberConstant.TRIM_HORIZON) => BigInt(-2)
       case Some(SequenceNumberConstant.AT_TIMESTAMP) => BigInt(-3)
-      case Some(SequenceNumberConstant.SHARD_END) =>
+      case Some(SequenceNumberConstant.SHARD_END)    =>
         SequenceNumber.shardEndNumber
     }
 

@@ -123,7 +123,7 @@ object ASTProcessor {
     }
 
     gens match {
-      case a :: Nil => a
+      case a :: Nil     => a
       case a :: b :: xs =>
         Gen.oneOf(a, b, xs: _*)
       case _ =>
