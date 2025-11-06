@@ -303,7 +303,7 @@ object CommonValidations {
   ): Response[EncryptionType] =
     encryptionType match {
       case EncryptionType.KMS => Right(encryptionType)
-      case _ =>
+      case _                  =>
         InvalidArgumentException(
           "KMS is the only valid EncryptionType for this request"
         ).asLeft

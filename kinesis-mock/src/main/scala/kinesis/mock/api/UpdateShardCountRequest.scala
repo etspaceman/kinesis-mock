@@ -144,7 +144,7 @@ object UpdateShardCountRequest {
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
       streamData
     case Nil | _ :: Nil => streamData
-    case h :: t =>
+    case h :: t         =>
       val (oldShard, oldShardData) = h
       val (newStreamData, newOpenShards) = t
         .find { case (x, _) =>
@@ -176,7 +176,7 @@ object UpdateShardCountRequest {
     case _
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
       streamData
-    case Nil => streamData
+    case Nil    => streamData
     case h :: t =>
       val (oldShard, oldShardData) = h
       splitShards(

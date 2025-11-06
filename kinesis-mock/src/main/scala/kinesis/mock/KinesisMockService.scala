@@ -142,7 +142,7 @@ object KinesisMockService extends ResourceApp.Forever {
       cache
         .describeStreamSummary(descReq, context, isCbor = false, Some(region))
         .map {
-          case Left(_) => false
+          case Left(_)  => false
           case Right(v) =>
             v.streamDescriptionSummary.streamStatus != StreamStatus.CREATING
         }
