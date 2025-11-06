@@ -20,11 +20,14 @@ object DockerImagePlugin extends AutoPlugin {
     val log = sbt.Keys.streams.value.log
 
     // Create a new builder instance for multi-platform builds if it doesn't exist
-    val createBuilderCmd = "docker buildx create --name multiarch-builder --driver docker-container --use"
+    val createBuilderCmd =
+      "docker buildx create --name multiarch-builder --driver docker-container --use"
     log.info(s"Setting up multi-arch builder: $createBuilderCmd")
     val createRes = createBuilderCmd.!
     if (createRes != 0 && createRes != 1) { // 1 means builder already exists
-      log.warn(s"Failed to create builder (exit code: $createRes), trying to use existing")
+      log.warn(
+        s"Failed to create builder (exit code: $createRes), trying to use existing"
+      )
     }
 
     // Bootstrap the builder
@@ -32,7 +35,9 @@ object DockerImagePlugin extends AutoPlugin {
     log.info(s"Bootstrapping builder: $bootstrapCmd")
     val bootstrapRes = bootstrapCmd.!
     if (bootstrapRes != 0) {
-      throw new IllegalStateException(s"Failed to bootstrap builder (exit code: $bootstrapRes)")
+      throw new IllegalStateException(
+        s"Failed to bootstrap builder (exit code: $bootstrapRes)"
+      )
     }
 
     // load only supports single platform, so omit --platform option
