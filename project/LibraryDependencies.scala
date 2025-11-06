@@ -2,7 +2,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
-  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.3"
+  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.4"
   val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.4")
   val ScalaParserCombinators = Def.setting(
@@ -25,9 +25,9 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.0")
     val scalacheck =
-      Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.1.0")
+      Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.2.0")
     val catsEffect =
       Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.1.0")
     val scalacheckEffect =
@@ -35,7 +35,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.33.13"
+    val sdkVersion = "2.35.5"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
@@ -52,7 +52,7 @@ object LibraryDependencies {
   }
 
   object Http4s {
-    val http4sVersion = "0.23.30"
+    val http4sVersion = "0.23.32"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -60,14 +60,14 @@ object LibraryDependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.14"
+    val circeVersion = "0.14.15"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
   }
 
   object Ciris {
-    val cirisVersion = "3.10.0"
+    val cirisVersion = "3.11.0"
     val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
   }
 
