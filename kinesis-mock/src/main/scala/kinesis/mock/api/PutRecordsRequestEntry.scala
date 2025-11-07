@@ -20,8 +20,6 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe.*
-
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
     explicitHashKey: Option[String],

@@ -25,8 +25,8 @@ object KinesisMockPlugin extends AutoPlugin {
   import TypelevelVersioningPlugin.autoImport._
   import _root_.io.chrisdavenport.npmpackage.sbtplugin.NpmPackagePlugin.autoImport._
   import autoImport._
-  import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
   import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+  import sbtheader.HeaderPlugin.autoImport._
   import scalafix.sbt.ScalafixPlugin.autoImport._
 
   private val primaryJavaOSCond = Def.setting {
@@ -74,7 +74,7 @@ object KinesisMockPlugin extends AutoPlugin {
       )
     ),
     githubWorkflowTargetTags += "v*",
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21")),
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map(
       "cbor_enabled" -> List("true", "false"),
@@ -240,9 +240,9 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Sbt(
-              List("kinesis-mockJS/buildDockerImage"),
-              name = Some("Build Docker Image"),
+            WorkflowStep.Use(
+              UseRef.Public("docker", "setup-buildx-action", "v3"),
+              name = Some("Set up Docker Buildx"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Run(
@@ -252,19 +252,13 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Login to registry"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Run(
-              List(
-                "VERSION=${{ github.ref_name }}",
-                """echo "VERSION=${VERSION:1}" >> $GITHUB_ENV"""
-              ),
-              name = Some("Get version"),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/buildDockerImage"),
+              name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
-            WorkflowStep.Run(
-              List(
-                """echo "${VERSION}"""",
-                """docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}""""
-              ),
+            WorkflowStep.Sbt(
+              List("kinesis-mockJS/pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
@@ -370,6 +364,43 @@ object KinesisMockPlugin extends AutoPlugin {
         scalas = Nil,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
+      ),
+      WorkflowJob(
+        "publishAssembly",
+        "Publish Fat JAR",
+        githubWorkflowJobSetup.value.toList ++
+          List(
+            WorkflowStep.Sbt(
+              List("cpl"),
+              name = Some("Compile"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Sbt(
+              List("kinesis-mock/assembly"),
+              name = Some("Assembly"),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("bruceadams", "get-release", "v1.3.2"),
+              name = Some("Get upload url for release"),
+              id = Some("get_release"),
+              cond = Some(onlyReleases.value)
+            ),
+            WorkflowStep.Use(
+              UseRef.Public("actions", "upload-release-asset", "v1"),
+              name = Some("Upload kinesis-mock.jar"),
+              params = Map(
+                "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
+                "asset_path" -> "./docker/image/lib/kinesis-mock.jar",
+                "asset_name" -> "kinesis-mock.jar",
+                "asset_content_type" -> "application/java-archive"
+              ),
+              cond = Some(onlyReleases.value)
+            )
+          ),
+        scalas = Nil,
+        javas = githubWorkflowJavaVersions.value.toList,
+        needs = List("build")
       )
     ),
     githubWorkflowAddedJobs ++= tlCiStewardValidateConfig.value.toList
@@ -399,7 +430,7 @@ object KinesisMockPlugin extends AutoPlugin {
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
     ),
-    tlJdkRelease := Some(17)
+    tlJdkRelease := Some(21)
   ) ++ Seq(
     addCommandAlias("cpl", ";Test / compile"),
     addCommandAlias(
@@ -437,7 +468,7 @@ object KinesisMockPluginKeys {
   lazy val npmCopyExtraFiles =
     taskKey[Unit]("Copy extra files to the NPM install directory")
 
-  val Scala3 = "3.3.5"
+  val Scala3 = "3.3.7"
 
   val testDependencies = Def.setting(
     Seq(

@@ -55,7 +55,7 @@ final case class PutRecordRequest(
                       .isStreamActiveOrUpdating(arn, streams),
                     CommonValidations.validateData(data),
                     sequenceNumberForOrdering match
-                      case None => Right(())
+                      case None        => Right(())
                       case Some(seqNo) =>
                         seqNo.parse.flatMap {
                           case parts: SequenceNumberParts

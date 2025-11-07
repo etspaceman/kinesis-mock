@@ -29,11 +29,11 @@ import org.http4s.EntityEncoder
 import org.http4s.Header
 import org.http4s.HttpRoutes
 import org.http4s.Request
+import org.http4s.Response as HResponse
 //import org.http4s._
 import org.http4s.dsl.io.*
 import org.http4s.headers.*
 import org.http4s.syntax.header.*
-import org.http4s.Response as HResponse
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 import kinesis.mock.api.*

@@ -1,4 +1,4 @@
-FROM azul/zulu-openjdk-alpine:17
+FROM azul/zulu-openjdk-alpine:21
 
 ARG DOCKER_SERVICE_JAR
 COPY docker/image/lib/kinesis-mock.jar ./kinesis-mock.jar

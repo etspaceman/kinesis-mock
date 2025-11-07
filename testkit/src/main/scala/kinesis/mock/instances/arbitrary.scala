@@ -74,7 +74,7 @@ object arbitrary:
   given sequenceNumberArbitrary: Arbitrary[SequenceNumber] = Arbitrary(
     Gen.option(Arbitrary.arbitrary[SequenceNumberConstant]).flatMap {
       case Some(constant) => SequenceNumber(constant.entryName)
-      case None =>
+      case None           =>
         for
           shardCreateTime <- nowGen.map(_.minusSeconds(300))
           shardIndex <- Gen.posNum[Int]

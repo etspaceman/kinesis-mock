@@ -29,8 +29,8 @@ import org.http4s.server.middleware.ErrorAction
 import org.http4s.server.middleware.ErrorHandling
 import org.http4s.server.middleware.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
-import retry.RetryPolicies.constantDelay
 import retry.*
+import retry.RetryPolicies.constantDelay
 
 import kinesis.mock.api.{CreateStreamRequest, DescribeStreamSummaryRequest}
 import kinesis.mock.cache.{Cache, CacheConfig}
@@ -142,7 +142,7 @@ object KinesisMockService extends ResourceApp.Forever:
       cache
         .describeStreamSummary(descReq, context, isCbor = false, Some(region))
         .map {
-          case Left(_) => false
+          case Left(_)  => false
           case Right(v) =>
             v.streamDescriptionSummary.streamStatus != StreamStatus.CREATING
         }

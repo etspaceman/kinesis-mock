@@ -130,7 +130,8 @@ class KCLTests extends AwsFunctionalTests:
               defaultLeaseManagement
                 .workerUtilizationAwareAssignmentConfig()
                 .disableWorkerMetrics(true),
-              defaultLeaseManagement.gracefulLeaseHandoffConfig()
+              defaultLeaseManagement.gracefulLeaseHandoffConfig(),
+              defaultLeaseManagement.leaseAssignmentIntervalMillis()
             )
           )
           scheduler <- Resource.eval(
@@ -159,25 +160,28 @@ class KCLTests extends AwsFunctionalTests:
               )
             )
           )
-          _ <- for
-            _ <- Resource.eval(resources.logger.info("Starting KCL Scheduler"))
-            _ <- IO.blocking(scheduler.run()).background
-            _ <- Resource.onFinalize(
-              for
-                _ <- resources.logger.info("Shutting down KCL Scheduler")
-                _ <- scheduler.startGracefulShutdown().toIO
-                _ <- resources.logger.info("KCL Scheduler has been shut down")
-                _ <- IO.blocking(scheduler.shutdown())
-              yield ()
-            )
-            _ <- Resource.eval(
-              for
-                _ <- resources.logger.info("Checking if KCL is started")
-                _ <- isStarted.get
-                _ <- resources.logger.info("KCL is started")
-              yield ()
-            )
-          yield ()
+          _ <-
+            for
+              _ <- Resource.eval(
+                resources.logger.info("Starting KCL Scheduler")
+              )
+              _ <- IO.blocking(scheduler.run()).background
+              _ <- Resource.onFinalize(
+                for
+                  _ <- resources.logger.info("Shutting down KCL Scheduler")
+                  _ <- scheduler.startGracefulShutdown().toIO
+                  _ <- resources.logger.info("KCL Scheduler has been shut down")
+                  _ <- IO.blocking(scheduler.shutdown())
+                yield ()
+              )
+              _ <- Resource.eval(
+                for
+                  _ <- resources.logger.info("Checking if KCL is started")
+                  _ <- isStarted.get
+                  _ <- resources.logger.info("KCL is started")
+                yield ()
+              )
+            yield ()
         yield KCLResources(resources, resultsQueue)
       }
     )
@@ -240,13 +244,14 @@ class KCLTests extends AwsFunctionalTests:
     )(
       resources.resultsQueue.size.map(_ == 5)
     )
-    resRecords <- for
-      rec1 <- resources.resultsQueue.take
-      rec2 <- resources.resultsQueue.take
-      rec3 <- resources.resultsQueue.take
-      rec4 <- resources.resultsQueue.take
-      rec5 <- resources.resultsQueue.take
-    yield Vector(rec1, rec2, rec3, rec4, rec5)
+    resRecords <-
+      for
+        rec1 <- resources.resultsQueue.take
+        rec2 <- resources.resultsQueue.take
+        rec3 <- resources.resultsQueue.take
+        rec4 <- resources.resultsQueue.take
+        rec5 <- resources.resultsQueue.take
+      yield Vector(rec1, rec2, rec3, rec4, rec5)
   yield assert(
     gotAllRecords && resRecords
       .map(_.partitionKey())

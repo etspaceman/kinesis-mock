@@ -61,13 +61,13 @@ class Cache private (
 
   private def getSemaphores(region: Option[AwsRegion]): IO[CacheSemaphores] =
     region match
-      case None => semaphores.get.map(_(config.awsRegion))
+      case None    => semaphores.get.map(_(config.awsRegion))
       case Some(r) =>
         for
           current <- semaphores.get
           res <- current.get(r) match
             case Some(found) => IO.pure(found)
-            case None =>
+            case None        =>
               for
                 created <- CacheSemaphores.create
                 _ <- semaphores.update(x => x + (r -> created))

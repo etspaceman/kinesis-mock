@@ -30,7 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [3]
-        java: [temurin@17]
+        java: [temurin@21]
         cbor_enabled: [true, false]
         project: [root-jvm-3, root-js-3]
         service_port: [4567, 4568]
@@ -38,43 +38,43 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (temurin@17)
-        id: setup-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' fastLinkJS
 
       - name: Link Test JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
       - name: Unit Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -83,7 +83,7 @@ jobs:
           retry_on: error
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -93,7 +93,7 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
@@ -109,11 +109,11 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
         run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
       - name: Check scalafix lints
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' fixCheck
 
   dependency-submission:
@@ -122,28 +122,28 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [temurin@17]
+        java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (temurin@17)
-        id: setup-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Submit Dependencies
@@ -159,57 +159,53 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [temurin@17]
+        java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (temurin@17)
-        id: setup-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
-      - name: Build Docker Image
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
+      - name: Set up Docker Buildx
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to registry
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
-      - name: Get version
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
-        run: |
-          VERSION=${{ github.ref_name }}
-          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
+      - name: Build Docker Image
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
       - name: Push to registry
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
-        run: |
-          echo "${VERSION}"
-          docker push "ghcr.io/etspaceman/kinesis-mock:${VERSION}"
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
@@ -218,36 +214,36 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [temurin@17]
+        java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (temurin@17)
-        id: setup-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
       - name: Get upload url for release
@@ -284,46 +280,46 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [temurin@17]
+        java: [temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (temurin@17)
-        id: setup-java-temurin-17
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Compile
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' fullLinkJS
 
       - name: Setup Node
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - name: Install artifacts to NPM
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' npmPackageInstall
 
       - name: Publish artifacts to NPM
@@ -331,3 +327,55 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: sbt '++ ${{ matrix.scala }}' npmPackageNpmrc npmPackagePublish
+
+  publishAssembly:
+    name: Publish Fat JAR
+    needs: [build]
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        java: [temurin@21]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Setup Java (temurin@21)
+        id: setup-java-temurin-21
+        if: matrix.java == 'temurin@21'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@21' && steps.setup-java-temurin-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Compile
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        run: sbt '++ ${{ matrix.scala }}' cpl
+
+      - name: Assembly
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mock/assembly
+
+      - name: Get upload url for release
+        id: get_release
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        uses: bruceadams/get-release@v1.3.2
+
+      - name: Upload kinesis-mock.jar
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./docker/image/lib/kinesis-mock.jar
+          asset_name: kinesis-mock.jar
+          asset_content_type: application/java-archive
