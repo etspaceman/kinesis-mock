@@ -25,8 +25,8 @@ object KinesisMockPlugin extends AutoPlugin {
   import TypelevelVersioningPlugin.autoImport._
   import _root_.io.chrisdavenport.npmpackage.sbtplugin.NpmPackagePlugin.autoImport._
   import autoImport._
-  import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
   import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+  import sbtheader.HeaderPlugin.autoImport._
   import scalafix.sbt.ScalafixPlugin.autoImport._
 
   private val primaryJavaOSCond = Def.setting {
