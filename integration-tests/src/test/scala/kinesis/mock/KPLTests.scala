@@ -44,12 +44,13 @@ class KPLTests extends AwsFunctionalTests:
   kplFixture.test("it should produce records") { resources =>
     for
       dataRecords <- IO(dataGen.take(20).toVector)
+      partitionKey <- Utils.randomUUIDString
       res <- dataRecords.parTraverse(data =>
         resources.kpl
           .addUserRecord(
             new UserRecord(
               resources.functionalTestResources.streamName.streamName,
-              Utils.randomUUIDString,
+              partitionKey,
               ByteBuffer.wrap(data)
             )
           )

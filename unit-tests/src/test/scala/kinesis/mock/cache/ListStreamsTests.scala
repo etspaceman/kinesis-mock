@@ -36,8 +36,8 @@ class ListStreamsTests extends munit.CatsEffectSuite:
       .resource[IO]
       .flatMap(cacheConfig => Cache(cacheConfig))
       .use { case cache =>
-        val context = LoggingContext.create
         for
+          context <- LoggingContext.create
           streamNames <- IO(
             Gen
               .listOfN(5, Arbitrary.arbitrary[StreamName])

@@ -26,7 +26,9 @@ class DescribeLimitsTests extends munit.CatsEffectSuite:
       .resource[IO]
       .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
       .use { case (cacheConfig, cache) =>
-        for res <- cache.describeLimits(LoggingContext.create, None).rethrow
+        for
+          context <- LoggingContext.create
+          res <- cache.describeLimits(context, None).rethrow
         yield assert(
           res.openShardCount == 0 &&
             res.shardLimit == cacheConfig.shardLimit &&

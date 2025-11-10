@@ -62,14 +62,14 @@ class PersistenceTests
       ) =>
         CacheConfig.read
           .resource[IO]
-          .both(Resource.pure(Utils.randomUUIDString))
+          .both(Resource.eval(Utils.randomUUIDString))
           .map { case (cacheConfig, uuid) =>
             cacheConfig.copy(persistConfig = persistConfig(uuid))
           }
           .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
           .evalMap { case (cacheConfig, cache) =>
-            val context = LoggingContext.create
             for
+              context <- LoggingContext.create
               _ <- cache
                 .createStream(
                   CreateStreamRequest(Some(1), None, streamName),
@@ -100,8 +100,8 @@ class PersistenceTests
               .map(newCache => (newCache, recordRequests))
           }
           .use { case (newCache, recordRequests) =>
-            val context = LoggingContext.create
             for
+              context <- LoggingContext.create
               shard <- newCache
                 .listShards(
                   ListShardsRequest(
@@ -157,9 +157,11 @@ class PersistenceTests
   )
 
   test("It should make a root path") {
-    val config =
-      val orig = persistConfig(Utils.randomUUIDString)
-      orig.copy(path = s"/${orig.path}")
+    Utils.randomUUIDString.map { id =>
+      val config =
+        val orig = persistConfig(id)
+        orig.copy(path = s"/${orig.path}")
 
-    assertEquals(config.osPath.absolute.toString, config.path)
+      assertEquals(config.osPath.absolute.toString, config.path)
+    }
   }

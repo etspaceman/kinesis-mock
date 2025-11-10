@@ -47,8 +47,8 @@ class PutRecordTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
         .use { case (cacheConfig, cache) =>
-          val context = LoggingContext.create
           for
+            context <- LoggingContext.create
             _ <- cache
               .createStream(
                 CreateStreamRequest(Some(1), None, streamName),

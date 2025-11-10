@@ -42,8 +42,8 @@ class ListShardsTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig))
         .use { case cache =>
-          val context = LoggingContext.create
           for
+            context <- LoggingContext.create
             _ <- cache
               .createStream(
                 CreateStreamRequest(Some(5), None, streamName),
