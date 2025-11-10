@@ -364,7 +364,7 @@ jobs:
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mock/assembly
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mock3/assembly
 
       - name: Get upload url for release
         id: get_release

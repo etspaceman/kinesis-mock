@@ -376,7 +376,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mock/assembly"),
+              List("kinesis-mock3/assembly"),
               name = Some("Assembly"),
               cond = Some(primaryJavaOSCond.value)
             ),
