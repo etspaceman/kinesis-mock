@@ -4,7 +4,6 @@ import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
 import java.net.URI
-import java.time.Instant
 import java.util.Date
 
 import cats.effect.SyncIO
@@ -40,11 +39,26 @@ class KCLTests extends AwsFunctionalTests:
   override val munitIOTimeout: FiniteDuration = 4.minutes
 
   def kclFixture(
-      initialPosition: InitialPositionInStreamExtended
+      useAtTimestamp: Boolean = false // scalafix:ok
   ): SyncIO[FunFixture[KCLResources]] =
     ResourceFunFixture(
       resource.flatMap { resources =>
         for
+          initialPosition <-
+            if useAtTimestamp then
+              Utils.now
+                .map(now =>
+                  InitialPositionInStreamExtended.newInitialPositionAtTimestamp(
+                    Date.from(now.minusSeconds(30))
+                  )
+                )
+                .toResource
+            else
+              Resource.pure(
+                InitialPositionInStreamExtended.newInitialPosition(
+                  InitialPositionInStream.TRIM_HORIZON
+                )
+              )
           cloudwatchClient <- Resource.fromAutoCloseable(
             IO(
               CloudWatchAsyncClient
@@ -263,14 +277,6 @@ class KCLTests extends AwsFunctionalTests:
     s"Got All Records: $gotAllRecords\nLength: ${resRecords.length}"
   )
 
-  kclFixture(
-    InitialPositionInStreamExtended.newInitialPosition(
-      InitialPositionInStream.TRIM_HORIZON
-    )
-  ).test("it should consume records")(kclTest)
+  kclFixture().test("it should consume records")(kclTest)
 
-  kclFixture(
-    InitialPositionInStreamExtended.newInitialPositionAtTimestamp(
-      Date.from(Instant.now().minusSeconds(30))
-    )
-  ).test("it should consume records using AT_TIMESTAMP")(kclTest)
+  kclFixture(true).test("it should consume records using AT_TIMESTAMP")(kclTest)

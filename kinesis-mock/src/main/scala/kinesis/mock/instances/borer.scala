@@ -34,13 +34,15 @@ object borer:
     bytes => Json.fromString(new String(BaseEncoding.base64.encode(bytes)))
 
   def circeJsonAstDecoder(
-      bigIntDecoder: Decoder[BigInt] = Decoder.forBigInt,
-      bigDecimalDecoder: Decoder[BigDecimal] = Decoder.forBigDecimal,
-      decodeUndefined: Option[() => Json] = Some(() => Json.Null),
+      bigIntDecoder: Decoder[BigInt] = Decoder.forBigInt, // scalafix:ok
+      bigDecimalDecoder: Decoder[BigDecimal] =
+        Decoder.forBigDecimal, // scalafix:ok
+      decodeUndefined: Option[() => Json] =
+        Some(() => Json.Null), // scalafix:ok
       decodeByteArray: Option[Array[Byte] => Json] = Some(
         defaultDecodeByteArray
-      ),
-      decodeSimpleValue: Option[SimpleValue => Json] = None
+      ), // scalafix:ok
+      decodeSimpleValue: Option[SimpleValue => Json] = None // scalafix:ok
   ): Decoder[Json] =
 
     new Decoder[Json]:
@@ -66,7 +68,7 @@ object borer:
               )
           else if r.hasMapStart then
             r.readMapStart()
-            while !r.tryReadBreak() do
+            while !r.tryReadBreak() do // scalafix:ok
               buf.addOne(r.readString() -> r.read[Json]())
             buf.result()
           else r.unexpectedDataItem(expected = "Map")
