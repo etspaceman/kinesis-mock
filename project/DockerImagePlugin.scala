@@ -85,7 +85,7 @@ object DockerImagePlugin extends AutoPlugin {
       serviceFileName := "main.js",
       dockerfileLocation := "docker/",
       dockerfile := sys.env
-        .getOrElse("KINESIS_MOCK_DOCKERFILE", "Dockerfile.JVM")
+        .getOrElse("KINESIS_MOCK_DOCKERFILE", "Dockerfile")
     )
 }
 
