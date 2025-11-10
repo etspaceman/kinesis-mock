@@ -1546,7 +1546,7 @@ object Cache:
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO]): Resource[IO, Cache] = for
+  )(using C: Concurrent[IO]): Resource[IO, Cache] = for
     ref <- Ref.of[IO, Streams](streams).toResource
     semaphores <- CacheSemaphores.create.toResource
     semaphoresRef <- Ref
@@ -1566,7 +1566,7 @@ object Cache:
 
   def loadFromFile(
       config: CacheConfig
-  )(implicit C: Concurrent[IO]): Resource[IO, Cache] =
+  )(using C: Concurrent[IO]): Resource[IO, Cache] =
     for
       exists <- Files[IO].exists(config.persistConfig.osFile).toResource
       res <-

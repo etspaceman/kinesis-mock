@@ -77,7 +77,7 @@ object Shard:
   given shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
-  def shardCirceEncoder(implicit
+  def shardCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[Shard] = circe.Encoder.forProduct8(
     "AdjacentParentShardId",
@@ -101,7 +101,7 @@ object Shard:
     )
   )
 
-  def shardCirceDecoder(implicit
+  def shardCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[Shard] = x =>
     for
@@ -128,13 +128,13 @@ object Shard:
     )
 
   given shardEncoder: Encoder[Shard] = Encoder.instance(
-    shardCirceEncoder(instantDoubleCirceEncoder),
-    shardCirceEncoder(instantLongCirceEncoder)
+    shardCirceEncoder(using instantDoubleCirceEncoder),
+    shardCirceEncoder(using instantLongCirceEncoder)
   )
 
   given shardDecoder: Decoder[Shard] = Decoder.instance(
-    shardCirceDecoder(instantDoubleCirceDecoder),
-    shardCirceDecoder(instantLongCirceDecoder)
+    shardCirceDecoder(using instantDoubleCirceDecoder),
+    shardCirceDecoder(using instantLongCirceDecoder)
   )
 
   given shardCirceKeyEncoder: circe.KeyEncoder[Shard] =

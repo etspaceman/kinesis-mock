@@ -95,7 +95,7 @@ final case class ListStreamConsumersRequest(
   }
 
 object ListStreamConsumersRequest:
-  def listStreamConsumersRequestCirceEncoder(implicit
+  def listStreamConsumersRequestCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ListStreamConsumersRequest] =
     circe.Encoder.forProduct4(
@@ -105,7 +105,7 @@ object ListStreamConsumersRequest:
       "StreamCreationTimestamp"
     )(x => (x.maxResults, x.nextToken, x.streamArn, x.streamCreationTimestamp))
 
-  def listStreamConsumersRequestCirceDecoder(implicit
+  def listStreamConsumersRequestCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ListStreamConsumersRequest] = x =>
     for
@@ -124,13 +124,17 @@ object ListStreamConsumersRequest:
 
   given listStreamConsumersRequestEncoder: Encoder[ListStreamConsumersRequest] =
     Encoder.instance(
-      listStreamConsumersRequestCirceEncoder(instantBigDecimalCirceEncoder),
-      listStreamConsumersRequestCirceEncoder(instantLongCirceEncoder)
+      listStreamConsumersRequestCirceEncoder(using
+        instantBigDecimalCirceEncoder
+      ),
+      listStreamConsumersRequestCirceEncoder(using instantLongCirceEncoder)
     )
   given listStreamConsumersRequestDecoder: Decoder[ListStreamConsumersRequest] =
     Decoder.instance(
-      listStreamConsumersRequestCirceDecoder(instantBigDecimalCirceDecoder),
-      listStreamConsumersRequestCirceDecoder(instantLongCirceDecoder)
+      listStreamConsumersRequestCirceDecoder(using
+        instantBigDecimalCirceDecoder
+      ),
+      listStreamConsumersRequestCirceDecoder(using instantLongCirceDecoder)
     )
 
   given listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =

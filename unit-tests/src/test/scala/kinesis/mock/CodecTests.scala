@@ -29,7 +29,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.*
 
 trait CodecTests extends munit.ScalaCheckSuite:
-  def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](implicit
+  def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](using
       loc: munit.Location,
       CT: ClassTag[A]
   ): Unit =

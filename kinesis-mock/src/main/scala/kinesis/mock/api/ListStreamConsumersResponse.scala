@@ -29,14 +29,14 @@ final case class ListStreamConsumersResponse(
 )
 
 object ListStreamConsumersResponse:
-  def listStreamConsumersResponseCirceEncoder(implicit
+  def listStreamConsumersResponseCirceEncoder(using
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[ListStreamConsumersResponse] =
     circe.Encoder.forProduct2("Consumers", "NextToken")(x =>
       (x.consumers, x.nextToken)
     )
 
-  def listStreamConsumersResponseCirceDecoder(implicit
+  def listStreamConsumersResponseCirceDecoder(using
       DC: circe.Decoder[ConsumerSummary]
   ): circe.Decoder[ListStreamConsumersResponse] =
     x =>
@@ -47,19 +47,19 @@ object ListStreamConsumersResponse:
 
   given listStreamConsumersResponseEncoder
       : Encoder[ListStreamConsumersResponse] = Encoder.instance(
-    listStreamConsumersResponseCirceEncoder(
+    listStreamConsumersResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeEncoder
     ),
-    listStreamConsumersResponseCirceEncoder(
+    listStreamConsumersResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
   given listStreamConsumersResponseDecoder
       : Decoder[ListStreamConsumersResponse] = Decoder.instance(
-    listStreamConsumersResponseCirceDecoder(
+    listStreamConsumersResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeDecoder
     ),
-    listStreamConsumersResponseCirceDecoder(
+    listStreamConsumersResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )

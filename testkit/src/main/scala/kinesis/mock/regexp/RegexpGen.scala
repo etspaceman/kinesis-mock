@@ -4,5 +4,5 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object RegexpGen:
 
-  def from(str: String)(implicit ev: Arbitrary[Char]): Gen[String] =
+  def from(str: String)(using ev: Arbitrary[Char]): Gen[String] =
     ASTProcessor(GenParser.parse(str))

@@ -26,12 +26,12 @@ import kinesis.mock.models.StreamDescription
 final case class DescribeStreamResponse(streamDescription: StreamDescription)
 
 object DescribeStreamResponse:
-  def describeStreamResponseCirceEncoder(implicit
+  def describeStreamResponseCirceEncoder(using
       ESD: circe.Encoder[StreamDescription]
   ): circe.Encoder[DescribeStreamResponse] =
     circe.Encoder.forProduct1("StreamDescription")(_.streamDescription)
 
-  def describeStreamResponseCirceDecoder(implicit
+  def describeStreamResponseCirceDecoder(using
       DSD: circe.Decoder[StreamDescription]
   ): circe.Decoder[DescribeStreamResponse] =
     _.downField("StreamDescription")
@@ -39,19 +39,19 @@ object DescribeStreamResponse:
       .map(DescribeStreamResponse.apply)
   given describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
     Encoder.instance(
-      describeStreamResponseCirceEncoder(
+      describeStreamResponseCirceEncoder(using
         Encoder[StreamDescription].circeEncoder
       ),
-      describeStreamResponseCirceEncoder(
+      describeStreamResponseCirceEncoder(using
         Encoder[StreamDescription].circeCborEncoder
       )
     )
   given describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
     Decoder.instance(
-      describeStreamResponseCirceDecoder(
+      describeStreamResponseCirceDecoder(using
         Decoder[StreamDescription].circeDecoder
       ),
-      describeStreamResponseCirceDecoder(
+      describeStreamResponseCirceDecoder(using
         Decoder[StreamDescription].circeCborDecoder
       )
     )

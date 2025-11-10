@@ -16,7 +16,7 @@ case class RetryPolicy[M[_]](
 ):
   def show: String = toString
 
-  def followedBy(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
+  def followedBy(rp: RetryPolicy[M])(using M: Apply[M]): RetryPolicy[M] =
     RetryPolicy.withShow(
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
@@ -31,7 +31,7 @@ case class RetryPolicy[M[_]](
     * both of the schedules want to delay the next retry. The dual of the `meet`
     * operation.
     */
-  def join(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
+  def join(rp: RetryPolicy[M])(using M: Apply[M]): RetryPolicy[M] =
     RetryPolicy.withShow[M](
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
@@ -46,7 +46,7 @@ case class RetryPolicy[M[_]](
     * both of the schedules want to delay the next retry. The dual of the `join`
     * operation.
     */
-  def meet(rp: RetryPolicy[M])(implicit M: Apply[M]): RetryPolicy[M] =
+  def meet(rp: RetryPolicy[M])(using M: Apply[M]): RetryPolicy[M] =
     RetryPolicy.withShow[M](
       status =>
         M.map2(decideNextRetry(status), rp.decideNextRetry(status)) {
@@ -60,7 +60,7 @@ case class RetryPolicy[M[_]](
 
   def mapDelay(
       f: FiniteDuration => FiniteDuration
-  )(implicit M: Functor[M]): RetryPolicy[M] =
+  )(using M: Functor[M]): RetryPolicy[M] =
     RetryPolicy.withShow(
       status =>
         M.map(decideNextRetry(status)) {
@@ -72,7 +72,7 @@ case class RetryPolicy[M[_]](
 
   def flatMapDelay(
       f: FiniteDuration => M[FiniteDuration]
-  )(implicit M: Monad[M]): RetryPolicy[M] =
+  )(using M: Monad[M]): RetryPolicy[M] =
     RetryPolicy.withShow(
       status =>
         M.flatMap(decideNextRetry(status)) {
@@ -91,7 +91,7 @@ case class RetryPolicy[M[_]](
 object RetryPolicy:
   def lift[M[_]](
       f: RetryStatus => PolicyDecision
-  )(implicit
+  )(using
       M: Applicative[M]
   ): RetryPolicy[M] =
     RetryPolicy[M](decideNextRetry = retryStatus => M.pure(f(retryStatus)))
@@ -110,7 +110,7 @@ object RetryPolicy:
   ): RetryPolicy[M] =
     withShow(rs => Applicative[M].pure(decideNextRetry(rs)), pretty)
 
-  implicit def boundedSemilatticeForRetryPolicy[M[_]](implicit
+  implicit def boundedSemilatticeForRetryPolicy[M[_]](using
       M: Applicative[M]
   ): BoundedSemilattice[RetryPolicy[M]] =
     new BoundedSemilattice[RetryPolicy[M]]:

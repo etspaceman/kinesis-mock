@@ -5,7 +5,7 @@ import cats.effect.{Deferred, IO}
 import software.amazon.kinesis.coordinator.WorkerStateChangeListener
 import software.amazon.kinesis.coordinator.WorkerStateChangeListener.WorkerState
 
-final case class WorkerStartedListener(started: Deferred[IO, Unit])(implicit
+final case class WorkerStartedListener(started: Deferred[IO, Unit])(using
     R: IORuntime
 ) extends WorkerStateChangeListener:
   override def onWorkerStateChange(newState: WorkerState): Unit =

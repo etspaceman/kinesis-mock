@@ -33,7 +33,7 @@ final case class GetRecordsResponse(
 )
 
 object GetRecordsResponse:
-  def getRecordsResponseCirceEncoder(implicit
+  def getRecordsResponseCirceEncoder(using
       EKR: circe.Encoder[KinesisRecord]
   ): circe.Encoder[GetRecordsResponse] =
     circe.Encoder.forProduct4(
@@ -45,7 +45,7 @@ object GetRecordsResponse:
       (x.childShards, x.millisBehindLatest, x.nextShardIterator, x.records)
     )
 
-  def getRecordsResponseCirceDecoder(implicit
+  def getRecordsResponseCirceDecoder(using
       DKR: circe.Decoder[KinesisRecord]
   ): circe.Decoder[GetRecordsResponse] =
     x =>
@@ -65,14 +65,18 @@ object GetRecordsResponse:
 
   given getRecordsResponseEncoder: Encoder[GetRecordsResponse] =
     Encoder.instance(
-      getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeEncoder),
-      getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeCborEncoder)
+      getRecordsResponseCirceEncoder(using Encoder[KinesisRecord].circeEncoder),
+      getRecordsResponseCirceEncoder(using
+        Encoder[KinesisRecord].circeCborEncoder
+      )
     )
 
   given getRecordsResponseDecoder: Decoder[GetRecordsResponse] =
     Decoder.instance(
-      getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeDecoder),
-      getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeCborDecoder)
+      getRecordsResponseCirceDecoder(using Decoder[KinesisRecord].circeDecoder),
+      getRecordsResponseCirceDecoder(using
+        Decoder[KinesisRecord].circeCborDecoder
+      )
     )
 
   given getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>

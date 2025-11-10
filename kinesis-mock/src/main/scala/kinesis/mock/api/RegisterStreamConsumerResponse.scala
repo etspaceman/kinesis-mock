@@ -26,30 +26,30 @@ import kinesis.mock.models.*
 final case class RegisterStreamConsumerResponse(consumer: ConsumerSummary)
 
 object RegisterStreamConsumerResponse:
-  def registerStreamConsumerResponseCirceEncoder(implicit
+  def registerStreamConsumerResponseCirceEncoder(using
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[RegisterStreamConsumerResponse] =
     circe.Encoder.forProduct1("Consumer")(_.consumer)
-  def registerStreamConsumerResponseCirceDecoder(implicit
+  def registerStreamConsumerResponseCirceDecoder(using
       DC: circe.Decoder[ConsumerSummary]
   ): circe.Decoder[RegisterStreamConsumerResponse] = _.downField("Consumer")
     .as[ConsumerSummary]
     .map(RegisterStreamConsumerResponse.apply)
   given registerStreamConsumerResponseEncoder
       : Encoder[RegisterStreamConsumerResponse] = Encoder.instance(
-    registerStreamConsumerResponseCirceEncoder(
+    registerStreamConsumerResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeEncoder
     ),
-    registerStreamConsumerResponseCirceEncoder(
+    registerStreamConsumerResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
   given registerStreamConsumerResponseDecoder
       : Decoder[RegisterStreamConsumerResponse] = Decoder.instance(
-    registerStreamConsumerResponseCirceDecoder(
+    registerStreamConsumerResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeDecoder
     ),
-    registerStreamConsumerResponseCirceDecoder(
+    registerStreamConsumerResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )

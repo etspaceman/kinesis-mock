@@ -13,7 +13,7 @@ import software.amazon.kinesis.retrieval.KinesisClientRecord
 
 case class KCLRecordProcessor(
     resultsQueue: Queue[IO, KinesisClientRecord]
-)(implicit R: IORuntime)
+)(using R: IORuntime)
     extends ShardRecordProcessor:
   override def initialize(x: InitializationInput): Unit = ()
   override def processRecords(x: ProcessRecordsInput): Unit = x
@@ -36,7 +36,7 @@ case class KCLRecordProcessor(
 
 case class KCLRecordProcessorFactory(
     resultsQueue: Queue[IO, KinesisClientRecord]
-)(implicit R: IORuntime)
+)(using R: IORuntime)
     extends ShardRecordProcessorFactory:
   override def shardRecordProcessor(): ShardRecordProcessor =
     KCLRecordProcessor(resultsQueue)

@@ -39,7 +39,7 @@ object ConsumerSummary:
     consumer.consumerName,
     consumer.consumerStatus
   )
-  def consumerSummaryCirceEncoder(implicit
+  def consumerSummaryCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ConsumerSummary] = circe.Encoder.forProduct4(
     "ConsumerARN",
@@ -55,7 +55,7 @@ object ConsumerSummary:
     )
   )
 
-  def consumerSummaryCirceDecoder(implicit
+  def consumerSummaryCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ConsumerSummary] = x =>
     for
@@ -74,14 +74,14 @@ object ConsumerSummary:
 
   given consumerSummaryEncoder: Encoder[ConsumerSummary] =
     Encoder.instance(
-      consumerSummaryCirceEncoder(instantDoubleCirceEncoder),
-      consumerSummaryCirceEncoder(instantLongCirceEncoder)
+      consumerSummaryCirceEncoder(using instantDoubleCirceEncoder),
+      consumerSummaryCirceEncoder(using instantLongCirceEncoder)
     )
 
   given consumerSummaryDecoder: Decoder[ConsumerSummary] =
     Decoder.instance(
-      consumerSummaryCirceDecoder(instantDoubleCirceDecoder),
-      consumerSummaryCirceDecoder(instantLongCirceDecoder)
+      consumerSummaryCirceDecoder(using instantDoubleCirceDecoder),
+      consumerSummaryCirceDecoder(using instantLongCirceDecoder)
     )
 
   given consumerSummaryEq: Eq[ConsumerSummary] = (x, y) =>

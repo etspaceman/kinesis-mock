@@ -28,14 +28,14 @@ final case class DescribeStreamSummaryResponse(
 )
 
 object DescribeStreamSummaryResponse:
-  def describeStreamSummaryResponseCirceEncoder(implicit
+  def describeStreamSummaryResponseCirceEncoder(using
       ESDS: circe.Encoder[StreamDescriptionSummary]
   ): circe.Encoder[DescribeStreamSummaryResponse] =
     circe.Encoder.forProduct1("StreamDescriptionSummary")(
       _.streamDescriptionSummary
     )
 
-  def describeStreamSummaryResponseCirceDecoder(implicit
+  def describeStreamSummaryResponseCirceDecoder(using
       DSDS: circe.Decoder[StreamDescriptionSummary]
   ): circe.Decoder[DescribeStreamSummaryResponse] =
     _.downField("StreamDescriptionSummary")
@@ -44,19 +44,19 @@ object DescribeStreamSummaryResponse:
 
   given describeStreamSummaryResponseEncoder
       : Encoder[DescribeStreamSummaryResponse] = Encoder.instance(
-    describeStreamSummaryResponseCirceEncoder(
+    describeStreamSummaryResponseCirceEncoder(using
       Encoder[StreamDescriptionSummary].circeEncoder
     ),
-    describeStreamSummaryResponseCirceEncoder(
+    describeStreamSummaryResponseCirceEncoder(using
       Encoder[StreamDescriptionSummary].circeCborEncoder
     )
   )
   given describeStreamSummaryResponseDecoder
       : Decoder[DescribeStreamSummaryResponse] = Decoder.instance(
-    describeStreamSummaryResponseCirceDecoder(
+    describeStreamSummaryResponseCirceDecoder(using
       Decoder[StreamDescriptionSummary].circeDecoder
     ),
-    describeStreamSummaryResponseCirceDecoder(
+    describeStreamSummaryResponseCirceDecoder(using
       Decoder[StreamDescriptionSummary].circeCborDecoder
     )
   )

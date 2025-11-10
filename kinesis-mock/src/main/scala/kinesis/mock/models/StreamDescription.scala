@@ -73,7 +73,7 @@ object StreamDescription:
       streamData.streamStatus
     )
 
-  def streamDescriptionCirceEncoder(implicit
+  def streamDescriptionCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[StreamDescription] =
     circe.Encoder.forProduct11(
@@ -104,7 +104,7 @@ object StreamDescription:
       )
     )
 
-  def streamDescriptionCirceDecoder(implicit
+  def streamDescriptionCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[StreamDescription] = x =>
     for
@@ -143,14 +143,14 @@ object StreamDescription:
 
   given streamDescriptionEncoder: Encoder[StreamDescription] =
     Encoder.instance(
-      streamDescriptionCirceEncoder(instantDoubleCirceEncoder),
-      streamDescriptionCirceEncoder(instantLongCirceEncoder)
+      streamDescriptionCirceEncoder(using instantDoubleCirceEncoder),
+      streamDescriptionCirceEncoder(using instantLongCirceEncoder)
     )
 
   given streamDescriptionDecoder: Decoder[StreamDescription] =
     Decoder.instance(
-      streamDescriptionCirceDecoder(instantDoubleCirceDecoder),
-      streamDescriptionCirceDecoder(instantLongCirceDecoder)
+      streamDescriptionCirceDecoder(using instantDoubleCirceDecoder),
+      streamDescriptionCirceDecoder(using instantLongCirceDecoder)
     )
 
   given streamDescriptionEq: Eq[StreamDescription] =

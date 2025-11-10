@@ -17,7 +17,7 @@ class RetryingOnFailuresPartiallyApplied[A]:
       onFailure: (A, RetryDetails) => M[Unit]
   )(
       action: => M[A]
-  )(implicit
+  )(using
       M: Monad[M],
       S: Sleep[M]
   ): M[A] = M.tailRecM(RetryStatus.NoRetriesYet) { status =>
@@ -33,7 +33,7 @@ class RetryingOnSomeErrorsPartiallyApplied[A]:
       onError: (E, RetryDetails) => M[Unit]
   )(
       action: => M[A]
-  )(implicit
+  )(using
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[A] = ME.tailRecM(RetryStatus.NoRetriesYet) { status =>
@@ -54,7 +54,7 @@ class RetryingOnAllErrorsPartiallyApplied[A]:
       onError: (E, RetryDetails) => M[Unit]
   )(
       action: => M[A]
-  )(implicit
+  )(using
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[A] =
@@ -71,7 +71,7 @@ class RetryingOnFailuresAndSomeErrorsPartiallyApplied[A]:
       onError: (E, RetryDetails) => M[Unit]
   )(
       action: => M[A]
-  )(implicit
+  )(using
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[A] =
@@ -98,7 +98,7 @@ class RetryingOnFailuresAndAllErrorsPartiallyApplied[A]:
       onError: (E, RetryDetails) => M[Unit]
   )(
       action: => M[A]
-  )(implicit
+  )(using
       ME: MonadError[M, E],
       S: Sleep[M]
   ): M[A] =

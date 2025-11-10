@@ -46,7 +46,7 @@ object Consumer:
       ConsumerStatus.CREATING,
       streamArn
     )
-  def consumerCirceEncoder(implicit
+  def consumerCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[Consumer] = circe.Encoder.forProduct5(
     "ConsumerARN",
@@ -64,7 +64,7 @@ object Consumer:
     )
   )
 
-  def consumerCirceDecoder(implicit
+  def consumerCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[Consumer] = x =>
     for
@@ -84,13 +84,13 @@ object Consumer:
     )
 
   given consumerEncoder: Encoder[Consumer] = Encoder.instance(
-    consumerCirceEncoder(instantDoubleCirceEncoder),
-    consumerCirceEncoder(instantLongCirceEncoder)
+    consumerCirceEncoder(using instantDoubleCirceEncoder),
+    consumerCirceEncoder(using instantLongCirceEncoder)
   )
 
   given consumerDecoder: Decoder[Consumer] = Decoder.instance(
-    consumerCirceDecoder(instantDoubleCirceDecoder),
-    consumerCirceDecoder(instantLongCirceDecoder)
+    consumerCirceDecoder(using instantDoubleCirceDecoder),
+    consumerCirceDecoder(using instantLongCirceDecoder)
   )
 
   given consumerEq: Eq[Consumer] = (x, y) =>

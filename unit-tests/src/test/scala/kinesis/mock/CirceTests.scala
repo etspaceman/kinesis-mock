@@ -27,7 +27,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.*
 
 trait CirceTests extends munit.ScalaCheckSuite:
-  def identityLawTest[A: CEncoder: CDecoder: Arbitrary: Eq](implicit
+  def identityLawTest[A: CEncoder: CDecoder: Arbitrary: Eq](using
       loc: munit.Location,
       CT: ClassTag[A]
   ): Unit =

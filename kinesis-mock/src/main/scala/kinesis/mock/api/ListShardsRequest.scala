@@ -197,7 +197,7 @@ final case class ListShardsRequest(
     )
 
 object ListShardsRequest:
-  def listShardsRequestCirceEncoder(implicit
+  def listShardsRequestCirceEncoder(using
       ESF: circe.Encoder[ShardFilter],
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ListShardsRequest] =
@@ -220,7 +220,7 @@ object ListShardsRequest:
         x.streamArn
       )
     )
-  def listShardsRequestCirceDecoder(implicit
+  def listShardsRequestCirceDecoder(using
       DSF: circe.Decoder[ShardFilter],
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ListShardsRequest] = x =>
@@ -247,22 +247,22 @@ object ListShardsRequest:
     )
   given listShardsRequestEncoder: Encoder[ListShardsRequest] =
     Encoder.instance(
-      listShardsRequestCirceEncoder(
+      listShardsRequestCirceEncoder(using
         Encoder[ShardFilter].circeEncoder,
         instantBigDecimalCirceEncoder
       ),
-      listShardsRequestCirceEncoder(
+      listShardsRequestCirceEncoder(using
         Encoder[ShardFilter].circeCborEncoder,
         instantLongCirceEncoder
       )
     )
   given listShardsRequestDecoder: Decoder[ListShardsRequest] =
     Decoder.instance(
-      listShardsRequestCirceDecoder(
+      listShardsRequestCirceDecoder(using
         Decoder[ShardFilter].circeDecoder,
         instantBigDecimalCirceDecoder
       ),
-      listShardsRequestCirceDecoder(
+      listShardsRequestCirceDecoder(using
         Decoder[ShardFilter].circeCborDecoder,
         instantLongCirceDecoder
       )

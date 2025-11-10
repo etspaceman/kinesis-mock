@@ -22,7 +22,7 @@ import java.time.Instant
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe.*
+import kinesis.mock.instances.circe.{*, given}
 
 final case class KinesisRecord(
     approximateArrivalTimestamp: Instant,
@@ -38,7 +38,7 @@ final case class KinesisRecord(
     approximateArrivalTimestamp.toString.getBytes("UTF-8").length
 
 object KinesisRecord:
-  def kinesisRecordCirceEncoder(implicit
+  def kinesisRecordCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[KinesisRecord] =
     circe.Encoder.forProduct5(
@@ -57,7 +57,7 @@ object KinesisRecord:
       )
     )
 
-  def kinesisRecordCirceDecoder(implicit
+  def kinesisRecordCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[KinesisRecord] =
     x =>
@@ -78,13 +78,13 @@ object KinesisRecord:
       )
 
   given kinesisRecordEncoder: Encoder[KinesisRecord] = Encoder.instance(
-    kinesisRecordCirceEncoder(instantDoubleCirceEncoder),
-    kinesisRecordCirceEncoder(instantLongCirceEncoder)
+    kinesisRecordCirceEncoder(using instantDoubleCirceEncoder),
+    kinesisRecordCirceEncoder(using instantLongCirceEncoder)
   )
 
   given kinesisRecordDecoder: Decoder[KinesisRecord] = Decoder.instance(
-    kinesisRecordCirceDecoder(instantDoubleCirceDecoder),
-    kinesisRecordCirceDecoder(instantLongCirceDecoder)
+    kinesisRecordCirceDecoder(using instantDoubleCirceDecoder),
+    kinesisRecordCirceDecoder(using instantLongCirceDecoder)
   )
 
   given kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>

@@ -258,7 +258,7 @@ final case class GetShardIteratorRequest(
   }
 
 object GetShardIteratorRequest:
-  def getShardIteratorRequestCirceEncoder(implicit
+  def getShardIteratorRequestCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[GetShardIteratorRequest] =
     circe.Encoder.forProduct6(
@@ -279,7 +279,7 @@ object GetShardIteratorRequest:
       )
     )
 
-  def getShardIteratorRequestCirceDecoder(implicit
+  def getShardIteratorRequestCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[GetShardIteratorRequest] =
     x =>
@@ -305,14 +305,14 @@ object GetShardIteratorRequest:
 
   given getShardIteratorRequestEncoder: Encoder[GetShardIteratorRequest] =
     Encoder.instance(
-      getShardIteratorRequestCirceEncoder(instantBigDecimalCirceEncoder),
-      getShardIteratorRequestCirceEncoder(instantLongCirceEncoder)
+      getShardIteratorRequestCirceEncoder(using instantBigDecimalCirceEncoder),
+      getShardIteratorRequestCirceEncoder(using instantLongCirceEncoder)
     )
 
   given getShardIteratorRequestDecoder: Decoder[GetShardIteratorRequest] =
     Decoder.instance(
-      getShardIteratorRequestCirceDecoder(instantBigDecimalCirceDecoder),
-      getShardIteratorRequestCirceDecoder(instantLongCirceDecoder)
+      getShardIteratorRequestCirceDecoder(using instantBigDecimalCirceDecoder),
+      getShardIteratorRequestCirceDecoder(using instantLongCirceDecoder)
     )
 
   given getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =

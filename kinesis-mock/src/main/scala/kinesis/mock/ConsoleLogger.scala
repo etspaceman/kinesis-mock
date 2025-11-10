@@ -13,7 +13,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 final class ConsoleLogger[F[_]](
     logLevel: ConsoleLogger.LogLevel,
     loggerName: String
-)(implicit
+)(using
     C: Console[F],
     F: Async[F]
 ) extends SelfAwareStructuredLogger[F]:

@@ -460,7 +460,7 @@ object KinesisMockRoutes:
   def handleDecodeError(
       err: DecodeFailure,
       responseHeaders: Vector[Header.ToRaw]
-  )(implicit
+  )(using
       entityEncoder: EntityEncoder[IO, ErrorResponse]
   ): IO[HResponse[IO]] =
     BadRequest(
@@ -471,7 +471,7 @@ object KinesisMockRoutes:
   def handleKinesisMockError(
       err: KinesisMockException,
       responseHeaders: Vector[Header.ToRaw]
-  )(implicit
+  )(using
       entityEncoder: EntityEncoder[IO, ErrorResponse]
   ): IO[HResponse[IO]] =
     BadRequest(
@@ -487,7 +487,7 @@ object KinesisMockRoutes:
       loggingContext: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  )(implicit
+  )(using
       errEE: EntityEncoder[IO, ErrorResponse],
       descLimitsEE: EntityEncoder[IO, DescribeLimitsResponse],
       descStreamEE: EntityEncoder[IO, DescribeStreamResponse],

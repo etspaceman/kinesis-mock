@@ -39,7 +39,7 @@ final case class CacheSemaphores private (
 )
 
 object CacheSemaphores:
-  def create(implicit C: Concurrent[IO]): IO[CacheSemaphores] = for
+  def create(using C: Concurrent[IO]): IO[CacheSemaphores] = for
     addTagsToStream <- Semaphore[IO](5)
     removeTagsFromStream <- Semaphore[IO](5)
     createStream <- Semaphore[IO](5)

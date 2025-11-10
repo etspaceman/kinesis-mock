@@ -8,7 +8,7 @@ object ASTProcessor:
   // TODO negation which doesn't use `suchThat`?
   private def negated(
       re: Negated
-  )(implicit ev: Arbitrary[Char]): Gen[String] =
+  )(using ev: Arbitrary[Char]): Gen[String] =
 
     val arbitraryString: Gen[String] =
       Arbitrary.arbitrary[Char].map(_.toString)
@@ -48,7 +48,7 @@ object ASTProcessor:
         sys.error("invalid negated term")
 
   // TODO tailrec optimisation
-  def apply(re: RegularExpression)(implicit ev: Arbitrary[Char]): Gen[String] =
+  def apply(re: RegularExpression)(using ev: Arbitrary[Char]): Gen[String] =
     re match
       case Literal(str) =>
         literal(str)

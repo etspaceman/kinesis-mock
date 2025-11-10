@@ -64,24 +64,24 @@ object circe:
       )
     )
 
-  given timeUnitCirceEncoder: Encoder[TimeUnit] =
+  given Encoder[TimeUnit] =
     Encoder[String].contramap(_.name())
-  given timeUnitCirceDecoder: Decoder[TimeUnit] =
+  given Decoder[TimeUnit] =
     Decoder[String].emapTry(x => Try(TimeUnit.valueOf(x)))
 
-  given finiteDurationCirceEncoder: Encoder[FiniteDuration] =
+  given Encoder[FiniteDuration] =
     x => JsonObject("length" -> x.length.asJson, "unit" -> x.unit.asJson).asJson
 
-  given finiteDurationCirceDecoder: Decoder[FiniteDuration] = x =>
+  given Decoder[FiniteDuration] = x =>
     for
       length <- x.downField("length").as[Long]
       unit <- x.downField("unit").as[TimeUnit]
     yield FiniteDuration(length, unit)
 
-  given arrayBytesCirceEncoder: Encoder[Array[Byte]] =
+  given Encoder[Array[Byte]] =
     Encoder[String].contramap(str =>
       new String(Base64.getEncoder.encode(str), "UTF-8")
     )
 
-  given arrayBytesCirceDecoder: Decoder[Array[Byte]] =
+  given Decoder[Array[Byte]] =
     Decoder[String].map(str => Base64.getDecoder.decode(str))

@@ -8,7 +8,7 @@ trait Sleep[M[_]]:
   def sleep(delay: FiniteDuration): M[Unit]
 
 object Sleep:
-  def apply[M[_]](implicit sleep: Sleep[M]): Sleep[M] = sleep
+  def apply[M[_]](using sleep: Sleep[M]): Sleep[M] = sleep
 
-  implicit def sleepUsingTemporal[F[_]](implicit t: Temporal[F]): Sleep[F] =
+  implicit def sleepUsingTemporal[F[_]](using t: Temporal[F]): Sleep[F] =
     (delay: FiniteDuration) => t.sleep(delay)

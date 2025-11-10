@@ -30,7 +30,7 @@ object JavaFutureSyntax:
       IO.fromCompletableFuture(IO(future))
 
   final class ListenableFutureOps[A](future: => ListenableFuture[A]):
-    def asScala(implicit e: Executor): Future[A] =
+    def asScala(using e: Executor): Future[A] =
       val p = Promise[A]()
       Futures.addCallback(
         future,
@@ -45,5 +45,5 @@ object JavaFutureSyntax:
       )
       p.future
 
-    def toIO(implicit E: Executor): IO[A] =
+    def toIO(using E: Executor): IO[A] =
       IO.fromFuture(IO(asScala))

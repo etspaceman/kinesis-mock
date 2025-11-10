@@ -31,14 +31,14 @@ final case class ShardFilter(
 )
 
 object ShardFilter:
-  def shardFilterCirceEncoder(implicit
+  def shardFilterCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ShardFilter] =
     circe.Encoder.forProduct3("ShardId", "Timestamp", "Type")(x =>
       (x.shardId, x.timestamp, x.`type`)
     )
 
-  def shardFilterCirceDecoder(implicit
+  def shardFilterCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ShardFilter] = x =>
     for
@@ -48,12 +48,12 @@ object ShardFilter:
     yield ShardFilter(shardId, timestamp, `type`)
 
   given shardFilterEncoder: Encoder[ShardFilter] = Encoder.instance(
-    shardFilterCirceEncoder(instantBigDecimalCirceEncoder),
-    shardFilterCirceEncoder(instantLongCirceEncoder)
+    shardFilterCirceEncoder(using instantBigDecimalCirceEncoder),
+    shardFilterCirceEncoder(using instantLongCirceEncoder)
   )
   given shardFilterDecoder: Decoder[ShardFilter] = Decoder.instance(
-    shardFilterCirceDecoder(instantBigDecimalCirceDecoder),
-    shardFilterCirceDecoder(instantLongCirceDecoder)
+    shardFilterCirceDecoder(using instantBigDecimalCirceDecoder),
+    shardFilterCirceDecoder(using instantLongCirceDecoder)
   )
 
   given shardFilterEq: Eq[ShardFilter] = (x, y) =>
