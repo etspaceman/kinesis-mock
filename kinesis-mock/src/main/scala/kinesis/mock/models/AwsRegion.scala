@@ -60,7 +60,7 @@ object AwsRegion
   case object US_ISOB_EAST_1 extends AwsRegion("us-isob-east-1", "aws-iso-b")
   case object US_ISO_WEST_1 extends AwsRegion("us-iso-west-1", "aws-iso")
 
-  given awsRegionCirceKeyEncoder: KeyEncoder[AwsRegion] =
+  given KeyEncoder[AwsRegion] =
     KeyEncoder.instance(_.entryName)
-  given awsRegionCirceKeyDecoder: KeyDecoder[AwsRegion] =
+  given KeyDecoder[AwsRegion] =
     KeyDecoder.instance(AwsRegion.withNameOption)

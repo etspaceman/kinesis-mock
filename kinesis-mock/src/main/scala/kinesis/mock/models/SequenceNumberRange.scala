@@ -48,5 +48,5 @@ object SequenceNumberRange:
   given sequenceNumberRangeDecoder: Decoder[SequenceNumberRange] =
     Decoder.derive
 
-  given sequenceNumberRangeEq: Eq[SequenceNumberRange] =
+  given Eq[SequenceNumberRange] =
     Eq.fromUniversalEquals

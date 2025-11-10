@@ -99,5 +99,5 @@ object StopStreamEncryptionRequest:
   given stopStreamEncryptionRequestDecoder
       : Decoder[StopStreamEncryptionRequest] = Decoder.derive
 
-  given stopStreamEncryptionRequestEq: Eq[StopStreamEncryptionRequest] =
+  given Eq[StopStreamEncryptionRequest] =
     Eq.fromUniversalEquals

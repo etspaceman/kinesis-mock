@@ -10,6 +10,7 @@ import java.util.Date
 import cats.effect.SyncIO
 import cats.effect.std.Queue
 import cats.effect.{Deferred, IO, Resource}
+import org.scalacheck.Arbitrary
 import retry.*
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
@@ -191,7 +192,8 @@ class KCLTests extends AwsFunctionalTests:
       PutRecordsRequest
         .builder()
         .records(
-          putRecordsRequestEntryArb.arbitrary
+          Arbitrary
+            .arbitrary[kinesis.mock.api.PutRecordsRequestEntry]
             .take(5)
             .toVector
             .map(x =>

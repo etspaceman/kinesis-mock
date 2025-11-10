@@ -199,5 +199,5 @@ object MergeShardsRequest:
     Encoder.derive
   given mergeShardsRequestDecoder: Decoder[MergeShardsRequest] =
     Decoder.derive
-  given mergeShardsRequestEq: Eq[MergeShardsRequest] =
+  given Eq[MergeShardsRequest] =
     Eq.fromUniversalEquals

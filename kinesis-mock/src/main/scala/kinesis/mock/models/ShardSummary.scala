@@ -76,4 +76,4 @@ object ShardSummary:
 
   given shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
   given shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
-  given shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
+  given Eq[ShardSummary] = Eq.fromUniversalEquals

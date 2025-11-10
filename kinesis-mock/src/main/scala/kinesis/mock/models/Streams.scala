@@ -79,9 +79,9 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]):
 
 object Streams:
   val empty: Streams = Streams(SortedMap.empty)
-  given streamsCirceEncoder: Encoder[Streams] =
+  given Encoder[Streams] =
     Encoder.forProduct1("streams")(x => x.streams)
-  given streamsCirceDecoder: Decoder[Streams] = x =>
+  given Decoder[Streams] = x =>
     for streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
     yield Streams(streams)
-  given streamsEq: Eq[Streams] = (x, y) => x.streams.toMap === y.streams.toMap
+  given Eq[Streams] = (x, y) => x.streams.toMap === y.streams.toMap

@@ -99,5 +99,5 @@ object RegisterStreamConsumerRequest:
       : Encoder[RegisterStreamConsumerRequest] = Encoder.derive
   given registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
-  given registerStreamConsumerRequestEq: Eq[RegisterStreamConsumerRequest] =
+  given Eq[RegisterStreamConsumerRequest] =
     (x, y) => x.consumerName === y.consumerName && x.streamArn === y.streamArn

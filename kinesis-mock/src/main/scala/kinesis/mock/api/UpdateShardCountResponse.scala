@@ -51,5 +51,5 @@ object UpdateShardCountResponse:
     Encoder.derive
   given updateShardCountResponseDecoder: Decoder[UpdateShardCountResponse] =
     Decoder.derive
-  given updateShardCountResponseEq: Eq[UpdateShardCountResponse] =
+  given Eq[UpdateShardCountResponse] =
     Eq.fromUniversalEquals

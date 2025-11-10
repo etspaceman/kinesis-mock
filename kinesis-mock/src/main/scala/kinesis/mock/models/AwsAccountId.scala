@@ -24,8 +24,8 @@ final case class AwsAccountId(accountId: String):
   override def toString: String = accountId
 
 object AwsAccountId:
-  given awsAccountIdCirceEncoder: Encoder[AwsAccountId] =
+  given Encoder[AwsAccountId] =
     Encoder[String].contramap(_.accountId)
-  given awsAccountIdConfigDecoder: ConfigDecoder[String, AwsAccountId] =
+  given ConfigDecoder[String, AwsAccountId] =
     ConfigDecoder[String].map(AwsAccountId.apply)
-  given awsAccountIdEq: Eq[AwsAccountId] = Eq.fromUniversalEquals
+  given Eq[AwsAccountId] = Eq.fromUniversalEquals

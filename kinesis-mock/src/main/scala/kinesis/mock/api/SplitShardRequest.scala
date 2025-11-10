@@ -194,5 +194,5 @@ object SplitShardRequest:
   given splitShardRequestDecoder: Decoder[SplitShardRequest] =
     Decoder.derive
 
-  given splitShardRequestEq: Eq[SplitShardRequest] =
+  given Eq[SplitShardRequest] =
     Eq.fromUniversalEquals

@@ -86,5 +86,5 @@ object UpdateStreamModeRequest:
   given updateStreamModeRequestDecoder: Decoder[UpdateStreamModeRequest] =
     Decoder.derive
 
-  given updateStreamModeRequestEq: Eq[UpdateStreamModeRequest] =
+  given Eq[UpdateStreamModeRequest] =
     Eq.fromUniversalEquals

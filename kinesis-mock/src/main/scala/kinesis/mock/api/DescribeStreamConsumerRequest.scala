@@ -75,7 +75,7 @@ object DescribeStreamConsumerRequest:
   given describeStreamConsumerRequestDecoder
       : Decoder[DescribeStreamConsumerRequest] =
     Decoder.derive
-  given describeStreamConsumerEq: Eq[DescribeStreamConsumerRequest] =
+  given Eq[DescribeStreamConsumerRequest] =
     (x, y) =>
       x.consumerArn === y.consumerArn &&
         x.consumerName === y.consumerName &&

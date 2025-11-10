@@ -43,5 +43,5 @@ object ListShardsResponse:
     Encoder.derive
   given listShardsResponseDecoder: Decoder[ListShardsResponse] =
     Decoder.derive
-  given listShardsResponseEq: Eq[ListShardsResponse] =
+  given Eq[ListShardsResponse] =
     (x, y) => x.nextToken == y.nextToken && x.shards === y.shards

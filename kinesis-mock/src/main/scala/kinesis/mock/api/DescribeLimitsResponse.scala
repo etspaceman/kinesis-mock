@@ -90,5 +90,5 @@ object DescribeLimitsResponse:
     Encoder.derive
   given describeLimitsResponseDecoder: Decoder[DescribeLimitsResponse] =
     Decoder.derive
-  given describeLimitsResponseEq: Eq[DescribeLimitsResponse] =
+  given Eq[DescribeLimitsResponse] =
     Eq.fromUniversalEquals

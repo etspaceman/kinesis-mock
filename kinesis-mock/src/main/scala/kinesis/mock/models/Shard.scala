@@ -74,7 +74,7 @@ object Shard:
           ) -> Vector.empty
         }
     )
-  given shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
+  given Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
   def shardCirceEncoder(using
@@ -137,17 +137,17 @@ object Shard:
     shardCirceDecoder(using instantLongCirceDecoder)
   )
 
-  given shardCirceKeyEncoder: circe.KeyEncoder[Shard] =
+  given circe.KeyEncoder[Shard] =
     circe
       .KeyEncoder[String]
       .contramap(x => shardCirceEncoder.apply(x).asJson.noSpaces)
 
-  given shardCirceKeyDecoder: circe.KeyDecoder[Shard] =
+  given circe.KeyDecoder[Shard] =
     circe.KeyDecoder.instance(x =>
       parse(x).flatMap(_.as[Shard](shardCirceDecoder)).toOption
     )
 
-  given shardEq: Eq[Shard] = (x, y) =>
+  given Eq[Shard] = (x, y) =>
     x.adjacentParentShardId == y.adjacentParentShardId &&
       x.closedTimestamp.map(_.getEpochSecond()) == y.closedTimestamp.map(
         _.getEpochSecond()

@@ -60,5 +60,5 @@ object PutRecordsResultEntry:
   given putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
     Decoder.derive
 
-  given putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
+  given Eq[PutRecordsResultEntry] =
     Eq.fromUniversalEquals

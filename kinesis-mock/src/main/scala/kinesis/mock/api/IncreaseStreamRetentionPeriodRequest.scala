@@ -95,5 +95,4 @@ object IncreaseStreamRetentionPeriodRequest:
       : Encoder[IncreaseStreamRetentionPeriodRequest] = Encoder.derive
   given increaseStreamRetentionRequestDecoder
       : Decoder[IncreaseStreamRetentionPeriodRequest] = Decoder.derive
-  given increaseStreamRetentionRequestEq
-      : Eq[IncreaseStreamRetentionPeriodRequest] = Eq.fromUniversalEquals
+  given Eq[IncreaseStreamRetentionPeriodRequest] = Eq.fromUniversalEquals

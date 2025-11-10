@@ -33,4 +33,4 @@ object TagListEntry:
 
   given tagListEntryEncoder: Encoder[TagListEntry] = Encoder.derive
   given tagListEntryDecoder: Decoder[TagListEntry] = Decoder.derive
-  given tagListEntryEq: Eq[TagListEntry] = Eq.fromUniversalEquals
+  given Eq[TagListEntry] = Eq.fromUniversalEquals

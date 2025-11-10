@@ -108,5 +108,5 @@ object AddTagsToStreamRequest:
     Encoder.derive
   given addTagsToStreamRequestDecoder: Decoder[AddTagsToStreamRequest] =
     Decoder.derive
-  given addTagsToStreamRequestEq: Eq[AddTagsToStreamRequest] =
+  given Eq[AddTagsToStreamRequest] =
     Eq.fromUniversalEquals

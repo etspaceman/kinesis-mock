@@ -97,5 +97,5 @@ object DecreaseStreamRetentionPeriodRequest:
   given decreaseStreamRetentionPeriodRequestDecoder
       : Decoder[DecreaseStreamRetentionPeriodRequest] =
     Decoder.derive
-  given decreaseStreamRetentionEq: Eq[DecreaseStreamRetentionPeriodRequest] =
+  given Eq[DecreaseStreamRetentionPeriodRequest] =
     Eq.fromUniversalEquals

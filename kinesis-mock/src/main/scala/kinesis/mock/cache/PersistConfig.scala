@@ -45,7 +45,7 @@ final case class PersistConfig(
   def osFile: Path = osPath / fileName
 
 object PersistConfig:
-  given persistConfigCirceEncoder: Encoder[PersistConfig] =
+  given Encoder[PersistConfig] =
     Encoder.forProduct5(
       "loadIfExists",
       "shouldPersist",

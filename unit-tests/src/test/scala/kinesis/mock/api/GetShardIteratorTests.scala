@@ -22,6 +22,7 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.effect.{IO, Ref}
+import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
@@ -39,7 +40,8 @@ class GetShardIteratorTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -93,7 +95,8 @@ class GetShardIteratorTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -149,8 +152,12 @@ class GetShardIteratorTests
         shard = streams.streams(streamArn).shards.head._1
         startingInstant = Instant.parse("2021-01-01T00:00:00.00Z")
         records =
-          kinesisRecordArbitrary.arbitrary.take(50).toVector.zipWithIndex.map {
-            case (record, index) =>
+          Arbitrary
+            .arbitrary[KinesisRecord]
+            .take(50)
+            .toVector
+            .zipWithIndex
+            .map { case (record, index) =>
               val newTimestamp = startingInstant.plusSeconds(index.toLong)
               record.copy(
                 approximateArrivalTimestamp = newTimestamp,
@@ -162,7 +169,7 @@ class GetShardIteratorTests
                   Some(newTimestamp)
                 )
               )
-          }
+            }
         withRecords = streams.findAndUpdateStream(streamArn) { s =>
           s.copy(
             shards = SortedMap(s.shards.head._1 -> records),
@@ -208,7 +215,8 @@ class GetShardIteratorTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -264,7 +272,8 @@ class GetShardIteratorTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -319,7 +328,8 @@ class GetShardIteratorTests
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
-          records = kinesisRecordArbitrary.arbitrary
+          records = Arbitrary
+            .arbitrary[KinesisRecord]
             .take(50)
             .toVector
             .zipWithIndex
@@ -377,7 +387,8 @@ class GetShardIteratorTests
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           shard = streams.streams(streamArn).shards.head._1
-          records = kinesisRecordArbitrary.arbitrary
+          records = Arbitrary
+            .arbitrary[KinesisRecord]
             .take(50)
             .toVector
             .zipWithIndex

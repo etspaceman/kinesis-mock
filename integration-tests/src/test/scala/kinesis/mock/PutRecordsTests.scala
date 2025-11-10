@@ -4,6 +4,7 @@ import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
 import cats.syntax.all.*
+import org.scalacheck.Arbitrary
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.kinesis.model.*
 
@@ -21,7 +22,8 @@ class PutRecordsTests extends AwsFunctionalTests:
           PutRecordsRequest
             .builder()
             .records(
-              putRecordsRequestEntryArb.arbitrary
+              Arbitrary
+                .arbitrary[kinesis.mock.api.PutRecordsRequestEntry]
                 .take(5)
                 .toVector
                 .map(x =>

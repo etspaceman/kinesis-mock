@@ -131,7 +131,7 @@ object StreamDescriptionSummary:
       streamDescriptionSummaryCirceDecoder(using instantLongCirceDecoder)
     )
 
-  given streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
+  given Eq[StreamDescriptionSummary] =
     (x, y) =>
       x.consumerCount == y.consumerCount &&
         x.encryptionType == y.encryptionType &&

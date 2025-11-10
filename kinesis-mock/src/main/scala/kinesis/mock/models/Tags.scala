@@ -34,12 +34,12 @@ object Tags:
   def fromTagList(tagList: TagList): Tags = Tags(
     SortedMap.from(tagList.tags.map(x => (x.key, x.value)))
   )
-  given tagsCirceEncoder: Encoder[Tags] =
+  given Encoder[Tags] =
     Encoder[SortedMap[String, String]].contramap(_.tags)
-  given tagsCirceDecoder: Decoder[Tags] =
+  given Decoder[Tags] =
     Decoder[SortedMap[String, String]].map(Tags.apply)
-  given tagsEq: Eq[Tags] = Eq.fromUniversalEquals
-  given tagsMonoid: Monoid[Tags] = new Monoid[Tags]:
+  given Eq[Tags] = Eq.fromUniversalEquals
+  given Monoid[Tags] = new Monoid[Tags]:
     override def combine(x: Tags, y: Tags): Tags = Tags(x.tags ++ y.tags)
 
     override def empty: Tags = Tags.empty

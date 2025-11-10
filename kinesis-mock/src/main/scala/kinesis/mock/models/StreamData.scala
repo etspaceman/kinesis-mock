@@ -130,7 +130,7 @@ object StreamData:
       shardCountUpdates
     )
 
-  given streamDataEq: Eq[StreamData] = (x, y) =>
+  given Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
       x.encryptionType === y.encryptionType &&
       x.enhancedMonitoring === y.enhancedMonitoring &&

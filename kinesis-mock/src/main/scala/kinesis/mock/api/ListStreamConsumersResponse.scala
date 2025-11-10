@@ -63,5 +63,5 @@ object ListStreamConsumersResponse:
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  given listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
+  given Eq[ListStreamConsumersResponse] =
     (x, y) => x.consumers === y.consumers && x.nextToken == y.nextToken

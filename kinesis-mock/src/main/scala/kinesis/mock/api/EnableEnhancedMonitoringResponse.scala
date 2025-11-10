@@ -67,5 +67,4 @@ object EnableEnhancedMonitoringResponse:
       : Encoder[EnableEnhancedMonitoringResponse] = Encoder.derive
   given enableEnhancedMonitoringResponseDecoder
       : Decoder[EnableEnhancedMonitoringResponse] = Decoder.derive
-  given enableEnhancedMonitoringResponseEq
-      : Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
+  given Eq[EnableEnhancedMonitoringResponse] = Eq.fromUniversalEquals

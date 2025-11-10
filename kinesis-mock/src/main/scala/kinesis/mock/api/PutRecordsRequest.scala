@@ -173,7 +173,7 @@ object PutRecordsRequest:
   given putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
     Decoder.derive
 
-  given putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
+  given Eq[PutRecordsRequest] = (x, y) =>
     x.records === y.records &&
       x.streamName == y.streamName &&
       x.streamArn == y.streamArn

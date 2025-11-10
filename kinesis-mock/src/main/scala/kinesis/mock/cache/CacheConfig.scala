@@ -183,7 +183,7 @@ object CacheConfig:
         )
   )
 
-  given cacheConfigCirceEncoder: Encoder[CacheConfig] =
+  given Encoder[CacheConfig] =
     Encoder.forProduct16(
       "initializeStreams",
       "createStreamDuration",

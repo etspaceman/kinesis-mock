@@ -105,5 +105,5 @@ object DeleteStreamRequest:
     Encoder.derive
   given deleteStreamRequestDecoder: Decoder[DeleteStreamRequest] =
     Decoder.derive
-  given deleteStreamRequestEq: Eq[DeleteStreamRequest] =
+  given Eq[DeleteStreamRequest] =
     Eq.fromUniversalEquals

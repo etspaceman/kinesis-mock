@@ -19,7 +19,7 @@ package kinesis.mock
 final case class ErrorResponse(__type: String, message: String)
 
 object ErrorResponse:
-  given errorResponseCirceEncoder: io.circe.Encoder[ErrorResponse] =
+  given io.circe.Encoder[ErrorResponse] =
     io.circe.Encoder.forProduct2("__type", "message")(x =>
       (x.__type, x.message)
     )

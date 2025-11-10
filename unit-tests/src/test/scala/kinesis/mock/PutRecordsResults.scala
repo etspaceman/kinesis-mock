@@ -36,5 +36,5 @@ object PutRecordResults:
   def fromPutRecordRequest(x: PutRecordRequest): PutRecordResults =
     PutRecordResults(x.data, x.partitionKey)
 
-  given putRecordResultsEq: Eq[PutRecordResults] = (x, y) =>
+  given Eq[PutRecordResults] = (x, y) =>
     x.data.sameElements(y.data) && x.partitionKey == y.partitionKey

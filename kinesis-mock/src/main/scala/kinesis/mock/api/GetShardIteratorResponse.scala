@@ -37,5 +37,5 @@ object GetShardIteratorResponse:
     Encoder.derive
   given getShardIteratorResponseDecoder: Decoder[GetShardIteratorResponse] =
     Decoder.derive
-  given getShardIteratorResponseEq: Eq[GetShardIteratorResponse] =
+  given Eq[GetShardIteratorResponse] =
     Eq.fromUniversalEquals

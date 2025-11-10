@@ -142,8 +142,8 @@ object SequenceNumber:
       ).toString()
     )
 
-  given sequenceNumberCirceEncoder: Encoder[SequenceNumber] =
+  given Encoder[SequenceNumber] =
     Encoder[String].contramap(_.value)
-  given sequenceNumberCirceDecoder: Decoder[SequenceNumber] =
+  given Decoder[SequenceNumber] =
     Decoder[String].map(SequenceNumber.apply)
-  given sequenceNumberEq: Eq[SequenceNumber] = Eq.fromUniversalEquals
+  given Eq[SequenceNumber] = Eq.fromUniversalEquals

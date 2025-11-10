@@ -120,7 +120,7 @@ object DeregisterStreamConsumerRequest:
   given deregisterStreamConsumerRequestDecoder
       : Decoder[DeregisterStreamConsumerRequest] =
     Decoder.derive
-  given deregisterStreamConsumerEq: Eq[DeregisterStreamConsumerRequest] =
+  given Eq[DeregisterStreamConsumerRequest] =
     (x, y) =>
       x.consumerArn === y.consumerArn &&
         x.consumerName === y.consumerName &&

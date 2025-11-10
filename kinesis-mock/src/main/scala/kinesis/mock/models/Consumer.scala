@@ -83,17 +83,17 @@ object Consumer:
       streamArn
     )
 
-  given consumerEncoder: Encoder[Consumer] = Encoder.instance(
+  given Encoder[Consumer] = Encoder.instance(
     consumerCirceEncoder(using instantDoubleCirceEncoder),
     consumerCirceEncoder(using instantLongCirceEncoder)
   )
 
-  given consumerDecoder: Decoder[Consumer] = Decoder.instance(
+  given Decoder[Consumer] = Decoder.instance(
     consumerCirceDecoder(using instantDoubleCirceDecoder),
     consumerCirceDecoder(using instantLongCirceDecoder)
   )
 
-  given consumerEq: Eq[Consumer] = (x, y) =>
+  given Eq[Consumer] = (x, y) =>
     x.consumerArn === y.consumerArn &&
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&

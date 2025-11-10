@@ -21,6 +21,7 @@ import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
 import cats.syntax.all.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.instances.arbitrary.given
@@ -39,8 +40,12 @@ class GetRecordsTests
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
         records =
-          kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
-            case (record, index) =>
+          Arbitrary
+            .arbitrary[KinesisRecord]
+            .take(100)
+            .toVector
+            .zipWithIndex
+            .map { case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
                   shard.createdAtTimestamp,
@@ -50,7 +55,7 @@ class GetRecordsTests
                   Some(record.approximateArrivalTimestamp)
                 )
               )
-          }
+            }
         withRecords = streams.findAndUpdateStream(streamArn) { s =>
           s.copy(
             shards = SortedMap(s.shards.head._1 -> records),
@@ -91,7 +96,8 @@ class GetRecordsTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex
@@ -146,7 +152,8 @@ class GetRecordsTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex
@@ -225,7 +232,8 @@ class GetRecordsTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -290,7 +298,8 @@ class GetRecordsTests
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex

@@ -56,7 +56,7 @@ object ShardFilter:
     shardFilterCirceDecoder(using instantLongCirceDecoder)
   )
 
-  given shardFilterEq: Eq[ShardFilter] = (x, y) =>
+  given Eq[ShardFilter] = (x, y) =>
     x.shardId == y.shardId &&
       x.timestamp.map(_.getEpochSecond()) == y.timestamp.map(
         _.getEpochSecond()

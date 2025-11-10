@@ -33,5 +33,5 @@ object ShardLevelMetrics:
     Encoder.derive
   given shardLevelMetricsDecoder: Decoder[ShardLevelMetrics] =
     Decoder.derive
-  given shardLevelMetricsEq: Eq[ShardLevelMetrics] =
+  given Eq[ShardLevelMetrics] =
     Eq.fromUniversalEquals

@@ -14,7 +14,7 @@ import kinesis.mock.syntax.javaFuture.*
 import kinesis.mock.syntax.scalacheck.*
 
 class KPLTests extends AwsFunctionalTests:
-  given E: ExecutionContextExecutor = ExecutionContext.global
+  given ExecutionContextExecutor = ExecutionContext.global
 
   val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFunFixture(
     resource.flatMap { resources =>

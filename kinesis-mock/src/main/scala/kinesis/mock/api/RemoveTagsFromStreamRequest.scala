@@ -89,5 +89,5 @@ object RemoveTagsFromStreamRequest:
       : Encoder[RemoveTagsFromStreamRequest] = Encoder.derive
   given removeTagsFromStreamRequestDecoder
       : Decoder[RemoveTagsFromStreamRequest] = Decoder.derive
-  given removeTagsFromStreamRequestEq: Eq[RemoveTagsFromStreamRequest] =
+  given Eq[RemoveTagsFromStreamRequest] =
     Eq.fromUniversalEquals

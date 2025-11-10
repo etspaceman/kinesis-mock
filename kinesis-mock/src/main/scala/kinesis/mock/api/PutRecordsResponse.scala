@@ -49,5 +49,5 @@ object PutRecordsResponse:
   given putRecordsResponseDecoder: Decoder[PutRecordsResponse] =
     Decoder.derive
 
-  given putRecordsResponseEq: Eq[PutRecordsResponse] =
+  given Eq[PutRecordsResponse] =
     Eq.fromUniversalEquals

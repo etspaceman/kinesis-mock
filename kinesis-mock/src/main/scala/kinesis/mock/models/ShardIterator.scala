@@ -110,10 +110,10 @@ object ShardIterator:
 
     ShardIterator(Base64.getEncoder.encodeToString(encryptedBytes))
 
-  given shardIteratorCirceEncoder: Encoder[ShardIterator] =
+  given Encoder[ShardIterator] =
     Encoder[String].contramap(_.value)
 
-  given shardIteratorCirceDecoder: Decoder[ShardIterator] =
+  given Decoder[ShardIterator] =
     Decoder[String].map(ShardIterator.apply)
 
-  given shardIteratorEq: Eq[ShardIterator] = Eq.fromUniversalEquals
+  given Eq[ShardIterator] = Eq.fromUniversalEquals

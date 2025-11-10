@@ -25,6 +25,7 @@ import cats.effect.kernel.Resource
 import cats.syntax.all.*
 import enumeratum.scalacheck.*
 import fs2.io.file.Files
+import org.scalacheck.Arbitrary
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -79,7 +80,8 @@ class PersistenceTests
                 .rethrow
               _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
               recordRequests <- IO(
-                putRecordRequestArb.arbitrary
+                Arbitrary
+                  .arbitrary[PutRecordRequest]
                   .take(5)
                   .toVector
                   .map(_.copy(streamName = Some(streamName), streamArn = None))

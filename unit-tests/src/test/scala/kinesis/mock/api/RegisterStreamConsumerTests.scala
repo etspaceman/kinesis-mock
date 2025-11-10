@@ -20,6 +20,7 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
@@ -61,7 +62,7 @@ class RegisterStreamConsumerTests
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         consumers = SortedMap.from(
           Gen
-            .listOfN(20, consumerArbitrary.arbitrary)
+            .listOfN(20, Arbitrary.arbitrary[Consumer])
             .suchThat(x =>
               x.groupBy(_.consumerName)
                 .collect { case (_, y) if y.length > 1 => x }
@@ -92,7 +93,7 @@ class RegisterStreamConsumerTests
           streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
           consumers = SortedMap.from(
             Gen
-              .listOfN(5, consumerArbitrary.arbitrary)
+              .listOfN(5, Arbitrary.arbitrary[Consumer])
               .suchThat(x =>
                 x.groupBy(_.consumerName)
                   .collect { case (_, y) if y.length > 1 => x }

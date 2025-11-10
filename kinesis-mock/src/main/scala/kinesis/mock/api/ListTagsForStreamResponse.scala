@@ -47,5 +47,5 @@ object ListTagsForStreamResponse:
   given listTagsForStreamResponseDecoder: Decoder[ListTagsForStreamResponse] =
     Decoder.derive
 
-  given listTagsForStreamResponseEq: Eq[ListTagsForStreamResponse] =
+  given Eq[ListTagsForStreamResponse] =
     Eq.fromUniversalEquals

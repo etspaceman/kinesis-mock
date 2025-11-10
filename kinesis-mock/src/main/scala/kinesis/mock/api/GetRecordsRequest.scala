@@ -247,5 +247,5 @@ object GetRecordsRequest:
     Encoder.derive
   given getRecordsRequestDecoder: Decoder[GetRecordsRequest] =
     Decoder.derive
-  given getRecordsRequestEq: Eq[GetRecordsRequest] =
+  given Eq[GetRecordsRequest] =
     Eq.fromUniversalEquals

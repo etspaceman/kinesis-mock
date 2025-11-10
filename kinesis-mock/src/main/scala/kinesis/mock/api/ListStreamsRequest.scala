@@ -80,5 +80,5 @@ object ListStreamsRequest:
     Encoder.derive
   given listStreamsRequestDecoder: Decoder[ListStreamsRequest] =
     Decoder.derive
-  given listStreamsRequestEq: Eq[ListStreamsRequest] =
+  given Eq[ListStreamsRequest] =
     Eq.fromUniversalEquals

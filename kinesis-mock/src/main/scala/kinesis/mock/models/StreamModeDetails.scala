@@ -40,5 +40,5 @@ object StreamModeDetails:
   given streamModeDetailsDecoder: Decoder[StreamModeDetails] =
     Decoder.derive
 
-  given streamModeDetailsEq: Eq[StreamModeDetails] =
+  given Eq[StreamModeDetails] =
     Eq.fromUniversalEquals

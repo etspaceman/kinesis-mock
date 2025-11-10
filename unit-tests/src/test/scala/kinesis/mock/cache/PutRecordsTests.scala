@@ -22,6 +22,7 @@ import scala.concurrent.duration.*
 import cats.effect.IO
 import cats.syntax.all.*
 import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
@@ -59,7 +60,8 @@ class PutRecordsTests
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
             req <- IO(
               PutRecordsRequest(
-                putRecordsRequestEntryArb.arbitrary
+                Arbitrary
+                  .arbitrary[PutRecordsRequestEntry]
                   .take(5)
                   .toVector,
                 Some(streamName),

@@ -25,15 +25,15 @@ final case class ConsumerName(consumerName: String):
   override def toString: String = consumerName
 
 object ConsumerName:
-  given consumerNameOrdering: Ordering[ConsumerName] =
+  given Ordering[ConsumerName] =
     (x: ConsumerName, y: ConsumerName) =>
       Ordering[String].compare(x.consumerName, y.consumerName)
-  given consumerNameCirceEncoder: Encoder[ConsumerName] =
+  given Encoder[ConsumerName] =
     Encoder[String].contramap(_.consumerName)
-  given consumerNameCirceDecoder: Decoder[ConsumerName] =
+  given Decoder[ConsumerName] =
     Decoder[String].map(ConsumerName.apply)
-  given consumerNameCirceKeyEncoder: KeyEncoder[ConsumerName] =
+  given KeyEncoder[ConsumerName] =
     KeyEncoder[String].contramap(_.consumerName)
-  given consumerNameCirceKeyDecoder: KeyDecoder[ConsumerName] =
+  given KeyDecoder[ConsumerName] =
     KeyDecoder[String].map(ConsumerName.apply)
-  given consumerNameEq: Eq[ConsumerName] = Eq.fromUniversalEquals
+  given Eq[ConsumerName] = Eq.fromUniversalEquals

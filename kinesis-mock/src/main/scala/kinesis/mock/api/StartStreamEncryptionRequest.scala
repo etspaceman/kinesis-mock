@@ -98,5 +98,5 @@ object StartStreamEncryptionRequest:
   given startStreamEncryptionRequestDecoder
       : Decoder[StartStreamEncryptionRequest] = Decoder.derive
 
-  given startStreamEncryptionRequestEq: Eq[StartStreamEncryptionRequest] =
+  given Eq[StartStreamEncryptionRequest] =
     Eq.fromUniversalEquals

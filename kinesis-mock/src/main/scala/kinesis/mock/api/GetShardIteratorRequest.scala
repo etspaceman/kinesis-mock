@@ -315,7 +315,7 @@ object GetShardIteratorRequest:
       getShardIteratorRequestCirceDecoder(using instantLongCirceDecoder)
     )
 
-  given getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
+  given Eq[GetShardIteratorRequest] =
     (x, y) =>
       x.shardId == y.shardId &&
         x.shardIteratorType == y.shardIteratorType &&

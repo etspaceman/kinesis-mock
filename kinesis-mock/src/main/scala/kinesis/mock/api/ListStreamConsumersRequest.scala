@@ -137,7 +137,7 @@ object ListStreamConsumersRequest:
       listStreamConsumersRequestCirceDecoder(using instantLongCirceDecoder)
     )
 
-  given listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
+  given Eq[ListStreamConsumersRequest] =
     (x, y) =>
       x.maxResults == y.maxResults && x.nextToken == y.nextToken && x.streamArn == y.streamArn && x.streamCreationTimestamp
         .map(_.toEpochMilli) == y.streamCreationTimestamp.map(_.toEpochMilli)

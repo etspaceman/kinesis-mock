@@ -72,19 +72,19 @@ object ConsumerSummary:
       consumerStatus
     )
 
-  given consumerSummaryEncoder: Encoder[ConsumerSummary] =
+  given Encoder[ConsumerSummary] =
     Encoder.instance(
       consumerSummaryCirceEncoder(using instantDoubleCirceEncoder),
       consumerSummaryCirceEncoder(using instantLongCirceEncoder)
     )
 
-  given consumerSummaryDecoder: Decoder[ConsumerSummary] =
+  given Decoder[ConsumerSummary] =
     Decoder.instance(
       consumerSummaryCirceDecoder(using instantDoubleCirceDecoder),
       consumerSummaryCirceDecoder(using instantLongCirceDecoder)
     )
 
-  given consumerSummaryEq: Eq[ConsumerSummary] = (x, y) =>
+  given Eq[ConsumerSummary] = (x, y) =>
     x.consumerArn === y.consumerArn &&
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&

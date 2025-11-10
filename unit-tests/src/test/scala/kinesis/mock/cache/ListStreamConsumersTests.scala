@@ -21,6 +21,7 @@ import scala.concurrent.duration.*
 import cats.effect.IO
 import cats.syntax.all.*
 import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 import org.scalacheck.{Gen, Test}
 
@@ -68,7 +69,7 @@ class ListStreamConsumersTests
               .map(_.streamDescriptionSummary.streamArn)
             consumerNames <- IO(
               Gen
-                .listOfN(3, consumerNameArb.arbitrary)
+                .listOfN(3, Arbitrary.arbitrary[ConsumerName])
                 .suchThat(x =>
                   x.groupBy(identity)
                     .collect { case (_, y) if y.length > 1 => x }

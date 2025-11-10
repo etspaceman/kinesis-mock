@@ -49,4 +49,4 @@ object HashKeyRange:
   given hashKeyRangeDecoder: Decoder[HashKeyRange] =
     Decoder.derive
 
-  given hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
+  given Eq[HashKeyRange] = Eq.fromUniversalEquals

@@ -79,7 +79,7 @@ object GetRecordsResponse:
       )
     )
 
-  given getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>
+  given Eq[GetRecordsResponse] = (x, y) =>
     x.childShards == y.childShards &&
       x.millisBehindLatest == y.millisBehindLatest &&
       x.nextShardIterator == y.nextShardIterator &&

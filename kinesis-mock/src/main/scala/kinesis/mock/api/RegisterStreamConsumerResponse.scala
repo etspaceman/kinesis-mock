@@ -53,5 +53,5 @@ object RegisterStreamConsumerResponse:
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  given registerStreamConsumerResponseEq: Eq[RegisterStreamConsumerResponse] =
+  given Eq[RegisterStreamConsumerResponse] =
     (x, y) => x.consumer === y.consumer

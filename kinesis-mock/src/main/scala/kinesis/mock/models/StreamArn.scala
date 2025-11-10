@@ -56,15 +56,15 @@ object StreamArn:
     Encoder[String].contramap(_.streamArn)
   given streamArnCirceDecoder: Decoder[StreamArn] =
     Decoder[String].emap(StreamArn.fromArn)
-  given streamArnCirceKeyEncoder: KeyEncoder[StreamArn] =
+  given KeyEncoder[StreamArn] =
     KeyEncoder[String].contramap(_.streamArn)
-  given streamArnCirceKeyDecoder: KeyDecoder[StreamArn] =
+  given KeyDecoder[StreamArn] =
     KeyDecoder.instance(StreamArn.fromArn(_).toOption)
-  given streamArnEq: Eq[StreamArn] = (x, y) =>
+  given Eq[StreamArn] = (x, y) =>
     x.awsRegion === y.awsRegion &&
       x.streamName === y.streamName &&
       x.awsAccountId === y.awsAccountId &&
       x.streamArn === y.streamArn
-  given streamArnOrdering: Ordering[StreamArn] =
+  given Ordering[StreamArn] =
     (x: StreamArn, y: StreamArn) =>
       Ordering[String].compare(x.streamArn, y.streamArn)

@@ -93,5 +93,4 @@ object DisableEnhancedMonitoringRequest:
       : Encoder[DisableEnhancedMonitoringRequest] = Encoder.derive
   given disableEnhancedMonitoringRequestDecoder
       : Decoder[DisableEnhancedMonitoringRequest] = Decoder.derive
-  given disableEnhancedMonitoringRequestEq
-      : Eq[DisableEnhancedMonitoringRequest] = Eq.fromUniversalEquals
+  given Eq[DisableEnhancedMonitoringRequest] = Eq.fromUniversalEquals

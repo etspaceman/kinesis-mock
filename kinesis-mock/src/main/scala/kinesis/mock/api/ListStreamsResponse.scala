@@ -43,5 +43,5 @@ object ListStreamsResponse:
     Encoder.derive
   given listStreamsResponseDecoder: Decoder[ListStreamsResponse] =
     Decoder.derive
-  given listStreamsResponseEq: Eq[ListStreamsResponse] =
+  given Eq[ListStreamsResponse] =
     Eq.fromUniversalEquals

@@ -268,7 +268,7 @@ object ListShardsRequest:
       )
     )
 
-  given listShardsRequestEq: Eq[ListShardsRequest] =
+  given Eq[ListShardsRequest] =
     (x, y) =>
       x.exclusiveStartShardId == y.exclusiveStartShardId &&
         x.maxResults == y.maxResults &&

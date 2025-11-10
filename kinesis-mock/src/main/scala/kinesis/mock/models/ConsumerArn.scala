@@ -74,11 +74,11 @@ object ConsumerArn:
     KeyEncoder[String].contramap(_.consumerArn)
   given consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
     KeyDecoder.instance(ConsumerArn.fromArn(_).toOption)
-  given consumerArnEq: Eq[ConsumerArn] = (x, y) =>
+  given Eq[ConsumerArn] = (x, y) =>
     x.consumerName === y.consumerName &&
       x.streamArn === y.streamArn &&
       x.creationTime.getEpochSecond() === y.creationTime.getEpochSecond() &&
       x.consumerArn === y.consumerArn
-  given consumerArnOrdering: Ordering[ConsumerArn] =
+  given Ordering[ConsumerArn] =
     (x: ConsumerArn, y: ConsumerArn) =>
       Ordering[String].compare(x.consumerArn, y.consumerArn)

@@ -254,7 +254,7 @@ class KinesisMockRoutes(
                         (missingKeys ++ missingDateMsg
                           .fold(Vector.empty[String])(_ =>
                             Vector(
-                              AmazonDateHeader.amazonDateHeaderInstance.name.toString,
+                              AmazonDateHeader.name.toString,
                               Date.headerInstance.name.toString
                             )
                           )).mkString(", ")

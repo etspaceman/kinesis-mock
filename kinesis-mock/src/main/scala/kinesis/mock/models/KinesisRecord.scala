@@ -87,7 +87,7 @@ object KinesisRecord:
     kinesisRecordCirceDecoder(using instantLongCirceDecoder)
   )
 
-  given kinesisRecordEq: Eq[KinesisRecord] = (x, y) =>
+  given Eq[KinesisRecord] = (x, y) =>
     x.approximateArrivalTimestamp.getEpochSecond == y.approximateArrivalTimestamp.getEpochSecond &&
       x.data.sameElements(y.data) &&
       x.encryptionType == y.encryptionType &&

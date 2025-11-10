@@ -215,5 +215,5 @@ object UpdateShardCountRequest:
   given updateShardCountRequestDecoder: Decoder[UpdateShardCountRequest] =
     Decoder.derive
 
-  given updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
+  given Eq[UpdateShardCountRequest] =
     Eq.fromUniversalEquals

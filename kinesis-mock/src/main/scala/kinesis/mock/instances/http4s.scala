@@ -39,14 +39,14 @@ object http4s:
               (ct.mediaType.isApplication && ct.mediaType.subType.startsWith(
                 "json"
               )) =>
-          given D: io.circe.Decoder[A] = Decoder[A].circeDecoder
+          given io.circe.Decoder[A] = Decoder[A].circeDecoder
           jsonOfWithMedia[IO, A](
             KinesisMockMediaTypes.amazonJson,
             MediaType.application.json
           ).decode(msg, strict = false)
 
         case Some(ct) if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
-          given D: io.bullet.borer.Decoder[A] = Decoder[A].borerDecoder
+          given io.bullet.borer.Decoder[A] = Decoder[A].borerDecoder
           EntityDecoder.collectBinary[IO](msg).flatMap { chunks =>
             EitherT.fromEither(
               Cbor.decode(chunks.toArray).to[A].valueEither.leftMap { err =>
@@ -77,7 +77,7 @@ object http4s:
           .withContentType(`Content-Type`(mediaType))
           .contramap(Encoder[A].circeEncoder.apply)
       case _ =>
-        given E: io.bullet.borer.Encoder[A] = Encoder[A].borerEncoder
+        given io.bullet.borer.Encoder[A] = Encoder[A].borerEncoder
         EntityEncoder[IO, Chunk[Byte]]
           .contramap[A](x => Chunk.array(Cbor.encode(x).toByteArray))
           .withContentType(`Content-Type`(mediaType))

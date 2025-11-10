@@ -103,5 +103,5 @@ object CreateStreamRequest:
   given createStreamRequestDecoder: Decoder[CreateStreamRequest] =
     Decoder.derive
 
-  given createStreamRequestEq: Eq[CreateStreamRequest] =
+  given Eq[CreateStreamRequest] =
     Eq.fromUniversalEquals

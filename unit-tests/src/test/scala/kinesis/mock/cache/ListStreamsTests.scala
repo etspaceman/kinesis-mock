@@ -19,6 +19,7 @@ package kinesis.mock.cache
 import cats.effect.IO
 import cats.syntax.all.*
 import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
@@ -26,6 +27,7 @@ import kinesis.mock.LoggingContext
 import kinesis.mock.api.*
 import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models.AwsRegion
+import kinesis.mock.models.StreamName
 import kinesis.mock.syntax.scalacheck.*
 
 class ListStreamsTests extends munit.CatsEffectSuite:
@@ -38,7 +40,7 @@ class ListStreamsTests extends munit.CatsEffectSuite:
         for
           streamNames <- IO(
             Gen
-              .listOfN(5, streamNameArbitrary.arbitrary)
+              .listOfN(5, Arbitrary.arbitrary[StreamName])
               .suchThat(streamNames =>
                 streamNames
                   .groupBy(identity)

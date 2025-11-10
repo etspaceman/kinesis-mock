@@ -111,5 +111,5 @@ object ListTagsForStreamRequest:
     Encoder.derive
   given listTagsForStreamRequestDecoder: Decoder[ListTagsForStreamRequest] =
     Decoder.derive
-  given listTagsForStreamRequestEq: Eq[ListTagsForStreamRequest] =
+  given Eq[ListTagsForStreamRequest] =
     Eq.fromUniversalEquals

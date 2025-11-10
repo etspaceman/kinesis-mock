@@ -164,7 +164,7 @@ object PutRecordRequest:
   given putRecordRequestDecoder: Decoder[PutRecordRequest] =
     Decoder.derive
 
-  given putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
+  given Eq[PutRecordRequest] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey &&

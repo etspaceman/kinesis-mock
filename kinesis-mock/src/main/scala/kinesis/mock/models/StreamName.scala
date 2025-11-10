@@ -23,15 +23,15 @@ final case class StreamName(streamName: String):
   override def toString: String = streamName
 
 object StreamName:
-  given streamNameCirceEncoder: Encoder[StreamName] =
+  given Encoder[StreamName] =
     Encoder[String].contramap(_.streamName)
-  given streamNameCirceDecoder: Decoder[StreamName] =
+  given Decoder[StreamName] =
     Decoder[String].map(StreamName.apply)
-  given streamNameCirceKeyEncoder: KeyEncoder[StreamName] =
+  given KeyEncoder[StreamName] =
     KeyEncoder[String].contramap(_.streamName)
-  given streamNameCirceKeyDecoder: KeyDecoder[StreamName] =
+  given KeyDecoder[StreamName] =
     KeyDecoder[String].map(StreamName.apply)
-  given streamNameEq: Eq[StreamName] = Eq.fromUniversalEquals
-  given streamNameOrdering: Ordering[StreamName] =
+  given Eq[StreamName] = Eq.fromUniversalEquals
+  given Ordering[StreamName] =
     (x: StreamName, y: StreamName) =>
       Ordering[String].compare(x.streamName, y.streamName)

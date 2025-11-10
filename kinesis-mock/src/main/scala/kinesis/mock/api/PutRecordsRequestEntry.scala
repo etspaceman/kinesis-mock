@@ -20,6 +20,8 @@ package api
 import cats.Eq
 import io.circe
 
+import kinesis.mock.instances.circe.given
+
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
     explicitHashKey: Option[String],
@@ -53,7 +55,7 @@ object PutRecordsRequestEntry:
   given putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
     Decoder.derive
 
-  given putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
+  given Eq[PutRecordsRequestEntry] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey

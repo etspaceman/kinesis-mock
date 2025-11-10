@@ -95,5 +95,5 @@ object DescribeStreamRequest:
     Encoder.derive
   given describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
     Decoder.derive
-  given describeStreamRequestEq: Eq[DescribeStreamRequest] =
+  given Eq[DescribeStreamRequest] =
     Eq.fromUniversalEquals

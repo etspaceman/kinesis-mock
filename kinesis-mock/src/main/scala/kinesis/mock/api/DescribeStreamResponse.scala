@@ -55,5 +55,5 @@ object DescribeStreamResponse:
         Decoder[StreamDescription].circeCborDecoder
       )
     )
-  given describeStreamResponseEq: Eq[DescribeStreamResponse] =
+  given Eq[DescribeStreamResponse] =
     (x, y) => x.streamDescription === y.streamDescription
