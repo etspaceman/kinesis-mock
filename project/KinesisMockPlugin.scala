@@ -343,7 +343,7 @@ object KinesisMockPlugin extends AutoPlugin {
               UseRef.Public("actions", "setup-node", "v3"),
               name = Some("Setup Node"),
               params = Map(
-                "node-version" -> "18"
+                "node-version" -> "25"
               ),
               cond = Some(primaryJavaOSCond.value)
             ),
