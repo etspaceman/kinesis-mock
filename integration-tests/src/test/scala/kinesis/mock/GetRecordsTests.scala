@@ -204,4 +204,61 @@ class GetRecordsTests extends AwsFunctionalTests {
       s"$res"
     )
   }
+
+  fixture(1).test("It should get records using subsequent shard iterators") {
+    resources =>
+      for {
+        shard <- resources.kinesisClient
+          .listShards(
+            ListShardsRequest
+              .builder()
+              .streamName(resources.streamName.streamName)
+              .build()
+          )
+          .toIO
+          .map(_.shards().getFirst())
+        shardIterator <- resources.kinesisClient
+          .getShardIterator(
+            GetShardIteratorRequest
+              .builder()
+              .shardId(shard.shardId())
+              .streamName(resources.streamName.streamName)
+              .shardIteratorType(ShardIteratorType.LATEST)
+              .build()
+          )
+          .toIO
+          .map(_.shardIterator())
+        partitionKey = "test-key"
+        data = SdkBytes.fromString("AA==", Charset.defaultCharset())
+        _ <- resources.kinesisClient
+          .putRecord(
+            PutRecordRequest
+              .builder()
+              .partitionKey(partitionKey)
+              .streamName(resources.streamName.streamName)
+              .data(data)
+              .build()
+          )
+          .toIO
+        res1 <- resources.kinesisClient
+          .getRecords(
+            GetRecordsRequest.builder().shardIterator(shardIterator).build()
+          )
+          .toIO
+        nextShardIterator = res1.nextShardIterator()
+        res1Records = res1.records().asScala.toVector
+        res2 <- resources.kinesisClient
+          .getRecords(
+            GetRecordsRequest.builder().shardIterator(nextShardIterator).build()
+          )
+          .toIO
+        res2Records = res2.records().asScala.toVector
+      } yield assert(
+        res1Records.length == 1 && res1Records.headOption.exists(rec =>
+          data.asByteArray.sameElements(rec.data.asByteArray)
+            && partitionKey == rec.partitionKey
+        ) && res2Records.isEmpty,
+        s"$res1Records\n\n$res2Records"
+      )
+  }
 }
