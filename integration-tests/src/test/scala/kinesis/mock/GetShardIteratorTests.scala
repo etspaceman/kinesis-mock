@@ -8,7 +8,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class GetShardIteratorTests extends AwsFunctionalTests {
 
-  fixture.test("It should get a shard iterator") { resources =>
+  fixture().test("It should get a shard iterator") { resources =>
     for {
       shard <- resources.kinesisClient
         .listShards(

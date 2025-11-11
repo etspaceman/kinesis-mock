@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class DisableEnhancedMonitoringTests extends AwsFunctionalTests {
 
-  fixture.test("It should disable enhanced monitoring") { resources =>
+  fixture().test("It should disable enhanced monitoring") { resources =>
     for {
       _ <- resources.kinesisClient
         .enableEnhancedMonitoring(

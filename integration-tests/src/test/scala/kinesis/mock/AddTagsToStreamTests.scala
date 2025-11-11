@@ -11,7 +11,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class AddTagsToStreamTests extends AwsFunctionalTests {
 
-  fixture.test("It should add tags to a stream") { resources =>
+  fixture().test("It should add tags to a stream") { resources =>
     for {
       tags <- IO(tagsGen.one)
       _ <- resources.kinesisClient

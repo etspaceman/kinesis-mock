@@ -2,6 +2,8 @@ package kinesis.mock
 
 import scala.jdk.CollectionConverters._
 
+import java.nio.charset.Charset
+
 import cats.effect.IO
 import cats.syntax.all._
 import software.amazon.awssdk.core.SdkBytes
@@ -14,7 +16,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class GetRecordsTests extends AwsFunctionalTests {
 
-  fixture.test("It should get records") { resources =>
+  fixture().test("It should get records") { resources =>
     for {
       recordRequests <- IO(
         putRecordRequestArb.arbitrary
@@ -80,7 +82,7 @@ class GetRecordsTests extends AwsFunctionalTests {
     )
   }
 
-  fixture.test("It should get records with quotes around shard iterator") {
+  fixture().test("It should get records with quotes around shard iterator") {
     resources =>
       for {
         recordRequests <- IO(
@@ -149,5 +151,57 @@ class GetRecordsTests extends AwsFunctionalTests {
         ),
         s"$res\n$recordRequests"
       )
+  }
+
+  fixture(1).test("It should get records after a sequence number") { resources =>
+    for {
+      putResp1 <- resources.kinesisClient
+        .putRecord(
+          PutRecordRequest
+            .builder()
+            .partitionKey("test-key-0")
+            .streamName(resources.streamName.streamName)
+            .data(SdkBytes.fromString("AA==", Charset.defaultCharset()))
+            .build()
+        )
+        .toIO
+      resp2PartitionKey = "test-key-1"
+      resp2Data = SdkBytes.fromString("AQ==", Charset.defaultCharset())
+      _ <- resources.kinesisClient
+        .putRecord(
+          PutRecordRequest
+            .builder()
+            .partitionKey(resp2PartitionKey)
+            .streamName(resources.streamName.streamName)
+            .data(resp2Data)
+            .build()
+        )
+        .toIO
+      shardId = putResp1.shardId()
+      shardIterator <- resources.kinesisClient
+        .getShardIterator(
+          GetShardIteratorRequest
+            .builder()
+            .shardId(shardId)
+            .streamName(resources.streamName.streamName)
+            .shardIteratorType(ShardIteratorType.AFTER_SEQUENCE_NUMBER)
+            .startingSequenceNumber(putResp1.sequenceNumber())
+            .build()
+        )
+        .toIO
+        .map(_.shardIterator())
+      res <- resources.kinesisClient
+        .getRecords(
+          GetRecordsRequest.builder().shardIterator(shardIterator).build()
+        )
+        .toIO
+        .map(_.records().asScala.toVector)
+    } yield assert(
+      res.length == 1 && res.headOption.exists(rec =>
+        resp2Data.asByteArray.sameElements(rec.data.asByteArray)
+          && resp2PartitionKey == rec.partitionKey
+      ),
+      s"$res"
+    )
   }
 }

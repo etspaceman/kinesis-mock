@@ -25,7 +25,7 @@ import kinesis.mock.syntax.scalacheck._
 
 trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
 
-  protected val genStreamShardCount = 3
+  val defaultShardCount = 3
 
   // this must match env var INITIALIZE_STREAMS in docker-compose.yml
   protected val initializedStreams = Vector(
@@ -56,7 +56,9 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
       .builder()
       .buildWithDefaults(trustAllCertificates)
 
-  val resource: Resource[IO, KinesisFunctionalTestResources] = for {
+  def resource(
+      shardCount: Int = defaultShardCount // scalafix:ok
+  ): Resource[IO, KinesisFunctionalTestResources] = for {
     testConfig <- FunctionalTestConfig.read.resource[IO]
     protocol = if (testConfig.servicePort == 4568) "http" else "https"
     region <- Resource.eval(
@@ -114,18 +116,21 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
             region
           )
         )
-        .flatTap(setup)
+        .flatTap(setup(_, shardCount))
     )(teardown)
   } yield res
 
-  def setup(resources: KinesisFunctionalTestResources): IO[Unit] = for {
+  def setup(
+      resources: KinesisFunctionalTestResources,
+      shardCount: Int
+  ): IO[Unit] = for {
     _ <- resources.logger.debug(s"Creating stream ${resources.streamName}")
     _ <- resources.kinesisClient
       .createStream(
         CreateStreamRequest
           .builder()
           .streamName(resources.streamName.streamName)
-          .shardCount(genStreamShardCount)
+          .shardCount(shardCount)
           .build()
       )
       .toIO
@@ -180,8 +185,10 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures {
     )
   } yield res
 
-  val fixture: SyncIO[FunFixture[KinesisFunctionalTestResources]] =
-    ResourceFunFixture(resource)
+  def fixture(
+      shardCount: Int = defaultShardCount // scalafix:ok
+  ): SyncIO[FunFixture[KinesisFunctionalTestResources]] =
+    ResourceFunFixture(resource(shardCount))
 
   def describeStreamSummary(
       resources: KinesisFunctionalTestResources
