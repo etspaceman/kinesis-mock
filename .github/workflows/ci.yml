@@ -201,11 +201,11 @@ jobs:
 
       - name: Build Docker Image
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS3/buildDockerImage
 
       - name: Push to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS3/pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
