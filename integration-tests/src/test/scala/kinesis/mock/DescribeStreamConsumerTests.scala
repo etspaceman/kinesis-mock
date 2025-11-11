@@ -9,7 +9,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class DescribeStreamConsumerTests extends AwsFunctionalTests {
 
-  fixture.test("It should describe a stream consumer") { resources =>
+  fixture().test("It should describe a stream consumer") { resources =>
     for {
       consumerName <- IO(consumerNameGen.one.consumerName)
       streamSummary <- describeStreamSummary(resources)

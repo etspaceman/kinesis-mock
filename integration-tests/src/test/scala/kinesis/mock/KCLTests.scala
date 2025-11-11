@@ -39,7 +39,7 @@ class KCLTests extends AwsFunctionalTests {
 
   def kclFixture(initialPosition: InitialPositionInStreamExtended) =
     ResourceFunFixture(
-      resource.flatMap { resources =>
+      resource().flatMap { resources =>
         for {
           cloudwatchClient <- Resource.fromAutoCloseable(
             IO(

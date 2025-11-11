@@ -79,7 +79,7 @@ object arbitrary {
           shardCreateTime <- nowGen.map(_.minusSeconds(300))
           shardIndex <- Gen.posNum[Int]
           seqIndex <- Gen.option(Gen.posNum[Int])
-          seqTime <- Gen.option(nowGen)
+          seqTime <- Gen.option(nowGen.map(_.minusSeconds(5)))
         } yield SequenceNumber
           .create(shardCreateTime, shardIndex, None, seqIndex, seqTime)
     }
@@ -162,7 +162,7 @@ object arbitrary {
         shardCreateTime <- nowGen.map(_.minusSeconds(300))
         shardIndex <- Gen.posNum[Int]
         startSeqIndex <- Gen.option(Gen.posNum[Int])
-        startSeqTime <- Gen.option(nowGen)
+        startSeqTime <- Gen.option(nowGen.map(_.minusSeconds(5)))
         startingSequenceNumber = SequenceNumber.create(
           shardCreateTime,
           shardIndex,
@@ -170,7 +170,7 @@ object arbitrary {
           startSeqIndex,
           startSeqTime
         )
-        endSeqTime <- nowGen
+        endSeqTime <- nowGen.map(_.minusSeconds(5))
         endingSequenceNumber <- Gen.option(
           SequenceNumber.create(
             shardCreateTime,

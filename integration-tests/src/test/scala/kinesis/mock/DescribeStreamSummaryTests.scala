@@ -7,7 +7,7 @@ import software.amazon.awssdk.services.kinesis.model._
 
 class DescribeStreamSummaryTests extends AwsFunctionalTests {
 
-  fixture.test("It should describe a stream summary") { resources =>
+  fixture().test("It should describe a stream summary") { resources =>
     for {
       res <- describeStreamSummary(resources)
       expected = StreamDescriptionSummary
@@ -20,7 +20,7 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
             .shardLevelMetricsWithStrings(Collections.emptyList[String]())
             .build()
         )
-        .openShardCount(genStreamShardCount)
+        .openShardCount(defaultShardCount)
         .retentionPeriodHours(24)
         .streamARN(
           s"arn:${resources.awsRegion.awsArnPiece}:kinesis:${resources.awsRegion.entryName}:${resources.cacheConfig.awsAccountId}:stream/${resources.streamName}"
@@ -40,7 +40,7 @@ class DescribeStreamSummaryTests extends AwsFunctionalTests {
     )
   }
 
-  fixture.test("It should describe initialized streams") { resources =>
+  fixture().test("It should describe initialized streams") { resources =>
     for {
       res <- initializedStreams.parTraverse { case (name, _) =>
         describeStreamSummary(resources.defaultRegionKinesisClient, name).map(

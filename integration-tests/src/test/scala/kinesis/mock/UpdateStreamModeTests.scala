@@ -9,7 +9,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class UpdateStreamModeTests extends AwsFunctionalTests {
 
-  fixture.test("It should update the stream mode") { resources =>
+  fixture().test("It should update the stream mode") { resources =>
     for {
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()

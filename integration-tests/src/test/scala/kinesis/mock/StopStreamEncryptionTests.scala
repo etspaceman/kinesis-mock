@@ -11,7 +11,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class StopStreamEncryptionTests extends AwsFunctionalTests {
 
-  fixture.test("It should stop stream encryption") { resources =>
+  fixture().test("It should stop stream encryption") { resources =>
     for {
       keyId <- IO(keyIdGen.one)
       _ <- resources.kinesisClient

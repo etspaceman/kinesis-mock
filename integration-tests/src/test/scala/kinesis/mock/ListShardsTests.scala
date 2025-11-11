@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class ListShardsTests extends AwsFunctionalTests {
 
-  fixture.test("It should list shards") { resources =>
+  fixture().test("It should list shards") { resources =>
     for {
       _ <- resources.kinesisClient
         .updateShardCount(
@@ -39,7 +39,7 @@ class ListShardsTests extends AwsFunctionalTests {
     )
   }
 
-  fixture.test("It should list shards for initialized streams") { resources =>
+  fixture().test("It should list shards for initialized streams") { resources =>
     for {
       res <- initializedStreams.map { case (name, _) =>
         resources.defaultRegionKinesisClient

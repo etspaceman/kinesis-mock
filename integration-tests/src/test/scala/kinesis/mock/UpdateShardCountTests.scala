@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class UpdateShardCountTests extends AwsFunctionalTests {
 
-  fixture.test("It should update the shard count") { resources =>
+  fixture().test("It should update the shard count") { resources =>
     for {
       res <- resources.kinesisClient
         .updateShardCount(

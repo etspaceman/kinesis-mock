@@ -11,7 +11,7 @@ import kinesis.mock.syntax.scalacheck._
 
 class DeregisterStreamConsumerTests extends AwsFunctionalTests {
 
-  fixture.test("It should deregister a stream consumer") { resources =>
+  fixture().test("It should deregister a stream consumer") { resources =>
     for {
       consumerName <- IO(consumerNameGen.one.consumerName)
       streamSummary <- describeStreamSummary(resources)

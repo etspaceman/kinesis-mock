@@ -6,7 +6,7 @@ import kinesis.mock.syntax.javaFuture._
 
 class DecreaseStreamRetentionPeriodTests extends AwsFunctionalTests {
 
-  fixture.test("It should decrease the stream retention period") { resources =>
+  fixture().test("It should decrease the stream retention period") { resources =>
     for {
       _ <- resources.kinesisClient
         .increaseStreamRetentionPeriod(
