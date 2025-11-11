@@ -58,7 +58,7 @@ lazy val `kinesis-mock-js` =
       scalaJSUseMainModuleInitializer := true,
       scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
       scalaJSLinkerConfig ~= {
-        _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+        _.withESFeatures(_.withESVersion(ESVersion.ES2021))
       },
       npmPackageName := "kinesis-local",
       npmPackageAuthor := "Eric Meisel",
@@ -120,7 +120,7 @@ lazy val `testkit-js` = testkit
   .settings(
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     scalaJSLinkerConfig ~= {
-      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+      _.withESFeatures(_.withESVersion(ESVersion.ES2021))
     }
   )
 
@@ -135,7 +135,7 @@ lazy val `unit-tests-js` = `unit-tests`
   .settings(
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     scalaJSLinkerConfig ~= {
-      _.withESFeatures(_.withESVersion(ESVersion.ES2018))
+      _.withESFeatures(_.withESVersion(ESVersion.ES2021))
     }
   )
 

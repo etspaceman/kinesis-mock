@@ -316,7 +316,7 @@ jobs:
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 25
 
       - name: Install artifacts to NPM
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
