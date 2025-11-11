@@ -16,6 +16,7 @@
 
 package kinesis.mock
 
+import cats.effect.IO
 import io.circe.Json
 
 final case class LoggingContext private (context: Map[String, String]) {
@@ -38,7 +39,9 @@ final case class LoggingContext private (context: Map[String, String]) {
 }
 
 object LoggingContext {
-  def create: LoggingContext = LoggingContext(
-    Map("contextId" -> Utils.randomUUIDString)
+  def create: IO[LoggingContext] = Utils.randomUUIDString.map(uuid =>
+    LoggingContext(
+      Map("contextId" -> uuid)
+    )
   )
 }

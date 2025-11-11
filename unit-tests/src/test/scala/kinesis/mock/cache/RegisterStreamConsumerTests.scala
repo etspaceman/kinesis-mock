@@ -45,10 +45,10 @@ class RegisterStreamConsumerTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
         .use { case (cacheConfig, cache) =>
-          val context = LoggingContext.create
           val streamArn =
             StreamArn(awsRegion, streamName, cacheConfig.awsAccountId)
           for {
+            context <- LoggingContext.create
             _ <- cache
               .createStream(
                 CreateStreamRequest(Some(1), None, streamName),

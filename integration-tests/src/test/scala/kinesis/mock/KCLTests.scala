@@ -70,8 +70,9 @@ class KCLTests extends AwsFunctionalTests {
           resultsQueue <- Resource.eval(
             Queue.unbounded[IO, KinesisClientRecord]
           )
-          appName = s"kinesis-mock-kcl-test-${Utils.randomUUIDString}"
-          workerId = Utils.randomUUIDString
+          appId <- Utils.randomUUIDString.toResource
+          appName = s"kinesis-mock-kcl-test-$appId"
+          workerId <- Utils.randomUUIDString.toResource
           retrievalSpecificConfig = new PollingConfig(
             resources.streamName.streamName,
             resources.kinesisClient

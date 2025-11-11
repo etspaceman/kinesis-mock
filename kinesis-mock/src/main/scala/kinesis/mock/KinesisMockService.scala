@@ -42,7 +42,7 @@ object KinesisMockService extends ResourceApp.Forever {
       logLevel <- ConsoleLogger.LogLevel.read.resource[IO]
       logger = new ConsoleLogger[IO](logLevel, this.getClass().getName())
       cacheConfig <- CacheConfig.read.resource[IO]
-      context = LoggingContext.create
+      context <- LoggingContext.create.toResource
       _ <- logger
         .info(
           context.addJson("cacheConfig", cacheConfig.asJson).context
@@ -121,8 +121,10 @@ object KinesisMockService extends ResourceApp.Forever {
           ).background
         )
         .onFinalize(
-          IO.pure(cacheConfig.persistConfig.shouldPersist)
-            .ifM(cache.persistToDisk(LoggingContext.create), IO.unit)
+          LoggingContext.create.flatMap(context =>
+            IO.pure(cacheConfig.persistConfig.shouldPersist)
+              .ifM(cache.persistToDisk(context), IO.unit)
+          )
         )
         .void
     } yield res
@@ -180,21 +182,21 @@ object KinesisMockService extends ResourceApp.Forever {
       interval: FiniteDuration,
       cache: Cache,
       logger: SelfAwareStructuredLogger[IO]
-  ): IO[Unit] = {
-    val context = LoggingContext.create
-    IO.pure(shouldPersist)
-      .ifM(
-        logger.info(context.context)("Starting persist data loop") >>
-          retryingOnFailuresAndAllErrors[Unit](
-            constantDelay[IO](interval),
-            _ => IO.pure(false),
-            noop[IO, Unit],
-            (e: Throwable, _) =>
-              logger.error(context.context, e)("Failed to persist data")
-          )(cache.persistToDisk(context)),
-        logger.info(LoggingContext.create.context)(
-          "Not configured to persist data, persist loop not started"
+  ): IO[Unit] =
+    LoggingContext.create.flatMap(context =>
+      IO.pure(shouldPersist)
+        .ifM(
+          logger.info(context.context)("Starting persist data loop") >>
+            retryingOnFailuresAndAllErrors[Unit](
+              constantDelay[IO](interval),
+              _ => IO.pure(false),
+              noop[IO, Unit],
+              (e: Throwable, _) =>
+                logger.error(context.context, e)("Failed to persist data")
+            )(cache.persistToDisk(context)),
+          logger.info(context.context)(
+            "Not configured to persist data, persist loop not started"
+          )
         )
-      )
-  }
+    )
 }
