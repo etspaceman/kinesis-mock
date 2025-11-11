@@ -17,7 +17,7 @@ class KPLTests extends AwsFunctionalTests:
   given ExecutionContextExecutor = ExecutionContext.global
 
   val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFunFixture(
-    resource.flatMap { resources =>
+    resource().flatMap { resources =>
       Resource
         .make(
           IO(

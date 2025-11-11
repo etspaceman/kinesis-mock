@@ -15,7 +15,7 @@ import kinesis.mock.syntax.scalacheck.*
 
 class PutRecordTests extends AwsFunctionalTests:
 
-  fixture.test("It should put a record") { resources =>
+  fixture().test("It should put a record") { resources =>
     for
       recordRequests <- IO(
         Arbitrary

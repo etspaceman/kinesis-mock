@@ -8,7 +8,7 @@ import kinesis.mock.syntax.javaFuture.*
 
 class DescribeStreamTests extends AwsFunctionalTests:
 
-  fixture.test("It should describe a stream") { resources =>
+  fixture().test("It should describe a stream") { resources =>
     for
       res <- resources.kinesisClient
         .describeStream(

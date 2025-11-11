@@ -91,7 +91,7 @@ final case class PutRecordRequest(
             shard.createdAtTimestamp,
             shard.shardId.index,
             None,
-            Some(records.length),
+            if records.isEmpty then Some(1) else Some(records.length + 1),
             Some(now)
           )
           (

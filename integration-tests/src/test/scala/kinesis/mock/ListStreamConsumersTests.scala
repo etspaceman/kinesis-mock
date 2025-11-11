@@ -13,7 +13,7 @@ import kinesis.mock.syntax.scalacheck.*
 
 class ListStreamConsumersTests extends AwsFunctionalTests:
 
-  fixture.test("It should list stream consumers") { resources =>
+  fixture().test("It should list stream consumers") { resources =>
     for
       consumerNames <- IO(
         consumerNameGen.take(3).toList.sorted.map(_.consumerName)

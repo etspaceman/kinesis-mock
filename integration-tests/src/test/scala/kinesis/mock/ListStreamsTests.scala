@@ -4,7 +4,7 @@ import kinesis.mock.syntax.javaFuture.*
 
 class ListStreamsTests extends AwsFunctionalTests:
 
-  fixture.test("It should list streams") { resources =>
+  fixture().test("It should list streams") { resources =>
     for res <- resources.kinesisClient.listStreams().toIO
     yield assert(
       !res.streamNames().isEmpty,
@@ -12,7 +12,7 @@ class ListStreamsTests extends AwsFunctionalTests:
     )
   }
 
-  fixture.test("It should list all initialized streams") { resources =>
+  fixture().test("It should list all initialized streams") { resources =>
     for res <- resources.defaultRegionKinesisClient.listStreams().toIO
     yield assert(
       initializedStreams.forall { case (name, _) =>

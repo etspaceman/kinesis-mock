@@ -280,12 +280,7 @@ class KinesisMockRoutes(
                               cache,
                               responseHeaders,
                               lcWithContentType,
-                              contentType match
-                                case ct
-                                    if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
-                                  true
-                                case _ => false
-                              ,
+                              contentType,
                               Try(
                                 authParsed("Credential").split("/")(2)
                               ).toOption.flatMap(AwsRegion.withNameOption)
@@ -371,12 +366,7 @@ class KinesisMockRoutes(
                             cache,
                             responseHeaders,
                             lcWithContentType,
-                            contentType match
-                              case ct
-                                  if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
-                                true
-                              case _ => false
-                            ,
+                            contentType,
                             queryAuthCredential.flatMap(x =>
                               Try(x.split("/")(2)).toOption
                                 .flatMap(AwsRegion.withNameOption)
@@ -489,7 +479,7 @@ object KinesisMockRoutes:
       cache: Cache,
       responseHeaders: Vector[Header.ToRaw],
       loggingContext: LoggingContext,
-      isCbor: Boolean,
+      contentType: `Content-Type`,
       region: Option[AwsRegion]
   )(using
       errEE: EntityEncoder[IO, ErrorResponse],
@@ -510,6 +500,11 @@ object KinesisMockRoutes:
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
       updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
   ): IO[HResponse[IO]] =
+    val isCbor = contentType match
+      case ct if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
+        true
+      case _ => false
+
     action match
       case KinesisAction.AddTagsToStream =>
         request

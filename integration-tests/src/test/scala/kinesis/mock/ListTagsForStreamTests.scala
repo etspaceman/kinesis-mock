@@ -11,7 +11,7 @@ import kinesis.mock.syntax.scalacheck.*
 
 class ListTagsForStreamTests extends AwsFunctionalTests:
 
-  fixture.test("It should list tags for a stream") { resources =>
+  fixture().test("It should list tags for a stream") { resources =>
     for
       tags <- IO(tagsGen.one)
       _ <- resources.kinesisClient

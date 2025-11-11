@@ -10,7 +10,7 @@ import kinesis.mock.syntax.javaFuture.*
 
 class MergeShardsTests extends AwsFunctionalTests:
 
-  fixture.test("It should merge shards") { resources =>
+  fixture().test("It should merge shards") { resources =>
     for
       _ <- resources.kinesisClient
         .updateShardCount(

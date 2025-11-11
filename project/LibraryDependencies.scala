@@ -6,7 +6,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.20"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.21"
 
   object Borer {
     val borerVersion = "1.16.0"
@@ -33,7 +33,7 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.38.1"
+    val sdkVersion = "2.38.3"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion

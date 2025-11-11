@@ -121,9 +121,9 @@ object KinesisMockService extends ResourceApp.Forever:
           ).background
         )
         .onFinalize(
-          LoggingContext.create.flatMap(lc =>
+          LoggingContext.create.flatMap(context =>
             IO.pure(cacheConfig.persistConfig.shouldPersist)
-              .ifM(cache.persistToDisk(lc), IO.unit)
+              .ifM(cache.persistToDisk(context), IO.unit)
           )
         )
         .void

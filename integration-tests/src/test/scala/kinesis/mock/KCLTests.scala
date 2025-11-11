@@ -42,7 +42,7 @@ class KCLTests extends AwsFunctionalTests:
       useAtTimestamp: Boolean = false // scalafix:ok
   ): SyncIO[FunFixture[KCLResources]] =
     ResourceFunFixture(
-      resource.flatMap { resources =>
+      resource().flatMap { resources =>
         for
           initialPosition <-
             if useAtTimestamp then
