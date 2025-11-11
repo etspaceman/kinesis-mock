@@ -1,17 +1,17 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
+import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class UpdateShardCountTests extends AwsFunctionalTests {
+class UpdateShardCountTests extends AwsFunctionalTests:
 
   fixture().test("It should update the shard count") { resources =>
-    for {
+    for
       res <- resources.kinesisClient
         .updateShardCount(
           UpdateShardCountRequest
@@ -39,7 +39,7 @@ class UpdateShardCountTests extends AwsFunctionalTests {
               .endingSequenceNumber() == null // scalafix:ok
           )
         )
-    } yield assert(
+    yield assert(
       openShards.length == 6 &&
         res.currentShardCount() == 3 &&
         res.targetShardCount() == 6 &&
@@ -47,4 +47,3 @@ class UpdateShardCountTests extends AwsFunctionalTests {
       s"$openShards\n${res.currentShardCount()}\n${res.targetShardCount()}\n${res.streamName()}}"
     )
   }
-}

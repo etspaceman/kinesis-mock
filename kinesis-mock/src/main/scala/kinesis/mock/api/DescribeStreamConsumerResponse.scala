@@ -18,46 +18,44 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.Consumer
 
 final case class DescribeStreamConsumerResponse(consumerDescription: Consumer)
 
-object DescribeStreamConsumerResponse {
-  def describeStreamConsumerResponseCirceEncoder(implicit
+object DescribeStreamConsumerResponse:
+  def describeStreamConsumerResponseCirceEncoder(using
       EC: circe.Encoder[Consumer]
   ): circe.Encoder[DescribeStreamConsumerResponse] =
     circe.Encoder.forProduct1("ConsumerDescription")(_.consumerDescription)
 
-  def describeStreamConsumerResponseCirceDecoder(implicit
+  def describeStreamConsumerResponseCirceDecoder(using
       DC: circe.Decoder[Consumer]
   ): circe.Decoder[DescribeStreamConsumerResponse] =
     _.downField("ConsumerDescription")
       .as[Consumer]
       .map(DescribeStreamConsumerResponse.apply)
-  implicit val describeStreamConsumerResponseEncoder
+  given describeStreamConsumerResponseEncoder
       : Encoder[DescribeStreamConsumerResponse] =
     Encoder.instance(
-      describeStreamConsumerResponseCirceEncoder(
+      describeStreamConsumerResponseCirceEncoder(using
         Encoder[Consumer].circeEncoder
       ),
-      describeStreamConsumerResponseCirceEncoder(
+      describeStreamConsumerResponseCirceEncoder(using
         Encoder[Consumer].circeCborEncoder
       )
     )
-  implicit val describeStreamConsumerResponseDecoder
+  given describeStreamConsumerResponseDecoder
       : Decoder[DescribeStreamConsumerResponse] =
     Decoder.instance(
-      describeStreamConsumerResponseCirceDecoder(
+      describeStreamConsumerResponseCirceDecoder(using
         Decoder[Consumer].circeDecoder
       ),
-      describeStreamConsumerResponseCirceDecoder(
+      describeStreamConsumerResponseCirceDecoder(using
         Decoder[Consumer].circeCborDecoder
       )
     )
-  implicit val describeStreamConsumerResponseEq
-      : Eq[DescribeStreamConsumerResponse] = (x, y) =>
-    x.consumerDescription === y.consumerDescription
-}
+  given Eq[DescribeStreamConsumerResponse] =
+    (x, y) => x.consumerDescription === y.consumerDescription

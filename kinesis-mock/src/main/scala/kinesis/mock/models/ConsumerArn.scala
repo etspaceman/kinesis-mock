@@ -21,22 +21,21 @@ import scala.util.Try
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
 final case class ConsumerArn(
     streamArn: StreamArn,
     consumerName: ConsumerName,
     creationTime: Instant
-) {
-  val consumerArn =
+):
+  val consumerArn: String =
     s"$streamArn/consumer/$consumerName:${creationTime.getEpochSecond}"
   override def toString: String = consumerArn
-}
 
-object ConsumerArn {
+object ConsumerArn:
   def fromArn(consumerArn: String): Either[String, ConsumerArn] =
-    for {
+    for
       streamArn <- Try(consumerArn.split("/consumer")(0)).toEither
         .leftMap(e =>
           s"Could not get stream arn part from consumer arn: ${e.getMessage}"
@@ -65,22 +64,21 @@ object ConsumerArn {
               s"Could not convert timestamp from ARN to Instant: ${e.getMessage}"
             )
         )
-    } yield ConsumerArn(streamArn, consumerName, creationTimestamp)
+    yield ConsumerArn(streamArn, consumerName, creationTimestamp)
 
-  implicit val consumerArnCirceEncoder: Encoder[ConsumerArn] =
+  given consumerArnCirceEncoder: Encoder[ConsumerArn] =
     Encoder[String].contramap(_.consumerArn)
-  implicit val consumerArnCirceDecoder: Decoder[ConsumerArn] =
+  given consumerArnCirceDecoder: Decoder[ConsumerArn] =
     Decoder[String].emap(ConsumerArn.fromArn)
-  implicit val consumerArnCirceKeyEncoder: KeyEncoder[ConsumerArn] =
+  given consumerArnCirceKeyEncoder: KeyEncoder[ConsumerArn] =
     KeyEncoder[String].contramap(_.consumerArn)
-  implicit val consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
+  given consumerArnCirceKeyDecoder: KeyDecoder[ConsumerArn] =
     KeyDecoder.instance(ConsumerArn.fromArn(_).toOption)
-  implicit val consumerArnEq: Eq[ConsumerArn] = (x, y) =>
+  given Eq[ConsumerArn] = (x, y) =>
     x.consumerName === y.consumerName &&
       x.streamArn === y.streamArn &&
       x.creationTime.getEpochSecond() === y.creationTime.getEpochSecond() &&
       x.consumerArn === y.consumerArn
-  implicit val consumerArnOrdering: Ordering[ConsumerArn] =
+  given Ordering[ConsumerArn] =
     (x: ConsumerArn, y: ConsumerArn) =>
       Ordering[String].compare(x.consumerArn, y.consumerArn)
-}

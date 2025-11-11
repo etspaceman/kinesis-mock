@@ -16,15 +16,14 @@
 
 package kinesis.mock.models
 
-import enumeratum._
+import enumeratum.*
 
 sealed trait EncryptionType extends EnumEntry
 
 object EncryptionType
     extends Enum[EncryptionType]
     with CirceEnum[EncryptionType]
-    with CatsEnum[EncryptionType] {
+    with CatsEnum[EncryptionType]:
   override val values: IndexedSeq[EncryptionType] = findValues
   case object NONE extends EncryptionType
   case object KMS extends EncryptionType
-}

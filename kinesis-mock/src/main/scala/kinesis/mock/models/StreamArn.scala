@@ -19,22 +19,21 @@ package kinesis.mock.models
 import scala.util.Try
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
 final case class StreamArn(
     awsRegion: AwsRegion,
     streamName: StreamName,
     awsAccountId: AwsAccountId
-) {
-  val streamArn =
+):
+  val streamArn: String =
     s"arn:${awsRegion.awsArnPiece}:kinesis:${awsRegion.entryName}:$awsAccountId:stream/$streamName"
   override def toString: String = streamArn
-}
 
-object StreamArn {
+object StreamArn:
   def fromArn(streamArn: String): Either[String, StreamArn] =
-    for {
+    for
       streamName <- Try(streamArn.split("/")(1)).toEither.bimap(
         e => s"Could not get stream name from ARN: ${e.getMessage}",
         StreamName.apply
@@ -51,22 +50,21 @@ object StreamArn {
         e => s"Could not get awsAccountId from ARN: ${e.getMessage}",
         AwsAccountId.apply
       )
-    } yield StreamArn(awsRegion, streamName, awsAccountId)
+    yield StreamArn(awsRegion, streamName, awsAccountId)
 
-  implicit val streamArnCirceEncoder: Encoder[StreamArn] =
+  given streamArnCirceEncoder: Encoder[StreamArn] =
     Encoder[String].contramap(_.streamArn)
-  implicit val streamArnCirceDecoder: Decoder[StreamArn] =
+  given streamArnCirceDecoder: Decoder[StreamArn] =
     Decoder[String].emap(StreamArn.fromArn)
-  implicit val streamArnCirceKeyEncoder: KeyEncoder[StreamArn] =
+  given KeyEncoder[StreamArn] =
     KeyEncoder[String].contramap(_.streamArn)
-  implicit val streamArnCirceKeyDecoder: KeyDecoder[StreamArn] =
+  given KeyDecoder[StreamArn] =
     KeyDecoder.instance(StreamArn.fromArn(_).toOption)
-  implicit val streamArnEq: Eq[StreamArn] = (x, y) =>
+  given Eq[StreamArn] = (x, y) =>
     x.awsRegion === y.awsRegion &&
       x.streamName === y.streamName &&
       x.awsAccountId === y.awsAccountId &&
       x.streamArn === y.streamArn
-  implicit val streamArnOrdering: Ordering[StreamArn] =
+  given Ordering[StreamArn] =
     (x: StreamArn, y: StreamArn) =>
       Ordering[String].compare(x.streamArn, y.streamArn)
-}

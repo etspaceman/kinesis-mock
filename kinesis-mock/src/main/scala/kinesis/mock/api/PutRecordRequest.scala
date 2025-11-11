@@ -19,12 +19,12 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.instances.circe.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordRequest(
@@ -34,7 +34,7 @@ final case class PutRecordRequest(
     sequenceNumberForOrdering: Option[SequenceNumber],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def putRecord(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -54,7 +54,7 @@ final case class PutRecordRequest(
                     CommonValidations
                       .isStreamActiveOrUpdating(arn, streams),
                     CommonValidations.validateData(data),
-                    sequenceNumberForOrdering match {
+                    sequenceNumberForOrdering match
                       case None        => Right(())
                       case Some(seqNo) =>
                         seqNo.parse.flatMap {
@@ -65,13 +65,13 @@ final case class PutRecordRequest(
                             ).asLeft
                           case x => Right(x)
                         }
-                    },
+                    ,
                     CommonValidations.validatePartitionKey(partitionKey),
-                    explicitHashKey match {
+                    explicitHashKey match
                       case Some(explHashKeh) =>
                         CommonValidations.validateExplicitHashKey(explHashKeh)
                       case None => Right(())
-                    },
+                    ,
                     CommonValidations
                       .computeShard(partitionKey, explicitHashKey, stream)
                       .flatMap { case (shard, records) =>
@@ -91,7 +91,7 @@ final case class PutRecordRequest(
             shard.createdAtTimestamp,
             shard.shardId.index,
             None,
-            if (records.isEmpty) Some(1) else Some(records.length + 1),
+            if records.isEmpty then Some(1) else Some(records.length + 1),
             Some(now)
           )
           (
@@ -118,10 +118,9 @@ final case class PutRecordRequest(
         .sequenceWithDefault(streams)
     }
   }
-}
 
-object PutRecordRequest {
-  implicit val purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
+object PutRecordRequest:
+  given purtRecordRequestCirceEncoder: circe.Encoder[PutRecordRequest] =
     circe.Encoder.forProduct6(
       "Data",
       "ExplicitHashKey",
@@ -140,9 +139,9 @@ object PutRecordRequest {
       )
     )
 
-  implicit val putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
+  given putRecordRequestCirceDecoder: circe.Decoder[PutRecordRequest] =
     x =>
-      for {
+      for
         data <- x.downField("Data").as[Array[Byte]]
         explicitHashKey <- x.downField("ExplicitHashKey").as[Option[String]]
         partitionKey <- x.downField("PartitionKey").as[String]
@@ -151,7 +150,7 @@ object PutRecordRequest {
           .as[Option[SequenceNumber]]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield PutRecordRequest(
+      yield PutRecordRequest(
         data,
         explicitHashKey,
         partitionKey,
@@ -160,16 +159,15 @@ object PutRecordRequest {
         streamArn
       )
 
-  implicit val putRecordRequestEncoder: Encoder[PutRecordRequest] =
+  given putRecordRequestEncoder: Encoder[PutRecordRequest] =
     Encoder.derive
-  implicit val putRecordRequestDecoder: Decoder[PutRecordRequest] =
+  given putRecordRequestDecoder: Decoder[PutRecordRequest] =
     Decoder.derive
 
-  implicit val putRecordRequestEq: Eq[PutRecordRequest] = (x, y) =>
+  given Eq[PutRecordRequest] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey &&
       x.sequenceNumberForOrdering == y.sequenceNumberForOrdering &&
       x.streamName == y.streamName &&
       x.streamArn == y.streamArn
-}

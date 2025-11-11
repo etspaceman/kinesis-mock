@@ -20,14 +20,12 @@ import cats.kernel.Eq
 import ciris.ConfigDecoder
 import io.circe.Encoder
 
-final case class AwsAccountId(accountId: String) {
+final case class AwsAccountId(accountId: String):
   override def toString: String = accountId
-}
 
-object AwsAccountId {
-  implicit val awsAccountIdCirceEncoder: Encoder[AwsAccountId] =
+object AwsAccountId:
+  given Encoder[AwsAccountId] =
     Encoder[String].contramap(_.accountId)
-  implicit val awsAccountIdConfigDecoder: ConfigDecoder[String, AwsAccountId] =
+  given ConfigDecoder[String, AwsAccountId] =
     ConfigDecoder[String].map(AwsAccountId.apply)
-  implicit val awsAccountIdEq: Eq[AwsAccountId] = Eq.fromUniversalEquals
-}
+  given Eq[AwsAccountId] = Eq.fromUniversalEquals

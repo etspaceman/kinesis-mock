@@ -21,8 +21,8 @@ import cats.Eq
 import cats.effect.{IO, Ref}
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DisableEnhancedMonitoring.html
@@ -30,7 +30,7 @@ final case class DisableEnhancedMonitoringRequest(
     shardLevelMetrics: Vector[ShardLevelMetric],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def disableEnhancedMonitoring(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -47,7 +47,7 @@ final case class DisableEnhancedMonitoringRequest(
               val current =
                 stream.enhancedMonitoring.flatMap(_.shardLevelMetrics)
               val desired =
-                if (shardLevelMetrics.contains(ShardLevelMetric.ALL))
+                if shardLevelMetrics.contains(ShardLevelMetric.ALL) then
                   Vector.empty
                 else current.diff(shardLevelMetrics)
 
@@ -69,32 +69,28 @@ final case class DisableEnhancedMonitoringRequest(
         }
         .sequenceWithDefault(streams)
     }
-}
 
-object DisableEnhancedMonitoringRequest {
-  implicit val disableEnhancedMonitoringRequestCirceEncoder
+object DisableEnhancedMonitoringRequest:
+  given disableEnhancedMonitoringRequestCirceEncoder
       : circe.Encoder[DisableEnhancedMonitoringRequest] =
     circe.Encoder.forProduct3("ShardLevelMetrics", "StreamName", "StreamARN")(
       x => (x.shardLevelMetrics, x.streamName, x.streamArn)
     )
-  implicit val disableEnhancedMonitoringRequestCirceDecoder
-      : circe.Decoder[DisableEnhancedMonitoringRequest] = { x =>
-    for {
+  given disableEnhancedMonitoringRequestCirceDecoder
+      : circe.Decoder[DisableEnhancedMonitoringRequest] = x =>
+    for
       shardLevelMetrics <- x
         .downField("ShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DisableEnhancedMonitoringRequest(
+    yield DisableEnhancedMonitoringRequest(
       shardLevelMetrics,
       streamName,
       streamArn
     )
-  }
-  implicit val disableEnhancedMonitoringRequestEncoder
+  given disableEnhancedMonitoringRequestEncoder
       : Encoder[DisableEnhancedMonitoringRequest] = Encoder.derive
-  implicit val disableEnhancedMonitoringRequestDecoder
+  given disableEnhancedMonitoringRequestDecoder
       : Decoder[DisableEnhancedMonitoringRequest] = Decoder.derive
-  implicit val disableEnhancedMonitoringRequestEq
-      : Eq[DisableEnhancedMonitoringRequest] = Eq.fromUniversalEquals
-}
+  given Eq[DisableEnhancedMonitoringRequest] = Eq.fromUniversalEquals

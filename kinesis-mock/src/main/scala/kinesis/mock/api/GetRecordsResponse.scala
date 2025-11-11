@@ -20,10 +20,10 @@ package api
 import scala.collection.immutable.Queue
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class GetRecordsResponse(
     childShards: Option[Vector[ChildShard]],
@@ -32,8 +32,8 @@ final case class GetRecordsResponse(
     records: Queue[KinesisRecord]
 )
 
-object GetRecordsResponse {
-  def getRecordsResponseCirceEncoder(implicit
+object GetRecordsResponse:
+  def getRecordsResponseCirceEncoder(using
       EKR: circe.Encoder[KinesisRecord]
   ): circe.Encoder[GetRecordsResponse] =
     circe.Encoder.forProduct4(
@@ -45,39 +45,42 @@ object GetRecordsResponse {
       (x.childShards, x.millisBehindLatest, x.nextShardIterator, x.records)
     )
 
-  def getRecordsResponseCirceDecoder(implicit
+  def getRecordsResponseCirceDecoder(using
       DKR: circe.Decoder[KinesisRecord]
   ): circe.Decoder[GetRecordsResponse] =
     x =>
-      for {
+      for
         childShards <- x.downField("ChildShards").as[Option[Vector[ChildShard]]]
         millisBehindLatest <- x.downField("MillisBehindLatest").as[Long]
         nextShardIterator <- x
           .downField("NextShardIterator")
           .as[Option[ShardIterator]]
         records <- x.downField("Records").as[Queue[KinesisRecord]]
-      } yield GetRecordsResponse(
+      yield GetRecordsResponse(
         childShards,
         millisBehindLatest,
         nextShardIterator,
         records
       )
 
-  implicit val getRecordsResponseEncoder: Encoder[GetRecordsResponse] =
+  given getRecordsResponseEncoder: Encoder[GetRecordsResponse] =
     Encoder.instance(
-      getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeEncoder),
-      getRecordsResponseCirceEncoder(Encoder[KinesisRecord].circeCborEncoder)
+      getRecordsResponseCirceEncoder(using Encoder[KinesisRecord].circeEncoder),
+      getRecordsResponseCirceEncoder(using
+        Encoder[KinesisRecord].circeCborEncoder
+      )
     )
 
-  implicit val getRecordsResponseDecoder: Decoder[GetRecordsResponse] =
+  given getRecordsResponseDecoder: Decoder[GetRecordsResponse] =
     Decoder.instance(
-      getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeDecoder),
-      getRecordsResponseCirceDecoder(Decoder[KinesisRecord].circeCborDecoder)
+      getRecordsResponseCirceDecoder(using Decoder[KinesisRecord].circeDecoder),
+      getRecordsResponseCirceDecoder(using
+        Decoder[KinesisRecord].circeCborDecoder
+      )
     )
 
-  implicit val getRecordsResponseEq: Eq[GetRecordsResponse] = (x, y) =>
+  given Eq[GetRecordsResponse] = (x, y) =>
     x.childShards == y.childShards &&
       x.millisBehindLatest == y.millisBehindLatest &&
       x.nextShardIterator == y.nextShardIterator &&
       x.records === y.records
-}

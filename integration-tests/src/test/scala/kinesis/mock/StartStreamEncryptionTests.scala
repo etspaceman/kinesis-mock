@@ -1,18 +1,18 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class StartStreamEncryptionTests extends AwsFunctionalTests {
+class StartStreamEncryptionTests extends AwsFunctionalTests:
 
   fixture().test("It should start stream encryption") { resources =>
-    for {
+    for
       keyId <- IO(keyIdGen.one)
       _ <- resources.kinesisClient
         .startStreamEncryption(
@@ -28,10 +28,9 @@ class StartStreamEncryptionTests extends AwsFunctionalTests {
         resources.cacheConfig.startStreamEncryptionDuration.plus(400.millis)
       )
       res <- describeStreamSummary(resources)
-    } yield assert(
+    yield assert(
       res.streamDescriptionSummary().keyId() == keyId &&
         res.streamDescriptionSummary().encryptionType() == EncryptionType.KMS,
       res
     )
   }
-}

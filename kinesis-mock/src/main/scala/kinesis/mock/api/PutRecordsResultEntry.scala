@@ -29,8 +29,8 @@ final case class PutRecordsResultEntry(
     shardId: Option[String]
 )
 
-object PutRecordsResultEntry {
-  implicit val putRecordsResultEntryCirceEncoder
+object PutRecordsResultEntry:
+  given putRecordsResultEntryCirceEncoder
       : circe.Encoder[PutRecordsResultEntry] =
     circe.Encoder.forProduct4(
       "ErrorCode",
@@ -39,27 +39,26 @@ object PutRecordsResultEntry {
       "ShardId"
     )(x => (x.errorCode, x.errorMessage, x.sequenceNumber, x.shardId))
 
-  implicit val putRecordsResultEntryCirceDecoder
+  given putRecordsResultEntryCirceDecoder
       : circe.Decoder[PutRecordsResultEntry] =
     x =>
-      for {
+      for
         errorCode <- x.downField("ErrorCode").as[Option[PutRecordsErrorCode]]
         errorMessage <- x.downField("ErrorMessage").as[Option[String]]
         sequenceNumber <- x
           .downField("SequenceNumber")
           .as[Option[SequenceNumber]]
         shardId <- x.downField("ShardId").as[Option[String]]
-      } yield PutRecordsResultEntry(
+      yield PutRecordsResultEntry(
         errorCode,
         errorMessage,
         sequenceNumber,
         shardId
       )
-  implicit val putRecordsResultEntryEncoder: Encoder[PutRecordsResultEntry] =
+  given putRecordsResultEntryEncoder: Encoder[PutRecordsResultEntry] =
     Encoder.derive
-  implicit val putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
+  given putRecordsResultEntryDecoder: Decoder[PutRecordsResultEntry] =
     Decoder.derive
 
-  implicit val putRecordsResultEntryEq: Eq[PutRecordsResultEntry] =
+  given Eq[PutRecordsResultEntry] =
     Eq.fromUniversalEquals
-}

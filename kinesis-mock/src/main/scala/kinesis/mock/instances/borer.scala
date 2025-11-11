@@ -16,41 +16,82 @@
 
 package kinesis.mock.instances
 
-import scala.annotation.switch
+import scala.annotation.{switch, tailrec}
 import scala.collection.Factory
 
 import io.bullet.borer.encodings.BaseEncoding
-import io.bullet.borer.{compat, _}
+import io.bullet.borer.{compat, *}
 import io.circe.{Json, JsonNumber}
 
 // See https://github.com/sirthias/borer/issues/418
-object borer {
-  implicit def borerEncoderFromCirceEncoder[T](implicit
+object borer:
+  given borerEncoderFromCirceEncoder[T](using
       ce: io.circe.Encoder[T]
   ): Encoder[T] =
     compat.circe.borerEncoderFromCirceEncoder
+
   private def defaultDecodeByteArray: Array[Byte] => Json =
     bytes => Json.fromString(new String(BaseEncoding.base64.encode(bytes)))
-  val circeJsonAstDecoder: Decoder[Json] =
-    new Decoder[Json] {
-      import DataItem.{Shifts => DIS}
+
+  def circeJsonAstDecoder(
+      bigIntDecoder: Decoder[BigInt] = Decoder.forBigInt, // scalafix:ok
+      bigDecimalDecoder: Decoder[BigDecimal] =
+        Decoder.forBigDecimal, // scalafix:ok
+      decodeUndefined: Option[() => Json] =
+        Some(() => Json.Null), // scalafix:ok
+      decodeByteArray: Option[Array[Byte] => Json] = Some(
+        defaultDecodeByteArray
+      ), // scalafix:ok
+      decodeSimpleValue: Option[SimpleValue => Json] = None // scalafix:ok
+  ): Decoder[Json] =
+
+    new Decoder[Json]:
+      import DataItem.Shifts as DIS
 
       private[this] val arrayDecoder =
         Decoder.fromFactory(this, implicitly[Factory[Json, Vector[Json]]])
-      private[this] val mapDecoder = Decoder.forListMap(Decoder.forString, this)
+      private[this] val mapDecoder =
+        Decoder { r =>
+          val buf =
+            new scala.collection.mutable.ArrayBuilder.ofRef[(String, Json)]
+          if r.hasMapHeader then
+            @tailrec def rec(remaining: Int): Array[(String, Json)] =
+              if remaining > 0 then
+                buf.addOne(r.readString() -> r.read[Json]())
+                rec(remaining - 1)
+              else buf.result()
+            val size = r.readMapHeader()
+            if size <= Int.MaxValue then rec(size.toInt)
+            else
+              r.overflow(
+                s"Cannot deserialize Map with size $size (> Int.MaxValue)"
+              )
+          else if r.hasMapStart then
+            r.readMapStart()
+            while !r.tryReadBreak() do // scalafix:ok
+              buf.addOne(r.readString() -> r.read[Json]())
+            buf.result()
+          else r.unexpectedDataItem(expected = "Map")
+        }
 
-      def read(r: Reader) =
-        (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match {
+      def read(r: Reader): Json =
+        (Integer.numberOfTrailingZeros(r.dataItem()): @switch) match
           case DIS.Null => r.readNull(); Json.Null
 
-          case DIS.Undefined => Json.Null
+          case DIS.Undefined =>
+            decodeUndefined match
+              case Some(f) => f()
+              case None    =>
+                r.validationFailure(
+                  "CBOR `undefined` cannot be represented in the circe JSON AST"
+                )
 
-          case DIS.Boolean => if (r.readBoolean()) Json.True else Json.False
+          case DIS.Boolean => if r.readBoolean() then Json.True else Json.False
 
           case DIS.Int  => Json.fromInt(r.readInt())
           case DIS.Long => Json.fromLong(r.readLong())
 
-          case DIS.OverLong => Json.fromBigInt(Decoder.forBigInt.read(r))
+          case DIS.OverLong => Json.fromBigInt(bigIntDecoder.read(r))
 
           case DIS.Float16 | DIS.Float =>
             val float = r.readFloat()
@@ -70,15 +111,23 @@ object borer {
             )
 
           case DIS.Bytes | DIS.BytesStart =>
-            defaultDecodeByteArray(r.readByteArray())
+            decodeByteArray match
+              case Some(f) => f(r.readByteArray())
+              case None    =>
+                r.validationFailure(
+                  "Raw byte arrays cannot be represented in the circe JSON AST"
+                )
 
           case DIS.Chars | DIS.String | DIS.Text | DIS.TextStart =>
             Json.fromString(r.readString())
 
           case DIS.SimpleValue =>
-            r.validationFailure(
-              "Raw byte arrays cannot be represented in the circe JSON AST"
-            )
+            decodeSimpleValue match
+              case Some(f) => f(SimpleValue(r.readSimpleValue()))
+              case None    =>
+                r.validationFailure(
+                  "Raw byte arrays cannot be represented in the circe JSON AST"
+                )
 
           case DIS.ArrayHeader | DIS.ArrayStart =>
             Json.fromValues(arrayDecoder.read(r))
@@ -87,27 +136,25 @@ object borer {
             Json.fromFields(mapDecoder.read(r))
 
           case DIS.Tag =>
-            if (r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum)) {
-              Json.fromBigInt(Decoder.forBigInt.read(r))
-            } else if (r.hasTag(Tag.DecimalFraction)) {
-              Json.fromBigDecimal(Decoder.forBigDecimal.read(r))
-            } else if (r.hasTag(Tag.EpochDateTime)) {
+            if r.hasTag(Tag.PositiveBigNum) | r.hasTag(Tag.NegativeBigNum) then
+              Json.fromBigInt(bigIntDecoder.read(r))
+            else if r.hasTag(Tag.DecimalFraction) then
+              Json.fromBigDecimal(bigDecimalDecoder.read(r))
+            else if r.hasTag(Tag.EpochDateTime) then
               Json.fromLong(epochDateTimeDecoder.read(r))
-            } else
+            else
               r.validationFailure(
                 s"CBOR tag `${r.readTag()}` cannot be represented in the circe JSON AST`"
               )
-        }
-    }
+
   val epochDateTimeDecoder: Decoder[Long] = Decoder { r =>
-    r.dataItem() match {
+    r.dataItem() match
       case DataItem.Long                        => r.readLong()
       case _ if r.tryReadTag(Tag.EpochDateTime) => r.readLong()
       case _ => r.unexpectedDataItem(expected = "Long")
-    }
   }
-  implicit def defaultBorerDecoderFromCirceDecoder[T](implicit
+
+  given defaultBorerDecoderFromCirceDecoder[T](using
       cd: io.circe.Decoder[T]
   ): Decoder[T] =
-    compat.circe.borerDecoderFromCirceDecoder(circeJsonAstDecoder)
-}
+    compat.circe.borerDecoderFromCirceDecoder(circeJsonAstDecoder())

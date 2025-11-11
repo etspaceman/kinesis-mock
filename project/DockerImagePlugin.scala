@@ -74,7 +74,7 @@ object DockerImagePlugin extends AutoPlugin {
       throw new IllegalStateException(s"docker buildx push returned $res")
   }
 
-  def settings: Seq[Setting[_]] =
+  def settings: Seq[Setting[?]] =
     Seq(
       buildDockerImage := buildDockerImageTask.value,
       pushDockerImage := pushDockerImageTask.value,
@@ -84,7 +84,8 @@ object DockerImagePlugin extends AutoPlugin {
       serviceFileLocation := "docker/image/lib/",
       serviceFileName := "main.js",
       dockerfileLocation := "docker/",
-      dockerfile := sys.env.getOrElse("KINESIS_MOCK_DOCKERFILE", "Dockerfile")
+      dockerfile := sys.env
+        .getOrElse("KINESIS_MOCK_DOCKERFILE", "Dockerfile")
     )
 }
 

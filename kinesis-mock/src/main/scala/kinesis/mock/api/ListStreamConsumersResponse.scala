@@ -18,51 +18,50 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class ListStreamConsumersResponse(
     consumers: Vector[ConsumerSummary],
     nextToken: Option[ConsumerName]
 )
 
-object ListStreamConsumersResponse {
-  def listStreamConsumersResponseCirceEncoder(implicit
+object ListStreamConsumersResponse:
+  def listStreamConsumersResponseCirceEncoder(using
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[ListStreamConsumersResponse] =
     circe.Encoder.forProduct2("Consumers", "NextToken")(x =>
       (x.consumers, x.nextToken)
     )
 
-  def listStreamConsumersResponseCirceDecoder(implicit
+  def listStreamConsumersResponseCirceDecoder(using
       DC: circe.Decoder[ConsumerSummary]
   ): circe.Decoder[ListStreamConsumersResponse] =
     x =>
-      for {
+      for
         consumers <- x.downField("Consumers").as[Vector[ConsumerSummary]]
         nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
-      } yield ListStreamConsumersResponse(consumers, nextToken)
+      yield ListStreamConsumersResponse(consumers, nextToken)
 
-  implicit val listStreamConsumersResponseEncoder
+  given listStreamConsumersResponseEncoder
       : Encoder[ListStreamConsumersResponse] = Encoder.instance(
-    listStreamConsumersResponseCirceEncoder(
+    listStreamConsumersResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeEncoder
     ),
-    listStreamConsumersResponseCirceEncoder(
+    listStreamConsumersResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
-  implicit val listStreamConsumersResponseDecoder
+  given listStreamConsumersResponseDecoder
       : Decoder[ListStreamConsumersResponse] = Decoder.instance(
-    listStreamConsumersResponseCirceDecoder(
+    listStreamConsumersResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeDecoder
     ),
-    listStreamConsumersResponseCirceDecoder(
+    listStreamConsumersResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  implicit val listStreamConusmerResponseEq: Eq[ListStreamConsumersResponse] =
+  given Eq[ListStreamConsumersResponse] =
     (x, y) => x.consumers === y.consumers && x.nextToken == y.nextToken
-}

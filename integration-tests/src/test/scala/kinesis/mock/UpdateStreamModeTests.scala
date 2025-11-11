@@ -1,16 +1,16 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class UpdateStreamModeTests extends AwsFunctionalTests {
+class UpdateStreamModeTests extends AwsFunctionalTests:
 
   fixture().test("It should update the stream mode") { resources =>
-    for {
+    for
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
       streamModeDetails = StreamModeDetails
@@ -30,9 +30,8 @@ class UpdateStreamModeTests extends AwsFunctionalTests {
         resources.cacheConfig.updateStreamModeDuration.plus(400.millis)
       )
       res <- describeStreamSummary(resources)
-    } yield assert(
+    yield assert(
       res.streamDescriptionSummary().streamModeDetails() == streamModeDetails,
       res
     )
   }
-}

@@ -17,22 +17,22 @@
 package kinesis.mock
 package api
 
-import cats.effect._
+import cats.effect.*
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 class PutRecordsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should put records")(PropF.forAllF {
     (
         streamArn: StreamArn,
         initReq: PutRecordsRequest
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         active =
@@ -60,7 +60,7 @@ class PutRecordsTests
           streamArn.awsAccountId
         )
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(streamArn).exists { stream =>
           stream.shards.values.toVector.flatten.count { rec =>
             req.records.map(_.data).exists(_.sameElements(rec.data))
@@ -78,7 +78,7 @@ class PutRecordsTests
           streamArn: StreamArn,
           initReq: PutRecordsRequest
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           req = initReq.copy(
@@ -91,7 +91,7 @@ class PutRecordsTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
 
@@ -101,7 +101,7 @@ class PutRecordsTests
           streamArn: StreamArn,
           initReq: PutRecordsRequest
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, streamArn, None, now)
           updated = streams.findAndUpdateStream(streamArn)(s =>
@@ -120,11 +120,9 @@ class PutRecordsTests
           streamsRef <- Ref.of[IO, Streams](updated)
           res <- req
             .putRecords(streamsRef, streamArn.awsRegion, streamArn.awsAccountId)
-        } yield assert(
+        yield assert(
           res.isLeft,
           s"req: $req\nres: $res"
         )
     }
   )
-
-}

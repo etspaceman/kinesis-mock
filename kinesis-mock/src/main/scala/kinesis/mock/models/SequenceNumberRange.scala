@@ -25,31 +25,28 @@ final case class SequenceNumberRange(
     startingSequenceNumber: SequenceNumber
 )
 
-object SequenceNumberRange {
-  implicit val sequenceNumberRangeCirceEncoder
-      : circe.Encoder[SequenceNumberRange] =
+object SequenceNumberRange:
+  given sequenceNumberRangeCirceEncoder: circe.Encoder[SequenceNumberRange] =
     circe.Encoder.forProduct2("EndingSequenceNumber", "StartingSequenceNumber")(
       x => (x.endingSequenceNumber, x.startingSequenceNumber)
     )
 
-  implicit val sequenceNumberRangeCirceDecoder
-      : circe.Decoder[SequenceNumberRange] = { x =>
-    for {
-      endingSequenceNumber <- x
-        .downField("EndingSequenceNumber")
-        .as[Option[SequenceNumber]]
-      startingSequenceNumber <- x
-        .downField("StartingSequenceNumber")
-        .as[SequenceNumber]
-    } yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
-  }
+  given sequenceNumberRangeCirceDecoder: circe.Decoder[SequenceNumberRange] =
+    x =>
+      for
+        endingSequenceNumber <- x
+          .downField("EndingSequenceNumber")
+          .as[Option[SequenceNumber]]
+        startingSequenceNumber <- x
+          .downField("StartingSequenceNumber")
+          .as[SequenceNumber]
+      yield SequenceNumberRange(endingSequenceNumber, startingSequenceNumber)
 
-  implicit val sequenceNumberRangeEncoder: Encoder[SequenceNumberRange] =
+  given sequenceNumberRangeEncoder: Encoder[SequenceNumberRange] =
     Encoder.derive
 
-  implicit val sequenceNumberRangeDecoder: Decoder[SequenceNumberRange] =
+  given sequenceNumberRangeDecoder: Decoder[SequenceNumberRange] =
     Decoder.derive
 
-  implicit val sequenceNumberRangeEq: Eq[SequenceNumberRange] =
+  given Eq[SequenceNumberRange] =
     Eq.fromUniversalEquals
-}

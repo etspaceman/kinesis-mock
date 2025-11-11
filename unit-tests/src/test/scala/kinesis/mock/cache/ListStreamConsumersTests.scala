@@ -16,23 +16,24 @@
 
 package kinesis.mock.cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 import org.scalacheck.{Gen, Test}
 
 import kinesis.mock.LoggingContext
-import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.api.*
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class ListStreamConsumersTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -46,7 +47,7 @@ class ListStreamConsumersTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
         .use { case (cacheConfig, cache) =>
-          for {
+          for
             context <- LoggingContext.create
             _ <- cache
               .createStream(
@@ -68,7 +69,7 @@ class ListStreamConsumersTests
               .map(_.streamDescriptionSummary.streamArn)
             consumerNames <- IO(
               Gen
-                .listOfN(3, consumerNameArb.arbitrary)
+                .listOfN(3, Arbitrary.arbitrary[ConsumerName])
                 .suchThat(x =>
                   x.groupBy(identity)
                     .collect { case (_, y) if y.length > 1 => x }
@@ -93,7 +94,7 @@ class ListStreamConsumersTests
                 isCbor = false
               )
               .rethrow
-          } yield assert(
+          yield assert(
             res.consumers == registerResults
               .map(_.consumer),
             s"${registerResults.map(_.consumer)}\n" +
@@ -101,4 +102,3 @@ class ListStreamConsumersTests
           )
         }
   })
-}

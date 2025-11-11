@@ -26,11 +26,10 @@ final case class ShardSummary(
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
     shardId: String
-) {
+):
   val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
-}
 
-object ShardSummary {
+object ShardSummary:
   def fromShard(shard: Shard): ShardSummary = ShardSummary(
     shard.adjacentParentShardId,
     shard.hashKeyRange,
@@ -39,7 +38,7 @@ object ShardSummary {
     shard.shardId.shardId
   )
 
-  implicit val shardSummaryCirceEncoder: circe.Encoder[ShardSummary] =
+  given shardSummaryCirceEncoder: circe.Encoder[ShardSummary] =
     circe.Encoder.forProduct5(
       "AdjacentParentShardId",
       "HashKeyRange",
@@ -56,8 +55,8 @@ object ShardSummary {
       )
     )
 
-  implicit val shardSummaryCirceDecoder: circe.Decoder[ShardSummary] = { x =>
-    for {
+  given shardSummaryCirceDecoder: circe.Decoder[ShardSummary] = x =>
+    for
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
         .as[Option[String]]
@@ -67,16 +66,14 @@ object ShardSummary {
         .downField("SequenceNumberRange")
         .as[SequenceNumberRange]
       shardId <- x.downField("ShardId").as[String]
-    } yield ShardSummary(
+    yield ShardSummary(
       adjacentParentShardId,
       hashKeyRange,
       parentShardId,
       sequenceNumberRange,
       shardId
     )
-  }
 
-  implicit val shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
-  implicit val shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
-  implicit val shardSummaryEq: Eq[ShardSummary] = Eq.fromUniversalEquals
-}
+  given shardSummaryEncoder: Encoder[ShardSummary] = Encoder.derive
+  given shardSummaryDecoder: Decoder[ShardSummary] = Decoder.derive
+  given Eq[ShardSummary] = Eq.fromUniversalEquals

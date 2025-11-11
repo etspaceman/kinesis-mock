@@ -18,6 +18,7 @@ lazy val `kinesis-mock` = projectMatrix
       Circe.parser.value,
       Circe.fs2.value,
       Ciris.core.value,
+      Ciris.enumeratum.value,
       Enumeratum.cats.value,
       Enumeratum.core.value,
       Enumeratum.circe.value,
@@ -25,7 +26,6 @@ lazy val `kinesis-mock` = projectMatrix
       Http4s.circe.value,
       Http4s.dsl.value,
       Log4Cats.core.value,
-      Ciris.core.value,
       FS2.core.value,
       FS2.io.value,
       ScodecBits.value
@@ -41,12 +41,12 @@ lazy val `kinesis-mock` = projectMatrix
     Compile / mainClass := Some("kinesis.mock.KinesisMockService")
   )
   .settings(DockerImagePlugin.settings)
-  .jvmPlatform(Seq(Scala213))
-  .jsPlatform(Seq(Scala213))
+  .jvmPlatform(Seq(Scala3))
+  .jsPlatform(Seq(Scala3))
 
 lazy val `kinesis-mock-js` =
   `kinesis-mock`
-    .js(Scala213)
+    .js(Scala3)
     .enablePlugins(NpmPackagePlugin)
     .settings(
       Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
@@ -111,12 +111,12 @@ lazy val `kinesis-mock-js` =
 lazy val testkit = projectMatrix
   .enablePlugins(NoPublishPlugin)
   .settings(libraryDependencies ++= testDependencies.value)
-  .jvmPlatform(Seq(Scala213))
-  .jsPlatform(Seq(Scala213))
+  .jvmPlatform(Seq(Scala3))
+  .jsPlatform(Seq(Scala3))
   .dependsOn(`kinesis-mock`)
 
 lazy val `testkit-js` = testkit
-  .js(Scala213)
+  .js(Scala3)
   .settings(
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     scalaJSLinkerConfig ~= {
@@ -126,12 +126,12 @@ lazy val `testkit-js` = testkit
 
 lazy val `unit-tests` = projectMatrix
   .enablePlugins(NoPublishPlugin)
-  .jvmPlatform(Seq(Scala213))
-  .jsPlatform(Seq(Scala213))
+  .jvmPlatform(Seq(Scala3))
+  .jsPlatform(Seq(Scala3))
   .dependsOn(testkit % Test)
 
 lazy val `unit-tests-js` = `unit-tests`
-  .js(Scala213)
+  .js(Scala3)
   .settings(
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     scalaJSLinkerConfig ~= {
@@ -152,7 +152,7 @@ lazy val `integration-tests` = projectMatrix
     ),
     Test / parallelExecution := false
   )
-  .jvmPlatform(Seq(Scala213))
+  .jvmPlatform(Seq(Scala3))
   .dependsOn(testkit % Test)
 
 lazy val allProjects = Seq(
@@ -162,9 +162,9 @@ lazy val allProjects = Seq(
   `integration-tests`
 )
 
-lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala213))
+lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala3))
 
-def commonRootSettings: Seq[Setting[_]] =
+def commonRootSettings: Seq[Setting[?]] =
   DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(
     name := "kinesis-mock-root",
     ThisBuild / mergifyLabelPaths ++= allProjects.map { x =>
@@ -178,31 +178,31 @@ lazy val root = project
   .settings(commonRootSettings)
   .aggregate(allProjects.flatMap(_.projectRefs): _*)
 
-lazy val `root-jvm-213` = project
+lazy val `root-jvm-3` = project
   .enablePlugins(NoPublishPlugin)
   .settings(commonRootSettings)
   .aggregate(
     allProjects.flatMap(
       _.filterProjects(
-        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
       ).map(_.project)
     ): _*
   )
 
-lazy val `root-js-213` = project
+lazy val `root-js-3` = project
   .enablePlugins(NoPublishPlugin)
   .settings(commonRootSettings)
   .aggregate(
     allProjects.flatMap(
       _.filterProjects(
-        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala213, "2.13"))
+        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
       ).map(_.project)
     ): _*
   )
 
 lazy val rootProjects = List(
-  `root-jvm-213`,
-  `root-js-213`
+  `root-jvm-3`,
+  `root-js-3`
 ).map(_.id)
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects

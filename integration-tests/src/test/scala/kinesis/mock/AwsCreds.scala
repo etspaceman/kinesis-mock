@@ -6,13 +6,11 @@ import software.amazon.awssdk.auth.credentials.{
 
 final case class AwsCreds(accessKey: String, secretKey: String)
     extends AwsCredentials
-    with AwsCredentialsProvider {
+    with AwsCredentialsProvider:
   override def accessKeyId(): String = accessKey
   override def secretAccessKey(): String = secretKey
   override def resolveCredentials(): AwsCredentials = this
-}
 
-object AwsCreds {
+object AwsCreds:
   val LocalCreds: AwsCreds =
     AwsCreds("mockKinesisAccessKey", "mockKinesisSecretKey")
-}

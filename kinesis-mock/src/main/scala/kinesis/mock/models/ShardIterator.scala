@@ -23,13 +23,13 @@ import java.time.Instant
 import java.util.Base64
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
 import kinesis.mock.validations.CommonValidations
 
-final case class ShardIterator(value: String) {
-  def parse(now: Instant): Response[ShardIteratorParts] = {
+final case class ShardIterator(value: String):
+  def parse(now: Instant): Response[ShardIteratorParts] =
     val decoded = Base64.getDecoder.decode(value.replaceAll("^\"|\"$", ""))
 
     val decrypted = new String(
@@ -41,9 +41,9 @@ final case class ShardIterator(value: String) {
       "UTF-8"
     )
     val split = decrypted.split("/")
-    if (split.length != 5)
+    if split.length != 5 then
       InvalidArgumentException("Invalid shard iterator").asLeft
-    else {
+    else
       val iteratorTimeMillis = split.head
       val streamName = StreamName(split(1))
       val shardId = split(2)
@@ -53,20 +53,19 @@ final case class ShardIterator(value: String) {
         CommonValidations.validateStreamName(streamName),
         CommonValidations.validateShardId(shardId),
         CommonValidations.validateSequenceNumber(sequenceNumber),
-        if (Try(iteratorTimeMillis.toLong).isFailure)
+        if Try(iteratorTimeMillis.toLong).isFailure then
           InvalidArgumentException(
             "Invalid ShardIterator, the time argument is not numeric"
           ).asLeft
         else Right(()),
-        if (
-          Try(iteratorTimeMillis.toLong)
+        if Try(iteratorTimeMillis.toLong)
             .exists(x => x <= 0 || x > now.toEpochMilli)
-        )
+        then
           InvalidArgumentException(
             "Invalid ShardIterator, the the time argument must be between 0 and now"
           ).asLeft
         else Right(()),
-        if (now.toEpochMilli - iteratorTimeMillis.toLong > 300000)
+        if now.toEpochMilli - iteratorTimeMillis.toLong > 300000 then
           ExpiredIteratorException(
             "The shard iterator has expired. Shard iterators are only valid for 300 seconds"
           ).asLeft
@@ -74,9 +73,6 @@ final case class ShardIterator(value: String) {
       ).mapN((_, _, _, _, _, _) =>
         ShardIteratorParts(streamName, shardId, sequenceNumber)
       )
-    }
-  }
-}
 
 final case class ShardIteratorParts(
     streamName: StreamName,
@@ -84,7 +80,7 @@ final case class ShardIteratorParts(
     sequenceNumber: SequenceNumber
 )
 
-object ShardIterator {
+object ShardIterator:
 
   private val iteratorPwdKey =
     BigInt(
@@ -100,7 +96,7 @@ object ShardIterator {
       shardId: String,
       sequenceNumber: SequenceNumber,
       now: Instant
-  ): ShardIterator = {
+  ): ShardIterator =
     val encryptString =
       (Vector.fill(14)("0").mkString + now.toEpochMilli)
         .takeRight(14) +
@@ -113,13 +109,11 @@ object ShardIterator {
       AES.encrypt(encryptString, iteratorPwdKey, iteratorPwdIv)
 
     ShardIterator(Base64.getEncoder.encodeToString(encryptedBytes))
-  }
 
-  implicit val shardIteratorCirceEncoder: Encoder[ShardIterator] =
+  given Encoder[ShardIterator] =
     Encoder[String].contramap(_.value)
 
-  implicit val shardIteratorCirceDecoder: Decoder[ShardIterator] =
+  given Decoder[ShardIterator] =
     Decoder[String].map(ShardIterator.apply)
 
-  implicit val shardIteratorEq: Eq[ShardIterator] = Eq.fromUniversalEquals
-}
+  given Eq[ShardIterator] = Eq.fromUniversalEquals

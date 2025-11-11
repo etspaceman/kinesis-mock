@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class UpdateShardCountResponse(
     currentShardCount: Int,
@@ -28,29 +28,28 @@ final case class UpdateShardCountResponse(
     targetShardCount: Int
 )
 
-object UpdateShardCountResponse {
-  implicit val updateShardCountResponseCirceEncoder
+object UpdateShardCountResponse:
+  given updateShardCountResponseCirceEncoder
       : circe.Encoder[UpdateShardCountResponse] =
     circe.Encoder.forProduct3(
       "CurrentShardCount",
       "StreamName",
       "TargetShardCount"
     )(x => (x.currentShardCount, x.streamName, x.targetShardCount))
-  implicit val updateShardCountResponseCirceDecoder
+  given updateShardCountResponseCirceDecoder
       : circe.Decoder[UpdateShardCountResponse] = x =>
-    for {
+    for
       currentShardCount <- x.downField("CurrentShardCount").as[Int]
       streamName <- x.downField("StreamName").as[StreamName]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
-    } yield UpdateShardCountResponse(
+    yield UpdateShardCountResponse(
       currentShardCount,
       streamName,
       targetShardCount
     )
-  implicit val updateShardCountResponseEncoder
-      : Encoder[UpdateShardCountResponse] = Encoder.derive
-  implicit val updateShardCountResponseDecoder
-      : Decoder[UpdateShardCountResponse] = Decoder.derive
-  implicit val updateShardCountResponseEq: Eq[UpdateShardCountResponse] =
+  given updateShardCountResponseEncoder: Encoder[UpdateShardCountResponse] =
+    Encoder.derive
+  given updateShardCountResponseDecoder: Decoder[UpdateShardCountResponse] =
+    Decoder.derive
+  given Eq[UpdateShardCountResponse] =
     Eq.fromUniversalEquals
-}

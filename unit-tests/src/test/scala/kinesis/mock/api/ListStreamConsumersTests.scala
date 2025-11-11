@@ -20,27 +20,28 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class ListStreamConsumersTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should list consumers")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         consumers = SortedMap.from(
           Gen
-            .listOfN(5, consumerArbitrary.arbitrary)
+            .listOfN(5, Arbitrary.arbitrary[Consumer])
             .suchThat(x =>
               x.groupBy(_.consumerName)
                 .collect { case (_, y) if y.length > 1 => x }
@@ -55,8 +56,7 @@ class ListStreamConsumersTests
         streamsRef <- Ref.of[IO, Streams](withConsumers)
         req = ListStreamConsumersRequest(None, None, streamArn, None)
         res <- req.listStreamConsumers(streamsRef)
-
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           consumers.values.toVector
             .map(ConsumerSummary.fromConsumer) === response.consumers
@@ -69,14 +69,13 @@ class ListStreamConsumersTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
         req = ListStreamConsumersRequest(None, None, streamArn, None)
         res <- req.listStreamConsumers(streamsRef)
-
-      } yield assert(
+      yield assert(
         res.isRight && res.exists(_.consumers.isEmpty),
         s"req: $req\nres: $res"
       )
@@ -86,12 +85,12 @@ class ListStreamConsumersTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         consumers = SortedMap.from(
           Gen
-            .listOfN(10, consumerArbitrary.arbitrary)
+            .listOfN(10, Arbitrary.arbitrary[Consumer])
             .suchThat(x =>
               x.groupBy(_.consumerName)
                 .collect { case (_, y) if y.length > 1 => x }
@@ -116,8 +115,7 @@ class ListStreamConsumersTests
             ).listStreamConsumers(streamsRef)
           )
           .map(_.flatMap(identity))
-
-      } yield assert(
+      yield assert(
         res.isRight && paginatedRes.isRight && res.exists { response =>
           consumers.values
             .take(5)
@@ -134,5 +132,3 @@ class ListStreamConsumersTests
           s"paginatedResCount: ${paginatedRes.map(_.consumers.length)}}"
       )
   })
-
-}

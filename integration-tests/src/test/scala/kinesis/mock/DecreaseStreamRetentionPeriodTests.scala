@@ -1,13 +1,13 @@
 package kinesis.mock
 
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class DecreaseStreamRetentionPeriodTests extends AwsFunctionalTests {
+class DecreaseStreamRetentionPeriodTests extends AwsFunctionalTests:
 
   fixture().test("It should decrease the stream retention period") { resources =>
-    for {
+    for
       _ <- resources.kinesisClient
         .increaseStreamRetentionPeriod(
           IncreaseStreamRetentionPeriodRequest
@@ -27,9 +27,8 @@ class DecreaseStreamRetentionPeriodTests extends AwsFunctionalTests {
         )
         .toIO
       res <- describeStreamSummary(resources)
-    } yield assert(
+    yield assert(
       res.streamDescriptionSummary().retentionPeriodHours().intValue == 24,
       res
     )
   }
-}

@@ -1,25 +1,27 @@
 package kinesis.mock
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import java.nio.charset.Charset
 
 import cats.effect.IO
-import cats.syntax.all._
+import cats.syntax.all.*
+import org.scalacheck.Arbitrary
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.id._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.syntax.id.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class GetRecordsTests extends AwsFunctionalTests {
+class GetRecordsTests extends AwsFunctionalTests:
 
   fixture().test("It should get records") { resources =>
-    for {
+    for
       recordRequests <- IO(
-        putRecordRequestArb.arbitrary
+        Arbitrary
+          .arbitrary[kinesis.mock.api.PutRecordRequest]
           .take(5)
           .toVector
           .map(
@@ -71,7 +73,7 @@ class GetRecordsTests extends AwsFunctionalTests {
           .toIO
       )
       res = gets.flatMap(_.records().asScala.toVector)
-    } yield assert(
+    yield assert(
       res.length == 5 && res.forall(rec =>
         recordRequests.exists(req =>
           req.data.asByteArray.sameElements(rec.data.asByteArray)
@@ -84,9 +86,10 @@ class GetRecordsTests extends AwsFunctionalTests {
 
   fixture().test("It should get records with quotes around shard iterator") {
     resources =>
-      for {
+      for
         recordRequests <- IO(
-          putRecordRequestArb.arbitrary
+          Arbitrary
+            .arbitrary[kinesis.mock.api.PutRecordRequest]
             .take(1)
             .toVector
             .map(
@@ -142,7 +145,7 @@ class GetRecordsTests extends AwsFunctionalTests {
             .toIO
         )
         res = gets.flatMap(_.records().asScala.toVector)
-      } yield assert(
+      yield assert(
         res.length == 1 && res.forall(rec =>
           recordRequests.exists(req =>
             req.data.asByteArray.sameElements(rec.data.asByteArray)
@@ -154,7 +157,7 @@ class GetRecordsTests extends AwsFunctionalTests {
   }
 
   fixture(1).test("It should get records after a sequence number") { resources =>
-    for {
+    for
       putResp1 <- resources.kinesisClient
         .putRecord(
           PutRecordRequest
@@ -196,7 +199,7 @@ class GetRecordsTests extends AwsFunctionalTests {
         )
         .toIO
         .map(_.records().asScala.toVector)
-    } yield assert(
+    yield assert(
       res.length == 1 && res.headOption.exists(rec =>
         resp2Data.asByteArray.sameElements(rec.data.asByteArray)
           && resp2PartitionKey == rec.partitionKey
@@ -207,7 +210,7 @@ class GetRecordsTests extends AwsFunctionalTests {
 
   fixture(1).test("It should get records using subsequent shard iterators") {
     resources =>
-      for {
+      for
         shard <- resources.kinesisClient
           .listShards(
             ListShardsRequest
@@ -253,7 +256,7 @@ class GetRecordsTests extends AwsFunctionalTests {
           )
           .toIO
         res2Records = res2.records().asScala.toVector
-      } yield assert(
+      yield assert(
         res1Records.length == 1 && res1Records.headOption.exists(rec =>
           data.asByteArray.sameElements(rec.data.asByteArray)
             && partitionKey == rec.partitionKey
@@ -261,4 +264,3 @@ class GetRecordsTests extends AwsFunctionalTests {
         s"$res1Records\n\n$res2Records"
       )
   }
-}

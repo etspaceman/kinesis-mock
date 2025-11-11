@@ -20,10 +20,10 @@ package models
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class StreamDescription(
     encryptionType: Option[EncryptionType],
@@ -39,17 +39,17 @@ final case class StreamDescription(
     streamStatus: StreamStatus
 )
 
-object StreamDescription {
+object StreamDescription:
   def fromStreamData(
       streamData: StreamData,
       exclusiveStartShardId: Option[String],
       limit: Option[Int]
-  ): StreamDescription = {
+  ): StreamDescription =
     val allShards = streamData.shards.keys.toVector
     val lim = Math.min(limit.getOrElse(100), 100)
 
     val (shards: Vector[Shard], hasMoreShards: Boolean) =
-      exclusiveStartShardId match {
+      exclusiveStartShardId match
         case None =>
           val s = allShards.take(lim)
           (s, allShards.length > s.length)
@@ -58,8 +58,6 @@ object StreamDescription {
           val allShardsAfterStart = allShards.splitAt(indexOfShard + 1)._2
           val s = allShardsAfterStart.take(lim)
           (s, allShardsAfterStart.length > s.length)
-
-      }
 
     StreamDescription(
       Some(streamData.encryptionType),
@@ -74,9 +72,8 @@ object StreamDescription {
       streamData.streamName,
       streamData.streamStatus
     )
-  }
 
-  def streamDescriptionCirceEncoder(implicit
+  def streamDescriptionCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[StreamDescription] =
     circe.Encoder.forProduct11(
@@ -107,10 +104,10 @@ object StreamDescription {
       )
     )
 
-  def streamDescriptionCirceDecoder(implicit
+  def streamDescriptionCirceDecoder(using
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[StreamDescription] = { x =>
-    for {
+  ): circe.Decoder[StreamDescription] = x =>
+    for
       encryptionType <- x
         .downField("EncryptionType")
         .as[Option[EncryptionType]]
@@ -130,7 +127,7 @@ object StreamDescription {
         .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
-    } yield StreamDescription(
+    yield StreamDescription(
       encryptionType,
       enhancedMonitoring,
       hasMoreShards,
@@ -143,21 +140,20 @@ object StreamDescription {
       streamName,
       streamStatus
     )
-  }
 
-  implicit val streamDescriptionEncoder: Encoder[StreamDescription] =
+  given streamDescriptionEncoder: Encoder[StreamDescription] =
     Encoder.instance(
-      streamDescriptionCirceEncoder(instantDoubleCirceEncoder),
-      streamDescriptionCirceEncoder(instantLongCirceEncoder)
+      streamDescriptionCirceEncoder(using instantDoubleCirceEncoder),
+      streamDescriptionCirceEncoder(using instantLongCirceEncoder)
     )
 
-  implicit val streamDescriptionDecoder: Decoder[StreamDescription] =
+  given streamDescriptionDecoder: Decoder[StreamDescription] =
     Decoder.instance(
-      streamDescriptionCirceDecoder(instantDoubleCirceDecoder),
-      streamDescriptionCirceDecoder(instantLongCirceDecoder)
+      streamDescriptionCirceDecoder(using instantDoubleCirceDecoder),
+      streamDescriptionCirceDecoder(using instantLongCirceDecoder)
     )
 
-  implicit val streamDescriptionEq: Eq[StreamDescription] =
+  given Eq[StreamDescription] =
     (x, y) =>
       x.encryptionType == y.encryptionType &&
         x.enhancedMonitoring == y.enhancedMonitoring &&
@@ -169,4 +165,3 @@ object StreamDescription {
         x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
         x.streamStatus == y.streamStatus
-}

@@ -1,17 +1,17 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
+import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class MergeShardsTests extends AwsFunctionalTests {
+class MergeShardsTests extends AwsFunctionalTests:
 
   fixture().test("It should merge shards") { resources =>
-    for {
+    for
       _ <- resources.kinesisClient
         .updateShardCount(
           UpdateShardCountRequest
@@ -79,9 +79,8 @@ class MergeShardsTests extends AwsFunctionalTests {
               .endingSequenceNumber() == null // scalafix:ok
           )
         )
-    } yield assert(
+    yield assert(
       openShards2.length == 1,
       s"$openShards\n$openShards2"
     )
   }
-}

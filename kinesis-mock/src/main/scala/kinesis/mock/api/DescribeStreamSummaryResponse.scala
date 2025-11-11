@@ -18,7 +18,7 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.StreamDescriptionSummary
@@ -27,40 +27,38 @@ final case class DescribeStreamSummaryResponse(
     streamDescriptionSummary: StreamDescriptionSummary
 )
 
-object DescribeStreamSummaryResponse {
-  def describeStreamSummaryResponseCirceEncoder(implicit
+object DescribeStreamSummaryResponse:
+  def describeStreamSummaryResponseCirceEncoder(using
       ESDS: circe.Encoder[StreamDescriptionSummary]
   ): circe.Encoder[DescribeStreamSummaryResponse] =
     circe.Encoder.forProduct1("StreamDescriptionSummary")(
       _.streamDescriptionSummary
     )
 
-  def describeStreamSummaryResponseCirceDecoder(implicit
+  def describeStreamSummaryResponseCirceDecoder(using
       DSDS: circe.Decoder[StreamDescriptionSummary]
   ): circe.Decoder[DescribeStreamSummaryResponse] =
     _.downField("StreamDescriptionSummary")
       .as[StreamDescriptionSummary]
       .map(DescribeStreamSummaryResponse.apply)
 
-  implicit val describeStreamSummaryResponseEncoder
+  given describeStreamSummaryResponseEncoder
       : Encoder[DescribeStreamSummaryResponse] = Encoder.instance(
-    describeStreamSummaryResponseCirceEncoder(
+    describeStreamSummaryResponseCirceEncoder(using
       Encoder[StreamDescriptionSummary].circeEncoder
     ),
-    describeStreamSummaryResponseCirceEncoder(
+    describeStreamSummaryResponseCirceEncoder(using
       Encoder[StreamDescriptionSummary].circeCborEncoder
     )
   )
-  implicit val describeStreamSummaryResponseDecoder
+  given describeStreamSummaryResponseDecoder
       : Decoder[DescribeStreamSummaryResponse] = Decoder.instance(
-    describeStreamSummaryResponseCirceDecoder(
+    describeStreamSummaryResponseCirceDecoder(using
       Decoder[StreamDescriptionSummary].circeDecoder
     ),
-    describeStreamSummaryResponseCirceDecoder(
+    describeStreamSummaryResponseCirceDecoder(using
       Decoder[StreamDescriptionSummary].circeCborDecoder
     )
   )
-  implicit val describeStreamSummaryResponseEq
-      : Eq[DescribeStreamSummaryResponse] = (x, y) =>
-    x.streamDescriptionSummary === y.streamDescriptionSummary
-}
+  given Eq[DescribeStreamSummaryResponse] =
+    (x, y) => x.streamDescriptionSummary === y.streamDescriptionSummary

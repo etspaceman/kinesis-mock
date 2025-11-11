@@ -1,18 +1,18 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class DeregisterStreamConsumerTests extends AwsFunctionalTests {
+class DeregisterStreamConsumerTests extends AwsFunctionalTests:
 
   fixture().test("It should deregister a stream consumer") { resources =>
-    for {
+    for
       consumerName <- IO(consumerNameGen.one.consumerName)
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
@@ -46,7 +46,7 @@ class DeregisterStreamConsumerTests extends AwsFunctionalTests {
         consumerName,
         streamArn
       ).attempt
-    } yield assert(
+    yield assert(
       check1
         .consumerDescription()
         .consumerStatus() == ConsumerStatus.DELETING &&
@@ -54,4 +54,3 @@ class DeregisterStreamConsumerTests extends AwsFunctionalTests {
       s"$check1\n$check2"
     )
   }
-}

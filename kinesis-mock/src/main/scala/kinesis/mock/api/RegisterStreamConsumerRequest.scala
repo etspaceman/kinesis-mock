@@ -19,18 +19,18 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RegisterStreamConsumer.html
 final case class RegisterStreamConsumerRequest(
     consumerName: ConsumerName,
     streamArn: StreamArn
-) {
+):
   def registerStreamConsumer(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[RegisterStreamConsumerResponse]] =
@@ -44,20 +44,19 @@ final case class RegisterStreamConsumerRequest(
               .flatMap(stream =>
                 (
                   CommonValidations.validateConsumerName(consumerName),
-                  if (stream.consumers.size >= 20)
+                  if stream.consumers.size >= 20 then
                     LimitExceededException(
                       s"Only 20 consumers can be registered to a stream at once"
                     ).asLeft
                   else Right(()),
-                  if (
-                    stream.consumers.values
+                  if stream.consumers.values
                       .count(_.consumerStatus == ConsumerStatus.CREATING) >= 5
-                  )
+                  then
                     LimitExceededException(
                       s"Only 5 consumers can be created at the same time"
                     ).asLeft
                   else Right(()),
-                  if (stream.consumers.contains(consumerName))
+                  if stream.consumers.contains(consumerName) then
                     ResourceInUseException(
                       s"Consumer $consumerName exists"
                     ).asLeft
@@ -83,26 +82,22 @@ final case class RegisterStreamConsumerRequest(
           .sequenceWithDefault(streams)
       }
     }
-}
 
-object RegisterStreamConsumerRequest {
-  implicit val registerStreamConsumerRequestCirceEncoder
+object RegisterStreamConsumerRequest:
+  given registerStreamConsumerRequestCirceEncoder
       : circe.Encoder[RegisterStreamConsumerRequest] =
     circe.Encoder.forProduct2("ConsumerName", "StreamARN")(x =>
       (x.consumerName, x.streamArn)
     )
-  implicit val registerStreamConsumerRequestCirceDecoder
-      : circe.Decoder[RegisterStreamConsumerRequest] = { x =>
-    for {
+  given registerStreamConsumerRequestCirceDecoder
+      : circe.Decoder[RegisterStreamConsumerRequest] = x =>
+    for
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       streamArn <- x.downField("StreamARN").as[StreamArn]
-    } yield RegisterStreamConsumerRequest(consumerName, streamArn)
-  }
-  implicit val registerStreamConsumerRequestEncoder
+    yield RegisterStreamConsumerRequest(consumerName, streamArn)
+  given registerStreamConsumerRequestEncoder
       : Encoder[RegisterStreamConsumerRequest] = Encoder.derive
-  implicit val registerStreamConsumerRequestDecoder
+  given registerStreamConsumerRequestDecoder
       : Decoder[RegisterStreamConsumerRequest] = Decoder.derive
-  implicit val registerStreamConsumerRequestEq
-      : Eq[RegisterStreamConsumerRequest] = (x, y) =>
-    x.consumerName === y.consumerName && x.streamArn === y.streamArn
-}
+  given Eq[RegisterStreamConsumerRequest] =
+    (x, y) => x.consumerName === y.consumerName && x.streamArn === y.streamArn

@@ -17,17 +17,17 @@
 package kinesis.mock
 package api
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateShardCount.html
@@ -36,7 +36,7 @@ final case class UpdateShardCountRequest(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn],
     targetShardCount: Int
-) {
+):
   def updateShardCount(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -56,40 +56,36 @@ final case class UpdateShardCountRequest(
                   .flatMap { stream =>
                     (
                       CommonValidations.isStreamActive(arn, streams),
-                      if (
-                        targetShardCount > stream.shards.keys
+                      if targetShardCount > stream.shards.keys
                           .count(_.isOpen) * 2
-                      )
+                      then
                         InvalidArgumentException(
                           "Cannot update shard count beyond 2x current shard count"
                         ).asLeft
-                      else if (
-                        targetShardCount < stream.shards.keys
+                      else if targetShardCount < stream.shards.keys
                           .count(_.isOpen) / 2
-                      )
+                      then
                         InvalidArgumentException(
                           "Cannot update shard count below 50% of the current shard count"
                         ).asLeft
-                      else if (targetShardCount > 10000)
+                      else if targetShardCount > 10000 then
                         InvalidArgumentException(
                           "Cannot scale a stream beyond 10000 shards"
                         ).asLeft
-                      else if (
-                        streams.streams.values
+                      else if streams.streams.values
                           .map(_.shards.size)
                           .sum + (targetShardCount - stream.shards.size) > shardLimit
-                      )
+                      then
                         LimitExceededException(
                           "Operation would result more shards than the configured shard limit for this account"
                         ).asLeft
                       else Right(targetShardCount),
-                      if (
-                        stream.shardCountUpdates.count(ts =>
+                      if stream.shardCountUpdates.count(ts =>
                           ts.toEpochMilli > now
                             .minusMillis(1.day.toMillis)
                             .toEpochMilli
                         ) >= 10
-                      )
+                      then
                         LimitExceededException(
                           "Cannot run UpdateShardCount more than 10 times in a 24 hour period"
                         ).asLeft
@@ -101,21 +97,21 @@ final case class UpdateShardCountRequest(
                 val openShards = stream.shards.toList.filter(_._1.isOpen)
                 val scalingUp = openShards.size < targetShardCount
 
-                val newStreamData = if (scalingUp) {
-                  UpdateShardCountRequest.splitShards(
-                    stream,
-                    openShards,
-                    targetShardCount,
-                    now
-                  )
-                } else {
-                  UpdateShardCountRequest.mergeShards(
-                    stream,
-                    openShards,
-                    targetShardCount,
-                    now
-                  )
-                }
+                val newStreamData =
+                  if scalingUp then
+                    UpdateShardCountRequest.splitShards(
+                      stream,
+                      openShards,
+                      targetShardCount,
+                      now
+                    )
+                  else
+                    UpdateShardCountRequest.mergeShards(
+                      stream,
+                      openShards,
+                      targetShardCount,
+                      now
+                    )
 
                 (
                   streams.updateStream(newStreamData),
@@ -130,16 +126,15 @@ final case class UpdateShardCountRequest(
           .sequenceWithDefault(streams)
       }
     }
-}
 
-object UpdateShardCountRequest {
+object UpdateShardCountRequest:
   @annotation.tailrec
   def mergeShards(
       streamData: StreamData,
       openShards: List[(Shard, Vector[KinesisRecord])],
       targetShardCount: Int,
       now: Instant
-  ): StreamData = openShards match {
+  ): StreamData = openShards match
     case _
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
       streamData
@@ -164,7 +159,6 @@ object UpdateShardCountRequest {
           )
         }
       mergeShards(newStreamData, newOpenShards, targetShardCount, now)
-  }
 
   @annotation.tailrec
   def splitShards(
@@ -172,7 +166,7 @@ object UpdateShardCountRequest {
       openShards: List[(Shard, Vector[KinesisRecord])],
       targetShardCount: Int,
       now: Instant
-  ): StreamData = openShards match {
+  ): StreamData = openShards match
     case _
         if streamData.shards.toList.count(_._1.isOpen) === targetShardCount =>
       streamData
@@ -192,9 +186,8 @@ object UpdateShardCountRequest {
         targetShardCount,
         now
       )
-  }
 
-  implicit val updateShardCountRequestCirceEncoder
+  given updateShardCountRequestCirceEncoder
       : circe.Encoder[UpdateShardCountRequest] =
     circe.Encoder.forProduct4(
       "ScalingType",
@@ -203,25 +196,24 @@ object UpdateShardCountRequest {
       "TargetShardCount"
     )(x => (x.scalingType, x.streamName, x.streamArn, x.targetShardCount))
 
-  implicit val updateShardCountRequestCirceDecoder
+  given updateShardCountRequestCirceDecoder
       : circe.Decoder[UpdateShardCountRequest] = x =>
-    for {
+    for
       scalingType <- x.downField("ScalingType").as[ScalingType]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       targetShardCount <- x.downField("TargetShardCount").as[Int]
-    } yield UpdateShardCountRequest(
+    yield UpdateShardCountRequest(
       scalingType,
       streamName,
       streamArn,
       targetShardCount
     )
 
-  implicit val updateShardCountRequestEncoder
-      : Encoder[UpdateShardCountRequest] = Encoder.derive
-  implicit val updateShardCountRequestDecoder
-      : Decoder[UpdateShardCountRequest] = Decoder.derive
+  given updateShardCountRequestEncoder: Encoder[UpdateShardCountRequest] =
+    Encoder.derive
+  given updateShardCountRequestDecoder: Decoder[UpdateShardCountRequest] =
+    Decoder.derive
 
-  implicit val updateShardCountRequestEq: Eq[UpdateShardCountRequest] =
+  given Eq[UpdateShardCountRequest] =
     Eq.fromUniversalEquals
-}

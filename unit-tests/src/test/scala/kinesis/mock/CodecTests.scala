@@ -19,26 +19,26 @@ package kinesis.mock
 import scala.reflect.ClassTag
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.bullet.borer
 import io.bullet.borer.Cbor
 import io.circe
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 import org.scalacheck.Arbitrary
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 
-trait CodecTests extends munit.ScalaCheckSuite {
-  def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](implicit
+trait CodecTests extends munit.ScalaCheckSuite:
+  def identityLawTest[A: Encoder: Decoder: Arbitrary: Eq](using
       loc: munit.Location,
       CT: ClassTag[A]
-  ): Unit = {
+  ): Unit =
     property(
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Circe"
     ) {
       forAll { (a: A) =>
-        implicit val E: circe.Encoder[A] = Encoder[A].circeEncoder
-        implicit val D: circe.Decoder[A] = Decoder[A].circeDecoder
+        given circe.Encoder[A] = Encoder[A].circeEncoder
+        given circe.Decoder[A] = Decoder[A].circeDecoder
         val encoded = a.asJson.noSpaces
         val decoded = parse(encoded).flatMap(_.as[A])
 
@@ -51,8 +51,8 @@ trait CodecTests extends munit.ScalaCheckSuite {
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Circe CBOR"
     ) {
       forAll { (a: A) =>
-        implicit val E: circe.Encoder[A] = Encoder[A].circeCborEncoder
-        implicit val D: circe.Decoder[A] = Decoder[A].circeCborDecoder
+        given circe.Encoder[A] = Encoder[A].circeCborEncoder
+        given circe.Decoder[A] = Decoder[A].circeCborDecoder
         val encoded = a.asJson.noSpaces
         val decoded = parse(encoded).flatMap(_.as[A])
 
@@ -65,8 +65,8 @@ trait CodecTests extends munit.ScalaCheckSuite {
       s"Codec Identity Laws Test for ${CT.runtimeClass.getName} - Borer"
     ) {
       forAll { (a: A) =>
-        implicit val E: borer.Encoder[A] = Encoder[A].borerEncoder
-        implicit val D: borer.Decoder[A] = Decoder[A].borerDecoder
+        given borer.Encoder[A] = Encoder[A].borerEncoder
+        given borer.Decoder[A] = Decoder[A].borerDecoder
         val encoded = Cbor.encode(a).toByteArray
         val decoded = Cbor.decode(encoded).to[A].valueEither
 
@@ -74,6 +74,3 @@ trait CodecTests extends munit.ScalaCheckSuite {
             .fold(_.toString, _.toString)}"
       }
     }
-  }
-
-}

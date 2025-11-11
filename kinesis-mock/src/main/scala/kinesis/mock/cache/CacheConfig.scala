@@ -17,15 +17,15 @@
 package kinesis.mock
 package cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
-import cats.implicits._
-import ciris._
+import cats.implicits.*
+import ciris.*
 import io.circe.Encoder
 
 import kinesis.mock.api.CreateStreamRequest
-import kinesis.mock.instances.circe._
-import kinesis.mock.models._
+import kinesis.mock.instances.circe.given
+import kinesis.mock.models.*
 
 final case class CacheConfig(
     initializeStreams: Option[Map[AwsRegion, List[CreateStreamRequest]]],
@@ -67,8 +67,8 @@ final case class CacheConfigStep1(
     logLevel: ConsoleLogger.LogLevel
 )
 
-object CacheConfig {
-  private def readStep1: ConfigValue[Effect, CacheConfigStep1] = for {
+object CacheConfig:
+  private def readStep1: ConfigValue[Effect, CacheConfigStep1] = for
     initializeStreamsStr <- env("INITIALIZE_STREAMS").option
     createStreamDuration <- env("CREATE_STREAM_DURATION")
       .default("500ms")
@@ -110,7 +110,7 @@ object CacheConfig {
       .default("10")
       .as[Int]
     logLevel <- ConsoleLogger.LogLevel.read
-  } yield CacheConfigStep1(
+  yield CacheConfigStep1(
     initializeStreamsStr,
     createStreamDuration,
     deleteStreamDuration,
@@ -131,7 +131,7 @@ object CacheConfig {
   )
 
   def read: ConfigValue[Effect, CacheConfig] = readStep1.flatMap(step1 =>
-    step1.initializeStreamsStr match {
+    step1.initializeStreamsStr match
       case None =>
         ConfigValue.default(
           CacheConfig(
@@ -181,10 +181,9 @@ object CacheConfig {
               )
             )
         )
-    }
   )
 
-  implicit val cacheConfigCirceEncoder: Encoder[CacheConfig] =
+  given Encoder[CacheConfig] =
     Encoder.forProduct16(
       "initializeStreams",
       "createStreamDuration",
@@ -236,7 +235,7 @@ object CacheConfig {
             defaultRegion -> CreateStreamRequest(None, None, StreamName(name))
           )
         case name :: count :: Nil if name.nonEmpty =>
-          if (count.isEmpty)
+          if count.isEmpty then
             Some(
               defaultRegion -> CreateStreamRequest(None, None, StreamName(name))
             )
@@ -251,7 +250,7 @@ object CacheConfig {
         case name :: count :: region :: Nil if name.nonEmpty =>
           val regionOrDefault =
             AwsRegion.withNameOption(region).getOrElse(defaultRegion)
-          if (count.isEmpty)
+          if count.isEmpty then
             Some(
               regionOrDefault -> CreateStreamRequest(
                 None,
@@ -275,4 +274,3 @@ object CacheConfig {
           "Invalid format for INITIALIZE_STREAMS. Expected: \"<String>:<Int>:<String>,<String>:<Int>:<String>,...\""
         )
       )
-}

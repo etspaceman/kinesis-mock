@@ -20,27 +20,32 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class GetRecordsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should get records")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
         records =
-          kinesisRecordArbitrary.arbitrary.take(100).toVector.zipWithIndex.map {
-            case (record, index) =>
+          Arbitrary
+            .arbitrary[KinesisRecord]
+            .take(100)
+            .toVector
+            .zipWithIndex
+            .map { case (record, index) =>
               record.copy(sequenceNumber =
                 SequenceNumber.create(
                   shard.createdAtTimestamp,
@@ -50,7 +55,7 @@ class GetRecordsTests
                   Some(record.approximateArrivalTimestamp)
                 )
               )
-          }
+            }
         withRecords = streams.findAndUpdateStream(streamArn) { s =>
           s.copy(
             shards = SortedMap(s.shards.head._1 -> records),
@@ -70,7 +75,7 @@ class GetRecordsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           response.records.toVector === records &&
           response.nextShardIterator.nonEmpty &&
@@ -87,11 +92,12 @@ class GetRecordsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex
@@ -125,7 +131,7 @@ class GetRecordsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           response.records.toVector === records.take(50) &&
           response.nextShardIterator.nonEmpty &&
@@ -142,11 +148,12 @@ class GetRecordsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex
@@ -191,7 +198,7 @@ class GetRecordsTests
           )
           .map(_.flatMap(identity))
         res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { case (r1, r2) =>
           r1.records.toVector === records
             .take(50) && r2.records.toVector === records
@@ -221,11 +228,12 @@ class GetRecordsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(50)
           .toVector
           .zipWithIndex
@@ -270,7 +278,7 @@ class GetRecordsTests
           )
           .map(_.flatMap(identity))
         res = res1.flatMap(r1 => res2.map(r2 => (r1, r2)))
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { case (r1, r2) =>
           r1.records.toVector === records
             .take(50) && r2.records.isEmpty &&
@@ -286,11 +294,12 @@ class GetRecordsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         shard = streams.streams(streamArn).shards.head._1
-        records = kinesisRecordArbitrary.arbitrary
+        records = Arbitrary
+          .arbitrary[KinesisRecord]
           .take(100)
           .toVector
           .zipWithIndex
@@ -341,7 +350,7 @@ class GetRecordsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           response.records.toVector === records &&
           response.nextShardIterator.isEmpty &&
@@ -353,4 +362,3 @@ class GetRecordsTests
           s"recHead: ${records.head}"
       )
   })
-}

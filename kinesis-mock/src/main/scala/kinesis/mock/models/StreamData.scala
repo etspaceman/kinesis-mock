@@ -18,15 +18,15 @@ package kinesis.mock
 package models
 
 import scala.collection.SortedMap
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 
 final case class StreamData(
     consumers: SortedMap[ConsumerName, Consumer],
@@ -44,20 +44,20 @@ final case class StreamData(
     shardCountUpdates: Vector[Instant]
 )
 
-object StreamData {
+object StreamData:
   val minRetentionPeriod: FiniteDuration = 24.hours
   val maxRetentionPeriod: FiniteDuration = 365.days
 
-  private implicit val consumerCirceEncoder: circe.Encoder[Consumer] =
+  private given consumerCirceEncoder: circe.Encoder[Consumer] =
     Encoder[Consumer].circeEncoder
-  private implicit val kinesisRecordCirceEncoder: circe.Encoder[KinesisRecord] =
+  private given kinesisRecordCirceEncoder: circe.Encoder[KinesisRecord] =
     Encoder[KinesisRecord].circeEncoder
-  private implicit val consumerCirceDecoder: circe.Decoder[Consumer] =
+  private given consumerCirceDecoder: circe.Decoder[Consumer] =
     Decoder[Consumer].circeDecoder
-  private implicit val kinesisRecordCirceDecoder: circe.Decoder[KinesisRecord] =
+  private given kinesisRecordCirceDecoder: circe.Decoder[KinesisRecord] =
     Decoder[KinesisRecord].circeDecoder
 
-  implicit val streamDataCirceEncoder: circe.Encoder[StreamData] =
+  given streamDataCirceEncoder: circe.Encoder[StreamData] =
     circe.Encoder.forProduct13(
       "consumers",
       "encryptionType",
@@ -89,8 +89,8 @@ object StreamData {
         x.shardCountUpdates
       )
     )
-  implicit val streamDataCirceDecoder: circe.Decoder[StreamData] = { x =>
-    for {
+  given streamDataCirceDecoder: circe.Decoder[StreamData] = x =>
+    for
       consumers <- x
         .downField("consumers")
         .as[SortedMap[ConsumerName, Consumer]]
@@ -114,7 +114,7 @@ object StreamData {
       streamStatus <- x.downField("streamStatus").as[StreamStatus]
       tags <- x.downField("tags").as[Tags]
       shardCountUpdates <- x.downField("shardCountUpdates").as[Vector[Instant]]
-    } yield StreamData(
+    yield StreamData(
       consumers,
       encryptionType,
       enhancedMonitoring,
@@ -130,9 +130,7 @@ object StreamData {
       shardCountUpdates
     )
 
-  }
-
-  implicit val streamDataEq: Eq[StreamData] = (x, y) =>
+  given Eq[StreamData] = (x, y) =>
     x.consumers.toMap === y.consumers.toMap &&
       x.encryptionType === y.encryptionType &&
       x.enhancedMonitoring === y.enhancedMonitoring &&
@@ -154,7 +152,7 @@ object StreamData {
       streamArn: StreamArn,
       streamModeDetails: Option[StreamModeDetails],
       now: Instant
-  ): StreamData = {
+  ): StreamData =
     val shards: SortedMap[Shard, Vector[KinesisRecord]] =
       Shard.newShards(shardCount, now, 0)
     StreamData(
@@ -172,5 +170,3 @@ object StreamData {
       Tags.empty,
       Vector.empty
     )
-  }
-}

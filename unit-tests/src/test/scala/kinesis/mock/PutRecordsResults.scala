@@ -26,7 +26,7 @@ final case class PutRecordResults(
     partitionKey: String
 )
 
-object PutRecordResults {
+object PutRecordResults:
   def fromKinesisRecord(x: KinesisRecord): PutRecordResults =
     PutRecordResults(x.data, x.partitionKey)
 
@@ -36,6 +36,5 @@ object PutRecordResults {
   def fromPutRecordRequest(x: PutRecordRequest): PutRecordResults =
     PutRecordResults(x.data, x.partitionKey)
 
-  implicit val putRecordResultsEq: Eq[PutRecordResults] = (x, y) =>
+  given Eq[PutRecordResults] = (x, y) =>
     x.data.sameElements(y.data) && x.partitionKey == y.partitionKey
-}

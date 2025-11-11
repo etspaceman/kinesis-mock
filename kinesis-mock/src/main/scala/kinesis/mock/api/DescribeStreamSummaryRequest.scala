@@ -21,14 +21,14 @@ import cats.Eq
 import cats.effect.{IO, Ref}
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStreamSummary.html
 final case class DescribeStreamSummaryRequest(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def describeStreamSummary(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -51,24 +51,22 @@ final case class DescribeStreamSummaryRequest(
             )
         }
     )
-}
 
-object DescribeStreamSummaryRequest {
-  implicit val describeStreamSummaryRequestCirceEncoder
+object DescribeStreamSummaryRequest:
+  given describeStreamSummaryRequestCirceEncoder
       : circe.Encoder[DescribeStreamSummaryRequest] =
     circe.Encoder.forProduct2("StreamName", "StreamARN")(x =>
       (x.streamName, x.streamArn)
     )
-  implicit val describeStreamSummaryRequestCirceDecoder
+  given describeStreamSummaryRequestCirceDecoder
       : circe.Decoder[DescribeStreamSummaryRequest] = x =>
-    for {
+    for
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DescribeStreamSummaryRequest(streamName, streamArn)
-  implicit val describeStreamSummaryRequestEncoder
+    yield DescribeStreamSummaryRequest(streamName, streamArn)
+  given describeStreamSummaryRequestEncoder
       : Encoder[DescribeStreamSummaryRequest] = Encoder.derive
-  implicit val describeStreamSummaryRequestDecoder
+  given describeStreamSummaryRequestDecoder
       : Decoder[DescribeStreamSummaryRequest] = Decoder.derive
-  implicit val describeStreamSummaryRequestEq
-      : Eq[DescribeStreamSummaryRequest] = Eq.fromUniversalEquals
-}
+  given Eq[DescribeStreamSummaryRequest] =
+    Eq.fromUniversalEquals

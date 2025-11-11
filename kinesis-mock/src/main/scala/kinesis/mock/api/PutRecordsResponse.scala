@@ -28,29 +28,26 @@ final case class PutRecordsResponse(
     records: Vector[PutRecordsResultEntry]
 )
 
-object PutRecordsResponse {
-  implicit val putRecordsResponseCirceEncoder
-      : circe.Encoder[PutRecordsResponse] =
+object PutRecordsResponse:
+  given putRecordsResponseCirceEncoder: circe.Encoder[PutRecordsResponse] =
     circe.Encoder.forProduct3(
       "EncryptionType",
       "FailedRecordCount",
       "Records"
     )(x => (x.encryptionType, x.failedRecordCount, x.records))
 
-  implicit val putRecordsResponseCirceDecoder
-      : circe.Decoder[PutRecordsResponse] =
+  given putRecordsResponseCirceDecoder: circe.Decoder[PutRecordsResponse] =
     x =>
-      for {
+      for
         encryptionType <- x.downField("EncryptionType").as[EncryptionType]
         failedRecordCount <- x.downField("FailedRecordCount").as[Int]
         records <- x.downField("Records").as[Vector[PutRecordsResultEntry]]
-      } yield PutRecordsResponse(encryptionType, failedRecordCount, records)
+      yield PutRecordsResponse(encryptionType, failedRecordCount, records)
 
-  implicit val putRecordsResponseEncoder: Encoder[PutRecordsResponse] =
+  given putRecordsResponseEncoder: Encoder[PutRecordsResponse] =
     Encoder.derive
-  implicit val putRecordsResponseDecoder: Decoder[PutRecordsResponse] =
+  given putRecordsResponseDecoder: Decoder[PutRecordsResponse] =
     Decoder.derive
 
-  implicit val putRecordsResponseEq: Eq[PutRecordsResponse] =
+  given Eq[PutRecordsResponse] =
     Eq.fromUniversalEquals
-}

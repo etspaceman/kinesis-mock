@@ -22,10 +22,10 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
-import io.circe._
+import cats.syntax.all.*
+import io.circe.*
 
-final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
+final case class Streams(streams: SortedMap[StreamArn, StreamData]):
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams ++ Seq(stream.streamArn -> stream))
   def findAndUpdateStream(
@@ -76,17 +76,12 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]) {
 
   def removeStream(streamArn: StreamArn): Streams =
     copy(streams = streams.filterNot { case (x, _) => streamArn == x })
-}
 
-object Streams {
+object Streams:
   val empty: Streams = Streams(SortedMap.empty)
-  implicit val streamsCirceEncoder: Encoder[Streams] =
+  given Encoder[Streams] =
     Encoder.forProduct1("streams")(x => x.streams)
-  implicit val streamsCirceDecoder: Decoder[Streams] = { x =>
-    for {
-      streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
-    } yield Streams(streams)
-  }
-  implicit val streamsEq: Eq[Streams] = (x, y) =>
-    x.streams.toMap === y.streams.toMap
-}
+  given Decoder[Streams] = x =>
+    for streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
+    yield Streams(streams)
+  given Eq[Streams] = (x, y) => x.streams.toMap === y.streams.toMap

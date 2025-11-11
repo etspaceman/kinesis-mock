@@ -17,9 +17,9 @@
 package kinesis.mock
 package api
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
-class ApiCirceTests extends CirceTests {
+class ApiCirceTests extends CirceTests:
   identityLawTest[AddTagsToStreamRequest]
   identityLawTest[CreateStreamRequest]
   identityLawTest[DecreaseStreamRetentionPeriodRequest]
@@ -55,4 +55,3 @@ class ApiCirceTests extends CirceTests {
   identityLawTest[UpdateShardCountRequest]
   identityLawTest[UpdateShardCountResponse]
   identityLawTest[UpdateStreamModeRequest]
-}

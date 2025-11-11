@@ -21,18 +21,18 @@ import scala.collection.mutable.HashMap
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class PutRecordsRequest(
     records: Vector[PutRecordsRequestEntry],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def putRecords(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -56,12 +56,12 @@ final case class PutRecordsRequest(
                         (
                           CommonValidations
                             .validatePartitionKey(x.partitionKey),
-                          x.explicitHashKey match {
+                          x.explicitHashKey match
                             case Some(explHashKey) =>
                               CommonValidations
                                 .validateExplicitHashKey(explHashKey)
                             case None => Right(())
-                          },
+                          ,
                           CommonValidations.validateData(x.data),
                           CommonValidations
                             .computeShard(
@@ -90,7 +90,7 @@ final case class PutRecordsRequest(
                   shard.createdAtTimestamp,
                   shard.shardId.index,
                   None,
-                  if (records.isEmpty) Some(1 + index)
+                  if records.isEmpty then Some(1 + index)
                   else Some(1 + records.length + index),
                   Some(now)
                 )
@@ -143,12 +143,11 @@ final case class PutRecordsRequest(
           .sequenceWithDefault(streams)
       }
     }
-}
 
-object PutRecordsRequest {
+object PutRecordsRequest:
   private def getIndexByShard(
       records: Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry)]
-  ): Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry, Int)] = {
+  ): Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry, Int)] =
     val indexMap: HashMap[Shard, Int] = new HashMap()
 
     records.map { case (shard, records, entry) =>
@@ -156,28 +155,26 @@ object PutRecordsRequest {
       indexMap += shard -> i
       (shard, records, entry, i)
     }
-  }
 
-  implicit val putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
+  given putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
     circe.Encoder.forProduct3("Records", "StreamName", "StreamARN")(x =>
       (x.records, x.streamName, x.streamArn)
     )
 
-  implicit val putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
+  given putRecordsRequestCirceDecoder: circe.Decoder[PutRecordsRequest] =
     x =>
-      for {
+      for
         records <- x.downField("Records").as[Vector[PutRecordsRequestEntry]]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield PutRecordsRequest(records, streamName, streamArn)
+      yield PutRecordsRequest(records, streamName, streamArn)
 
-  implicit val putRecordsRequestEncoder: Encoder[PutRecordsRequest] =
+  given putRecordsRequestEncoder: Encoder[PutRecordsRequest] =
     Encoder.derive
-  implicit val putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
+  given putRecordsRequestDecoder: Decoder[PutRecordsRequest] =
     Decoder.derive
 
-  implicit val putRecordsRequestEq: Eq[PutRecordsRequest] = (x, y) =>
+  given Eq[PutRecordsRequest] = (x, y) =>
     x.records === y.records &&
       x.streamName == y.streamName &&
       x.streamArn == y.streamArn
-}

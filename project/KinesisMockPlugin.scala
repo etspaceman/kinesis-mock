@@ -52,7 +52,7 @@ object KinesisMockPlugin extends AutoPlugin {
     s"github.event_name != 'pull_request' && $publicationCond"
   }
 
-  override def buildSettings: Seq[Setting[_]] = Seq(
+  override def buildSettings: Seq[Setting[?]] = Seq(
     tlBaseVersion := "0.4",
     tlCiScalafixCheck := true,
     tlCiMimaBinaryIssueCheck := false,
@@ -62,8 +62,8 @@ object KinesisMockPlugin extends AutoPlugin {
     licenses := Seq(License.MIT),
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    crossScalaVersions := Seq(Scala213),
-    scalaVersion := Scala213,
+    crossScalaVersions := Seq(Scala3),
+    scalaVersion := Scala3,
     resolvers += "s01 snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     tlCiStewardValidateConfig :=
       Some(file(".scala-steward.conf")).filter(_.exists()),
@@ -138,7 +138,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests/test",
+            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests3/test",
             "retry_on" -> "error"
           )
         )
@@ -164,7 +164,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests/test",
+            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests3/test",
             "retry_on" -> "error"
           ),
           env = Map(
@@ -376,7 +376,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mock/assembly"),
+              List("kinesis-mock3/assembly"),
               name = Some("Assembly"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -422,13 +422,8 @@ object KinesisMockPlugin extends AutoPlugin {
       }
   )
 
-  override def projectSettings: Seq[Setting[_]] = Seq(
+  override def projectSettings: Seq[Setting[?]] = Seq(
     scalacOptions ++= ScalacSettings.settings,
-    Compile / console / scalacOptions ~= {
-      _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
-    },
-    addCompilerPlugin(KindProjector cross CrossVersion.full),
-    addCompilerPlugin(BetterMonadicFor),
     Test / testOptions ++=
       List(Tests.Argument(TestFrameworks.MUnit, "+l")),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
@@ -473,7 +468,7 @@ object KinesisMockPluginKeys {
   lazy val npmCopyExtraFiles =
     taskKey[Unit]("Copy extra files to the NPM install directory")
 
-  val Scala213 = "2.13.17"
+  val Scala3 = "3.3.7"
 
   val testDependencies = Def.setting(
     Seq(

@@ -23,10 +23,10 @@ import java.time.Instant
 
 import cats.Eq
 import io.circe
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class Shard(
     adjacentParentShardId: Option[String],
@@ -36,11 +36,10 @@ final case class Shard(
     parentShardId: Option[String],
     sequenceNumberRange: SequenceNumberRange,
     shardId: ShardId
-) {
+):
   val isOpen: Boolean = sequenceNumberRange.endingSequenceNumber.isEmpty
-}
 
-object Shard {
+object Shard:
 
   val minHashKey: BigInt = BigInt(0)
   val maxHashKey: BigInt = BigInt("340282366920938463463374607431768211455")
@@ -49,7 +48,7 @@ object Shard {
       shardCount: Int,
       createTime: Instant,
       startingIndex: Int
-  ): SortedMap[Shard, Vector[KinesisRecord]] = {
+  ): SortedMap[Shard, Vector[KinesisRecord]] =
     val shardHash = maxHashKey / BigInt(shardCount)
     SortedMap.from(
       Vector
@@ -61,7 +60,7 @@ object Shard {
             None,
             createTime,
             HashKeyRange(
-              if (listIndex < shardCount - 1)
+              if listIndex < shardCount - 1 then
                 (shardHash * BigInt(listIndex + 1)) - BigInt(1)
               else maxHashKey,
               shardHash * BigInt(listIndex)
@@ -75,11 +74,10 @@ object Shard {
           ) -> Vector.empty
         }
     )
-  }
-  implicit val shardOrdering: Ordering[Shard] = (x: Shard, y: Shard) =>
+  given Ordering[Shard] = (x: Shard, y: Shard) =>
     Ordering[ShardId].compare(x.shardId, y.shardId)
 
-  def shardCirceEncoder(implicit
+  def shardCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[Shard] = circe.Encoder.forProduct8(
     "AdjacentParentShardId",
@@ -103,10 +101,10 @@ object Shard {
     )
   )
 
-  def shardCirceDecoder(implicit
+  def shardCirceDecoder(using
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[Shard] = { x =>
-    for {
+  ): circe.Decoder[Shard] = x =>
+    for
       adjacentParentShardId <- x
         .downField("AdjacentParentShardId")
         .as[Option[String]]
@@ -119,7 +117,7 @@ object Shard {
         .as[SequenceNumberRange]
       shardId <- x.downField("ShardId").as[String]
       shardIndex <- x.downField("ShardIndex").as[Int]
-    } yield Shard(
+    yield Shard(
       adjacentParentShardId,
       closedTimestamp,
       createdAtTimestamp,
@@ -128,29 +126,28 @@ object Shard {
       sequenceNumberRange,
       ShardId(shardId, shardIndex)
     )
-  }
 
-  implicit val shardEncoder: Encoder[Shard] = Encoder.instance(
-    shardCirceEncoder(instantDoubleCirceEncoder),
-    shardCirceEncoder(instantLongCirceEncoder)
+  given shardEncoder: Encoder[Shard] = Encoder.instance(
+    shardCirceEncoder(using instantDoubleCirceEncoder),
+    shardCirceEncoder(using instantLongCirceEncoder)
   )
 
-  implicit val shardDecoder: Decoder[Shard] = Decoder.instance(
-    shardCirceDecoder(instantDoubleCirceDecoder),
-    shardCirceDecoder(instantLongCirceDecoder)
+  given shardDecoder: Decoder[Shard] = Decoder.instance(
+    shardCirceDecoder(using instantDoubleCirceDecoder),
+    shardCirceDecoder(using instantLongCirceDecoder)
   )
 
-  implicit val shardCirceKeyEncoder: circe.KeyEncoder[Shard] =
+  given circe.KeyEncoder[Shard] =
     circe
       .KeyEncoder[String]
       .contramap(x => shardCirceEncoder.apply(x).asJson.noSpaces)
 
-  implicit val shardCirceKeyDecoder: circe.KeyDecoder[Shard] =
+  given circe.KeyDecoder[Shard] =
     circe.KeyDecoder.instance(x =>
       parse(x).flatMap(_.as[Shard](shardCirceDecoder)).toOption
     )
 
-  implicit val shardEq: Eq[Shard] = (x, y) =>
+  given Eq[Shard] = (x, y) =>
     x.adjacentParentShardId == y.adjacentParentShardId &&
       x.closedTimestamp.map(_.getEpochSecond()) == y.closedTimestamp.map(
         _.getEpochSecond()
@@ -160,4 +157,3 @@ object Shard {
       x.parentShardId == y.parentShardId &&
       x.sequenceNumberRange == y.sequenceNumberRange &&
       x.shardId == y.shardId
-}

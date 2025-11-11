@@ -17,15 +17,15 @@
 package kinesis.mock
 package api
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DecreaseStreamRetention.html
@@ -33,7 +33,7 @@ final case class DecreaseStreamRetentionPeriodRequest(
     retentionPeriodHours: Int,
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def decreaseStreamRetention(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -52,7 +52,7 @@ final case class DecreaseStreamRetentionPeriodRequest(
                   CommonValidations
                     .validateRetentionPeriodHours(retentionPeriodHours),
                   CommonValidations.isStreamActive(arn, streams),
-                  if (stream.retentionPeriod.toHours < retentionPeriodHours)
+                  if stream.retentionPeriod.toHours < retentionPeriodHours then
                     InvalidArgumentException(
                       s"Provided RetentionPeriodHours $retentionPeriodHours is greater than the currently defined retention period ${stream.retentionPeriod.toHours}"
                     ).asLeft
@@ -71,35 +71,31 @@ final case class DecreaseStreamRetentionPeriodRequest(
       }
       .sequenceWithDefault(streams)
   }
-}
 
-object DecreaseStreamRetentionPeriodRequest {
-  implicit val decreaseStreamRetentionPeriodRequestCirceEncoder
+object DecreaseStreamRetentionPeriodRequest:
+  given decreaseStreamRetentionPeriodRequestCirceEncoder
       : circe.Encoder[DecreaseStreamRetentionPeriodRequest] =
     circe.Encoder.forProduct3(
       "RetentionPeriodHours",
       "StreamName",
       "StreamARN"
     )(x => (x.retentionPeriodHours, x.streamName, x.streamArn))
-  implicit val decreaseStreamRetentionPeriodRequestCirceDecoder
-      : circe.Decoder[DecreaseStreamRetentionPeriodRequest] = { x =>
-    for {
+  given decreaseStreamRetentionPeriodRequestCirceDecoder
+      : circe.Decoder[DecreaseStreamRetentionPeriodRequest] = x =>
+    for
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DecreaseStreamRetentionPeriodRequest(
+    yield DecreaseStreamRetentionPeriodRequest(
       retentionPeriodHours,
       streamName,
       streamArn
     )
-  }
-  implicit val decreaseStreamRetentionPeriodRequestEncoder
+  given decreaseStreamRetentionPeriodRequestEncoder
       : Encoder[DecreaseStreamRetentionPeriodRequest] =
     Encoder.derive
-  implicit val decreaseStreamRetentionPeriodRequestDecoder
+  given decreaseStreamRetentionPeriodRequestDecoder
       : Decoder[DecreaseStreamRetentionPeriodRequest] =
     Decoder.derive
-  implicit val decreaseStreamRetentionEq
-      : Eq[DecreaseStreamRetentionPeriodRequest] =
+  given Eq[DecreaseStreamRetentionPeriodRequest] =
     Eq.fromUniversalEquals
-}

@@ -16,12 +16,12 @@
 
 package kinesis.mock.models
 
-import enumeratum.scalacheck._
-import org.scalacheck.Prop._
+import enumeratum.scalacheck.*
+import org.scalacheck.Prop.*
 
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.instances.arbitrary.given
 
-class StreamArnSpec extends munit.ScalaCheckSuite {
+class StreamArnSpec extends munit.ScalaCheckSuite:
   property("It should convert to a proper ARN format")(forAll {
     (
         streamName: StreamName,
@@ -35,4 +35,3 @@ class StreamArnSpec extends munit.ScalaCheckSuite {
 
       (streamArn.streamArn == expected) :| s"Calculated: ${streamArn}\nExpected: ${expected}"
   })
-}

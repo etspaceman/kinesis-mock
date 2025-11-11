@@ -5,16 +5,16 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import java.nio.ByteBuffer
 
 import cats.effect.{IO, Resource, SyncIO}
-import cats.syntax.all._
+import cats.syntax.all.*
 import software.amazon.awssdk.regions.Region
-import software.amazon.kinesis.producer._
+import software.amazon.kinesis.producer.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class KPLTests extends AwsFunctionalTests {
-  implicit val E: ExecutionContextExecutor = ExecutionContext.global
+class KPLTests extends AwsFunctionalTests:
+  given ExecutionContextExecutor = ExecutionContext.global
 
   val kplFixture: SyncIO[FunFixture[KPLResources]] = ResourceFunFixture(
     resource().flatMap { resources =>
@@ -42,7 +42,7 @@ class KPLTests extends AwsFunctionalTests {
   )
 
   kplFixture.test("it should produce records") { resources =>
-    for {
+    for
       dataRecords <- IO(dataGen.take(20).toVector)
       partitionKey <- Utils.randomUUIDString
       res <- dataRecords.parTraverse(data =>
@@ -56,6 +56,5 @@ class KPLTests extends AwsFunctionalTests {
           )
           .toIO
       )
-    } yield assert(res.forall(_.isSuccessful()))
+    yield assert(res.forall(_.isSuccessful()))
   }
-}

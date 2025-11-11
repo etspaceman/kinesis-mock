@@ -10,14 +10,14 @@ pull_request_rules:
   conditions:
   - author=etspaceman-scala-steward-app[bot]
   - body~=labels:.*early-semver-patch
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, true, root-jvm-213, 4567)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, true, root-jvm-213, 4568)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, true, root-js-213, 4567)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, true, root-js-213, 4568)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, false, root-jvm-213, 4567)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, false, root-jvm-213, 4568)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, false, root-js-213, 4567)
-  - status-success=Test (ubuntu-22.04, 2.13, temurin@21, false, root-js-213, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, root-jvm-3, 4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, root-jvm-3, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, root-js-3, 4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, root-js-3, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, root-jvm-3, 4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, root-jvm-3, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, root-js-3, 4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, root-js-3, 4568)
   actions:
     merge:
       method: squash
@@ -29,6 +29,14 @@ pull_request_rules:
       add:
       - integration-tests
       remove: []
+- name: Label integration-tests3 PRs
+  conditions:
+  - files~=^.sbt/matrix/integration-tests3/
+  actions:
+    label:
+      add:
+      - integration-tests3
+      remove: []
 - name: Label kinesis-mock PRs
   conditions:
   - files~=^kinesis-mock/
@@ -37,29 +45,37 @@ pull_request_rules:
       add:
       - kinesis-mock
       remove: []
-- name: Label kinesis-mockJS PRs
+- name: Label kinesis-mock3 PRs
   conditions:
-  - files~=^.sbt/matrix/kinesis-mockJS/
+  - files~=^.sbt/matrix/kinesis-mock3/
   actions:
     label:
       add:
-      - kinesis-mockJS
+      - kinesis-mock3
       remove: []
-- name: Label root-js-213 PRs
+- name: Label kinesis-mockJS3 PRs
   conditions:
-  - files~=^root-js-213/
+  - files~=^.sbt/matrix/kinesis-mockJS3/
   actions:
     label:
       add:
-      - root-js-213
+      - kinesis-mockJS3
       remove: []
-- name: Label root-jvm-213 PRs
+- name: Label root-js-3 PRs
   conditions:
-  - files~=^root-jvm-213/
+  - files~=^root-js-3/
   actions:
     label:
       add:
-      - root-jvm-213
+      - root-js-3
+      remove: []
+- name: Label root-jvm-3 PRs
+  conditions:
+  - files~=^root-jvm-3/
+  actions:
+    label:
+      add:
+      - root-jvm-3
       remove: []
 - name: Label testkit PRs
   conditions:
@@ -69,13 +85,21 @@ pull_request_rules:
       add:
       - testkit
       remove: []
-- name: Label testkitJS PRs
+- name: Label testkit3 PRs
   conditions:
-  - files~=^.sbt/matrix/testkitJS/
+  - files~=^.sbt/matrix/testkit3/
   actions:
     label:
       add:
-      - testkitJS
+      - testkit3
+      remove: []
+- name: Label testkitJS3 PRs
+  conditions:
+  - files~=^.sbt/matrix/testkitJS3/
+  actions:
+    label:
+      add:
+      - testkitJS3
       remove: []
 - name: Label unit-tests PRs
   conditions:
@@ -85,11 +109,19 @@ pull_request_rules:
       add:
       - unit-tests
       remove: []
-- name: Label unit-testsJS PRs
+- name: Label unit-tests3 PRs
   conditions:
-  - files~=^.sbt/matrix/unit-testsJS/
+  - files~=^.sbt/matrix/unit-tests3/
   actions:
     label:
       add:
-      - unit-testsJS
+      - unit-tests3
+      remove: []
+- name: Label unit-testsJS3 PRs
+  conditions:
+  - files~=^.sbt/matrix/unit-testsJS3/
+  actions:
+    label:
+      add:
+      - unit-testsJS3
       remove: []

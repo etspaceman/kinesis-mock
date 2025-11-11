@@ -23,19 +23,19 @@ import cats.effect.{IO, Ref}
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.{given, *}
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class ListTagsForStreamTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should list tags")(PropF.forAllF {
     (
         streamArn: StreamArn,
         tags: Tags
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         withTags = streams.findAndUpdateStream(streamArn)(s =>
@@ -48,7 +48,7 @@ class ListTagsForStreamTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           tags == Tags.fromTagList(response.tags)
         },
@@ -60,7 +60,7 @@ class ListTagsForStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams =
           Streams.empty.addStream(100, streamArn, None, now)
@@ -85,7 +85,7 @@ class ListTagsForStreamTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.slice(4, 10)) == Tags.fromTagList(
             response.tags
@@ -99,7 +99,7 @@ class ListTagsForStreamTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams =
           Streams.empty.addStream(100, streamArn, None, now)
@@ -118,7 +118,7 @@ class ListTagsForStreamTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           tags.copy(tags = tags.tags.take(5)) == Tags.fromTagList(
             response.tags
@@ -127,4 +127,3 @@ class ListTagsForStreamTests
         s"req: $req\nres: $res"
       )
   })
-}

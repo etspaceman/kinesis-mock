@@ -17,18 +17,18 @@
 package kinesis.mock.cache
 
 import cats.effect.IO
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.LoggingContext
-import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.api.*
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 
 class ListShardsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -42,7 +42,7 @@ class ListShardsTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig))
         .use { case cache =>
-          for {
+          for
             context <- LoggingContext.create
             _ <- cache
               .createStream(
@@ -68,10 +68,9 @@ class ListShardsTests
                 Some(awsRegion)
               )
               .rethrow
-          } yield assert(
+          yield assert(
             res.shards.length == 5,
             s"$res"
           )
         }
   })
-}

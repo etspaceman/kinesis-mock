@@ -22,7 +22,7 @@ import java.time.Instant
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class StreamDescriptionSummary(
     consumerCount: Option[Int],
@@ -38,7 +38,7 @@ final case class StreamDescriptionSummary(
     streamStatus: StreamStatus
 )
 
-object StreamDescriptionSummary {
+object StreamDescriptionSummary:
   def fromStreamData(streamData: StreamData): StreamDescriptionSummary =
     StreamDescriptionSummary(
       Some(streamData.consumers.size),
@@ -54,7 +54,7 @@ object StreamDescriptionSummary {
       streamData.streamStatus
     )
 
-  def streamDescriptionSummaryCirceEncoder(implicit
+  def streamDescriptionSummaryCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct11(
     "ConsumerCount",
@@ -84,10 +84,10 @@ object StreamDescriptionSummary {
     )
   )
 
-  def streamDescriptionSummaryCirceDecoder(implicit
+  def streamDescriptionSummaryCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[StreamDescriptionSummary] = x =>
-    for {
+    for
       consumerCount <- x.downField("ConsumerCount").as[Option[Int]]
       encryptionType <- x.downField("EncryptionType").as[Option[EncryptionType]]
       enhancedMonitoring <- x
@@ -105,7 +105,7 @@ object StreamDescriptionSummary {
         .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
-    } yield StreamDescriptionSummary(
+    yield StreamDescriptionSummary(
       consumerCount,
       encryptionType,
       enhancedMonitoring,
@@ -119,19 +119,19 @@ object StreamDescriptionSummary {
       streamStatus
     )
 
-  implicit val streamDescriptionSummaryEncoder
-      : Encoder[StreamDescriptionSummary] = Encoder.instance(
-    streamDescriptionSummaryCirceEncoder(instantDoubleCirceEncoder),
-    streamDescriptionSummaryCirceEncoder(instantLongCirceEncoder)
-  )
+  given streamDescriptionSummaryEncoder: Encoder[StreamDescriptionSummary] =
+    Encoder.instance(
+      streamDescriptionSummaryCirceEncoder(using instantDoubleCirceEncoder),
+      streamDescriptionSummaryCirceEncoder(using instantLongCirceEncoder)
+    )
 
-  implicit val streamDescriptionSummaryDecoder
-      : Decoder[StreamDescriptionSummary] = Decoder.instance(
-    streamDescriptionSummaryCirceDecoder(instantDoubleCirceDecoder),
-    streamDescriptionSummaryCirceDecoder(instantLongCirceDecoder)
-  )
+  given streamDescriptionSummaryDecoder: Decoder[StreamDescriptionSummary] =
+    Decoder.instance(
+      streamDescriptionSummaryCirceDecoder(using instantDoubleCirceDecoder),
+      streamDescriptionSummaryCirceDecoder(using instantLongCirceDecoder)
+    )
 
-  implicit val streamDescriptionSummaryEq: Eq[StreamDescriptionSummary] =
+  given Eq[StreamDescriptionSummary] =
     (x, y) =>
       x.consumerCount == y.consumerCount &&
         x.encryptionType == y.encryptionType &&
@@ -143,4 +143,3 @@ object StreamDescriptionSummary {
         x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
         x.streamStatus == y.streamStatus
-}

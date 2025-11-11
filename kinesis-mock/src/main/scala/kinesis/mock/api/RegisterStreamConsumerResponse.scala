@@ -18,41 +18,40 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class RegisterStreamConsumerResponse(consumer: ConsumerSummary)
 
-object RegisterStreamConsumerResponse {
-  def registerStreamConsumerResponseCirceEncoder(implicit
+object RegisterStreamConsumerResponse:
+  def registerStreamConsumerResponseCirceEncoder(using
       EC: circe.Encoder[ConsumerSummary]
   ): circe.Encoder[RegisterStreamConsumerResponse] =
     circe.Encoder.forProduct1("Consumer")(_.consumer)
-  def registerStreamConsumerResponseCirceDecoder(implicit
+  def registerStreamConsumerResponseCirceDecoder(using
       DC: circe.Decoder[ConsumerSummary]
   ): circe.Decoder[RegisterStreamConsumerResponse] = _.downField("Consumer")
     .as[ConsumerSummary]
     .map(RegisterStreamConsumerResponse.apply)
-  implicit val registerStreamConsumerResponseEncoder
+  given registerStreamConsumerResponseEncoder
       : Encoder[RegisterStreamConsumerResponse] = Encoder.instance(
-    registerStreamConsumerResponseCirceEncoder(
+    registerStreamConsumerResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeEncoder
     ),
-    registerStreamConsumerResponseCirceEncoder(
+    registerStreamConsumerResponseCirceEncoder(using
       Encoder[ConsumerSummary].circeCborEncoder
     )
   )
-  implicit val registerStreamConsumerResponseDecoder
+  given registerStreamConsumerResponseDecoder
       : Decoder[RegisterStreamConsumerResponse] = Decoder.instance(
-    registerStreamConsumerResponseCirceDecoder(
+    registerStreamConsumerResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeDecoder
     ),
-    registerStreamConsumerResponseCirceDecoder(
+    registerStreamConsumerResponseCirceDecoder(using
       Decoder[ConsumerSummary].circeCborDecoder
     )
   )
-  implicit val registerStreamConsumerResponseEq
-      : Eq[RegisterStreamConsumerResponse] = (x, y) => x.consumer === y.consumer
-}
+  given Eq[RegisterStreamConsumerResponse] =
+    (x, y) => x.consumer === y.consumer

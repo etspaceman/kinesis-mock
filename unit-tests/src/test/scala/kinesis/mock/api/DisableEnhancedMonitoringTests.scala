@@ -20,18 +20,18 @@ package api
 import cats.effect.{IO, Ref}
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 
 class DisableEnhancedMonitoringTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should disable enhanced monitoring")(PropF.forAllF {
     (
         streamArn: StreamArn,
         shardLevelMetrics: ShardLevelMetrics
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         updated = streams.findAndUpdateStream(streamArn)(stream =>
@@ -66,12 +66,10 @@ class DisableEnhancedMonitoringTests
         updatedMetrics = s.streams
           .get(streamArn)
           .map(_.enhancedMonitoring.flatMap(_.shardLevelMetrics))
-
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { case response =>
           updatedMetrics.contains(response.desiredShardLevelMetrics)
         },
         s"req: $req\nres: $res\nupdatedMetrics: $updatedMetrics"
       )
   })
-}

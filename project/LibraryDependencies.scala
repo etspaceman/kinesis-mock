@@ -2,8 +2,6 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
-  val KindProjector = "org.typelevel" % "kind-projector" % "0.13.4"
-  val BetterMonadicFor = "com.olegpy" %% "better-monadic-for" % "0.3.1"
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.4")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
@@ -11,7 +9,7 @@ object LibraryDependencies {
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.21"
 
   object Borer {
-    val borerVersion = "1.8.0"
+    val borerVersion = "1.16.0"
     val core = Def.setting("io.bullet" %%% "borer-core" % borerVersion)
     val circe = Def.setting("io.bullet" %%% "borer-compat-circe" % borerVersion)
   }
@@ -69,6 +67,7 @@ object LibraryDependencies {
   object Ciris {
     val cirisVersion = "3.11.1"
     val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
+    val enumeratum = Def.setting("is.cir" %%% "ciris-enumeratum" % cirisVersion)
   }
 
   object Enumeratum {

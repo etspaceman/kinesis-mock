@@ -17,23 +17,23 @@
 package kinesis.mock
 package cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.LoggingContext
-import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.api.*
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class PutRecordTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
   override def scalaCheckTestParameters: Test.Parameters =
     Test.Parameters.default.withMinSuccessfulTests(5)
@@ -47,7 +47,7 @@ class PutRecordTests
         .resource[IO]
         .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
         .use { case (cacheConfig, cache) =>
-          for {
+          for
             context <- LoggingContext.create
             _ <- cache
               .createStream(
@@ -59,7 +59,8 @@ class PutRecordTests
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
             recordRequests <- IO(
-              putRecordRequestArb.arbitrary
+              Arbitrary
+                .arbitrary[PutRecordRequest]
                 .take(5)
                 .toVector
                 .map(_.copy(streamName = Some(streamName), streamArn = None))
@@ -110,7 +111,7 @@ class PutRecordTests
                 Some(awsRegion)
               )
               .rethrow
-          } yield assert(
+          yield assert(
             res.records.length == 5 && res.records.toVector.map(
               PutRecordResults.fromKinesisRecord
             ) === recordRequests.map(PutRecordResults.fromPutRecordRequest),
@@ -118,4 +119,3 @@ class PutRecordTests
           )
         }
   })
-}

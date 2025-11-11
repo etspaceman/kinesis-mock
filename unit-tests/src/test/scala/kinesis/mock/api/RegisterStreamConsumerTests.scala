@@ -20,21 +20,22 @@ package api
 import scala.collection.SortedMap
 
 import cats.effect.{IO, Ref}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class RegisterStreamConsumerTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should register stream consumers")(PropF.forAllF {
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -44,7 +45,7 @@ class RegisterStreamConsumerTests
         )
         res <- req.registerStreamConsumer(streamsRef)
         s <- streamsRef.get
-      } yield assert(
+      yield assert(
         res.isRight && s.streams.get(consumerArn.streamArn).exists { stream =>
           stream.consumers.contains(consumerArn.consumerName)
         },
@@ -56,12 +57,12 @@ class RegisterStreamConsumerTests
     (
       consumerArn: ConsumerArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
         consumers = SortedMap.from(
           Gen
-            .listOfN(20, consumerArbitrary.arbitrary)
+            .listOfN(20, Arbitrary.arbitrary[Consumer])
             .suchThat(x =>
               x.groupBy(_.consumerName)
                 .collect { case (_, y) if y.length > 1 => x }
@@ -79,7 +80,7 @@ class RegisterStreamConsumerTests
           consumerArn.streamArn
         )
         res <- req.registerStreamConsumer(streamsRef)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test("It should reject when there are 5 consumers being created")(
@@ -87,12 +88,12 @@ class RegisterStreamConsumerTests
       (
         consumerArn: ConsumerArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(1, consumerArn.streamArn, None, now)
           consumers = SortedMap.from(
             Gen
-              .listOfN(5, consumerArbitrary.arbitrary)
+              .listOfN(5, Arbitrary.arbitrary[Consumer])
               .suchThat(x =>
                 x.groupBy(_.consumerName)
                   .collect { case (_, y) if y.length > 1 => x }
@@ -111,7 +112,6 @@ class RegisterStreamConsumerTests
             consumerArn.streamArn
           )
           res <- req.registerStreamConsumer(streamsRef)
-        } yield assert(res.isLeft, s"req: $req\nres: $res")
+        yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
-}

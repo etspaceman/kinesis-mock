@@ -2,21 +2,21 @@ package kinesis.mock
 
 import java.time.Instant
 
-import cats.effect._
+import cats.effect.*
 import cats.effect.std.Console
-import cats.syntax.all._
-import ciris._
-import enumeratum._
+import cats.syntax.all.*
+import ciris.*
+import enumeratum.*
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 @SuppressWarnings(Array("scalafix:DisableSyntax.defaultArgs"))
 final class ConsoleLogger[F[_]](
     logLevel: ConsoleLogger.LogLevel,
     loggerName: String
-)(implicit
+)(using
     C: Console[F],
     F: Async[F]
-) extends SelfAwareStructuredLogger[F] {
+) extends SelfAwareStructuredLogger[F]:
 
   private def printMessage(
       logLevel: String,
@@ -24,13 +24,13 @@ final class ConsoleLogger[F[_]](
       e: Option[Throwable] = None
   )(
       message: => String
-  ): F[Unit] = for {
+  ): F[Unit] = for
     now <- F.realTime.map(d => Instant.EPOCH.plusNanos(d.toNanos))
     _ <- C.println(
       s"[$logLevel] $loggerName $now ${ctx.map { case (k, v) => s"$k=$v" }.mkString(", ")} $message"
     )
     _ <- e.fold(F.unit)(e => C.printStackTrace(e))
-  } yield ()
+  yield ()
 
   override def error(message: => String): F[Unit] =
     isErrorEnabled.ifM(printMessage("error")(message), F.unit)
@@ -124,14 +124,12 @@ final class ConsoleLogger[F[_]](
   ): F[Unit] =
     isErrorEnabled.ifM(printMessage("error", ctx, Option(t))(msg), F.unit)
 
-}
-
-object ConsoleLogger {
+object ConsoleLogger:
   sealed trait LogLevel extends EnumEntry with EnumEntry.Uppercase
   object LogLevel
       extends Enum[LogLevel]
-      with CirisEnum[LogLevel]
-      with CirceEnum[LogLevel] {
+      with CirceEnum[LogLevel]
+      with CirisEnum[LogLevel]:
     override val values = findValues
 
     case object Error extends LogLevel
@@ -142,5 +140,3 @@ object ConsoleLogger {
 
     def read: ConfigValue[Effect, LogLevel] =
       env("LOG_LEVEL").default("ERROR").as[LogLevel]
-  }
-}

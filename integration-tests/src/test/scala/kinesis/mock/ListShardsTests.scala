@@ -1,17 +1,17 @@
 package kinesis.mock
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
-import cats.implicits._
-import software.amazon.awssdk.services.kinesis.model._
+import cats.implicits.*
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.syntax.javaFuture._
+import kinesis.mock.syntax.javaFuture.*
 
-class ListShardsTests extends AwsFunctionalTests {
+class ListShardsTests extends AwsFunctionalTests:
 
   fixture().test("It should list shards") { resources =>
-    for {
+    for
       _ <- resources.kinesisClient
         .updateShardCount(
           UpdateShardCountRequest
@@ -33,15 +33,14 @@ class ListShardsTests extends AwsFunctionalTests {
             .build()
         )
         .toIO
-    } yield assert(
+    yield assert(
       res.shards().size() == 4,
       s"$res"
     )
   }
 
   fixture().test("It should list shards for initialized streams") { resources =>
-    for {
-      res <- initializedStreams.map { case (name, _) =>
+    for res <- initializedStreams.map { case (name, _) =>
         resources.defaultRegionKinesisClient
           .listShards(
             ListShardsRequest
@@ -52,11 +51,10 @@ class ListShardsTests extends AwsFunctionalTests {
           .toIO
           .map(name -> _.shards())
       }.parSequence
-    } yield assert(
+    yield assert(
       res.map { case (name, shards) =>
         name -> shards.size()
       } == initializedStreams,
       s"$res"
     )
   }
-}

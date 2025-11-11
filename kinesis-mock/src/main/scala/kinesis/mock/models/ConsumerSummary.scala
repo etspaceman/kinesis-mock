@@ -20,10 +20,10 @@ package models
 import java.time.Instant
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.*
 
 final case class ConsumerSummary(
     consumerArn: ConsumerArn,
@@ -32,14 +32,14 @@ final case class ConsumerSummary(
     consumerStatus: ConsumerStatus
 )
 
-object ConsumerSummary {
+object ConsumerSummary:
   def fromConsumer(consumer: Consumer): ConsumerSummary = ConsumerSummary(
     consumer.consumerArn,
     consumer.consumerCreationTimestamp,
     consumer.consumerName,
     consumer.consumerStatus
   )
-  def consumerSummaryCirceEncoder(implicit
+  def consumerSummaryCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ConsumerSummary] = circe.Encoder.forProduct4(
     "ConsumerARN",
@@ -55,39 +55,37 @@ object ConsumerSummary {
     )
   )
 
-  def consumerSummaryCirceDecoder(implicit
+  def consumerSummaryCirceDecoder(using
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[ConsumerSummary] = { x =>
-    for {
+  ): circe.Decoder[ConsumerSummary] = x =>
+    for
       consumerArn <- x.downField("ConsumerARN").as[ConsumerArn]
       consumerCreationTimestamp <- x
         .downField("ConsumerCreationTimestamp")
         .as[Instant]
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
-    } yield ConsumerSummary(
+    yield ConsumerSummary(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus
     )
-  }
 
-  implicit val consumerSummaryEncoder: Encoder[ConsumerSummary] =
+  given Encoder[ConsumerSummary] =
     Encoder.instance(
-      consumerSummaryCirceEncoder(instantDoubleCirceEncoder),
-      consumerSummaryCirceEncoder(instantLongCirceEncoder)
+      consumerSummaryCirceEncoder(using instantDoubleCirceEncoder),
+      consumerSummaryCirceEncoder(using instantLongCirceEncoder)
     )
 
-  implicit val consumerSummaryDecoder: Decoder[ConsumerSummary] =
+  given Decoder[ConsumerSummary] =
     Decoder.instance(
-      consumerSummaryCirceDecoder(instantDoubleCirceDecoder),
-      consumerSummaryCirceDecoder(instantLongCirceDecoder)
+      consumerSummaryCirceDecoder(using instantDoubleCirceDecoder),
+      consumerSummaryCirceDecoder(using instantLongCirceDecoder)
     )
 
-  implicit val consumerSummaryEq: Eq[ConsumerSummary] = (x, y) =>
+  given Eq[ConsumerSummary] = (x, y) =>
     x.consumerArn === y.consumerArn &&
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&
       x.consumerStatus === y.consumerStatus
-}

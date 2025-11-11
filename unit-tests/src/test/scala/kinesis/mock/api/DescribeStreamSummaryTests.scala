@@ -18,20 +18,20 @@ package kinesis.mock
 package api
 
 import cats.effect.{IO, Ref}
-import enumeratum.scalacheck._
+import enumeratum.scalacheck.*
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 
 class DescribeStreamSummaryTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should describe a stream summary")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -44,7 +44,7 @@ class DescribeStreamSummaryTests
         streamDescriptionSummary = streams.streams
           .get(streamArn)
           .map(s => StreamDescriptionSummary.fromStreamData(s))
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streamDescriptionSummary.contains(response.streamDescriptionSummary)
         },
@@ -60,9 +60,8 @@ class DescribeStreamSummaryTests
     ) =>
       val streams = Streams.empty
 
-      for {
+      for
         streamsRef <- Ref.of[IO, Streams](streams)
         res <- req.describeStreamSummary(streamsRef, awsRegion, awsAccountId)
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
-}

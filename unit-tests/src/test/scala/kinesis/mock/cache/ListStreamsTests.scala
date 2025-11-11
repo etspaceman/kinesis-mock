@@ -17,28 +17,30 @@
 package kinesis.mock.cache
 
 import cats.effect.IO
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.effect.PropF
 
 import kinesis.mock.LoggingContext
-import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
+import kinesis.mock.api.*
+import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models.AwsRegion
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.models.StreamName
+import kinesis.mock.syntax.scalacheck.*
 
-class ListStreamsTests extends munit.CatsEffectSuite {
+class ListStreamsTests extends munit.CatsEffectSuite:
   test("It should list streams")(PropF.forAllF { (awsRegion: AwsRegion) =>
     CacheConfig.read
       .resource[IO]
       .flatMap(cacheConfig => Cache(cacheConfig))
       .use { case cache =>
-        for {
+        for
           context <- LoggingContext.create
           streamNames <- IO(
             Gen
-              .listOfN(5, streamNameArbitrary.arbitrary)
+              .listOfN(5, Arbitrary.arbitrary[StreamName])
               .suchThat(streamNames =>
                 streamNames
                   .groupBy(identity)
@@ -66,10 +68,9 @@ class ListStreamsTests extends munit.CatsEffectSuite {
               Some(awsRegion)
             )
             .rethrow
-        } yield assert(
+        yield assert(
           res.streamNames == streamNames,
           s"${res.streamNames}\n${streamNames}"
         )
       }
   })
-}

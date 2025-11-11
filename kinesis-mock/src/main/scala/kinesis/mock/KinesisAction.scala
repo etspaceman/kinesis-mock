@@ -16,13 +16,13 @@
 
 package kinesis.mock
 
-import cats.syntax.all._
-import enumeratum._
+import cats.syntax.all.*
+import enumeratum.*
 import org.http4s.{ParseFailure, QueryParamDecoder}
 
 sealed trait KinesisAction extends EnumEntry
 
-object KinesisAction extends Enum[KinesisAction] {
+object KinesisAction extends Enum[KinesisAction]:
   override val values: IndexedSeq[KinesisAction] = findValues
 
   case object AddTagsToStream extends KinesisAction
@@ -55,8 +55,9 @@ object KinesisAction extends Enum[KinesisAction] {
   case object UpdateShardCount extends KinesisAction
   case object UpdateStreamMode extends KinesisAction
 
-  implicit val kinesisActionQueryParamDecoder
-      : QueryParamDecoder[KinesisAction] = QueryParamDecoder[String].emap(x =>
-    KinesisAction.withNameEither(x).leftMap(e => ParseFailure(e.getMessage, ""))
-  )
-}
+  given QueryParamDecoder[KinesisAction] =
+    QueryParamDecoder[String].emap(x =>
+      KinesisAction
+        .withNameEither(x)
+        .leftMap(e => ParseFailure(e.getMessage, ""))
+    )

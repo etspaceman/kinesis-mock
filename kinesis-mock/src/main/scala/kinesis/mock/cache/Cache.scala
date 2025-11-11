@@ -17,19 +17,19 @@
 package kinesis.mock
 package cache
 
-import cats.effect._
+import cats.effect.*
 import cats.effect.std.{Semaphore, Supervisor}
-import cats.syntax.all._
-import fs2.io.file._
+import cats.syntax.all.*
+import fs2.io.file.*
 import fs2.{Chunk, Stream}
 import io.circe.Printer
-import io.circe.fs2._
-import io.circe.syntax._
+import io.circe.fs2.*
+import io.circe.syntax.*
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
-import kinesis.mock.api._
-import kinesis.mock.models._
-import kinesis.mock.syntax.semaphore._
+import kinesis.mock.api.*
+import kinesis.mock.models.*
+import kinesis.mock.syntax.semaphore.*
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
@@ -37,7 +37,8 @@ class Cache private (
     persistDataSemaphore: Semaphore[IO],
     config: CacheConfig,
     supervisor: Supervisor[IO]
-) { self =>
+):
+  self =>
 
   val logger: SelfAwareStructuredLogger[IO] =
     new ConsoleLogger(config.logLevel, self.getClass().getName())
@@ -59,28 +60,26 @@ class Cache private (
   )(new RuntimeException("Unexpected outcome recreating StreamArn"))
 
   private def getSemaphores(region: Option[AwsRegion]): IO[CacheSemaphores] =
-    region match {
+    region match
       case None    => semaphores.get.map(_(config.awsRegion))
       case Some(r) =>
-        for {
+        for
           current <- semaphores.get
-          res <- current.get(r) match {
+          res <- current.get(r) match
             case Some(found) => IO.pure(found)
             case None        =>
-              for {
+              for
                 created <- CacheSemaphores.create
                 _ <- semaphores.update(x => x + (r -> created))
-              } yield created
-          }
-        } yield res
-    }
+              yield created
+        yield res
 
   def addTagsToStream(
       req: AddTagsToStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -120,13 +119,12 @@ class Cache private (
             )
         )
       )
-  }
   def removeTagsFromStream(
       req: RemoveTagsFromStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -166,14 +164,13 @@ class Cache private (
             )
         )
       )
-  }
 
   def createStream(
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
@@ -181,7 +178,7 @@ class Cache private (
       ) *>
       getSemaphores(region).flatMap(
         _.createStream.tryAcquireRelease(
-          for {
+          for
             createStreamsRes <- req
               .createStream(
                 streamsRef,
@@ -221,7 +218,7 @@ class Cache private (
                     )
               )
               .void
-          } yield createStreamsRes,
+          yield createStreamsRes,
           logger
             .warn(ctx.context)("Rate limit exceeded for CreateStream")
             .as(
@@ -233,14 +230,13 @@ class Cache private (
             )
         )
       )
-  }
 
   def deleteStream(
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -251,7 +247,7 @@ class Cache private (
       ) *>
       getSemaphores(region).flatMap(
         _.deleteStream.tryAcquireRelease(
-          for {
+          for
             deleteStreamRes <- req.deleteStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
@@ -269,7 +265,7 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                for {
+                for
                   _ <- logger.debug(ctx.context)(
                     s"Delaying removing the stream for ${config.deleteStreamDuration.toString}"
                   )
@@ -283,10 +279,10 @@ class Cache private (
                     region
                   )
                   _ <- streamsRef.update(x => x.removeStream(streamArn))
-                } yield ()
+                yield ()
               )
               .void
-          } yield deleteStreamRes,
+          yield deleteStreamRes,
           logger
             .warn(ctx.context)("Rate limit exceeded for DeleteStream")
             .as(
@@ -298,14 +294,13 @@ class Cache private (
             )
         )
       )
-  }
 
   def decreaseStreamRetention(
       req: DecreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -334,14 +329,13 @@ class Cache private (
               )
           )
         )
-  }
 
   def increaseStreamRetention(
       req: IncreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -370,7 +364,6 @@ class Cache private (
               )
           )
         )
-  }
 
   def describeLimits(
       context: LoggingContext,
@@ -413,7 +406,7 @@ class Cache private (
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[DescribeStreamResponse]] = {
+  ): IO[Response[DescribeStreamResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -459,14 +452,13 @@ class Cache private (
             )
         )
       )
-  }
 
   def describeStreamSummary(
       req: DescribeStreamSummaryRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[DescribeStreamSummaryResponse]] = {
+  ): IO[Response[DescribeStreamSummaryResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -516,13 +508,12 @@ class Cache private (
             )
         )
       )
-  }
 
   def registerStreamConsumer(
       req: RegisterStreamConsumerRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[Response[RegisterStreamConsumerResponse]] = {
+  ): IO[Response[RegisterStreamConsumerResponse]] =
     val ctx = context + ("streamArn" -> req.streamArn.streamArn)
     logger.debug(ctx.context)(
       "Processing RegisterStreamConsumer request"
@@ -594,7 +585,6 @@ class Cache private (
             )
         )
       )
-  }
 
   def deregisterStreamConsumer(
       req: DeregisterStreamConsumerRequest,
@@ -729,7 +719,7 @@ class Cache private (
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[DisableEnhancedMonitoringResponse]] = {
+  ): IO[Response[DisableEnhancedMonitoringResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -764,14 +754,13 @@ class Cache private (
                 .as(response)
           )
         )
-  }
 
   def enableEnhancedMonitoring(
       req: EnableEnhancedMonitoringRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[EnableEnhancedMonitoringResponse]] = {
+  ): IO[Response[EnableEnhancedMonitoringResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -806,7 +795,6 @@ class Cache private (
                 .as(response)
           )
         )
-  }
 
   def listShards(
       req: ListShardsRequest,
@@ -858,7 +846,7 @@ class Cache private (
       req: ListStreamConsumersRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[Response[ListStreamConsumersResponse]] = {
+  ): IO[Response[ListStreamConsumersResponse]] =
     val ctx = context + ("streamArn" -> req.streamArn.streamArn)
     logger.debug(ctx.context)(
       "Processing ListStreamConsumers request"
@@ -899,7 +887,6 @@ class Cache private (
             )
         )
       )
-  }
 
   def listStreams(
       req: ListStreamsRequest,
@@ -956,7 +943,7 @@ class Cache private (
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[ListTagsForStreamResponse]] = {
+  ): IO[Response[ListTagsForStreamResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1004,14 +991,13 @@ class Cache private (
             )
         )
       )
-  }
 
   def startStreamEncryption(
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1042,7 +1028,7 @@ class Cache private (
                   "Successfully started stream encryption"
                 ) *> supervisor
                   .supervise(
-                    for {
+                    for
                       _ <- logger.debug(context.context)(
                         s"Delaying setting the stream to active for ${config.startStreamEncryptionDuration.toString}"
                       )
@@ -1061,19 +1047,18 @@ class Cache private (
                             streamArn
                           )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                         )
-                    } yield ()
+                    yield ()
                   )
                   .as(response)
             )
         )
-  }
 
   def stopStreamEncryption(
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1105,7 +1090,7 @@ class Cache private (
                 ) *>
                   supervisor
                     .supervise(
-                      for {
+                      for
                         _ <- logger.debug(context.context)(
                           s"Delaying setting the stream to active for ${config.stopStreamEncryptionDuration.toString}"
                         )
@@ -1124,21 +1109,19 @@ class Cache private (
                               streamArn
                             )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                           )
-                      } yield ()
+                      yield ()
                     )
                     .void
                     .as(response)
             )
         )
 
-  }
-
   def getShardIterator(
       req: GetShardIteratorRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[GetShardIteratorResponse]] = {
+  ): IO[Response[GetShardIteratorResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1175,7 +1158,6 @@ class Cache private (
             )
         )
 
-  }
   def getRecords(
       req: GetRecordsRequest,
       context: LoggingContext,
@@ -1219,12 +1201,12 @@ class Cache private (
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[PutRecordResponse]] = {
+  ): IO[Response[PutRecordResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
         req.streamArn.map(x => "streamArn" -> x.streamArn).toList
-    for {
+    for
       _ <- logger.debug(ctx.context)("Processing PutRecord request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
@@ -1248,19 +1230,18 @@ class Cache private (
               "Logging response"
             )
       )
-    } yield res
-  }
+    yield res
 
   def putRecords(
       req: PutRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[PutRecordsResponse]] = {
+  ): IO[Response[PutRecordsResponse]] =
     val ctx = context ++
       req.streamName.map(x => "streamName" -> x.streamName).toList ++
       req.streamArn.map(x => "streamArn" -> x.streamArn).toList
-    for {
+    for
       _ <- logger.debug(ctx.context)("Processing PutRecords request")
       _ <- logger.trace(context.addEncoded("request", req, isCbor).context)(
         "Logging request"
@@ -1284,15 +1265,14 @@ class Cache private (
               "Logging response"
             )
       )
-    } yield res
-  }
+    yield res
 
   def mergeShards(
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1305,7 +1285,7 @@ class Cache private (
       ) *>
       getSemaphores(region).flatMap(
         _.mergeShards.tryAcquireRelease(
-          for {
+          for
             result <- req.mergeShards(
               streamsRef,
               region.getOrElse(config.awsRegion),
@@ -1324,7 +1304,7 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                for {
+                for
                   _ <- logger.debug(context.context)(
                     s"Delaying setting the stream to active for ${config.mergeShardsDuration.toString}"
                   )
@@ -1343,10 +1323,10 @@ class Cache private (
                         streamArn
                       )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                     )
-                } yield ()
+                yield ()
               )
               .void
-          } yield result,
+          yield result,
           logger
             .warn(ctx.context)(
               "Rate limit exceeded for MergeShards"
@@ -1354,14 +1334,13 @@ class Cache private (
             .as(Left(LimitExceededException("Limit Exceeded for MergeShards")))
         )
       )
-  }
 
   def splitShard(
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1374,7 +1353,7 @@ class Cache private (
       ) *>
       getSemaphores(region).flatMap(
         _.splitShard.tryAcquireRelease(
-          for {
+          for
             result <- req.splitShard(
               streamsRef,
               config.shardLimit,
@@ -1394,7 +1373,7 @@ class Cache private (
             )
             _ <- supervisor
               .supervise(
-                for {
+                for
                   _ <- logger.debug(context.context)(
                     s"Delaying setting the stream to active for ${config.splitShardDuration.toString}"
                   )
@@ -1413,11 +1392,10 @@ class Cache private (
                         streamArn
                       )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                     )
-
-                } yield ()
+                yield ()
               )
               .void
-          } yield result,
+          yield result,
           logger
             .warn(ctx.context)(
               "Rate limit exceeded for MergeShards"
@@ -1425,14 +1403,13 @@ class Cache private (
             .as(Left(LimitExceededException("Limit Exceeded for SplitShard")))
         )
       )
-  }
 
   def updateShardCount(
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
-  ): IO[Response[UpdateShardCountResponse]] = {
+  ): IO[Response[UpdateShardCountResponse]] =
     val ctx =
       context ++
         req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1442,7 +1419,7 @@ class Cache private (
     ) *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
-      ) *> (for {
+      ) *> (for
         result <- req.updateShardCount(
           streamsRef,
           config.shardLimit,
@@ -1462,7 +1439,7 @@ class Cache private (
         )
         _ <- supervisor
           .supervise(
-            for {
+            for
               _ <- logger.debug(context.context)(
                 s"Delaying setting the stream to active for ${config.updateShardCountDuration.toString}"
               )
@@ -1477,24 +1454,23 @@ class Cache private (
                     streamArn
                   )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                 )
-            } yield ()
+            yield ()
           )
           .void
-      } yield result)
-  }
+      yield result)
 
   def updateStreamMode(
       req: UpdateStreamModeRequest,
       context: LoggingContext,
       isCbor: Boolean
-  ): IO[Response[Unit]] = {
+  ): IO[Response[Unit]] =
     val ctx = context + ("streamArn" -> req.streamArn.streamArn)
     logger.debug(ctx.context)(
       "Processing UpdateStreamMode request"
     ) *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"
-      ) *> (for {
+      ) *> (for
         result <- req.updateStreamMode(
           streamsRef,
           config.onDemandStreamCountLimit
@@ -1527,14 +1503,13 @@ class Cache private (
                 )
           )
           .void
-      } yield result)
-  }
+      yield result)
 
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
         persistDataSemaphore.permit.use(_ =>
-          for {
+          for
             streams <- streamsRef.get
             ctx = context ++ Vector(
               "fileName" -> config.persistConfig.fileName,
@@ -1561,18 +1536,17 @@ class Cache private (
               .drain
             _ <- logger
               .debug(ctx.context)("Successfully persisted stream data")
-          } yield res
+          yield res
         ),
         logger
           .warn(context.context)("Persist config was not provided, ignoring")
       )
-}
 
-object Cache {
+object Cache:
   def apply(
       config: CacheConfig,
       streams: Streams = Streams.empty // scalafix:ok
-  )(implicit C: Concurrent[IO]): Resource[IO, Cache] = for {
+  )(using C: Concurrent[IO]): Resource[IO, Cache] = for
     ref <- Ref.of[IO, Streams](streams).toResource
     semaphores <- CacheSemaphores.create.toResource
     semaphoresRef <- Ref
@@ -1582,7 +1556,7 @@ object Cache {
       .toResource
     persistDataSemaphore <- Semaphore[IO](1).toResource
     supervisor <- Supervisor[IO]
-  } yield new Cache(
+  yield new Cache(
     ref,
     semaphoresRef,
     persistDataSemaphore,
@@ -1592,12 +1566,12 @@ object Cache {
 
   def loadFromFile(
       config: CacheConfig
-  )(implicit C: Concurrent[IO]): Resource[IO, Cache] =
-    for {
+  )(using C: Concurrent[IO]): Resource[IO, Cache] =
+    for
       exists <- Files[IO].exists(config.persistConfig.osFile).toResource
       res <-
-        if (exists) {
-          for {
+        if exists then
+          for
             streams <- Files[IO]
               .readAll(config.persistConfig.osFile)
               .through(byteArrayParser)
@@ -1606,7 +1580,6 @@ object Cache {
               .lastOrError
               .toResource
             cache <- apply(config, streams)
-          } yield cache
-        } else apply(config)
-    } yield res
-}
+          yield cache
+        else apply(config)
+    yield res

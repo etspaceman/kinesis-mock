@@ -19,10 +19,10 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStream.html
@@ -31,7 +31,7 @@ final case class DescribeStreamRequest(
     limit: Option[Int],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def describeStream(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -48,15 +48,14 @@ final case class DescribeStreamRequest(
                 .findStream(arn, streams)
                 .flatMap(stream =>
                   (
-                    exclusiveStartShardId match {
+                    exclusiveStartShardId match
                       case Some(shardId) =>
                         CommonValidations.validateShardId(shardId)
                       case None => Right(())
-                    },
-                    limit match {
+                    ,
+                    limit match
                       case Some(l) => CommonValidations.validateLimit(l)
                       case _       => Right(())
-                    }
                   ).mapN((_, _) =>
                     DescribeStreamResponse(
                       StreamDescription
@@ -67,10 +66,9 @@ final case class DescribeStreamRequest(
             )
         }
     )
-}
 
-object DescribeStreamRequest {
-  implicit val describeStreamRequestCirceEncoder
+object DescribeStreamRequest:
+  given describeStreamRequestCirceEncoder
       : circe.Encoder[DescribeStreamRequest] =
     circe.Encoder.forProduct4(
       "ExclusiveStartShardId",
@@ -78,26 +76,24 @@ object DescribeStreamRequest {
       "StreamName",
       "StreamARN"
     )(x => (x.exclusiveStartShardId, x.limit, x.streamName, x.streamArn))
-  implicit val describeStreamRequestCirceDecoder
-      : circe.Decoder[DescribeStreamRequest] = { x =>
-    for {
+  given describeStreamRequestCirceDecoder
+      : circe.Decoder[DescribeStreamRequest] = x =>
+    for
       exclusiveStartShardId <- x
         .downField("ExclusiveStartShardId")
         .as[Option[String]]
       limit <- x.downField("Limit").as[Option[Int]]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield DescribeStreamRequest(
+    yield DescribeStreamRequest(
       exclusiveStartShardId,
       limit,
       streamName,
       streamArn
     )
-  }
-  implicit val describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
+  given describeStreamRequestEncoder: Encoder[DescribeStreamRequest] =
     Encoder.derive
-  implicit val describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
+  given describeStreamRequestDecoder: Decoder[DescribeStreamRequest] =
     Decoder.derive
-  implicit val describeStreamRequestEq: Eq[DescribeStreamRequest] =
+  given Eq[DescribeStreamRequest] =
     Eq.fromUniversalEquals
-}

@@ -16,14 +16,14 @@
 
 package kinesis.mock.models
 
-import enumeratum._
+import enumeratum.*
 
 sealed trait ShardLevelMetric extends EnumEntry
 
 object ShardLevelMetric
     extends Enum[ShardLevelMetric]
     with CirceEnum[ShardLevelMetric]
-    with CatsEnum[ShardLevelMetric] {
+    with CatsEnum[ShardLevelMetric]:
   override val values: IndexedSeq[ShardLevelMetric] = findValues
 
   case object IncomingBytes extends ShardLevelMetric
@@ -34,4 +34,3 @@ object ShardLevelMetric
   case object ReadProvisionedThroughputExceeded extends ShardLevelMetric
   case object IteratorAgeMilliseconds extends ShardLevelMetric
   case object ALL extends ShardLevelMetric
-}

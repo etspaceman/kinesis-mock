@@ -19,18 +19,18 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class CreateStreamRequest(
     shardCount: Option[Int],
     streamModeDetails: Option[StreamModeDetails],
     streamName: StreamName
-) {
+):
   def createStream(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -44,17 +44,16 @@ final case class CreateStreamRequest(
         val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
         (
           CommonValidations.validateStreamName(streamName),
-          if (streams.streams.contains(streamArn))
+          if streams.streams.contains(streamArn) then
             ResourceInUseException(
               s"Stream $streamName already exists"
             ).asLeft
           else Right(()),
           CommonValidations.validateShardCount(shardCountOrDefault),
-          if (
-            streams.streams.count { case (_, stream) =>
+          if streams.streams.count { case (_, stream) =>
               stream.streamStatus == StreamStatus.CREATING
             } >= 5
-          )
+          then
             LimitExceededException(
               "Limit for streams being created concurrently exceeded"
             ).asLeft
@@ -84,29 +83,25 @@ final case class CreateStreamRequest(
         }.sequenceWithDefault(streams)
       }
     }
-}
 
-object CreateStreamRequest {
-  implicit val createStreamRequestCirceEncoder
-      : circe.Encoder[CreateStreamRequest] =
+object CreateStreamRequest:
+  given createStreamRequestCirceEncoder: circe.Encoder[CreateStreamRequest] =
     circe.Encoder.forProduct3("ShardCount", "StreamModeDetails", "StreamName")(
       x => (x.shardCount, x.streamModeDetails, x.streamName)
     )
-  implicit val createStreamRequestCirceDecoder
-      : circe.Decoder[CreateStreamRequest] = { x =>
-    for {
-      shardCount <- x.downField("ShardCount").as[Option[Int]]
-      streamModeDetails <- x
-        .downField("StreamModeDetails")
-        .as[Option[StreamModeDetails]]
-      streamName <- x.downField("StreamName").as[StreamName]
-    } yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
-  }
-  implicit val createStreamRequestEncoder: Encoder[CreateStreamRequest] =
+  given createStreamRequestCirceDecoder: circe.Decoder[CreateStreamRequest] =
+    x =>
+      for
+        shardCount <- x.downField("ShardCount").as[Option[Int]]
+        streamModeDetails <- x
+          .downField("StreamModeDetails")
+          .as[Option[StreamModeDetails]]
+        streamName <- x.downField("StreamName").as[StreamName]
+      yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
+  given createStreamRequestEncoder: Encoder[CreateStreamRequest] =
     Encoder.derive
-  implicit val createStreamRequestDecoder: Decoder[CreateStreamRequest] =
+  given createStreamRequestDecoder: Decoder[CreateStreamRequest] =
     Decoder.derive
 
-  implicit val createStreamRequestEq: Eq[CreateStreamRequest] =
+  given Eq[CreateStreamRequest] =
     Eq.fromUniversalEquals
-}

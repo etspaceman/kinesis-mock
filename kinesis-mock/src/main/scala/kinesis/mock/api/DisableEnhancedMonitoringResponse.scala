@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.models._
+import kinesis.mock.models.*
 
 final case class DisableEnhancedMonitoringResponse(
     currentShardLevelMetrics: Vector[ShardLevelMetric],
@@ -29,8 +29,8 @@ final case class DisableEnhancedMonitoringResponse(
     streamArn: StreamArn
 )
 
-object DisableEnhancedMonitoringResponse {
-  implicit val disableEnhancedMonitoringResponseCirceEncoder
+object DisableEnhancedMonitoringResponse:
+  given disableEnhancedMonitoringResponseCirceEncoder
       : circe.Encoder[DisableEnhancedMonitoringResponse] =
     circe.Encoder.forProduct4(
       "CurrentShardLevelMetrics",
@@ -46,9 +46,9 @@ object DisableEnhancedMonitoringResponse {
       )
     )
 
-  implicit val disableEnhancedMonitoringResponseCirceDecoder
-      : circe.Decoder[DisableEnhancedMonitoringResponse] = { x =>
-    for {
+  given disableEnhancedMonitoringResponseCirceDecoder
+      : circe.Decoder[DisableEnhancedMonitoringResponse] = x =>
+    for
       currentShardLevelMetrics <- x
         .downField("CurrentShardLevelMetrics")
         .as[Vector[ShardLevelMetric]]
@@ -57,17 +57,14 @@ object DisableEnhancedMonitoringResponse {
         .as[Vector[ShardLevelMetric]]
       streamName <- x.downField("StreamName").as[StreamName]
       streamArn <- x.downField("StreamARN").as[StreamArn]
-    } yield DisableEnhancedMonitoringResponse(
+    yield DisableEnhancedMonitoringResponse(
       currentShardLevelMetrics,
       desiredShardLevelMetrics,
       streamName,
       streamArn
     )
-  }
-  implicit val disableEnhancedMonitoringResponseEncoder
+  given disableEnhancedMonitoringResponseEncoder
       : Encoder[DisableEnhancedMonitoringResponse] = Encoder.derive
-  implicit val disableEnhancedMonitoringResponseDecoder
+  given disableEnhancedMonitoringResponseDecoder
       : Decoder[DisableEnhancedMonitoringResponse] = Decoder.derive
-  implicit val disableEnhancedMonitoringResponseEq
-      : Eq[DisableEnhancedMonitoringResponse] = Eq.fromUniversalEquals
-}
+  given Eq[DisableEnhancedMonitoringResponse] = Eq.fromUniversalEquals

@@ -29,10 +29,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        scala: [2.13]
+        scala: [3]
         java: [temurin@21]
         cbor_enabled: [true, false]
-        project: [root-jvm-213, root-js-213]
+        project: [root-jvm-3, root-js-3]
         service_port: [4567, 4568]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -79,7 +79,7 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' unit-tests/test
+          command: sbt 'project ${{ matrix.project }}' unit-tests3/test
           retry_on: error
 
       - name: Docker Compose Up
@@ -101,7 +101,7 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' integration-tests/test
+          command: sbt 'project ${{ matrix.project }}' integration-tests3/test
           retry_on: error
 
       - name: Print docker logs and container listing
@@ -149,7 +149,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: unit-tests_sjs1_2.13 kinesis-mock-root_2.13 kinesis-mock_sjs1_2.13 kinesis-mock-root_2.13 testkit_sjs1_2.13 kinesis-mock-root_2.13 unit-tests_2.13 integration-tests_2.13 kinesis-mock_2.13 testkit_2.13
+          modules-ignore: kinesis-mock-root_3 testkit_sjs1_3 kinesis-mock-root_3 unit-tests_3 kinesis-mock-root_3 kinesis-mock_sjs1_3 kinesis-mock_3 unit-tests_sjs1_3 integration-tests_3 testkit_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   publishDocker:
@@ -364,7 +364,7 @@ jobs:
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mock/assembly
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mock3/assembly
 
       - name: Get upload url for release
         id: get_release

@@ -3,16 +3,16 @@ package kinesis.mock.regexp
 import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 import scala.util.parsing.input.CharSequenceReader
 
-import ast._
+import ast.*
 
-object GenParser extends RegexParsers with PackratParsers {
+object GenParser extends RegexParsers with PackratParsers:
 
   override def skipWhitespace: Boolean = false
 
   lazy val expression0: PackratParser[RegularExpression] =
     group | characterClass | term
 
-  lazy val expression1: PackratParser[RegularExpression] = {
+  lazy val expression1: PackratParser[RegularExpression] =
 
     val int: Parser[Int] = "\\d+".r ^^ { _.toInt }
 
@@ -22,12 +22,11 @@ object GenParser extends RegexParsers with PackratParsers {
         re: RegularExpression,
         result: RegularExpression => RegularExpression
     ): RegularExpression =
-      re match {
+      re match
         case Literal(s) if s.length > 1 =>
           And(Literal(s.init), result(Literal(s.last.toString)))
         case other =>
           result(other)
-      }
 
     // quantifiers
     val optional = expression0 <~ "?" ^^ { splitLiteral(_, Optional.apply) }
@@ -48,7 +47,6 @@ object GenParser extends RegexParsers with PackratParsers {
     }
 
     optional | oneOrMore | zeroOrMore | rangeFrom | range | length | expression0
-  }
 
   // and
   lazy val expression2: PackratParser[RegularExpression] =
@@ -60,38 +58,34 @@ object GenParser extends RegexParsers with PackratParsers {
       Or(a, b)
     }) | expression2
 
-  lazy val group: PackratParser[RegularExpression] = {
+  lazy val group: PackratParser[RegularExpression] =
 
     lazy val nonCapturingGroup =
       "(?:" ~> expression <~ ")" ^^ NonCapturingGroup.apply
     lazy val capturingGroup = "(" ~> expression <~ ")" ^^ Group.apply
 
     capturingGroup | nonCapturingGroup
-  }
 
   // character classes
-  lazy val characterClass: PackratParser[RegularExpression] = {
+  lazy val characterClass: PackratParser[RegularExpression] =
 
-    lazy val digitRange: Parser[CharacterClass.Term] = {
+    lazy val digitRange: Parser[CharacterClass.Term] =
       val d: Parser[Int] = "\\d".r ^^ { _.toInt }
       (d ~ ("-" ~> d)) ^^ { case min ~ max =>
         CharacterClass.DigitRange(min, max)
       }
-    }
 
-    lazy val lowerAlphaRange: Parser[CharacterClass.Term] = {
+    lazy val lowerAlphaRange: Parser[CharacterClass.Term] =
       val c = "[a-z]".r ^^ { _.charAt(0) }
       c ~ ("-" ~> c) ^^ { case min ~ max =>
         CharacterClass.CharRange(min, max)
       }
-    }
 
-    lazy val upperAlphaRange: Parser[CharacterClass.Term] = {
+    lazy val upperAlphaRange: Parser[CharacterClass.Term] =
       val c = "[A-Z]".r ^^ { _.charAt(0) }
       c ~ ("-" ~> c) ^^ { case min ~ max =>
         CharacterClass.CharRange(min, max)
       }
-    }
 
     val word: Parser[CharacterClass.Term] = "\\w" ^^^ CharacterClass.WordChar
     val digit: Parser[CharacterClass.Term] = "\\d" ^^^ CharacterClass.DigitChar
@@ -99,24 +93,22 @@ object GenParser extends RegexParsers with PackratParsers {
     val wordBoundary: Parser[CharacterClass.Term] =
       "\\b" ^^^ CharacterClass.WordBoundary
 
-    lazy val char: Parser[CharacterClass.Term] = {
+    lazy val char: Parser[CharacterClass.Term] =
       val normalChars = "[^\\]\\\\]".r
       val meta = "\\" | "]" | "-"
       (("\\" ~> meta) | normalChars | "\\" ~> normalChars) ^^ CharacterClass.Literal.apply
-    }
 
     lazy val characterClassTerm: Parser[CharacterClass.Term] =
       word | digit | space | wordBoundary | digitRange | lowerAlphaRange | upperAlphaRange | char
 
     lazy val charClass =
-      ("[" ~> characterClassTerm.+ <~ "]") ^^ { CharacterClass(_: _*) }
+      ("[" ~> characterClassTerm.+ <~ "]") ^^ { CharacterClass(_*) }
     lazy val negatedCharClass =
       ("[^" ~> characterClassTerm.+ <~ "]") ^^ { terms =>
-        Negated(CharacterClass(terms: _*))
+        Negated(CharacterClass(terms*))
       }
 
     negatedCharClass | charClass
-  }
 
   // terminals...
   lazy val term: PackratParser[RegularExpression] =
@@ -154,14 +146,12 @@ object GenParser extends RegexParsers with PackratParsers {
       expression
 
   // literals
-  lazy val char: PackratParser[Literal] = {
+  lazy val char: PackratParser[Literal] =
     val meta: Parser[String] =
       ")" | "(" | "$" | "[" | "." | "+" | "*" | "?" | "|" | "\\" | "{"
     (("\\" ~> meta) | "[^|)(.+*?{\\[$\\\\]".r).+ ^^ { strs =>
       Literal(strs.mkString(""))
     }
-  }
 
   def parse(string: String): RegularExpression =
     regularExpression(new PackratReader(new CharSequenceReader(string))).get
-}

@@ -19,23 +19,21 @@ package kinesis.mock.models
 import scala.math.Ordering
 
 import cats.Eq
-import io.circe._
+import io.circe.*
 
-final case class ConsumerName(consumerName: String) {
+final case class ConsumerName(consumerName: String):
   override def toString: String = consumerName
-}
 
-object ConsumerName {
-  implicit val consumerNameOrdering: Ordering[ConsumerName] =
+object ConsumerName:
+  given Ordering[ConsumerName] =
     (x: ConsumerName, y: ConsumerName) =>
       Ordering[String].compare(x.consumerName, y.consumerName)
-  implicit val consumerNameCirceEncoder: Encoder[ConsumerName] =
+  given Encoder[ConsumerName] =
     Encoder[String].contramap(_.consumerName)
-  implicit val consumerNameCirceDecoder: Decoder[ConsumerName] =
+  given Decoder[ConsumerName] =
     Decoder[String].map(ConsumerName.apply)
-  implicit val consumerNameCirceKeyEncoder: KeyEncoder[ConsumerName] =
+  given KeyEncoder[ConsumerName] =
     KeyEncoder[String].contramap(_.consumerName)
-  implicit val consumerNameCirceKeyDecoder: KeyDecoder[ConsumerName] =
+  given KeyDecoder[ConsumerName] =
     KeyDecoder[String].map(ConsumerName.apply)
-  implicit val consumerNameEq: Eq[ConsumerName] = Eq.fromUniversalEquals
-}
+  given Eq[ConsumerName] = Eq.fromUniversalEquals

@@ -18,11 +18,11 @@ package kinesis.mock.cache
 
 import scala.concurrent.duration.FiniteDuration
 
-import ciris._
+import ciris.*
 import fs2.io.file.Path
 import io.circe.Encoder
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 
 final case class PersistConfig(
     loadIfExists: Boolean,
@@ -30,30 +30,22 @@ final case class PersistConfig(
     path: String,
     fileName: String,
     interval: FiniteDuration
-) {
+):
 
-  private def createPath(starting: Path, p: String): Path = {
+  private def createPath(starting: Path, p: String): Path =
     val split = p.split("/").toList
-    split match {
+    split match
       case Nil      => starting
       case h :: Nil => starting / h
       case h :: t   => t.foldLeft(starting / h) { case (acc, x) => acc / x }
-    }
-  }
 
-  def osPath: Path = if (path.isEmpty) Path(".")
-  else {
-    if (!path.startsWith("/")) {
-      createPath(Path("."), path)
-    } else {
-      createPath(Path("/"), path.drop(1))
-    }
-  }
-  def osFile = osPath / fileName
-}
+  def osPath: Path = if path.isEmpty then Path(".")
+  else if !path.startsWith("/") then createPath(Path("."), path)
+  else createPath(Path("/"), path.drop(1))
+  def osFile: Path = osPath / fileName
 
-object PersistConfig {
-  implicit val persistConfigCirceEncoder: Encoder[PersistConfig] =
+object PersistConfig:
+  given Encoder[PersistConfig] =
     Encoder.forProduct5(
       "loadIfExists",
       "shouldPersist",
@@ -62,11 +54,10 @@ object PersistConfig {
       "interval"
     )(x => (x.loadIfExists, x.shouldPersist, x.path, x.fileName, x.interval))
 
-  def read: ConfigValue[Effect, PersistConfig] = for {
+  def read: ConfigValue[Effect, PersistConfig] = for
     loadIfExists <- env("LOAD_DATA_IF_EXISTS").default("true").as[Boolean]
     shouldPersist <- env("SHOULD_PERSIST_DATA").default("false").as[Boolean]
     path <- env("PERSIST_PATH").default("data")
     fileName <- env("PERSIST_FILE_NAME").default("kinesis-data.json")
     interval <- env("PERSIST_INTERVAL").default("5s").as[FiniteDuration]
-  } yield PersistConfig(loadIfExists, shouldPersist, path, fileName, interval)
-}
+  yield PersistConfig(loadIfExists, shouldPersist, path, fileName, interval)

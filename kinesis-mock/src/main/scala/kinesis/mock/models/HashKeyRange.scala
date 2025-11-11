@@ -19,16 +19,15 @@ package models
 
 import cats.Eq
 import io.circe
-import io.circe.syntax._
+import io.circe.syntax.*
 
-final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt) {
+final case class HashKeyRange(endingHashKey: BigInt, startingHashKey: BigInt):
   def isAdjacent(other: HashKeyRange): Boolean =
     endingHashKey == other.startingHashKey + BigInt(1) ||
       startingHashKey == other.endingHashKey + BigInt(1)
-}
 
-object HashKeyRange {
-  implicit val hashKeyRangeCirceEncoder: circe.Encoder[HashKeyRange] = x =>
+object HashKeyRange:
+  given hashKeyRangeCirceEncoder: circe.Encoder[HashKeyRange] = x =>
     circe
       .JsonObject(
         "EndingHashKey" -> x.endingHashKey.toString.asJson,
@@ -36,20 +35,18 @@ object HashKeyRange {
       )
       .asJson
 
-  implicit val hashKeyRangeCirceDecoder: circe.Decoder[HashKeyRange] = { x =>
-    for {
+  given hashKeyRangeCirceDecoder: circe.Decoder[HashKeyRange] = x =>
+    for
       endingHashKey <- x.downField("EndingHashKey").as[String].map(BigInt.apply)
       startingHashKey <- x
         .downField("StartingHashKey")
         .as[String]
         .map(BigInt.apply)
-    } yield HashKeyRange(endingHashKey, startingHashKey)
-  }
+    yield HashKeyRange(endingHashKey, startingHashKey)
 
-  implicit val hashKeyRangeEncoder: Encoder[HashKeyRange] =
+  given hashKeyRangeEncoder: Encoder[HashKeyRange] =
     Encoder.derive
-  implicit val hashKeyRangeDecoder: Decoder[HashKeyRange] =
+  given hashKeyRangeDecoder: Decoder[HashKeyRange] =
     Decoder.derive
 
-  implicit val hashKeyRangeEq: Eq[HashKeyRange] = Eq.fromUniversalEquals
-}
+  given Eq[HashKeyRange] = Eq.fromUniversalEquals

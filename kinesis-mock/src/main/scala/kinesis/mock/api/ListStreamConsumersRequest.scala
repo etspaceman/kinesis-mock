@@ -21,11 +21,11 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
-import kinesis.mock.models._
+import kinesis.mock.instances.circe.*
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 final case class ListStreamConsumersRequest(
@@ -33,7 +33,7 @@ final case class ListStreamConsumersRequest(
     nextToken: Option[ConsumerName],
     streamArn: StreamArn,
     streamCreationTimestamp: Option[Instant]
-) {
+):
   def listStreamConsumers(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[ListStreamConsumersResponse]] = streamsRef.get.map { streams =>
@@ -44,17 +44,16 @@ final case class ListStreamConsumersRequest(
           .findStream(streamArn, streams)
           .flatMap(stream =>
             (
-              maxResults match {
+              maxResults match
                 case Some(mr) => CommonValidations.validateMaxResults(mr)
                 case None     => Right(())
-              },
-              nextToken match {
+              ,
+              nextToken match
                 case Some(nt) =>
                   CommonValidations.validateNextToken(nt.consumerName)
                 case None => Right(())
-              }
             ).mapN((_, _) =>
-              nextToken match {
+              nextToken match
                 case Some(nt) =>
                   val allConsumers = stream.consumers.values.toVector
                   val lastConsumerIndex = allConsumers.length - 1
@@ -66,7 +65,7 @@ final case class ListStreamConsumersRequest(
                     Math.min(firstIndex + limit, lastConsumerIndex + 1)
                   val consumers = allConsumers.slice(firstIndex, lastIndex)
                   val ntUpdated =
-                    if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                    if lastConsumerIndex == lastIndex || consumers.isEmpty then
                       None
                     else Some(consumers.last.consumerName)
                   ListStreamConsumersResponse(
@@ -83,22 +82,20 @@ final case class ListStreamConsumersRequest(
                     Math.min(limit, lastConsumerIndex + 1)
                   val consumers = allConsumers.take(limit)
                   val nextToken =
-                    if (lastConsumerIndex == lastIndex || consumers.isEmpty)
+                    if lastConsumerIndex == lastIndex || consumers.isEmpty then
                       None
                     else Some(consumers.last.consumerName)
                   ListStreamConsumersResponse(
                     consumers.map(ConsumerSummary.fromConsumer),
                     nextToken
                   )
-              }
             )
           )
       )
   }
-}
 
-object ListStreamConsumersRequest {
-  def listStreamConsumersRequestCirceEncoder(implicit
+object ListStreamConsumersRequest:
+  def listStreamConsumersRequestCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ListStreamConsumersRequest] =
     circe.Encoder.forProduct4(
@@ -108,36 +105,39 @@ object ListStreamConsumersRequest {
       "StreamCreationTimestamp"
     )(x => (x.maxResults, x.nextToken, x.streamArn, x.streamCreationTimestamp))
 
-  def listStreamConsumersRequestCirceDecoder(implicit
+  def listStreamConsumersRequestCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[ListStreamConsumersRequest] = x =>
-    for {
+    for
       maxResults <- x.downField("MaxResults").as[Option[Int]]
       nextToken <- x.downField("NextToken").as[Option[ConsumerName]]
       streamArn <- x.downField("StreamARN").as[StreamArn]
       streamCreationTimestamp <- x
         .downField("StreamCreationTimestamp")
         .as[Option[Instant]]
-    } yield ListStreamConsumersRequest(
+    yield ListStreamConsumersRequest(
       maxResults,
       nextToken,
       streamArn,
       streamCreationTimestamp
     )
 
-  implicit val listStreamConsumersRequestEncoder
-      : Encoder[ListStreamConsumersRequest] = Encoder.instance(
-    listStreamConsumersRequestCirceEncoder(instantBigDecimalCirceEncoder),
-    listStreamConsumersRequestCirceEncoder(instantLongCirceEncoder)
-  )
-  implicit val listStreamConsumersRequestDecoder
-      : Decoder[ListStreamConsumersRequest] = Decoder.instance(
-    listStreamConsumersRequestCirceDecoder(instantBigDecimalCirceDecoder),
-    listStreamConsumersRequestCirceDecoder(instantLongCirceDecoder)
-  )
+  given listStreamConsumersRequestEncoder: Encoder[ListStreamConsumersRequest] =
+    Encoder.instance(
+      listStreamConsumersRequestCirceEncoder(using
+        instantBigDecimalCirceEncoder
+      ),
+      listStreamConsumersRequestCirceEncoder(using instantLongCirceEncoder)
+    )
+  given listStreamConsumersRequestDecoder: Decoder[ListStreamConsumersRequest] =
+    Decoder.instance(
+      listStreamConsumersRequestCirceDecoder(using
+        instantBigDecimalCirceDecoder
+      ),
+      listStreamConsumersRequestCirceDecoder(using instantLongCirceDecoder)
+    )
 
-  implicit val listStreamConsumersRequestEq: Eq[ListStreamConsumersRequest] =
+  given Eq[ListStreamConsumersRequest] =
     (x, y) =>
       x.maxResults == y.maxResults && x.nextToken == y.nextToken && x.streamArn == y.streamArn && x.streamCreationTimestamp
         .map(_.toEpochMilli) == y.streamCreationTimestamp.map(_.toEpochMilli)
-}

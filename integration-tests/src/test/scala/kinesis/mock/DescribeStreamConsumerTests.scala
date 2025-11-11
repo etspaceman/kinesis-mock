@@ -1,16 +1,16 @@
 package kinesis.mock
 
 import cats.effect.IO
-import software.amazon.awssdk.services.kinesis.model._
+import software.amazon.awssdk.services.kinesis.model.*
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.syntax.javaFuture._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.instances.arbitrary.*
+import kinesis.mock.syntax.javaFuture.*
+import kinesis.mock.syntax.scalacheck.*
 
-class DescribeStreamConsumerTests extends AwsFunctionalTests {
+class DescribeStreamConsumerTests extends AwsFunctionalTests:
 
   fixture().test("It should describe a stream consumer") { resources =>
-    for {
+    for
       consumerName <- IO(consumerNameGen.one.consumerName)
       streamSummary <- describeStreamSummary(resources)
       streamArn = streamSummary.streamDescriptionSummary().streamARN()
@@ -24,7 +24,7 @@ class DescribeStreamConsumerTests extends AwsFunctionalTests {
         )
         .toIO
       res <- describeStreamConsumer(resources, consumerName, streamArn)
-    } yield assert(
+    yield assert(
       res
         .consumerDescription()
         .consumerARN == registerRes.consumer().consumerARN() &&
@@ -41,4 +41,3 @@ class DescribeStreamConsumerTests extends AwsFunctionalTests {
       s"$res\n$registerRes"
     )
   }
-}

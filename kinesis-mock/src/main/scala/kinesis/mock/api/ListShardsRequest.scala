@@ -21,11 +21,11 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
-import kinesis.mock.models._
+import kinesis.mock.instances.circe.*
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListShards.html
@@ -37,7 +37,7 @@ final case class ListShardsRequest(
     streamCreationTimestamp: Option[Instant],
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def listShards(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -51,7 +51,7 @@ final case class ListShardsRequest(
         streamCreationTimestamp,
         streamName,
         streamArn
-      ) match {
+      ) match
         case (None, Some(nt), None, None, None, None) =>
           CommonValidations
             .validateNextToken(nt)
@@ -62,14 +62,13 @@ final case class ListShardsRequest(
                 CommonValidations.validateStreamName(streamName),
                 CommonValidations.validateShardId(shardId),
                 CommonValidations.findStream(streamArn, streams),
-                maxResults match {
+                maxResults match
                   case Some(l) => CommonValidations.validateMaxResults(l)
                   case _       => Right(())
-                },
-                shardFilter match {
+                ,
+                shardFilter match
                   case Some(sf) => ListShardsRequest.validateShardFilter(sf)
                   case None     => Right(())
-                }
               ).mapN { (_, _, stream, _, _) =>
                 val allShards = stream.shards.keys.toVector
                 val lastShardIndex = allShards.length - 1
@@ -79,7 +78,7 @@ final case class ListShardsRequest(
                 val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
                 val shards = allShards.slice(firstIndex, lastIndex)
                 val nextToken =
-                  if (lastShardIndex + 1 == lastIndex) None
+                  if lastShardIndex + 1 == lastIndex then None
                   else
                     Some(
                       ListShardsRequest
@@ -107,7 +106,6 @@ final case class ListShardsRequest(
           InvalidArgumentException(
             "Cannot define ExclusiveStartShardId, StreamCreationTimestamp or StreamName if NextToken is defined"
           ).asLeft
-      }
     }
   }
 
@@ -116,23 +114,22 @@ final case class ListShardsRequest(
       sName: StreamName,
       streams: Streams,
       now: Instant
-  ) = CommonValidations
+  ): Response[ListShardsResponse] = CommonValidations
     .findStream(streamArn, streams)
     .flatMap(stream =>
       (
         CommonValidations.validateStreamName(sName),
-        exclusiveStartShardId match {
+        exclusiveStartShardId match
           case Some(eShardId) =>
             CommonValidations.validateShardId(eShardId)
           case None => Right(())
-        },
-        shardFilter match {
+        ,
+        shardFilter match
           case Some(sf) => ListShardsRequest.validateShardFilter(sf)
           case None     => Right(())
-        }
       ).mapN { (_, _, _) =>
         val allShards: Vector[Shard] = stream.shards.keys.toVector
-        val filteredShards = shardFilter match {
+        val filteredShards = shardFilter match
           case Some(sf)
               if sf.`type` == ShardFilterType.AT_TRIM_HORIZON ||
                 (sf.`type` == ShardFilterType.AT_TIMESTAMP && sf.timestamp
@@ -179,7 +176,6 @@ final case class ListShardsRequest(
             allShards.slice(index, allShards.length)
 
           case _ => allShards
-        }
         val lastShardIndex = filteredShards.length - 1
         val limit = maxResults.map(l => Math.min(l, 100)).getOrElse(100)
         val firstIndex = exclusiveStartShardId
@@ -190,7 +186,7 @@ final case class ListShardsRequest(
         val lastIndex = Math.min(firstIndex + limit, lastShardIndex + 1)
         val shards = filteredShards.slice(firstIndex, lastIndex)
         val nextToken =
-          if (lastShardIndex + 1 == lastIndex) None
+          if lastShardIndex + 1 == lastIndex then None
           else
             Some(
               ListShardsRequest
@@ -199,10 +195,9 @@ final case class ListShardsRequest(
         ListShardsResponse(nextToken, shards.map(ShardSummary.fromShard))
       }
     )
-}
 
-object ListShardsRequest {
-  def listShardsRequestCirceEncoder(implicit
+object ListShardsRequest:
+  def listShardsRequestCirceEncoder(using
       ESF: circe.Encoder[ShardFilter],
       EI: circe.Encoder[Instant]
   ): circe.Encoder[ListShardsRequest] =
@@ -225,11 +220,11 @@ object ListShardsRequest {
         x.streamArn
       )
     )
-  def listShardsRequestCirceDecoder(implicit
+  def listShardsRequestCirceDecoder(using
       DSF: circe.Decoder[ShardFilter],
       DI: circe.Decoder[Instant]
-  ): circe.Decoder[ListShardsRequest] = { x =>
-    for {
+  ): circe.Decoder[ListShardsRequest] = x =>
+    for
       exclusiveStartShardId <- x
         .downField("ExclusiveStartShardId")
         .as[Option[String]]
@@ -241,7 +236,7 @@ object ListShardsRequest {
         .as[Option[Instant]]
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-    } yield ListShardsRequest(
+    yield ListShardsRequest(
       exclusiveStartShardId,
       maxResults,
       nextToken,
@@ -250,31 +245,30 @@ object ListShardsRequest {
       streamName,
       streamArn
     )
-  }
-  implicit val listShardsRequestEncoder: Encoder[ListShardsRequest] =
+  given listShardsRequestEncoder: Encoder[ListShardsRequest] =
     Encoder.instance(
-      listShardsRequestCirceEncoder(
+      listShardsRequestCirceEncoder(using
         Encoder[ShardFilter].circeEncoder,
         instantBigDecimalCirceEncoder
       ),
-      listShardsRequestCirceEncoder(
+      listShardsRequestCirceEncoder(using
         Encoder[ShardFilter].circeCborEncoder,
         instantLongCirceEncoder
       )
     )
-  implicit val listShardsRequestDecoder: Decoder[ListShardsRequest] =
+  given listShardsRequestDecoder: Decoder[ListShardsRequest] =
     Decoder.instance(
-      listShardsRequestCirceDecoder(
+      listShardsRequestCirceDecoder(using
         Decoder[ShardFilter].circeDecoder,
         instantBigDecimalCirceDecoder
       ),
-      listShardsRequestCirceDecoder(
+      listShardsRequestCirceDecoder(using
         Decoder[ShardFilter].circeCborDecoder,
         instantLongCirceDecoder
       )
     )
 
-  implicit val listShardsRequestEq: Eq[ListShardsRequest] =
+  given Eq[ListShardsRequest] =
     (x, y) =>
       x.exclusiveStartShardId == y.exclusiveStartShardId &&
         x.maxResults == y.maxResults &&
@@ -290,16 +284,15 @@ object ListShardsRequest {
     s"$streamName::$shardId"
   def parseNextToken(
       nextToken: String
-  ): Response[(StreamName, String)] = {
+  ): Response[(StreamName, String)] =
     val split = nextToken.split("::")
-    if (split.length != 2)
+    if split.length != 2 then
       InvalidArgumentException(s"NextToken is improperly formatted").asLeft
     else Right((StreamName(split.head), split(1)))
-  }
   def validateShardFilter(
       shardFilter: ShardFilter
   ): Response[ShardFilter] =
-    shardFilter.`type` match {
+    shardFilter.`type` match
       case ShardFilterType.AFTER_SHARD_ID if shardFilter.shardId.isEmpty =>
         InvalidArgumentException(
           "ShardId must be supplied in a ShardFilter with a Type of AFTER_SHARD_ID"
@@ -310,5 +303,3 @@ object ListShardsRequest {
           "Timestamp must be supplied in a ShardFilter with a Type of FROM_TIMESTAMP or AT_TIMESTAMP"
         ).asLeft
       case _ => Right(shardFilter)
-    }
-}

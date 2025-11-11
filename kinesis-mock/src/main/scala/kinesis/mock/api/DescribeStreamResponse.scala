@@ -18,43 +18,42 @@ package kinesis.mock
 package api
 
 import cats.Eq
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.StreamDescription
 
 final case class DescribeStreamResponse(streamDescription: StreamDescription)
 
-object DescribeStreamResponse {
-  def describeStreamResponseCirceEncoder(implicit
+object DescribeStreamResponse:
+  def describeStreamResponseCirceEncoder(using
       ESD: circe.Encoder[StreamDescription]
   ): circe.Encoder[DescribeStreamResponse] =
     circe.Encoder.forProduct1("StreamDescription")(_.streamDescription)
 
-  def describeStreamResponseCirceDecoder(implicit
+  def describeStreamResponseCirceDecoder(using
       DSD: circe.Decoder[StreamDescription]
   ): circe.Decoder[DescribeStreamResponse] =
     _.downField("StreamDescription")
       .as[StreamDescription]
       .map(DescribeStreamResponse.apply)
-  implicit val describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
+  given describeStreamResponseEncoder: Encoder[DescribeStreamResponse] =
     Encoder.instance(
-      describeStreamResponseCirceEncoder(
+      describeStreamResponseCirceEncoder(using
         Encoder[StreamDescription].circeEncoder
       ),
-      describeStreamResponseCirceEncoder(
+      describeStreamResponseCirceEncoder(using
         Encoder[StreamDescription].circeCborEncoder
       )
     )
-  implicit val describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
+  given describeStreamResponseDecoder: Decoder[DescribeStreamResponse] =
     Decoder.instance(
-      describeStreamResponseCirceDecoder(
+      describeStreamResponseCirceDecoder(using
         Decoder[StreamDescription].circeDecoder
       ),
-      describeStreamResponseCirceDecoder(
+      describeStreamResponseCirceDecoder(using
         Decoder[StreamDescription].circeCborDecoder
       )
     )
-  implicit val describeStreamResponseEq: Eq[DescribeStreamResponse] =
+  given Eq[DescribeStreamResponse] =
     (x, y) => x.streamDescription === y.streamDescription
-}

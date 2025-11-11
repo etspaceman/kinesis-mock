@@ -19,18 +19,18 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 final case class RemoveTagsFromStreamRequest(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn],
     tagKeys: Vector[String]
-) {
+):
   // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_RemoveTagsFromStream.html
   // https://docs.aws.amazon.com/streams/latest/dev/tagging.html
   // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
@@ -52,7 +52,7 @@ final case class RemoveTagsFromStreamRequest(
                   (
                     CommonValidations.validateTagKeys(tagKeys), {
                       val numberOfTags = tagKeys.length
-                      if (numberOfTags > 10)
+                      if numberOfTags > 10 then
                         InvalidArgumentException(
                           s"Can only remove 50 tags with a single request. Request contains $numberOfTags tags"
                         ).asLeft
@@ -71,27 +71,23 @@ final case class RemoveTagsFromStreamRequest(
         }
         .sequenceWithDefault(streams)
     )
-}
 
-object RemoveTagsFromStreamRequest {
-  implicit val removeTagsFromStreamRequestCirceEncoder
+object RemoveTagsFromStreamRequest:
+  given removeTagsFromStreamRequestCirceEncoder
       : circe.Encoder[RemoveTagsFromStreamRequest] =
     circe.Encoder.forProduct3("StreamName", "StreamARN", "TagKeys")(x =>
       (x.streamName, x.streamArn, x.tagKeys)
     )
-  implicit val removeTagsFromStreamRequestCirceDecoder
-      : circe.Decoder[RemoveTagsFromStreamRequest] = { x =>
-    for {
+  given removeTagsFromStreamRequestCirceDecoder
+      : circe.Decoder[RemoveTagsFromStreamRequest] = x =>
+    for
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
       tagKeys <- x.downField("TagKeys").as[Vector[String]]
-    } yield RemoveTagsFromStreamRequest(streamName, streamArn, tagKeys)
-  }
-  implicit val removeTagsFromStreamRequestEncoder
+    yield RemoveTagsFromStreamRequest(streamName, streamArn, tagKeys)
+  given removeTagsFromStreamRequestEncoder
       : Encoder[RemoveTagsFromStreamRequest] = Encoder.derive
-  implicit val removeTagsFromStreamRequestDecoder
+  given removeTagsFromStreamRequestDecoder
       : Decoder[RemoveTagsFromStreamRequest] = Decoder.derive
-  implicit val removeTagsFromStreamRequestEq: Eq[RemoveTagsFromStreamRequest] =
+  given Eq[RemoveTagsFromStreamRequest] =
     Eq.fromUniversalEquals
-
-}

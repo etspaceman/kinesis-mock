@@ -22,20 +22,20 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
 
 class ListShardsTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
   test("It should list shards when provided a streamName")(PropF.forAllF {
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -53,7 +53,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streams.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -68,7 +68,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -86,7 +86,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streams.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -102,7 +102,7 @@ class ListShardsTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(100, streamArn, None, now)
           streamsRef <- Ref.of[IO, Streams](streams)
@@ -120,7 +120,7 @@ class ListShardsTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(
+        yield assert(
           res.isRight && res.exists { response =>
             streams.streams.get(streamArn).exists { s =>
               s.shards.keys.toVector
@@ -136,7 +136,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -172,7 +172,7 @@ class ListShardsTests
               )
           )
           .map(_.flatMap(identity))
-      } yield assert(
+      yield assert(
         res.isRight && paginatedRes.isRight && res.exists { response =>
           streams.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -198,7 +198,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         exclusiveStartShardId = ShardId.create(10)
@@ -217,7 +217,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streams.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -233,7 +233,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         updated = streams.findAndUpdateStream(streamArn) { s =>
@@ -267,7 +267,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           updated.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -286,7 +286,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         updated = streams.findAndUpdateStream(streamArn) { s =>
@@ -319,7 +319,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           updated.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -337,7 +337,7 @@ class ListShardsTests
       (
         streamArn: StreamArn
       ) =>
-        for {
+        for
           now <- Utils.now
           streams = Streams.empty.addStream(100, streamArn, None, now)
           updated = streams.findAndUpdateStream(streamArn) { s =>
@@ -373,7 +373,7 @@ class ListShardsTests
             streamArn.awsRegion,
             streamArn.awsAccountId
           )
-        } yield assert(
+        yield assert(
           res.isRight && res.exists { response =>
             updated.streams.get(streamArn).exists { s =>
               s.shards.keys.toVector
@@ -392,7 +392,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         shards = streams.streams(streamArn).shards.keys.toVector
@@ -418,7 +418,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           streams.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -439,7 +439,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
@@ -491,7 +491,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           updated.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -509,7 +509,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         requestTimestamp = Instant.parse("2021-01-30T00:00:00.00Z")
@@ -565,7 +565,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(
+      yield assert(
         res.isRight && res.exists { response =>
           updated.streams.get(streamArn).exists { s =>
             s.shards.keys.toVector
@@ -585,7 +585,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -603,7 +603,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -612,7 +612,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -630,7 +630,7 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
 
   test(
@@ -639,7 +639,7 @@ class ListShardsTests
     (
       streamArn: StreamArn
     ) =>
-      for {
+      for
         now <- Utils.now
         streams = Streams.empty.addStream(100, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
@@ -657,6 +657,5 @@ class ListShardsTests
           streamArn.awsRegion,
           streamArn.awsAccountId
         )
-      } yield assert(res.isLeft, s"req: $req\nres: $res")
+      yield assert(res.isLeft, s"req: $req\nres: $res")
   })
-}

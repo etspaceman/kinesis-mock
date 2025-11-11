@@ -20,7 +20,7 @@ package api
 import cats.Eq
 import io.circe
 
-import kinesis.mock.instances.circe._
+import kinesis.mock.instances.circe.given
 
 final case class PutRecordsRequestEntry(
     data: Array[Byte],
@@ -28,8 +28,8 @@ final case class PutRecordsRequestEntry(
     partitionKey: String
 )
 
-object PutRecordsRequestEntry {
-  implicit val putRecordsRequestEntryCirceEncoder
+object PutRecordsRequestEntry:
+  given putRecordsRequestEntryCirceEncoder
       : circe.Encoder[PutRecordsRequestEntry] =
     circe.Encoder.forProduct3(
       "Data",
@@ -37,26 +37,25 @@ object PutRecordsRequestEntry {
       "PartitionKey"
     )(x => (x.data, x.explicitHashKey, x.partitionKey))
 
-  implicit val putRecordsRequestEntryCirceDecoder
+  given putRecordsRequestEntryCirceDecoder
       : circe.Decoder[PutRecordsRequestEntry] =
     x =>
-      for {
+      for
         data <- x.downField("Data").as[Array[Byte]]
         explicitHashKey <- x.downField("ExplicitHashKey").as[Option[String]]
         partitionKey <- x.downField("PartitionKey").as[String]
-      } yield PutRecordsRequestEntry(
+      yield PutRecordsRequestEntry(
         data,
         explicitHashKey,
         partitionKey
       )
 
-  implicit val putRecordsRequestEntryEncoder: Encoder[PutRecordsRequestEntry] =
+  given putRecordsRequestEntryEncoder: Encoder[PutRecordsRequestEntry] =
     Encoder.derive
-  implicit val putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
+  given putRecordsRequestEntryDecoder: Decoder[PutRecordsRequestEntry] =
     Decoder.derive
 
-  implicit val putrecordsRequestEntryEq: Eq[PutRecordsRequestEntry] = (x, y) =>
+  given Eq[PutRecordsRequestEntry] = (x, y) =>
     x.data.sameElements(y.data) &&
       x.explicitHashKey == y.explicitHashKey &&
       x.partitionKey == y.partitionKey
-}

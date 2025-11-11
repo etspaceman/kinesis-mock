@@ -13,44 +13,26 @@ import com.google.common.util.concurrent.{
 
 object javaFuture extends JavaFutureSyntax
 
-trait JavaFutureSyntax {
-  implicit def toJavaFutureOps[A](
-      future: => CompletableFuture[A]
-  ): JavaFutureSyntax.JavaFutureOps[A] =
-    new JavaFutureSyntax.JavaFutureOps(future)
-
-  implicit def toListenableFutureOps[A](
-      future: => ListenableFuture[A]
-  ): JavaFutureSyntax.ListenableFutureOps[A] =
-    new JavaFutureSyntax.ListenableFutureOps(future)
-}
-
-object JavaFutureSyntax {
-  final class JavaFutureOps[A](future: => CompletableFuture[A]) {
+trait JavaFutureSyntax:
+  extension [A](future: => CompletableFuture[A])
     def toIO: IO[A] =
       IO.fromCompletableFuture(IO(future))
-  }
 
-  final class ListenableFutureOps[A](future: => ListenableFuture[A]) {
-    def asScala(implicit e: Executor): Future[A] = {
+  extension [A](future: => ListenableFuture[A])
+    def asScala(using e: Executor): Future[A] =
       val p = Promise[A]()
       Futures.addCallback(
         future,
-        new FutureCallback[A] {
-          def onSuccess(result: A): Unit = {
+        new FutureCallback[A]:
+          def onSuccess(result: A): Unit =
             val _ = p.success(result)
-          }
 
-          def onFailure(t: Throwable): Unit = {
+          def onFailure(t: Throwable): Unit =
             val _ = p.failure(t)
-          }
-        },
+        ,
         e
       )
       p.future
-    }
 
-    def toIO(implicit E: Executor): IO[A] =
+    def toIO(using E: Executor): IO[A] =
       IO.fromFuture(IO(asScala))
-  }
-}

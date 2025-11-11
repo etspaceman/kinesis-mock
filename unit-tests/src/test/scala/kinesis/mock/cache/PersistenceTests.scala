@@ -17,29 +17,28 @@
 package kinesis.mock
 package cache
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 import cats.effect.IO
 import cats.effect.SyncIO
 import cats.effect.kernel.Resource
-import cats.syntax.all._
-import enumeratum.scalacheck._
+import cats.syntax.all.*
+import enumeratum.scalacheck.*
 import fs2.io.file.Files
+import org.scalacheck.Arbitrary
 import org.scalacheck.Test
 import org.scalacheck.effect.PropF
 
-import kinesis.mock.LoggingContext
-import kinesis.mock.Utils
-import kinesis.mock.api._
-import kinesis.mock.instances.arbitrary._
-import kinesis.mock.models._
-import kinesis.mock.syntax.scalacheck._
+import kinesis.mock.api.*
+import kinesis.mock.instances.arbitrary.given
+import kinesis.mock.models.*
+import kinesis.mock.syntax.scalacheck.*
 
 class PersistenceTests
     extends munit.CatsEffectSuite
-    with munit.ScalaCheckEffectSuite {
+    with munit.ScalaCheckEffectSuite:
 
-  def persistConfig(uuid: String) = PersistConfig(
+  def persistConfig(uuid: String): PersistConfig = PersistConfig(
     loadIfExists = true,
     shouldPersist = true,
     "testing/data",
@@ -69,7 +68,7 @@ class PersistenceTests
           }
           .flatMap(cacheConfig => Cache(cacheConfig).map(x => (cacheConfig, x)))
           .evalMap { case (cacheConfig, cache) =>
-            for {
+            for
               context <- LoggingContext.create
               _ <- cache
                 .createStream(
@@ -81,7 +80,8 @@ class PersistenceTests
                 .rethrow
               _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
               recordRequests <- IO(
-                putRecordRequestArb.arbitrary
+                Arbitrary
+                  .arbitrary[PutRecordRequest]
                   .take(5)
                   .toVector
                   .map(_.copy(streamName = Some(streamName), streamArn = None))
@@ -92,7 +92,7 @@ class PersistenceTests
                   .rethrow
               )
               _ <- cache.persistToDisk(context)
-            } yield (cacheConfig, recordRequests)
+            yield (cacheConfig, recordRequests)
           }
           .flatMap { case (cacheConfig, recordRequests) =>
             Cache
@@ -100,7 +100,7 @@ class PersistenceTests
               .map(newCache => (newCache, recordRequests))
           }
           .use { case (newCache, recordRequests) =>
-            for {
+            for
               context <- LoggingContext.create
               shard <- newCache
                 .listShards(
@@ -143,7 +143,7 @@ class PersistenceTests
                   Some(awsRegion)
                 )
                 .rethrow
-            } yield assert(
+            yield assert(
               res.records.length == 5 && res.records.forall(rec =>
                 recordRequests.exists(req =>
                   req.data.sameElements(rec.data)
@@ -158,12 +158,10 @@ class PersistenceTests
 
   test("It should make a root path") {
     Utils.randomUUIDString.map { id =>
-      val config = {
+      val config =
         val orig = persistConfig(id)
         orig.copy(path = s"/${orig.path}")
-      }
 
       assertEquals(config.osPath.absolute.toString, config.path)
     }
   }
-}

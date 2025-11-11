@@ -21,11 +21,11 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.instances.circe._
-import kinesis.mock.models._
+import kinesis.mock.instances.circe.*
+import kinesis.mock.models.*
 import kinesis.mock.validations.CommonValidations
 
 final case class GetShardIteratorRequest(
@@ -35,7 +35,7 @@ final case class GetShardIteratorRequest(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn],
     timestamp: Option[Instant]
-) {
+):
   def getShardIterator(
       streamsRef: Ref[IO, Streams],
       awsRegion: AwsRegion,
@@ -54,16 +54,16 @@ final case class GetShardIteratorRequest(
                   (
                     CommonValidations
                       .isStreamActiveOrUpdating(arn, streams),
-                    startingSequenceNumber match {
+                    startingSequenceNumber match
                       case Some(sequenceNumber) =>
                         CommonValidations.validateSequenceNumber(sequenceNumber)
                       case None => Right(())
-                    },
+                    ,
                     (
                       shardIteratorType,
                       startingSequenceNumber,
                       timestamp
-                    ) match {
+                    ) match
                       case (ShardIteratorType.AT_SEQUENCE_NUMBER, None, _) |
                           (ShardIteratorType.AFTER_SEQUENCE_NUMBER, None, _) =>
                         InvalidArgumentException(
@@ -74,11 +74,11 @@ final case class GetShardIteratorRequest(
                           s"Timestamp must be provided for ShardIteratorType $shardIteratorType"
                         ).asLeft
                       case _ => Right(())
-                    },
+                    ,
                     CommonValidations.validateShardId(shardId),
                     CommonValidations.findShard(shardId, stream).flatMap {
                       case (shard, data) =>
-                        if (data.isEmpty)
+                        if data.isEmpty then
                           Right(
                             GetShardIteratorResponse(
                               ShardIterator.create(
@@ -94,7 +94,7 @@ final case class GetShardIteratorRequest(
                             shardIteratorType,
                             startingSequenceNumber,
                             timestamp
-                          ) match {
+                          ) match
                             case (ShardIteratorType.TRIM_HORIZON, _, _) =>
                               Right(
                                 GetShardIteratorResponse(
@@ -122,11 +122,11 @@ final case class GetShardIteratorRequest(
                                   _,
                                   Some(ts)
                                 ) =>
-                              if (ts.toEpochMilli > now.toEpochMilli)
+                              if ts.toEpochMilli > now.toEpochMilli then
                                 InvalidArgumentException(
                                   s"Timestamp cannot be in the future"
                                 ).asLeft
-                              else {
+                              else
                                 val sequenceNumber =
                                   data
                                     .find(
@@ -134,7 +134,7 @@ final case class GetShardIteratorRequest(
                                     )
                                     .map(data.indexOf)
                                     .flatMap(x =>
-                                      if (x == 0)
+                                      if x == 0 then
                                         Some(
                                           shard.sequenceNumberRange.startingSequenceNumber
                                         )
@@ -154,7 +154,6 @@ final case class GetShardIteratorRequest(
                                     )
                                   )
                                 )
-                              }
                             case (
                                   ShardIteratorType.AT_SEQUENCE_NUMBER,
                                   Some(seqNo),
@@ -176,9 +175,9 @@ final case class GetShardIteratorRequest(
                                   Some(seqNo),
                                   _
                                 ) =>
-                              data.find(_.sequenceNumber == seqNo) match {
+                              data.find(_.sequenceNumber == seqNo) match
                                 case Some(record) =>
-                                  if (record == data.head)
+                                  if record == data.head then
                                     Right(
                                       GetShardIteratorResponse(
                                         ShardIterator.create(
@@ -206,7 +205,6 @@ final case class GetShardIteratorRequest(
                                   ResourceNotFoundException(
                                     s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
                                   ).asLeft
-                              }
                             case (
                                   ShardIteratorType.AFTER_SEQUENCE_NUMBER,
                                   Some(seqNo),
@@ -228,7 +226,7 @@ final case class GetShardIteratorRequest(
                                   Some(seqNo),
                                   _
                                 ) =>
-                              data.find(_.sequenceNumber == seqNo) match {
+                              data.find(_.sequenceNumber == seqNo) match
                                 case Some(record) =>
                                   Right(
                                     GetShardIteratorResponse(
@@ -246,13 +244,11 @@ final case class GetShardIteratorRequest(
                                   ResourceNotFoundException(
                                     s"Unable to find record with provided SequenceNumber $seqNo in stream $streamName"
                                   ).asLeft
-                              }
 
                             case _ =>
                               InvalidArgumentException(
                                 s"Request for GetShardIterator invalid. ShardIteratorType: $shardIteratorType, StartingSequenceNumber: $startingSequenceNumber, Timestamp: $timestamp"
                               ).asLeft
-                          }
                     }
                   ).mapN((_, _, _, _, res) => res)
                 )
@@ -260,10 +256,9 @@ final case class GetShardIteratorRequest(
         }
     }
   }
-}
 
-object GetShardIteratorRequest {
-  def getShardIteratorRequestCirceEncoder(implicit
+object GetShardIteratorRequest:
+  def getShardIteratorRequestCirceEncoder(using
       EI: circe.Encoder[Instant]
   ): circe.Encoder[GetShardIteratorRequest] =
     circe.Encoder.forProduct6(
@@ -284,11 +279,11 @@ object GetShardIteratorRequest {
       )
     )
 
-  def getShardIteratorRequestCirceDecoder(implicit
+  def getShardIteratorRequestCirceDecoder(using
       DI: circe.Decoder[Instant]
   ): circe.Decoder[GetShardIteratorRequest] =
     x =>
-      for {
+      for
         shardId <- x.downField("ShardId").as[String]
         shardIteratorType <- x
           .downField("ShardIteratorType")
@@ -299,7 +294,7 @@ object GetShardIteratorRequest {
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
         timestamp <- x.downField("Timestamp").as[Option[Instant]]
-      } yield GetShardIteratorRequest(
+      yield GetShardIteratorRequest(
         shardId,
         shardIteratorType,
         startingSequenceNumber,
@@ -308,19 +303,19 @@ object GetShardIteratorRequest {
         timestamp
       )
 
-  implicit val getShardIteratorRequestEncoder
-      : Encoder[GetShardIteratorRequest] = Encoder.instance(
-    getShardIteratorRequestCirceEncoder(instantBigDecimalCirceEncoder),
-    getShardIteratorRequestCirceEncoder(instantLongCirceEncoder)
-  )
+  given getShardIteratorRequestEncoder: Encoder[GetShardIteratorRequest] =
+    Encoder.instance(
+      getShardIteratorRequestCirceEncoder(using instantBigDecimalCirceEncoder),
+      getShardIteratorRequestCirceEncoder(using instantLongCirceEncoder)
+    )
 
-  implicit val getShardIteratorRequestDecoder
-      : Decoder[GetShardIteratorRequest] = Decoder.instance(
-    getShardIteratorRequestCirceDecoder(instantBigDecimalCirceDecoder),
-    getShardIteratorRequestCirceDecoder(instantLongCirceDecoder)
-  )
+  given getShardIteratorRequestDecoder: Decoder[GetShardIteratorRequest] =
+    Decoder.instance(
+      getShardIteratorRequestCirceDecoder(using instantBigDecimalCirceDecoder),
+      getShardIteratorRequestCirceDecoder(using instantLongCirceDecoder)
+    )
 
-  implicit val getShardIteratorRequestEq: Eq[GetShardIteratorRequest] =
+  given Eq[GetShardIteratorRequest] =
     (x, y) =>
       x.shardId == y.shardId &&
         x.shardIteratorType == y.shardIteratorType &&
@@ -330,4 +325,3 @@ object GetShardIteratorRequest {
         x.timestamp.map(_.getEpochSecond()) == y.timestamp.map(
           _.getEpochSecond()
         )
-}

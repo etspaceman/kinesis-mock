@@ -21,11 +21,11 @@ import java.time.Instant
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all._
+import cats.syntax.all.*
 import io.circe
 
-import kinesis.mock.models._
-import kinesis.mock.syntax.either._
+import kinesis.mock.models.*
+import kinesis.mock.syntax.either.*
 import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_SplitShard.html
@@ -34,7 +34,7 @@ final case class SplitShardRequest(
     shardToSplit: String,
     streamName: Option[StreamName],
     streamArn: Option[StreamArn]
-) {
+):
   def splitShard(
       streamsRef: Ref[IO, Streams],
       shardLimit: Int,
@@ -55,16 +55,15 @@ final case class SplitShardRequest(
                     (
                       CommonValidations.isStreamActive(arn, streams),
                       CommonValidations.validateShardId(shardToSplit),
-                      if (!newStartingHashKey.matches("0|([1-9]\\d{0,38})")) {
+                      if !newStartingHashKey.matches("0|([1-9]\\d{0,38})") then
                         InvalidArgumentException(
                           "NewStartingHashKey contains invalid characters"
                         ).asLeft
-                      } else Right(newStartingHashKey),
-                      if (
-                        streams.streams.values
+                      else Right(newStartingHashKey),
+                      if streams.streams.values
                           .map(_.shards.size)
                           .sum + 1 > shardLimit
-                      )
+                      then
                         LimitExceededException(
                           "Operation would exceed the configured shard limit for the account"
                         ).asLeft
@@ -75,10 +74,8 @@ final case class SplitShardRequest(
                           CommonValidations.isShardOpen(shard).flatMap { _ =>
                             val newStartingHashKeyNumber =
                               BigInt(newStartingHashKey)
-                            if (
-                              newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
-                            )
-                              Right((shard, shardData))
+                            if newStartingHashKeyNumber >= shard.hashKeyRange.startingHashKey && newStartingHashKeyNumber <= shard.hashKeyRange.endingHashKey
+                            then Right((shard, shardData))
                             else
                               InvalidArgumentException(
                                 s"NewStartingHashKey is not within the hash range shard ${shard.shardId}"
@@ -108,9 +105,8 @@ final case class SplitShardRequest(
           .sequenceWithDefault(streams)
       }
     }
-}
 
-object SplitShardRequest {
+object SplitShardRequest:
 
   def splitShard(
       newStartingHashKey: String,
@@ -118,7 +114,7 @@ object SplitShardRequest {
       shardData: Vector[KinesisRecord],
       stream: StreamData,
       now: Instant
-  ): StreamData = {
+  ): StreamData =
     val newStartingHashKeyNumber = BigInt(newStartingHashKey)
     val newShardIndex1 =
       stream.shards.keys.map(_.shardId.index).max + 1
@@ -170,9 +166,8 @@ object SplitShardRequest {
       } ++ (newShards :+ oldShard),
       streamStatus = StreamStatus.UPDATING
     )
-  }
 
-  implicit val splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
+  given splitShardRequestCirceEncoder: circe.Encoder[SplitShardRequest] =
     circe.Encoder.forProduct4(
       "NewStartingHashKey",
       "ShardToSplit",
@@ -180,25 +175,24 @@ object SplitShardRequest {
       "StreamARN"
     )(x => (x.newStartingHashKey, x.shardToSplit, x.streamName, x.streamArn))
 
-  implicit val splitShardRequestCirceDecoder: circe.Decoder[SplitShardRequest] =
+  given splitShardRequestCirceDecoder: circe.Decoder[SplitShardRequest] =
     x =>
-      for {
+      for
         newStartingHashKey <- x.downField("NewStartingHashKey").as[String]
         shardToSplit <- x.downField("ShardToSplit").as[String]
         streamName <- x.downField("StreamName").as[Option[StreamName]]
         streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      } yield SplitShardRequest(
+      yield SplitShardRequest(
         newStartingHashKey,
         shardToSplit,
         streamName,
         streamArn
       )
 
-  implicit val splitShardRequestEncoder: Encoder[SplitShardRequest] =
+  given splitShardRequestEncoder: Encoder[SplitShardRequest] =
     Encoder.derive
-  implicit val splitShardRequestDecoder: Decoder[SplitShardRequest] =
+  given splitShardRequestDecoder: Decoder[SplitShardRequest] =
     Decoder.derive
 
-  implicit val splitShardRequestEq: Eq[SplitShardRequest] =
+  given Eq[SplitShardRequest] =
     Eq.fromUniversalEquals
-}

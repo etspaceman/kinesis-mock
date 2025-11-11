@@ -19,7 +19,7 @@ package kinesis.mock
 import cats.effect.IO
 import io.circe.Json
 
-final case class LoggingContext private (context: Map[String, String]) {
+final case class LoggingContext private (context: Map[String, String]):
   def +(kv: (String, String)): LoggingContext = copy(context + kv)
   def ++(kvs: IterableOnce[(String, String)]): LoggingContext = copy(
     context ++ kvs
@@ -34,14 +34,13 @@ final case class LoggingContext private (context: Map[String, String]) {
   ): LoggingContext =
     addJson(
       key,
-      if (isCbor) Encoder[A].circeCborEncoder(a) else Encoder[A].circeEncoder(a)
+      if isCbor then Encoder[A].circeCborEncoder(a)
+      else Encoder[A].circeEncoder(a)
     )
-}
 
-object LoggingContext {
+object LoggingContext:
   def create: IO[LoggingContext] = Utils.randomUUIDString.map(uuid =>
     LoggingContext(
       Map("contextId" -> uuid)
     )
   )
-}
