@@ -6,15 +6,11 @@ import cats.{Monad, MonadError}
 import kinesis.mock.retry
 
 trait RetrySyntax:
-  implicit final def retrySyntaxBase[M[_], A](
-      action: => M[A]
-  ): RetryingOps[M, A] =
-    new RetryingOps[M, A](action)
-
-  implicit final def retrySyntaxError[M[_], A, E](
-      action: => M[A]
-  )(using M: MonadError[M, E]): RetryingErrorOps[M, A, E] =
-    new RetryingErrorOps[M, A, E](action)
+  extension [M[_], A](action: => M[A])
+    def retrySyntaxBase: RetryingOps[M, A] = new RetryingOps[M, A](action)
+    def retrySyntaxError[E](using
+        M: MonadError[M, E]
+    ): RetryingErrorOps[M, A, E] = new RetryingErrorOps[M, A, E](action)
 
 final class RetryingOps[M[_], A](action: => M[A]):
   def retryingOnFailures[E](

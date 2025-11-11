@@ -14,22 +14,11 @@ import com.google.common.util.concurrent.{
 object javaFuture extends JavaFutureSyntax
 
 trait JavaFutureSyntax:
-  implicit def toJavaFutureOps[A](
-      future: => CompletableFuture[A]
-  ): JavaFutureSyntax.JavaFutureOps[A] =
-    new JavaFutureSyntax.JavaFutureOps(future)
-
-  implicit def toListenableFutureOps[A](
-      future: => ListenableFuture[A]
-  ): JavaFutureSyntax.ListenableFutureOps[A] =
-    new JavaFutureSyntax.ListenableFutureOps(future)
-
-object JavaFutureSyntax:
-  final class JavaFutureOps[A](future: => CompletableFuture[A]):
+  extension [A](future: => CompletableFuture[A])
     def toIO: IO[A] =
       IO.fromCompletableFuture(IO(future))
 
-  final class ListenableFutureOps[A](future: => ListenableFuture[A]):
+  extension [A](future: => ListenableFuture[A])
     def asScala(using e: Executor): Future[A] =
       val p = Promise[A]()
       Futures.addCallback(

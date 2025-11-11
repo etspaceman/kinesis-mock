@@ -10,5 +10,5 @@ trait Sleep[M[_]]:
 object Sleep:
   def apply[M[_]](using sleep: Sleep[M]): Sleep[M] = sleep
 
-  implicit def sleepUsingTemporal[F[_]](using t: Temporal[F]): Sleep[F] =
+  given sleepUsingTemporal[F[_]](using t: Temporal[F]): Sleep[F] =
     (delay: FiniteDuration) => t.sleep(delay)
