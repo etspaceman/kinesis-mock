@@ -53,7 +53,7 @@ object KinesisMockPlugin extends AutoPlugin {
   }
 
   override def buildSettings: Seq[Setting[?]] = Seq(
-    tlBaseVersion := "0.4",
+    tlBaseVersion := "0.5",
     tlCiScalafixCheck := true,
     tlCiMimaBinaryIssueCheck := false,
     tlCiDocCheck := false,
@@ -253,12 +253,12 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/buildDockerImage"),
+              List("kinesis-mockJS3/buildDockerImage"),
               name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/pushDockerImage"),
+              List("kinesis-mockJS3/pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
