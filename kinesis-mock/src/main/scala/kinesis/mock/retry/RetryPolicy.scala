@@ -110,7 +110,7 @@ object RetryPolicy:
   ): RetryPolicy[M] =
     withShow(rs => Applicative[M].pure(decideNextRetry(rs)), pretty)
 
-  implicit def boundedSemilatticeForRetryPolicy[M[_]](using
+  given boundedSemilatticeForRetryPolicy[M[_]](using
       M: Applicative[M]
   ): BoundedSemilattice[RetryPolicy[M]] =
     new BoundedSemilattice[RetryPolicy[M]]:
@@ -122,5 +122,5 @@ object RetryPolicy:
           y: RetryPolicy[M]
       ): RetryPolicy[M] = x.join(y)
 
-  implicit def showForRetryPolicy[M[_]]: Show[RetryPolicy[M]] =
+  given showForRetryPolicy[M[_]]: Show[RetryPolicy[M]] =
     Show.show(_.show)

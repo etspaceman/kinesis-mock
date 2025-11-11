@@ -25,7 +25,7 @@ import io.circe.{Json, JsonNumber}
 
 // See https://github.com/sirthias/borer/issues/418
 object borer:
-  implicit def borerEncoderFromCirceEncoder[T](using
+  given borerEncoderFromCirceEncoder[T](using
       ce: io.circe.Encoder[T]
   ): Encoder[T] =
     compat.circe.borerEncoderFromCirceEncoder
@@ -154,7 +154,7 @@ object borer:
       case _ => r.unexpectedDataItem(expected = "Long")
   }
 
-  implicit def defaultBorerDecoderFromCirceDecoder[T](using
+  given defaultBorerDecoderFromCirceDecoder[T](using
       cd: io.circe.Decoder[T]
   ): Decoder[T] =
     compat.circe.borerDecoderFromCirceDecoder(circeJsonAstDecoder())

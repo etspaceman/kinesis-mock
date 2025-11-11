@@ -30,7 +30,6 @@ import org.http4s.Header
 import org.http4s.HttpRoutes
 import org.http4s.Request
 import org.http4s.Response as HResponse
-//import org.http4s._
 import org.http4s.dsl.io.*
 import org.http4s.headers.*
 import org.http4s.syntax.header.*
@@ -38,7 +37,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 import kinesis.mock.api.*
 import kinesis.mock.cache.Cache
-import kinesis.mock.instances.http4s.*
+import kinesis.mock.instances.http4s.{given, *}
 import kinesis.mock.models.AwsRegion
 
 class KinesisMockRoutes(
@@ -163,7 +162,9 @@ class KinesisMockRoutes(
                       responseHeaders*
                     )
                 case (Some(contentType), Some(_), Some(_)) =>
-                  implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
+                  given entityEncoder[A](using
+                      Encoder[A]
+                  ): EntityEncoder[IO, A] =
                     kinesisMockEntityEncoder(contentType.mediaType)
                   logger.warn(
                     lcWithHeaders.context + ("contentType" -> contentType.value)
@@ -178,7 +179,9 @@ class KinesisMockRoutes(
                       responseHeaders*
                     )
                 case (Some(contentType), None, None) =>
-                  implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
+                  given entityEncoder[A](using
+                      Encoder[A]
+                  ): EntityEncoder[IO, A] =
                     kinesisMockEntityEncoder(contentType.mediaType)
                   logger.warn(
                     lcWithHeaders.context + ("contentType" -> contentType.value)
@@ -193,7 +196,9 @@ class KinesisMockRoutes(
                       responseHeaders*
                     )
                 case (Some(contentType), Some(authHeader), _) =>
-                  implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
+                  given entityEncoder[A](using
+                      Encoder[A]
+                  ): EntityEncoder[IO, A] =
                     kinesisMockEntityEncoder(contentType.mediaType)
                   val lcWithContentType =
                     lcWithHeaders + ("contentType" -> contentType.value)
@@ -298,7 +303,9 @@ class KinesisMockRoutes(
                               )
                   }
                 case (Some(contentType), _, Some(_)) =>
-                  implicit def entityEncoder[A: Encoder]: EntityEncoder[IO, A] =
+                  given entityEncoder[A](using
+                      Encoder[A]
+                  ): EntityEncoder[IO, A] =
                     kinesisMockEntityEncoder(contentType.mediaType)
 
                   val lcWithContentType =

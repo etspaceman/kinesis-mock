@@ -22,9 +22,7 @@ import io.circe
 trait Encoder[A]:
   def circeEncoder: circe.Encoder[A]
   def circeCborEncoder: circe.Encoder[A]
-  lazy val borerEncoder: borer.Encoder[A] =
-    kinesis.mock.instances.borer
-      .borerEncoderFromCirceEncoder(using circeEncoder)
+  def borerEncoder: borer.Encoder[A]
 
 object Encoder:
   def apply[A](using E: Encoder[A]): Encoder[A] = E
@@ -34,5 +32,8 @@ object Encoder:
   ): Encoder[A] = new Encoder[A]:
     override val circeEncoder: circe.Encoder[A] = circeEncoder0
     override val circeCborEncoder: circe.Encoder[A] = circeCborEncoder0
+    override val borerEncoder: io.bullet.borer.Encoder[A] =
+      kinesis.mock.instances.borer
+        .borerEncoderFromCirceEncoder(using circeCborEncoder)
   def derive[A](using circeEncoder0: circe.Encoder[A]): Encoder[A] =
     instance(circeEncoder0, circeEncoder0)

@@ -28,7 +28,7 @@ import org.http4s.circe.jsonOfWithMedia
 import org.http4s.headers.`Content-Type`
 
 object http4s:
-  implicit def kinesisMockEntityDecoder[A: Decoder]: EntityDecoder[IO, A] =
+  given kinesisMockEntityDecoder[A](using Decoder[A]): EntityDecoder[IO, A] =
     EntityDecoder.decodeBy[IO, A](
       KinesisMockMediaTypes.validContentTypes.head,
       KinesisMockMediaTypes.validContentTypes.tail.toVector*
