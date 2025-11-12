@@ -9,7 +9,7 @@ object LibraryDependencies {
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.21"
 
   object Borer {
-    val borerVersion = "1.16.0"
+    val borerVersion = "1.16.2"
     val core = Def.setting("io.bullet" %%% "borer-core" % borerVersion)
     val circe = Def.setting("io.bullet" %%% "borer-compat-circe" % borerVersion)
   }
