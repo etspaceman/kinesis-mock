@@ -447,12 +447,22 @@ class KinesisMockRoutes(
                 )).context
               )("Successfully processed OPTIONS call")
 
-              Ok("", responseHeaders*)
+              emptyOk(
+                responseHeaders,
+                request.contentType
+                  .getOrElse(`Content-Type`(KinesisMockMediaTypes.amazonJson))
+              )
           }
       }
   }
 
 object KinesisMockRoutes:
+  def emptyOk(
+      responseHeaders: Vector[Header.ToRaw],
+      contentType: `Content-Type`
+  ) =
+    Ok("", responseHeaders).map(_.withContentType(contentType))
+
   def errorMessage(`type`: String, message: Option[String]): String =
     message match
       case Some(msg) => s"<${`type`}>\n <Message>$msg</Message>\n</${`type`}>\n"
@@ -524,7 +534,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -539,7 +549,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -554,7 +564,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -569,7 +579,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -584,7 +594,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -714,7 +724,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -789,7 +799,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -849,7 +859,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -864,7 +874,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -879,7 +889,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -894,7 +904,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -932,7 +942,7 @@ object KinesisMockRoutes:
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
-                    _ => Ok("", responseHeaders*)
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
