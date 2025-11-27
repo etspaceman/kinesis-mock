@@ -447,7 +447,11 @@ class KinesisMockRoutes(
                 )).context
               )("Successfully processed OPTIONS call")
 
-              emptyOk(responseHeaders, contentType)
+              emptyOk(
+                responseHeaders,
+                request.contentType
+                  .getOrElse(`Content-Type`(KinesisMockMediaTypes.amazonJson))
+              )
           }
       }
   }
@@ -456,7 +460,7 @@ object KinesisMockRoutes:
   def emptyOk(
       responseHeaders: Vector[Header.ToRaw],
       contentType: `Content-Type`
-  ): IO[Response[IO]] =
+  ) =
     Ok("", responseHeaders).map(_.withContentType(contentType))
 
   def errorMessage(`type`: String, message: Option[String]): String =
