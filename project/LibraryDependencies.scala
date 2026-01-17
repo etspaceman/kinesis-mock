@@ -6,7 +6,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.24"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.25"
 
   object Borer {
     val borerVersion = "1.16.2"
