@@ -313,7 +313,7 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Upload server.json"),
               params = Map(
                 "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
-                "asset_path" -> "./kinesis-mock/src/main/resources/server.json",
+                "asset_path" -> "./src/main/resources/server.json",
                 "asset_name" -> "server.json",
                 "asset_content_type" -> "application/json"
               )
