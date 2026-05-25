@@ -236,12 +236,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("kinesis-mockJS/Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("fullLinkJS"),
+              List("kinesis-mockJS/fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -279,12 +279,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("kinesis-mockJS/Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("fullLinkJS"),
+              List("kinesis-mockJS/fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -335,12 +335,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("kinesis-mockJS/Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("fullLinkJS"),
+              List("kinesis-mockJS/fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -376,7 +376,7 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("kinesis-mockJVM/Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),

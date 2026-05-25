@@ -188,11 +188,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' cpl
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
 
       - name: Set up Docker Buildx
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -244,11 +244,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' cpl
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
 
       - name: Get upload url for release
         id: get_release
@@ -311,11 +311,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' cpl
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
 
       - name: Setup Node
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -366,7 +366,7 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' cpl
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJVM/Test/compile
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
