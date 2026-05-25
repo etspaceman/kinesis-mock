@@ -152,9 +152,12 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' dockerComposeUp",
+            "command" -> "sbt dockerComposeUp",
             "retry_on" -> "error",
-            "on_retry_command" -> "sbt 'project ${{ matrix.project }}' dockerComposeDown"
+            "on_retry_command" -> "sbt dockerComposeDown"
+          ),
+          env = Map(
+            "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
           )
         ),
         WorkflowStep.Use(
@@ -178,14 +181,16 @@ object KinesisMockPlugin extends AutoPlugin {
             "dockerComposeLogs"
           ),
           name = Some("Print docker logs and container listing"),
-          cond = Some(onlyFailures.value)
+          cond = Some(onlyFailures.value),
+          preamble = false
         ),
         WorkflowStep.Sbt(
           List(
             "dockerComposeDown"
           ),
           name = Some("Remove docker containers"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(onlyScalaJsCond.value),
+          preamble = false
         )
       )
 

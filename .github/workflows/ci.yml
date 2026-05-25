@@ -84,12 +84,14 @@ jobs:
 
       - name: Docker Compose Up
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
           retry_on: error
-          command: sbt 'project ${{ matrix.project }}' dockerComposeUp
-          on_retry_command: sbt 'project ${{ matrix.project }}' dockerComposeDown
+          command: sbt dockerComposeUp
+          on_retry_command: sbt dockerComposeDown
           max_attempts: 3
 
       - name: Integration Tests
@@ -106,11 +108,11 @@ jobs:
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}
-        run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
+        run: sbt dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
-        run: sbt 'project ${{ matrix.project }}' dockerComposeDown
+        run: sbt dockerComposeDown
 
       - name: Check scalafix lints
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
