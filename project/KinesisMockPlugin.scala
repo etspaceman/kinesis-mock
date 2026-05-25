@@ -436,7 +436,7 @@ object KinesisMockPlugin extends AutoPlugin {
       ),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
-      HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
+      HeaderLicense.ALv2(s"${startYear.value.get}-2026", organizationName.value)
     ),
     tlJdkRelease := Some(21)
   ) ++ Seq(

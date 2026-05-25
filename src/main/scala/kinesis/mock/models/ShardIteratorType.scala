@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Typelevel
+ * Copyright 2021-2026 io.github.etspaceman
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,3 +31,4 @@ object ShardIteratorType
   case object AT_TIMESTAMP extends ShardIteratorType
   case object TRIM_HORIZON extends ShardIteratorType
   case object LATEST extends ShardIteratorType
+eratorType
