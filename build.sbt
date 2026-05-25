@@ -128,9 +128,13 @@ lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
 
 lazy val `kinesis-mock-jvm` = `kinesis-mock`.jvm
 lazy val `kinesis-mock-js` = `kinesis-mock`.js
-  .settings(DockerComposePlugin.settings(true, List(LocalProject("kinesis-mockJS"))))
+  .settings(
+    DockerComposePlugin.settings(true, List(LocalProject("kinesis-mockJS")))
+  )
 
-lazy val functionalTestProjects: List[ProjectReference] = List(`kinesis-mock-js`)
+lazy val functionalTestProjects: List[ProjectReference] = List(
+  `kinesis-mock-js`
+)
 
 lazy val `kinesis-mock-root` = tlCrossRootProject
   .aggregate(`kinesis-mock-jvm`, `kinesis-mock-js`)
