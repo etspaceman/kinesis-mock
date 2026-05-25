@@ -36,7 +36,7 @@ object KinesisMockPlugin extends AutoPlugin {
   }
 
   private val onlyScalaJsCond = Def.setting {
-    primaryJavaOSCond.value + s" && startsWith(matrix.project, 'root-js')"
+    primaryJavaOSCond.value + s" && matrix.project == 'kinesis-mockJS'"
   }
 
   private val onlyFailures = Def.setting {
@@ -138,7 +138,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests3/test",
+            "command" -> "sbt 'project ${{ matrix.project }}' test",
             "retry_on" -> "error"
           )
         )
@@ -164,7 +164,7 @@ object KinesisMockPlugin extends AutoPlugin {
           params = Map(
             "timeout_minutes" -> "15",
             "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests3/test",
+            "command" -> "sbt 'project kinesis-mockJVM' itTest",
             "retry_on" -> "error"
           ),
           env = Map(
@@ -253,12 +253,12 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS3/buildDockerImage"),
+              List("kinesis-mockJS/buildDockerImage"),
               name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS3/pushDockerImage"),
+              List("kinesis-mockJS/pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
@@ -376,7 +376,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mock3/assembly"),
+              List("kinesis-mockJVM/assembly"),
               name = Some("Assembly"),
               cond = Some(primaryJavaOSCond.value)
             ),
