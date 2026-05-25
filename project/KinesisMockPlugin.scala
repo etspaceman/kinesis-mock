@@ -106,7 +106,7 @@ object KinesisMockPlugin extends AutoPlugin {
           )
         ),
         WorkflowStep.Sbt(
-          commands = List("project kinesis-mockJVM", "itTest"),
+          commands = List("project kinesis-mock-rootJVM", "itTest"),
           name = Some("Integration Tests"),
           cond = Some(jsCond),
           preamble = false,
@@ -168,7 +168,7 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         sbtStepPreamble =
-          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
@@ -226,7 +226,7 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         sbtStepPreamble =
-          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
@@ -270,7 +270,7 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         sbtStepPreamble =
-          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
@@ -309,7 +309,7 @@ object KinesisMockPlugin extends AutoPlugin {
             )
           ),
         sbtStepPreamble =
-          List("++ ${{ matrix.scala }}", "project kinesis-mockJVM"),
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJVM"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")

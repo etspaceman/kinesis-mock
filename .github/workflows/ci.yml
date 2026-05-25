@@ -95,7 +95,7 @@ jobs:
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
-        run: sbt 'project kinesis-mockJVM' itTest
+        run: sbt 'project kinesis-mock-rootJVM' itTest
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}
@@ -175,11 +175,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' fullLinkJS
 
       - name: Set up Docker Buildx
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -191,11 +191,11 @@ jobs:
 
       - name: Build Docker Image
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' buildDockerImage
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' buildDockerImage
 
       - name: Push to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' pushDockerImage
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
@@ -231,11 +231,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' fullLinkJS
 
       - name: Get upload url for release
         id: get_release
@@ -298,11 +298,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' fullLinkJS
 
       - name: Setup Node
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -312,13 +312,13 @@ jobs:
 
       - name: Install artifacts to NPM
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' npmPackageInstall
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' npmPackageInstall
 
       - name: Publish artifacts to NPM
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' npmPackageNpmrc npmPackagePublish
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' npmPackageNpmrc npmPackagePublish
 
   publishAssembly:
     name: Publish Fat JAR
@@ -353,11 +353,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJVM' Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJVM' Test/compile
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJVM' assembly
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJVM' assembly
 
       - name: Get upload url for release
         id: get_release
