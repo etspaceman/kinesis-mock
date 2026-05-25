@@ -4,9 +4,13 @@ import java.nio.file.StandardCopyOption
 import LibraryDependencies._
 import org.scalajs.linker.interface.ESVersion
 import org.scalajs.sbtplugin.Stage
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
-lazy val `kinesis-mock` = projectMatrix
+lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("."))
   .enablePlugins(DockerImagePlugin, NoPublishPlugin)
+  .settings(DockerImagePlugin.settings)
   .settings(
     description := "A Mock API for AWS Kinesis",
     libraryDependencies ++= Seq(
@@ -30,118 +34,25 @@ lazy val `kinesis-mock` = projectMatrix
       FS2.io.value,
       ScodecBits.value
     ),
+    Compile / unmanagedResourceDirectories +=
+      (ThisBuild / baseDirectory).value / "src" / "main" / "resources",
+    Test / unmanagedResourceDirectories +=
+      (ThisBuild / baseDirectory).value / "src" / "test" / "resources"
+  )
+  .jvmSettings(
+    Compile / unmanagedSourceDirectories +=
+      (ThisBuild / baseDirectory).value / "src" / "main" / "scalajvm",
+    Test / unmanagedSourceDirectories +=
+      (ThisBuild / baseDirectory).value / "src" / "test" / "scalajvm",
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
-      case x => MergeStrategy.defaultMergeStrategy(x)
+      case x                                    => MergeStrategy.defaultMergeStrategy(x)
     },
     assembly / assemblyOutputPath := file(
       s"docker/image/lib/${name.value}.jar"
     ),
-    Compile / mainClass := Some("kinesis.mock.KinesisMockService")
-  )
-  .settings(DockerImagePlugin.settings)
-  .jvmPlatform(Seq(Scala3))
-  .jsPlatform(Seq(Scala3))
-
-lazy val `kinesis-mock-js` =
-  `kinesis-mock`
-    .js(Scala3)
-    .enablePlugins(NpmPackagePlugin)
-    .settings(
-      Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
-        "docker/image/lib"
-      ),
-      Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file(
-        "docker/image/lib"
-      ),
-      scalaJSUseMainModuleInitializer := true,
-      scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
-      scalaJSLinkerConfig ~= {
-        _.withESFeatures(_.withESVersion(ESVersion.ES2021))
-      },
-      npmPackageName := "kinesis-local",
-      npmPackageAuthor := "Eric Meisel",
-      npmPackageDescription := description.value,
-      npmPackageLicense := Some("MIT"),
-      npmPackageRepository := Some(
-        "https://github.com/etspaceman/kinesis-mock"
-      ),
-      npmPackageBinaryEnable := true,
-      npmPackageStage := Stage.FullOpt,
-      npmPackageKeywords := Seq(
-        "kinesis mock",
-        "kinesis-mock",
-        "kinesis",
-        "aws kinesis",
-        "aws kinesis mock",
-        "aws-kinesis-mock"
-      ),
-      npmExtraFiles := Seq(
-        file("LICENSE"),
-        file("kinesis-mock/src/main/resources/server.json")
-      ),
-      Compile / npmCopyExtraFiles := Def.task {
-        val targetDir = (Compile / npmPackageOutputDirectory).value
-        val log = streams.value.log
-
-        if (Files.exists(targetDir.toPath())) ()
-        else Files.createDirectories(targetDir.toPath())
-
-        npmExtraFiles.value.foreach { f =>
-          val targetPath = (targetDir / f.name).toPath
-
-          Files.copy(
-            f.toPath,
-            targetPath,
-            StandardCopyOption.REPLACE_EXISTING
-          )
-          log.info(s"Wrote $f to $targetPath")
-        }
-      }.value,
-      Compile / npmPackage := {
-        val b = (Compile / npmPackagePackageJson).value
-        val a = (Compile / npmPackageOutputJS).value
-        val c = (Compile / npmPackageWriteREADME).value
-        val d = (Compile / npmCopyExtraFiles).value
-        void(a, b, c, d)
-      }
-    )
-
-lazy val testkit = projectMatrix
-  .enablePlugins(NoPublishPlugin)
-  .settings(libraryDependencies ++= testDependencies.value)
-  .jvmPlatform(Seq(Scala3))
-  .jsPlatform(Seq(Scala3))
-  .dependsOn(`kinesis-mock`)
-
-lazy val `testkit-js` = testkit
-  .js(Scala3)
-  .settings(
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
-    scalaJSLinkerConfig ~= {
-      _.withESFeatures(_.withESVersion(ESVersion.ES2021))
-    }
-  )
-
-lazy val `unit-tests` = projectMatrix
-  .enablePlugins(NoPublishPlugin)
-  .jvmPlatform(Seq(Scala3))
-  .jsPlatform(Seq(Scala3))
-  .dependsOn(testkit % Test)
-
-lazy val `unit-tests-js` = `unit-tests`
-  .js(Scala3)
-  .settings(
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
-    scalaJSLinkerConfig ~= {
-      _.withESFeatures(_.withESVersion(ESVersion.ES2021))
-    }
-  )
-
-lazy val `integration-tests` = projectMatrix
-  .enablePlugins(NoPublishPlugin)
-  .settings(
+    Compile / mainClass := Some("kinesis.mock.KinesisMockService"),
     libraryDependencies ++= Seq(
       Aws.kinesis % Test,
       Aws.cloudwatch % Test,
@@ -152,57 +63,90 @@ lazy val `integration-tests` = projectMatrix
     ),
     Test / parallelExecution := false
   )
-  .jvmPlatform(Seq(Scala3))
-  .dependsOn(testkit % Test)
+  .jsConfigure(_.enablePlugins(NpmPackagePlugin))
+  .jsSettings(
+    Compile / unmanagedSourceDirectories +=
+      (ThisBuild / baseDirectory).value / "src" / "main" / "scalajs",
+    Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
+      "docker/image/lib"
+    ),
+    Compile / fullLinkJS / scalaJSLinkerOutputDirectory := file(
+      "docker/image/lib"
+    ),
+    scalaJSUseMainModuleInitializer := true,
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    scalaJSLinkerConfig ~= {
+      _.withESFeatures(_.withESVersion(ESVersion.ES2021))
+    },
+    npmPackageName := "kinesis-local",
+    npmPackageAuthor := "Eric Meisel",
+    npmPackageDescription := description.value,
+    npmPackageLicense := Some("MIT"),
+    npmPackageRepository := Some(
+      "https://github.com/etspaceman/kinesis-mock"
+    ),
+    npmPackageBinaryEnable := true,
+    npmPackageStage := Stage.FullOpt,
+    npmPackageKeywords := Seq(
+      "kinesis mock",
+      "kinesis-mock",
+      "kinesis",
+      "aws kinesis",
+      "aws kinesis mock",
+      "aws-kinesis-mock"
+    ),
+    npmExtraFiles := Seq(
+      file("LICENSE"),
+      file("src/main/resources/server.json")
+    ),
+    Compile / npmCopyExtraFiles := Def.task {
+      val targetDir = (Compile / npmPackageOutputDirectory).value
+      val log = streams.value.log
 
-lazy val allProjects = Seq(
-  `kinesis-mock`,
-  testkit,
-  `unit-tests`,
-  `integration-tests`
-)
+      if (Files.exists(targetDir.toPath())) ()
+      else Files.createDirectories(targetDir.toPath())
 
-lazy val functionalTestProjects = List(`kinesis-mock`).map(_.js(Scala3))
+      npmExtraFiles.value.foreach { f =>
+        val targetPath = (targetDir / f.name).toPath
 
-def commonRootSettings: Seq[Setting[?]] =
-  DockerComposePlugin.settings(true, functionalTestProjects) ++ Seq(
-    name := "kinesis-mock-root",
-    ThisBuild / mergifyLabelPaths ++= allProjects.map { x =>
-      x.id -> x.base
-    }.toMap
+        Files.copy(
+          f.toPath,
+          targetPath,
+          StandardCopyOption.REPLACE_EXISTING
+        )
+        log.info(s"Wrote $f to $targetPath")
+      }
+    }.value,
+    Compile / npmPackage := {
+      val b = (Compile / npmPackagePackageJson).value
+      val a = (Compile / npmPackageOutputJS).value
+      val c = (Compile / npmPackageWriteREADME).value
+      val d = (Compile / npmCopyExtraFiles).value
+      void(a, b, c, d)
+    }
   )
+
+lazy val `kinesis-mock-jvm` = `kinesis-mock`.jvm
+lazy val `kinesis-mock-js` = `kinesis-mock`.js
+
+lazy val functionalTestProjects: List[Project] = List(`kinesis-mock-js`)
+
+ThisBuild / mergifyLabelPaths ++= Map(
+  "kinesis-mock" -> file("src")
+)
 
 lazy val root = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
-  .settings(commonRootSettings)
-  .aggregate(allProjects.flatMap(_.projectRefs): _*)
-
-lazy val `root-jvm-3` = project
-  .enablePlugins(NoPublishPlugin)
-  .settings(commonRootSettings)
-  .aggregate(
-    allProjects.flatMap(
-      _.filterProjects(
-        Seq(VirtualAxis.jvm, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
-      ).map(_.project)
-    ): _*
+  .settings(
+    name := "kinesis-mock-root",
+    Compile / sources := Nil,
+    Test / sources := Nil,
+    DockerComposePlugin.settings(true, functionalTestProjects)
   )
+  .aggregate(`kinesis-mock-jvm`, `kinesis-mock-js`)
 
-lazy val `root-js-3` = project
-  .enablePlugins(NoPublishPlugin)
-  .settings(commonRootSettings)
-  .aggregate(
-    allProjects.flatMap(
-      _.filterProjects(
-        Seq(VirtualAxis.js, VirtualAxis.ScalaVersionAxis(Scala3, "3.3"))
-      ).map(_.project)
-    ): _*
-  )
-
-lazy val rootProjects = List(
-  `root-jvm-3`,
-  `root-js-3`
-).map(_.id)
-
-ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> rootProjects
+ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> List(
+  "kinesis-mockJVM",
+  "kinesis-mockJS"
+)
