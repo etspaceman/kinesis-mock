@@ -6,7 +6,7 @@ object LibraryDependencies {
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.23"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.27"
 
   object Borer {
     val borerVersion = "1.16.2"
@@ -23,7 +23,7 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.1")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.2")
     val scalacheck =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.2.0")
     val catsEffect =
@@ -33,12 +33,12 @@ object LibraryDependencies {
   }
 
   object Aws {
-    val sdkVersion = "2.40.17"
+    val sdkVersion = "2.41.19"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
     val kpl = "software.amazon.kinesis" % "amazon-kinesis-producer" % "1.0.6"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "3.2.1"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "3.3.0"
   }
 
   object Cats {
