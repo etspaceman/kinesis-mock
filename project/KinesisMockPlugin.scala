@@ -314,24 +314,7 @@ object KinesisMockPlugin extends AutoPlugin {
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
       )
-    ),
-    githubWorkflowAddedJobs ++= tlCiStewardValidateConfig.value.toList
-      .map { config =>
-        WorkflowJob(
-          "validate-steward",
-          "Validate Steward Config",
-          WorkflowStep.Checkout ::
-            WorkflowStep.Use(
-              UseRef.Public("coursier", "setup-action", "v1"),
-              Map("apps" -> "scala-steward")
-            ) ::
-            WorkflowStep.Run(
-              List(s"scala-steward validate-repo-config $config")
-            ) :: Nil,
-          scalas = List.empty,
-          javas = List.empty
-        )
-      }
+    )
   )
 
   override def projectSettings: Seq[Setting[?]] = Seq(
