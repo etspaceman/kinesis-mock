@@ -111,7 +111,11 @@ class DeregisterStreamConsumerTests
             streamStatus = StreamStatus.ACTIVE,
             consumers = SortedMap(
               consumerArn.consumerName -> Consumer
-                .create(stream.streamArn, consumerArn.consumerName, now)
+                .create(
+                  stream.streamArn,
+                  consumerArn.consumerName,
+                  consumerArn.creationTime
+                )
             )
           )
         }
