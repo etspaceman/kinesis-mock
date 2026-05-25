@@ -35,12 +35,12 @@ object KinesisMockPlugin extends AutoPlugin {
     s"matrix.java == '${java.render}' && matrix.os == '${os}'"
   }
 
-  private val onlyScalaJsCond = Def.setting {
-    primaryJavaOSCond.value + s" && matrix.project == 'kinesis-mockJS'"
-  }
-
-  private val onlyFailures = Def.setting {
-    "${{ failure() }}"
+  // JS-only steps gated to the JS matrix bucket: JS link, docker compose lifecycle,
+  // and the JVM integration tests (which run against the docker-hosted JS-built mock).
+  private val scalaJsCond = Def.setting {
+    val java = githubWorkflowJavaVersions.value.head
+    val os = githubWorkflowOSes.value.head
+    s"matrix.java == '${java.render}' && matrix.os == '${os}' && matrix.project == 'kinesis-mockJS'"
   }
 
   private val onlyReleases = Def.setting {
@@ -55,8 +55,8 @@ object KinesisMockPlugin extends AutoPlugin {
   override def buildSettings: Seq[Setting[?]] = Seq(
     tlBaseVersion := "0.5",
     tlCiScalafixCheck := true,
-    tlCiMimaBinaryIssueCheck := false,
-    tlCiDocCheck := false,
+    tlCiHeaderCheck := true,
+    tlCiScalafmtCheck := true,
     organization := "io.github.etspaceman",
     startYear := Some(2021),
     licenses := Seq(License.MIT),
@@ -83,151 +83,50 @@ object KinesisMockPlugin extends AutoPlugin {
     githubWorkflowBuildSbtStepPreamble := Seq(
       s"project $${{ matrix.project }}"
     ),
-    githubWorkflowBuild := {
-      val style = (tlCiHeaderCheck.value, tlCiScalafmtCheck.value) match {
-        case (true, true) => // headers + formatting
-          List(
-            WorkflowStep.Sbt(
-              List(
-                "headerCheckAll",
-                "fmtCheck"
-              ),
-              name = Some("Check headers and formatting"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (true, false) => // headers
-          List(
-            WorkflowStep.Sbt(
-              List("headerCheckAll"),
-              name = Some("Check headers"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (false, true) => // formatting
-          List(
-            WorkflowStep.Sbt(
-              List("fmtCheck"),
-              name = Some("Check formatting"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (false, false) => Nil // nada
-      }
-
-      val test = List(
-        WorkflowStep.Sbt(
-          List("cpl"),
-          name = Some("Compile"),
-          cond = Some(primaryJavaOSCond.value)
-        ),
+    githubWorkflowBuild ++= {
+      val jsCond = scalaJsCond.value
+      List(
         WorkflowStep.Sbt(
           List("fastLinkJS"),
           name = Some("Link JS"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(jsCond)
         ),
         WorkflowStep.Sbt(
           List("Test/fastLinkJS"),
           name = Some("Link Test JS"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(jsCond)
         ),
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
-          name = Some("Unit Tests"),
-          cond = Some(primaryJavaOSCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' test",
-            "retry_on" -> "error"
-          )
-        )
-      )
-
-      val integrationTest = List(
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
+        WorkflowStep.Sbt(
+          List("dockerComposeUp"),
           name = Some("Docker Compose Up"),
-          cond = Some(onlyScalaJsCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt dockerComposeUp",
-            "retry_on" -> "error",
-            "on_retry_command" -> "sbt dockerComposeDown"
-          ),
+          cond = Some(jsCond),
           env = Map(
             "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
           )
         ),
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
+        WorkflowStep.Sbt(
+          commands = List("project kinesis-mockJVM", "itTest"),
           name = Some("Integration Tests"),
-          cond = Some(onlyScalaJsCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt 'project kinesis-mockJVM' itTest",
-            "retry_on" -> "error"
-          ),
+          cond = Some(jsCond),
+          preamble = false,
           env = Map(
             "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
             "SERVICE_PORT" -> "${{ matrix.service_port }}"
           )
         ),
         WorkflowStep.Sbt(
-          List(
-            "dockerComposePs",
-            "dockerComposeLogs"
-          ),
+          List("dockerComposePs", "dockerComposeLogs"),
           name = Some("Print docker logs and container listing"),
-          cond = Some(onlyFailures.value),
+          cond = Some("${{ failure() }}"),
           preamble = false
         ),
         WorkflowStep.Sbt(
-          List(
-            "dockerComposeDown"
-          ),
+          List("dockerComposeDown"),
           name = Some("Remove docker containers"),
-          cond = Some(onlyScalaJsCond.value),
+          cond = Some(jsCond),
           preamble = false
         )
       )
-
-      val scalafix =
-        if (tlCiScalafixCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("fixCheck"),
-              name = Some("Check scalafix lints"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      val mima =
-        if (tlCiMimaBinaryIssueCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("mimaReportBinaryIssues"),
-              name = Some("Check binary compatibility"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      val doc =
-        if (tlCiDocCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("doc"),
-              name = Some("Generate API documentation"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      style ++ test ++ integrationTest ++ scalafix ++ mima ++ doc
     },
     githubWorkflowAddedJobs ++= List(
       WorkflowJob(

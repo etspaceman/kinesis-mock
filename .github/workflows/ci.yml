@@ -61,9 +61,16 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
-      - name: Compile
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt 'project ${{ matrix.project }}' cpl
+      - name: Check headers and formatting
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567' && matrix.project == 'kinesis-mockJVM'
+        run: sbt 'project ${{ matrix.project }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+
+      - name: Check scalafix lints
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567' && matrix.project == 'kinesis-mockJVM'
+        run: sbt 'project ${{ matrix.project }}' 'scalafixAll --check'
+
+      - name: Test
+        run: sbt 'project ${{ matrix.project }}' test
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
@@ -73,38 +80,18 @@ jobs:
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
-      - name: Unit Tests
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' test
-          retry_on: error
-
       - name: Docker Compose Up
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 15
-          retry_on: error
-          command: sbt dockerComposeUp
-          on_retry_command: sbt dockerComposeDown
-          max_attempts: 3
+        run: sbt 'project ${{ matrix.project }}' dockerComposeUp
 
       - name: Integration Tests
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: sbt 'project kinesis-mockJVM' itTest
-          retry_on: error
+        run: sbt 'project kinesis-mockJVM' itTest
 
       - name: Print docker logs and container listing
         if: ${{ failure() }}
@@ -113,10 +100,6 @@ jobs:
       - name: Remove docker containers
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         run: sbt dockerComposeDown
-
-      - name: Check scalafix lints
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt 'project ${{ matrix.project }}' fixCheck
 
   dependency-submission:
     name: Submit Dependencies
