@@ -268,7 +268,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             )
           ),
-        scalas = Nil,
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
         needs = List("build")
@@ -324,7 +324,7 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
-        scalas = Nil,
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
         needs = List("build")
@@ -366,7 +366,7 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
-        scalas = Nil,
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
       ),
@@ -403,7 +403,7 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(onlyReleases.value)
             )
           ),
-        scalas = Nil,
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
       )
