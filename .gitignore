@@ -12,3 +12,5 @@ errlogs
 .claude/
 .jvm/
 .js/
+.sbt/
+testing/

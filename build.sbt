@@ -47,7 +47,7 @@ lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
-      case x                                    => MergeStrategy.defaultMergeStrategy(x)
+      case x => MergeStrategy.defaultMergeStrategy(x)
     },
     assembly / assemblyOutputPath := file(
       s"docker/image/lib/${name.value}.jar"
@@ -135,15 +135,10 @@ ThisBuild / mergifyLabelPaths ++= Map(
   "kinesis-mock" -> file("src")
 )
 
-lazy val root = project
+lazy val `kinesis-mock-root` = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
-  .settings(
-    name := "kinesis-mock-root",
-    Compile / sources := Nil,
-    Test / sources := Nil,
-    DockerComposePlugin.settings(true, functionalTestProjects)
-  )
+  .settings(DockerComposePlugin.settings(true, functionalTestProjects))
   .aggregate(`kinesis-mock-jvm`, `kinesis-mock-js`)
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> List(

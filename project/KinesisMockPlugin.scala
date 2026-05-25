@@ -425,7 +425,10 @@ object KinesisMockPlugin extends AutoPlugin {
   override def projectSettings: Seq[Setting[?]] = Seq(
     scalacOptions ++= ScalacSettings.settings,
     Test / testOptions ++=
-      List(Tests.Argument(TestFrameworks.MUnit, "+l")),
+      List(
+        Tests.Argument(TestFrameworks.MUnit, "+l"),
+        Tests.Argument(TestFrameworks.MUnit, "--exclude-tags=integration")
+      ),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
       HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
@@ -456,6 +459,10 @@ object KinesisMockPlugin extends AutoPlugin {
     addCommandAlias(
       "prettyCheck",
       ";fixCheck;fmtCheck"
+    ),
+    addCommandAlias(
+      "itTest",
+      ";set Test/testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test/testOnly;set Test/testOptions := (Test/testOptions).value"
     )
   ).flatten
 }
