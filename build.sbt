@@ -8,7 +8,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
-  .in(file("."))
+  .in(file("kinesis-mock"))
   .enablePlugins(DockerImagePlugin, NoPublishPlugin)
   .settings(DockerImagePlugin.settings)
   .settings(
@@ -35,15 +35,15 @@ lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
       ScodecBits.value
     ),
     Compile / unmanagedResourceDirectories +=
-      (ThisBuild / baseDirectory).value / "src" / "main" / "resources",
+      (ThisBuild / baseDirectory).value / "kinesis-mock" / "src" / "main" / "resources",
     Test / unmanagedResourceDirectories +=
-      (ThisBuild / baseDirectory).value / "src" / "test" / "resources"
+      (ThisBuild / baseDirectory).value / "kinesis-mock" / "src" / "test" / "resources"
   )
   .jvmSettings(
     Compile / unmanagedSourceDirectories +=
-      (ThisBuild / baseDirectory).value / "src" / "main" / "scalajvm",
+      (ThisBuild / baseDirectory).value / "kinesis-mock" / "src" / "main" / "scalajvm",
     Test / unmanagedSourceDirectories +=
-      (ThisBuild / baseDirectory).value / "src" / "test" / "scalajvm",
+      (ThisBuild / baseDirectory).value / "kinesis-mock" / "src" / "test" / "scalajvm",
     assembly / test := {},
     assembly / assemblyMergeStrategy := {
       case PathList("module-info.class", _ @_*) => MergeStrategy.discard
@@ -66,7 +66,7 @@ lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
   .jsConfigure(_.enablePlugins(NpmPackagePlugin))
   .jsSettings(
     Compile / unmanagedSourceDirectories +=
-      (ThisBuild / baseDirectory).value / "src" / "main" / "scalajs",
+      (ThisBuild / baseDirectory).value / "kinesis-mock" / "src" / "main" / "scalajs",
     Compile / fastLinkJS / scalaJSLinkerOutputDirectory := file(
       "docker/image/lib"
     ),
@@ -97,7 +97,7 @@ lazy val `kinesis-mock` = crossProject(JVMPlatform, JSPlatform)
     ),
     npmExtraFiles := Seq(
       file("LICENSE"),
-      file("src/main/resources/server.json")
+      file("kinesis-mock/src/main/resources/server.json")
     ),
     Compile / npmCopyExtraFiles := Def.task {
       val targetDir = (Compile / npmPackageOutputDirectory).value
@@ -133,16 +133,16 @@ lazy val `kinesis-mock-js` = `kinesis-mock`.js
 lazy val functionalTestProjects: List[ProjectReference] = List(`kinesis-mock-js`)
 
 ThisBuild / mergifyLabelPaths ++= Map(
-  "kinesis-mock" -> file("src")
+  "kinesis-mock" -> file("kinesis-mock/src")
 )
 
-lazy val `kinesis-mock-root` = project
-  .in(file("."))
-  .enablePlugins(NoPublishPlugin)
-  .settings(DockerComposePlugin.settings(true, functionalTestProjects))
+// tlCrossRootProject auto-populates the `project` matrix axis with the
+// rootJVM / rootJS aggregates (kinesis-mock-rootJVM / kinesis-mock-rootJS)
+// and auto-prepends `project ${{ matrix.project }}` to githubWorkflowBuildSbtStepPreamble.
+// Tasks scoped to kinesis-mockJVM / kinesis-mockJS reach the aggregate via
+// sbt's task aggregation.
+lazy val `kinesis-mock-root` = tlCrossRootProject
   .aggregate(`kinesis-mock-jvm`, `kinesis-mock-js`)
-
-ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> List(
-  "kinesis-mockJVM",
-  "kinesis-mockJS"
-)
+  .configureRoot(
+    _.settings(DockerComposePlugin.settings(true, functionalTestProjects))
+  )

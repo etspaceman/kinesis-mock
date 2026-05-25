@@ -37,10 +37,12 @@ object KinesisMockPlugin extends AutoPlugin {
 
   // JS-only steps gated to the JS matrix bucket: JS link, docker compose lifecycle,
   // and the JVM integration tests (which run against the docker-hosted JS-built mock).
+  // matrix.project is auto-populated by tlCrossRootProject using the platform
+  // aggregate names (kinesis-mock-rootJS / kinesis-mock-rootJVM).
   private val scalaJsCond = Def.setting {
     val java = githubWorkflowJavaVersions.value.head
     val os = githubWorkflowOSes.value.head
-    s"matrix.java == '${java.render}' && matrix.os == '${os}' && matrix.project == 'kinesis-mockJS'"
+    s"matrix.java == '${java.render}' && matrix.os == '${os}' && matrix.project == 'kinesis-mock-rootJS'"
   }
 
   private val onlyReleases = Def.setting {
@@ -76,12 +78,11 @@ object KinesisMockPlugin extends AutoPlugin {
     githubWorkflowTargetTags += "v*",
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21")),
     githubWorkflowBuildMatrixFailFast := Some(false),
-    githubWorkflowBuildMatrixAdditions := Map(
+    // `:= Map(...)` would wipe out the `project` axis that tlCrossRootProject
+    // auto-populates; merge with `++=` instead.
+    githubWorkflowBuildMatrixAdditions ++= Map(
       "cbor_enabled" -> List("true", "false"),
       "service_port" -> List("4567", "4568")
-    ),
-    githubWorkflowBuildSbtStepPreamble := Seq(
-      s"project $${{ matrix.project }}"
     ),
     githubWorkflowBuild ++= {
       val jsCond = scalaJsCond.value
@@ -218,7 +219,7 @@ object KinesisMockPlugin extends AutoPlugin {
               name = Some("Upload server.json"),
               params = Map(
                 "upload_url" -> "${{ steps.get_release.outputs.upload_url }}",
-                "asset_path" -> "./src/main/resources/server.json",
+                "asset_path" -> "./kinesis-mock/src/main/resources/server.json",
                 "asset_name" -> "server.json",
                 "asset_content_type" -> "application/json"
               )

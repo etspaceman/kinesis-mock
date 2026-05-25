@@ -10,20 +10,26 @@ pull_request_rules:
   conditions:
   - author=etspaceman-scala-steward-app[bot]
   - body~=labels:.*early-semver-patch
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mockJVM, 4567)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mockJVM, 4568)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mockJS, 4567)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mockJS, 4568)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mockJVM, 4567)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mockJVM, 4568)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mockJS, 4567)
-  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mockJS, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mock-rootJS, 4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mock-rootJS, 4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mock-rootJVM,
+    4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, true, kinesis-mock-rootJVM,
+    4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mock-rootJS,
+    4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mock-rootJS,
+    4568)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mock-rootJVM,
+    4567)
+  - status-success=Test (ubuntu-22.04, 3, temurin@21, false, kinesis-mock-rootJVM,
+    4568)
   actions:
     merge:
       method: squash
 - name: Label kinesis-mock PRs
   conditions:
-  - files~=^src/
+  - files~=^kinesis-mock/src/
   actions:
     label:
       add:

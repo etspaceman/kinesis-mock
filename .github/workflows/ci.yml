@@ -32,7 +32,7 @@ jobs:
         scala: [3]
         java: [temurin@21]
         cbor_enabled: [true, false]
-        project: [kinesis-mockJVM, kinesis-mockJS]
+        project: [kinesis-mock-rootJS, kinesis-mock-rootJVM]
         service_port: [4567, 4568]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -62,32 +62,36 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567' && matrix.project == 'kinesis-mockJVM'
-        run: sbt 'project ${{ matrix.project }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Check scalafix lints
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567' && matrix.project == 'kinesis-mockJVM'
-        run: sbt 'project ${{ matrix.project }}' 'scalafixAll --check'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.cbor_enabled == 'true' && matrix.service_port == '4567'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' 'scalafixAll --check'
+
+      - name: scalaJSLink
+        if: matrix.project == 'kinesis-mock-rootJS'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/scalaJSLinkerResult
 
       - name: Test
-        run: sbt 'project ${{ matrix.project }}' test
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
 
       - name: Link JS
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
-        run: sbt 'project ${{ matrix.project }}' fastLinkJS
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mock-rootJS'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' fastLinkJS
 
       - name: Link Test JS
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
-        run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mock-rootJS'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/fastLinkJS
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mock-rootJS'
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-        run: sbt 'project ${{ matrix.project }}' dockerComposeUp
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' dockerComposeUp
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mock-rootJS'
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
@@ -98,8 +102,8 @@ jobs:
         run: sbt dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
-        run: sbt 'project ${{ matrix.project }}' dockerComposeDown
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mock-rootJS'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' dockerComposeDown
 
   dependency-submission:
     name: Submit Dependencies
@@ -134,7 +138,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: kinesis-mock-root_3 kinesis-mock_3 kinesis-mock_sjs1_3
+          modules-ignore: kinesis-mock_sjs1_3 kinesis-mock-rootnative_3 kinesis-mock-rootjs_3 kinesis-mock-rootjvm_3 kinesis-mock_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   publishDocker:
@@ -257,7 +261,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./src/main/resources/server.json
+          asset_path: ./kinesis-mock/src/main/resources/server.json
           asset_name: server.json
           asset_content_type: application/json
 
