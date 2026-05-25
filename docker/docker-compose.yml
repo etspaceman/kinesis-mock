@@ -9,6 +9,7 @@ services:
     image: "localstack/localstack:latest"
     environment:
       - "SERVICES=cloudwatch,sts"
+      - "LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}"
     healthcheck:
       test: "awslocal cloudwatch list-metrics"
       interval: 5s
