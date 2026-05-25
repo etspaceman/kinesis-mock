@@ -39,9 +39,9 @@ object borer:
         Decoder.forBigDecimal, // scalafix:ok
       decodeUndefined: Option[() => Json] =
         Some(() => Json.Null), // scalafix:ok
-      decodeByteArray: Option[Array[Byte] => Json] = Some(
+      decodeByteArray: Option[Array[Byte] => Json] = Some( // scalafix:ok
         defaultDecodeByteArray
-      ), // scalafix:ok
+      ),
       decodeSimpleValue: Option[SimpleValue => Json] = None // scalafix:ok
   ): Decoder[Json] =
 
