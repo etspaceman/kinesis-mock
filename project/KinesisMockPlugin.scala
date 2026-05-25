@@ -35,12 +35,14 @@ object KinesisMockPlugin extends AutoPlugin {
     s"matrix.java == '${java.render}' && matrix.os == '${os}'"
   }
 
-  private val onlyScalaJsCond = Def.setting {
-    primaryJavaOSCond.value + s" && startsWith(matrix.project, 'root-js')"
-  }
-
-  private val onlyFailures = Def.setting {
-    "${{ failure() }}"
+  // JS-only steps gated to the JS matrix bucket: JS link, docker compose lifecycle,
+  // and the JVM integration tests (which run against the docker-hosted JS-built mock).
+  // matrix.project is auto-populated by tlCrossRootProject using the platform
+  // aggregate names (kinesis-mock-rootJS / kinesis-mock-rootJVM).
+  private val scalaJsCond = Def.setting {
+    val java = githubWorkflowJavaVersions.value.head
+    val os = githubWorkflowOSes.value.head
+    s"matrix.java == '${java.render}' && matrix.os == '${os}' && matrix.project == 'kinesis-mock-rootJS'"
   }
 
   private val onlyReleases = Def.setting {
@@ -55,8 +57,8 @@ object KinesisMockPlugin extends AutoPlugin {
   override def buildSettings: Seq[Setting[?]] = Seq(
     tlBaseVersion := "0.5",
     tlCiScalafixCheck := true,
-    tlCiMimaBinaryIssueCheck := false,
-    tlCiDocCheck := false,
+    tlCiHeaderCheck := true,
+    tlCiScalafmtCheck := true,
     organization := "io.github.etspaceman",
     startYear := Some(2021),
     licenses := Seq(License.MIT),
@@ -73,156 +75,59 @@ object KinesisMockPlugin extends AutoPlugin {
         author = "etspaceman-scala-steward-app[bot]"
       )
     ),
+    mergifyLabelPaths ++= Map(
+      "kinesis-mock" -> file("kinesis-mock/src")
+    ),
     githubWorkflowTargetTags += "v*",
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21")),
     githubWorkflowBuildMatrixFailFast := Some(false),
-    githubWorkflowBuildMatrixAdditions := Map(
+    githubWorkflowBuildMatrixAdditions ++= Map(
       "cbor_enabled" -> List("true", "false"),
       "service_port" -> List("4567", "4568")
     ),
-    githubWorkflowBuildSbtStepPreamble := Seq(
-      s"project $${{ matrix.project }}"
-    ),
-    githubWorkflowBuild := {
-      val style = (tlCiHeaderCheck.value, tlCiScalafmtCheck.value) match {
-        case (true, true) => // headers + formatting
-          List(
-            WorkflowStep.Sbt(
-              List(
-                "headerCheckAll",
-                "fmtCheck"
-              ),
-              name = Some("Check headers and formatting"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (true, false) => // headers
-          List(
-            WorkflowStep.Sbt(
-              List("headerCheckAll"),
-              name = Some("Check headers"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (false, true) => // formatting
-          List(
-            WorkflowStep.Sbt(
-              List("fmtCheck"),
-              name = Some("Check formatting"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        case (false, false) => Nil // nada
-      }
-
-      val test = List(
-        WorkflowStep.Sbt(
-          List("cpl"),
-          name = Some("Compile"),
-          cond = Some(primaryJavaOSCond.value)
-        ),
+    githubWorkflowBuild ++= {
+      val jsCond = scalaJsCond.value
+      List(
         WorkflowStep.Sbt(
           List("fastLinkJS"),
           name = Some("Link JS"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(jsCond)
         ),
         WorkflowStep.Sbt(
           List("Test/fastLinkJS"),
           name = Some("Link Test JS"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(jsCond)
         ),
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
-          name = Some("Unit Tests"),
-          cond = Some(primaryJavaOSCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' unit-tests3/test",
-            "retry_on" -> "error"
-          )
-        )
-      )
-
-      val integrationTest = List(
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
+        WorkflowStep.Sbt(
+          List("dockerComposeUp"),
           name = Some("Docker Compose Up"),
-          cond = Some(onlyScalaJsCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' dockerComposeUp",
-            "retry_on" -> "error",
-            "on_retry_command" -> "sbt 'project ${{ matrix.project }}' dockerComposeDown"
+          cond = Some(jsCond),
+          env = Map(
+            "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
           )
         ),
-        WorkflowStep.Use(
-          UseRef.Public("nick-fields", "retry", "v2"),
+        WorkflowStep.Sbt(
+          commands = List("project kinesis-mock-rootJVM", "itTest"),
           name = Some("Integration Tests"),
-          cond = Some(onlyScalaJsCond.value),
-          params = Map(
-            "timeout_minutes" -> "15",
-            "max_attempts" -> "3",
-            "command" -> "sbt 'project ${{ matrix.project }}' integration-tests3/test",
-            "retry_on" -> "error"
-          ),
+          cond = Some(jsCond),
+          preamble = false,
           env = Map(
             "CBOR_ENABLED" -> "${{ matrix.cbor_enabled }}",
             "SERVICE_PORT" -> "${{ matrix.service_port }}"
           )
         ),
         WorkflowStep.Sbt(
-          List(
-            "dockerComposePs",
-            "dockerComposeLogs"
-          ),
+          List("dockerComposePs", "dockerComposeLogs"),
           name = Some("Print docker logs and container listing"),
-          cond = Some(onlyFailures.value)
+          cond = Some("${{ failure() }}"),
+          preamble = false
         ),
         WorkflowStep.Sbt(
-          List(
-            "dockerComposeDown"
-          ),
+          List("dockerComposeDown"),
           name = Some("Remove docker containers"),
-          cond = Some(onlyScalaJsCond.value)
+          cond = Some(jsCond)
         )
       )
-
-      val scalafix =
-        if (tlCiScalafixCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("fixCheck"),
-              name = Some("Check scalafix lints"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      val mima =
-        if (tlCiMimaBinaryIssueCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("mimaReportBinaryIssues"),
-              name = Some("Check binary compatibility"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      val doc =
-        if (tlCiDocCheck.value)
-          List(
-            WorkflowStep.Sbt(
-              List("doc"),
-              name = Some("Generate API documentation"),
-              cond = Some(primaryJavaOSCond.value)
-            )
-          )
-        else Nil
-
-      style ++ test ++ integrationTest ++ scalafix ++ mima ++ doc
     },
     githubWorkflowAddedJobs ++= List(
       WorkflowJob(
@@ -231,7 +136,7 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -253,17 +158,19 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS3/buildDockerImage"),
+              List("buildDockerImage"),
               name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS3/pushDockerImage"),
+              List("pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
           ),
-        scalas = Nil,
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
         needs = List("build")
@@ -274,7 +181,7 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -319,7 +226,9 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
-        scalas = Nil,
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
         needs = List("build")
@@ -330,7 +239,7 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -361,7 +270,9 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
-        scalas = Nil,
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
       ),
@@ -371,12 +282,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("cpl"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mock3/assembly"),
+              List("assembly"),
               name = Some("Assembly"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -398,37 +309,25 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(onlyReleases.value)
             )
           ),
-        scalas = Nil,
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJVM"),
+        scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
       )
-    ),
-    githubWorkflowAddedJobs ++= tlCiStewardValidateConfig.value.toList
-      .map { config =>
-        WorkflowJob(
-          "validate-steward",
-          "Validate Steward Config",
-          WorkflowStep.Checkout ::
-            WorkflowStep.Use(
-              UseRef.Public("coursier", "setup-action", "v1"),
-              Map("apps" -> "scala-steward")
-            ) ::
-            WorkflowStep.Run(
-              List(s"scala-steward validate-repo-config $config")
-            ) :: Nil,
-          scalas = List.empty,
-          javas = List.empty
-        )
-      }
+    )
   )
 
   override def projectSettings: Seq[Setting[?]] = Seq(
     scalacOptions ++= ScalacSettings.settings,
     Test / testOptions ++=
-      List(Tests.Argument(TestFrameworks.MUnit, "+l")),
+      List(
+        Tests.Argument(TestFrameworks.MUnit, "+l"),
+        Tests.Argument(TestFrameworks.MUnit, "--exclude-tags=integration")
+      ),
     libraryDependencies ++= testDependencies.value.map(_ % Test),
     headerLicense := Some(
-      HeaderLicense.ALv2(s"${startYear.value.get}-2023", organizationName.value)
+      HeaderLicense.ALv2(s"${startYear.value.get}-2026", organizationName.value)
     ),
     tlJdkRelease := Some(21)
   ) ++ Seq(
@@ -456,6 +355,10 @@ object KinesisMockPlugin extends AutoPlugin {
     addCommandAlias(
       "prettyCheck",
       ";fixCheck;fmtCheck"
+    ),
+    addCommandAlias(
+      "itTest",
+      ";set Test/testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test/testOnly;set Test/testOptions := (Test/testOptions).value"
     )
   ).flatten
 }

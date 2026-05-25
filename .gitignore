@@ -9,3 +9,8 @@ docker/image/lib/
 **/metals.sbt
 logs
 errlogs
+.claude/
+.jvm/
+.js/
+.sbt/
+testing/

@@ -132,7 +132,7 @@ object DockerComposePlugin extends AutoPlugin {
 
   def settings(
       build: Boolean,
-      projects: List[Project]
+      projects: List[ProjectReference]
   ): Seq[Setting[?]] =
     Seq(
       createNetwork := createNetworkTask.value,
@@ -164,7 +164,7 @@ object DockerComposePluginKeys {
   val buildImage = settingKey[Boolean](
     "Determines if dockerComposeUp should also build a docker image via the DockerImagePlugin"
   )
-  val projectsToBuild = settingKey[Seq[Project]]("Projects to build images for")
+  val projectsToBuild = settingKey[Seq[ProjectReference]]("Projects to build images for")
   val createNetwork = taskKey[Unit]("Creates a docker network")
   val removeNetwork = taskKey[Unit]("Removes a docker network")
   val dockerComposeTestQuick =

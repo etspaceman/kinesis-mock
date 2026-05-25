@@ -2,11 +2,11 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
 
 object LibraryDependencies {
-  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.4")
+  val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.5")
   val ScalaParserCombinators = Def.setting(
     "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
   )
-  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.27"
+  val Logback = "ch.qos.logback" % "logback-classic" % "1.5.32"
 
   object Borer {
     val borerVersion = "1.16.2"
@@ -15,7 +15,7 @@ object LibraryDependencies {
   }
 
   object Log4Cats {
-    val log4CatsVersion = "2.7.1"
+    val log4CatsVersion = "2.8.0"
     val core =
       Def.setting("org.typelevel" %%% "log4cats-core" % log4CatsVersion)
     val slf4j =
@@ -23,34 +23,34 @@ object LibraryDependencies {
   }
 
   object Munit {
-    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.2")
+    val core = Def.setting("org.scalameta" %%% "munit" % "1.2.4")
     val scalacheck =
-      Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.2.0")
+      Def.setting("org.scalameta" %%% "munit-scalacheck" % "1.3.0")
     val catsEffect =
-      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.1.0")
+      Def.setting("org.typelevel" %%% "munit-cats-effect" % "2.2.0")
     val scalacheckEffect =
-      Def.setting("org.typelevel" %%% "scalacheck-effect-munit" % "2.0.0-M2")
+      Def.setting("org.typelevel" %%% "scalacheck-effect-munit" % "2.1.0")
   }
 
   object Aws {
-    val sdkVersion = "2.41.19"
+    val sdkVersion = "2.44.12"
     val utils = "software.amazon.awssdk" % "utils" % sdkVersion
     val kinesis = "software.amazon.awssdk" % "kinesis" % sdkVersion
     val cloudwatch = "software.amazon.awssdk" % "cloudwatch" % sdkVersion
-    val kpl = "software.amazon.kinesis" % "amazon-kinesis-producer" % "1.0.6"
-    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "3.3.0"
+    val kpl = "software.amazon.kinesis" % "amazon-kinesis-producer" % "1.0.7"
+    val kcl = "software.amazon.kinesis" % "amazon-kinesis-client" % "3.4.3"
   }
 
   object Cats {
     val catsVersion = "2.13.0"
-    val catsEffectVersion = "3.6.3"
+    val catsEffectVersion = "3.7.0"
     val core = Def.setting("org.typelevel" %%% "cats-core" % catsVersion)
     val effect =
       Def.setting("org.typelevel" %%% "cats-effect" % catsEffectVersion)
   }
 
   object Http4s {
-    val http4sVersion = "0.23.33"
+    val http4sVersion = "0.23.34"
     val circe = Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val dsl = Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val emberServer =
@@ -65,13 +65,13 @@ object LibraryDependencies {
   }
 
   object Ciris {
-    val cirisVersion = "3.12.0"
+    val cirisVersion = "3.14.1"
     val core = Def.setting("is.cir" %%% "ciris" % cirisVersion)
     val enumeratum = Def.setting("is.cir" %%% "ciris-enumeratum" % cirisVersion)
   }
 
   object Enumeratum {
-    val enumeratumVersion = "1.9.2"
+    val enumeratumVersion = "1.9.7"
     val cats =
       Def.setting("com.beachape" %%% "enumeratum-cats" % enumeratumVersion)
     val core = Def.setting("com.beachape" %%% "enumeratum" % enumeratumVersion)
@@ -84,7 +84,7 @@ object LibraryDependencies {
   }
 
   object FS2 {
-    val fs2Version = "3.12.2"
+    val fs2Version = "3.13.0"
     val core = Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io = Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
