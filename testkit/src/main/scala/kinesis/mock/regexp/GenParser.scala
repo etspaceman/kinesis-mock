@@ -102,7 +102,9 @@ object GenParser extends RegexParsers with PackratParsers:
       word | digit | space | wordBoundary | digitRange | lowerAlphaRange | upperAlphaRange | char
 
     lazy val charClass =
-      ("[" ~> characterClassTerm.+ <~ "]") ^^ CharacterClass(_*)
+      ("[" ~> characterClassTerm.+ <~ "]") ^^ { terms =>
+        CharacterClass(terms*)
+      }
     lazy val negatedCharClass =
       ("[^" ~> characterClassTerm.+ <~ "]") ^^ { terms =>
         Negated(CharacterClass(terms*))
