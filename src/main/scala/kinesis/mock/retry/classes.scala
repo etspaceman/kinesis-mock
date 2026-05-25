@@ -138,32 +138,3 @@ object NextStep:
       delay: FiniteDuration,
       updatedStatus: RetryStatus
   ) extends NextStep
-wasSuccessful: A => M[Boolean],
-      onFailure: (A, RetryDetails) => M[Unit],
-      onError: (E, RetryDetails) => M[Unit]
-  )(
-      action: => M[A]
-  )(using
-      ME: MonadError[M, E],
-      S: Sleep[M]
-  ): M[A] =
-    retryingOnFailuresAndSomeErrors[A]
-      .apply[M, E](
-        policy,
-        wasSuccessful,
-        _ => ME.pure(true),
-        onFailure,
-        onError
-      )(
-        action
-      )
-
-sealed trait NextStep
-
-object NextStep:
-  case object GiveUp extends NextStep
-
-  final case class RetryAfterDelay(
-      delay: FiniteDuration,
-      updatedStatus: RetryStatus
-  ) extends NextStep

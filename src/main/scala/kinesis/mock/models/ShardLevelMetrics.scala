@@ -35,4 +35,3 @@ object ShardLevelMetrics:
     Decoder.derive
   given Eq[ShardLevelMetrics] =
     Eq.fromUniversalEquals
-rsalEquals

@@ -31,4 +31,3 @@ object ShardIteratorType
   case object AT_TIMESTAMP extends ShardIteratorType
   case object TRIM_HORIZON extends ShardIteratorType
   case object LATEST extends ShardIteratorType
-eratorType

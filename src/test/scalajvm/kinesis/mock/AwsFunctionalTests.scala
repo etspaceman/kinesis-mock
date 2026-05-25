@@ -22,7 +22,7 @@ import scala.util.Try
 import java.net.URI
 
 import cats.effect.{IO, Resource, SyncIO}
-import munit.{CatsEffectFunFixtures, CatsEffectSuite, Tag=>MUnitTag}
+import munit.{CatsEffectFunFixtures, CatsEffectSuite, Tag as MUnitTag}
 import org.scalacheck.Gen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
@@ -45,7 +45,7 @@ trait AwsFunctionalTests extends CatsEffectSuite with CatsEffectFunFixtures:
     super.munitTestTransforms :+ new TestTransform(
       "integration",
       t => t.tag(MUnitTag("integration"))
-  )
+    )
 
   val defaultShardCount = 3
 

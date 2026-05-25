@@ -82,5 +82,3 @@ class EnableEnhancedMonitoringTests
           )
         }
   })
-    }
-  })
