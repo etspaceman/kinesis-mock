@@ -123,8 +123,7 @@ object KinesisMockPlugin extends AutoPlugin {
         WorkflowStep.Sbt(
           List("dockerComposeDown"),
           name = Some("Remove docker containers"),
-          cond = Some(jsCond),
-          preamble = false
+          cond = Some(jsCond)
         )
       )
     },
@@ -135,12 +134,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/Test/compile"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/fullLinkJS"),
+              List("fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -157,16 +156,18 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/buildDockerImage"),
+              List("buildDockerImage"),
               name = Some("Build Docker Image"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/pushDockerImage"),
+              List("pushDockerImage"),
               name = Some("Push to registry"),
               cond = Some(primaryJavaOSCond.value)
             )
           ),
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
@@ -178,12 +179,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/Test/compile"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/fullLinkJS"),
+              List("fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -223,6 +224,8 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         cond = Some(onlyReleases.value),
@@ -234,12 +237,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/Test/compile"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJS/fullLinkJS"),
+              List("fullLinkJS"),
               name = Some("Link JS"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -265,6 +268,8 @@ object KinesisMockPlugin extends AutoPlugin {
               )
             )
           ),
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mockJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")
@@ -275,12 +280,12 @@ object KinesisMockPlugin extends AutoPlugin {
         githubWorkflowJobSetup.value.toList ++
           List(
             WorkflowStep.Sbt(
-              List("kinesis-mockJVM/Test/compile"),
+              List("Test/compile"),
               name = Some("Compile"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("kinesis-mockJVM/assembly"),
+              List("assembly"),
               name = Some("Assembly"),
               cond = Some(primaryJavaOSCond.value)
             ),
@@ -302,6 +307,8 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(onlyReleases.value)
             )
           ),
+        sbtStepPreamble =
+          List("++ ${{ matrix.scala }}", "project kinesis-mockJVM"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
         needs = List("build")

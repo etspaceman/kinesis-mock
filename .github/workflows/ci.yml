@@ -99,7 +99,7 @@ jobs:
 
       - name: Remove docker containers
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
-        run: sbt dockerComposeDown
+        run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
   dependency-submission:
     name: Submit Dependencies
@@ -171,11 +171,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
 
       - name: Set up Docker Buildx
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -187,11 +187,11 @@ jobs:
 
       - name: Build Docker Image
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' buildDockerImage
 
       - name: Push to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
@@ -227,11 +227,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
 
       - name: Get upload url for release
         id: get_release
@@ -294,11 +294,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' Test/compile
 
       - name: Link JS
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/fullLinkJS
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' fullLinkJS
 
       - name: Setup Node
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
@@ -308,13 +308,13 @@ jobs:
 
       - name: Install artifacts to NPM
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' npmPackageInstall
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' npmPackageInstall
 
       - name: Publish artifacts to NPM
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: sbt '++ ${{ matrix.scala }}' npmPackageNpmrc npmPackagePublish
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJS' npmPackageNpmrc npmPackagePublish
 
   publishAssembly:
     name: Publish Fat JAR
@@ -349,11 +349,11 @@ jobs:
 
       - name: Compile
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJVM/Test/compile
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJVM' Test/compile
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJVM/assembly
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mockJVM' assembly
 
       - name: Get upload url for release
         id: get_release
