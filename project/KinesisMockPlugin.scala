@@ -75,11 +75,12 @@ object KinesisMockPlugin extends AutoPlugin {
         author = "etspaceman-scala-steward-app[bot]"
       )
     ),
+    mergifyLabelPaths ++= Map(
+      "kinesis-mock" -> file("kinesis-mock/src")
+    ),
     githubWorkflowTargetTags += "v*",
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21")),
     githubWorkflowBuildMatrixFailFast := Some(false),
-    // `:= Map(...)` would wipe out the `project` axis that tlCrossRootProject
-    // auto-populates; merge with `++=` instead.
     githubWorkflowBuildMatrixAdditions ++= Map(
       "cbor_enabled" -> List("true", "false"),
       "service_port" -> List("4567", "4568")

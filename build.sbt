@@ -132,15 +132,6 @@ lazy val `kinesis-mock-js` = `kinesis-mock`.js
 
 lazy val functionalTestProjects: List[ProjectReference] = List(`kinesis-mock-js`)
 
-ThisBuild / mergifyLabelPaths ++= Map(
-  "kinesis-mock" -> file("kinesis-mock/src")
-)
-
-// tlCrossRootProject auto-populates the `project` matrix axis with the
-// rootJVM / rootJS aggregates (kinesis-mock-rootJVM / kinesis-mock-rootJS)
-// and auto-prepends `project ${{ matrix.project }}` to githubWorkflowBuildSbtStepPreamble.
-// Tasks scoped to kinesis-mockJVM / kinesis-mockJS reach the aggregate via
-// sbt's task aggregation.
 lazy val `kinesis-mock-root` = tlCrossRootProject
   .aggregate(`kinesis-mock-jvm`, `kinesis-mock-js`)
   .configureRoot(
