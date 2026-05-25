@@ -32,7 +32,7 @@ jobs:
         scala: [3]
         java: [temurin@21]
         cbor_enabled: [true, false]
-        project: [root-jvm-3, root-js-3]
+        project: [kinesis-mockJVM, kinesis-mockJS]
         service_port: [4567, 4568]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -66,11 +66,11 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' cpl
 
       - name: Link JS
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         run: sbt 'project ${{ matrix.project }}' fastLinkJS
 
       - name: Link Test JS
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         run: sbt 'project ${{ matrix.project }}' Test/fastLinkJS
 
       - name: Unit Tests
@@ -79,11 +79,11 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' unit-tests3/test
+          command: sbt 'project ${{ matrix.project }}' test
           retry_on: error
 
       - name: Docker Compose Up
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         uses: nick-fields/retry@v2
         with:
           timeout_minutes: 15
@@ -93,7 +93,7 @@ jobs:
           max_attempts: 3
 
       - name: Integration Tests
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         env:
           CBOR_ENABLED: ${{ matrix.cbor_enabled }}
           SERVICE_PORT: ${{ matrix.service_port }}
@@ -101,7 +101,7 @@ jobs:
         with:
           timeout_minutes: 15
           max_attempts: 3
-          command: sbt 'project ${{ matrix.project }}' integration-tests3/test
+          command: sbt 'project kinesis-mockJVM' itTest
           retry_on: error
 
       - name: Print docker logs and container listing
@@ -109,7 +109,7 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' dockerComposePs dockerComposeLogs
 
       - name: Remove docker containers
-        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && startsWith(matrix.project, 'root-js')
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04' && matrix.project == 'kinesis-mockJS'
         run: sbt 'project ${{ matrix.project }}' dockerComposeDown
 
       - name: Check scalafix lints
@@ -149,7 +149,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: kinesis-mock-root_3 testkit_sjs1_3 kinesis-mock-root_3 unit-tests_3 kinesis-mock-root_3 kinesis-mock_sjs1_3 kinesis-mock_3 unit-tests_sjs1_3 integration-tests_3 testkit_3
+          modules-ignore: kinesis-mock-root_3 kinesis-mock_3 kinesis-mock_sjs1_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   publishDocker:
@@ -201,11 +201,11 @@ jobs:
 
       - name: Build Docker Image
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS3/buildDockerImage
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/buildDockerImage
 
       - name: Push to registry
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS3/pushDockerImage
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJS/pushDockerImage
 
   publishJSAssets:
     name: Publish JS Assets
@@ -270,7 +270,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./kinesis-mock/src/main/resources/server.json
+          asset_path: ./src/main/resources/server.json
           asset_name: server.json
           asset_content_type: application/json
 
@@ -364,7 +364,7 @@ jobs:
 
       - name: Assembly
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' kinesis-mock3/assembly
+        run: sbt '++ ${{ matrix.scala }}' kinesis-mockJVM/assembly
 
       - name: Get upload url for release
         id: get_release
