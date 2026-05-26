@@ -14,3 +14,4 @@ errlogs
 .js/
 .sbt/
 testing/
+.sdkmanrc
