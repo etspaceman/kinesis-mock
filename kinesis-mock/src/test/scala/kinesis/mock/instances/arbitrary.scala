@@ -1096,6 +1096,8 @@ object arbitrary:
       shardCountUpdates <- Gen
         .choose(0, 10)
         .flatMap(size => Gen.containerOfN[Vector, Instant](size, nowGen))
+      maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
+      warmThroughputMiBps <- Gen.option(Gen.choose(0, 10000))
     yield StreamData(
       consumers,
       encryptionType,
@@ -1109,7 +1111,9 @@ object arbitrary:
       streamName,
       streamStatus,
       tags,
-      shardCountUpdates
+      shardCountUpdates,
+      maxRecordSizeInKiB,
+      warmThroughputMiBps
     )
   )
 

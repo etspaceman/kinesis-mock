@@ -42,8 +42,8 @@ final case class StreamData(
     streamStatus: StreamStatus,
     tags: Tags,
     shardCountUpdates: Vector[Instant],
-    maxRecordSizeInKiB: Option[Int] = None,
-    warmThroughputMiBps: Option[Int] = None
+    maxRecordSizeInKiB: Option[Int],
+    warmThroughputMiBps: Option[Int]
 )
 
 object StreamData:
@@ -184,5 +184,7 @@ object StreamData:
       streamArn.streamName,
       StreamStatus.CREATING,
       Tags.empty,
-      Vector.empty
+      Vector.empty,
+      None,
+      None
     )
