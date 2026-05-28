@@ -645,6 +645,27 @@ object arbitrary:
       yield StartingPosition(shardIteratorType, sequenceNumber, timestamp)
     )
 
+  given Arbitrary[SubscribeToShardEvent] =
+    Arbitrary(
+      for
+        records <- Gen.choose(0, 10).flatMap(n =>
+          Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord])
+        )
+        continuationSequenceNumber <- Arbitrary.arbitrary[SequenceNumber]
+        millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
+        childShards <- Gen.option(
+          Gen.choose(0, 3).flatMap(n =>
+            Gen.listOfN(n, childShardGen).map(_.toVector)
+          )
+        )
+      yield SubscribeToShardEvent(
+        scala.collection.immutable.Queue.from(records),
+        continuationSequenceNumber,
+        millisBehindLatest,
+        childShards
+      )
+    )
+
   given Arbitrary[SubscribeToShardRequest] =
     Arbitrary(
       for
