@@ -25,3 +25,35 @@ class EventStreamCodecTests extends munit.FunSuite:
     val expected = hex"0d3a6d6573736167652d747970650700056576656e74"
     assertEquals(EventStreamHeader.encode(h), expected)
   }
+
+  test("encode message: total length, headers length, prelude crc, message crc") {
+    val msg = EventStreamMessage(
+      headers = List(EventStreamHeader(":message-type", "event")),
+      payload = ByteVector.empty
+    )
+    val encoded = EventStreamMessage.encode(msg)
+    // headers encoded: 1 + 13 + 1 + 2 + 5 = 22 bytes
+    // total = 12 prelude + 22 headers + 0 payload + 4 trailing crc = 38 (0x26)
+    assertEquals(encoded.take(4), hex"00000026")
+    assertEquals(encoded.slice(4, 8), hex"00000016") // 22
+    // prelude CRC over first 8 bytes
+    assertEquals(
+      encoded.slice(8, 12),
+      ByteVector.fromInt(Crc32.compute(encoded.take(8)).toInt)
+    )
+    // message CRC over everything except the trailing 4 bytes
+    assertEquals(
+      encoded.takeRight(4),
+      ByteVector.fromInt(Crc32.compute(encoded.dropRight(4)).toInt)
+    )
+  }
+
+  test("encode message: payload appears verbatim between headers and crc") {
+    val payload = ByteVector("hello".getBytes("UTF-8"))
+    val msg = EventStreamMessage(
+      headers = List(EventStreamHeader(":content-type", "application/json")),
+      payload = payload
+    )
+    val encoded = EventStreamMessage.encode(msg)
+    assert(encoded.containsSlice(payload), "payload bytes missing from encoded frame")
+  }
