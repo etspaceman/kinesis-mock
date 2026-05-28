@@ -41,7 +41,9 @@ final case class StreamData(
     streamName: StreamName,
     streamStatus: StreamStatus,
     tags: Tags,
-    shardCountUpdates: Vector[Instant]
+    shardCountUpdates: Vector[Instant],
+    maxRecordSizeInKiB: Option[Int] = None,
+    warmThroughputMiBps: Option[Int] = None
 )
 
 object StreamData:
@@ -58,7 +60,7 @@ object StreamData:
     Decoder[KinesisRecord].circeDecoder
 
   given streamDataCirceEncoder: circe.Encoder[StreamData] =
-    circe.Encoder.forProduct13(
+    circe.Encoder.forProduct15(
       "consumers",
       "encryptionType",
       "enhancedMonitoring",
@@ -71,7 +73,9 @@ object StreamData:
       "streamName",
       "streamStatus",
       "tags",
-      "shardCountUpdates"
+      "shardCountUpdates",
+      "maxRecordSizeInKiB",
+      "warmThroughputMiBps"
     )(x =>
       (
         x.consumers,
@@ -86,7 +90,9 @@ object StreamData:
         x.streamName,
         x.streamStatus,
         x.tags,
-        x.shardCountUpdates
+        x.shardCountUpdates,
+        x.maxRecordSizeInKiB,
+        x.warmThroughputMiBps
       )
     )
   given streamDataCirceDecoder: circe.Decoder[StreamData] = x =>
@@ -114,6 +120,12 @@ object StreamData:
       streamStatus <- x.downField("streamStatus").as[StreamStatus]
       tags <- x.downField("tags").as[Tags]
       shardCountUpdates <- x.downField("shardCountUpdates").as[Vector[Instant]]
+      maxRecordSizeInKiB <- x
+        .downField("maxRecordSizeInKiB")
+        .as[Option[Int]]
+      warmThroughputMiBps <- x
+        .downField("warmThroughputMiBps")
+        .as[Option[Int]]
     yield StreamData(
       consumers,
       encryptionType,
@@ -127,7 +139,9 @@ object StreamData:
       streamName,
       streamStatus,
       tags,
-      shardCountUpdates
+      shardCountUpdates,
+      maxRecordSizeInKiB,
+      warmThroughputMiBps
     )
 
   given Eq[StreamData] = (x, y) =>
@@ -145,7 +159,9 @@ object StreamData:
       x.tags === y.tags &&
       x.shardCountUpdates.map(_.getEpochSecond) === y.shardCountUpdates.map(
         _.getEpochSecond
-      )
+      ) &&
+      x.maxRecordSizeInKiB === y.maxRecordSizeInKiB &&
+      x.warmThroughputMiBps === y.warmThroughputMiBps
 
   def create(
       shardCount: Int,
