@@ -53,6 +53,7 @@ object KinesisAction extends Enum[KinesisAction]:
   case object StopStreamEncryption extends KinesisAction
   case object SubscribeToShard extends KinesisAction
   case object TagResource extends KinesisAction
+  case object UntagResource extends KinesisAction
   case object UpdateShardCount extends KinesisAction
   case object UpdateStreamMode extends KinesisAction
 

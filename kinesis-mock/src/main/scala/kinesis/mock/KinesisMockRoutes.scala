@@ -943,6 +943,21 @@ object KinesisMockRoutes:
                   )
                 )
           )
+      case KinesisAction.UntagResource =>
+        request
+          .attemptAs[UntagResourceRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .untagResource(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
       case KinesisAction.UpdateShardCount =>
         request
           .attemptAs[UpdateShardCountRequest]

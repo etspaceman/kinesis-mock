@@ -1564,6 +1564,43 @@ class Cache private (
         )
       )
 
+  def untagResource(
+      req: UntagResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing UntagResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.untagResource.tryAcquireRelease(
+          req
+            .untagResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Untagging resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully untagged the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for UntagResource")
+            .as(
+              Left(
+                LimitExceededException("Rate limit exceeded for UntagResource")
+              )
+            )
+        )
+      )
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(

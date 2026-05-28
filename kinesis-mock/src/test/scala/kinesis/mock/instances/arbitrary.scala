@@ -290,6 +290,22 @@ object arbitrary:
         TagResourceRequest(arn, tags)
     )
 
+  given Arbitrary[UntagResourceRequest] =
+    Arbitrary(
+      for
+        streamArn <- streamArnGen
+        useConsumer <- Arbitrary.arbitrary[Boolean]
+        consumerName <- consumerNameGen
+        creationTime <- nowGen
+        tags <- tagsGen
+      yield
+        val arn =
+          if useConsumer then
+            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
+          else streamArn.streamArn
+        UntagResourceRequest(arn, tags.tags.keys.toList)
+    )
+
   given Arbitrary[StreamModeDetails] = Arbitrary(
     Arbitrary.arbitrary[StreamMode].map(StreamModeDetails.apply)
   )
