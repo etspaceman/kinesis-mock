@@ -25,7 +25,11 @@ import cats.Eq
 import cats.syntax.all.*
 import io.circe.*
 
-final case class Streams(streams: SortedMap[StreamArn, StreamData]):
+final case class Streams(
+    streams: SortedMap[StreamArn, StreamData],
+    resourcePolicies: Map[String, String] = Map.empty,
+    accountSettings: AccountSettings = AccountSettings.default
+):
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams ++ Seq(stream.streamArn -> stream))
   def findAndUpdateStream(
@@ -80,8 +84,22 @@ final case class Streams(streams: SortedMap[StreamArn, StreamData]):
 object Streams:
   val empty: Streams = Streams(SortedMap.empty)
   given Encoder[Streams] =
-    Encoder.forProduct1("streams")(x => x.streams)
+    Encoder.forProduct3("streams", "resourcePolicies", "accountSettings")(x =>
+      (x.streams, x.resourcePolicies, x.accountSettings)
+    )
   given Decoder[Streams] = x =>
-    for streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
-    yield Streams(streams)
-  given Eq[Streams] = (x, y) => x.streams.toMap === y.streams.toMap
+    for
+      streams <- x.downField("streams").as[SortedMap[StreamArn, StreamData]]
+      resourcePolicies <- x
+        .downField("resourcePolicies")
+        .as[Option[Map[String, String]]]
+        .map(_.getOrElse(Map.empty))
+      accountSettings <- x
+        .downField("accountSettings")
+        .as[Option[AccountSettings]]
+        .map(_.getOrElse(AccountSettings.default))
+    yield Streams(streams, resourcePolicies, accountSettings)
+  given Eq[Streams] = (x, y) =>
+    x.streams.toMap === y.streams.toMap &&
+      x.resourcePolicies === y.resourcePolicies &&
+      x.accountSettings === y.accountSettings
