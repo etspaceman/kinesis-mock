@@ -17,8 +17,9 @@
 package kinesis.mock
 
 import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
 
 import cats.effect.IO
@@ -31,8 +32,8 @@ import kinesis.mock.syntax.scalacheck.*
 
 class SubscribeToShardTests extends AwsFunctionalTests:
 
-  fixture().test("It should subscribe to a shard and receive records") {
-    resources =>
+  fixture(shardCount = 1)
+    .test("It should subscribe to a shard and receive records") { resources =>
       for
         consumerName <- IO(consumerNameGen.one.consumerName)
         streamSummary <- describeStreamSummary(resources)
@@ -50,14 +51,15 @@ class SubscribeToShardTests extends AwsFunctionalTests:
           resources.cacheConfig.registerStreamConsumerDuration.plus(400.millis)
         )
         consumerArn = registered.consumer().consumerARN()
-        recordCounter = new AtomicInteger(0)
+        partitionKey = "subscribe-to-shard-test-pk"
+        payload = "subscribe-to-shard-test-payload"
+        received = new ConcurrentLinkedQueue[Record]()
         handler = SubscribeToShardResponseHandler
           .builder()
           .subscriber(new Consumer[SubscribeToShardEventStream] {
             def accept(t: SubscribeToShardEventStream): Unit = t match
               case e: SubscribeToShardEvent =>
-                recordCounter.addAndGet(e.records().size())
-                ()
+                e.records().asScala.foreach(received.add)
               case _ => ()
           })
           .build()
@@ -83,15 +85,21 @@ class SubscribeToShardTests extends AwsFunctionalTests:
             PutRecordRequest
               .builder()
               .streamName(resources.streamName.streamName)
-              .partitionKey("pk")
-              .data(SdkBytes.fromUtf8String("hello"))
+              .partitionKey(partitionKey)
+              .data(SdkBytes.fromUtf8String(payload))
               .build()
           )
           .toIO
         _ <- IO.sleep(3.seconds)
         _ <- subFib.cancel
-      yield assert(
-        recordCounter.get() >= 1,
-        s"expected >=1 record via SDK SubscribeToShard, got ${recordCounter.get()}"
-      )
-  }
+        records = received.asScala.toVector
+      yield
+        assertEquals(records.size, 1, s"expected exactly 1 record, got: $records")
+        val r = records.head
+        assertEquals(r.partitionKey(), partitionKey)
+        assertEquals(r.data().asUtf8String(), payload)
+        assert(
+          r.sequenceNumber() != null && r.sequenceNumber().nonEmpty,
+          s"sequence number missing on record: $r"
+        )
+    }
