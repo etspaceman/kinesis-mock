@@ -115,12 +115,14 @@ object arbitrary:
         consumerCreationTimestamp
       )
       consumerStatus <- Arbitrary.arbitrary[ConsumerStatus]
+      tags <- Arbitrary.arbitrary[Tags]
     yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus,
-      streamArn
+      streamArn,
+      tags
     )
   )
 

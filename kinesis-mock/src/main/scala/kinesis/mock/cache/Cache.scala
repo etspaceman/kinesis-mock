@@ -561,7 +561,11 @@ class Cache private (
                                         r.consumer.consumerCreationTimestamp,
                                         r.consumer.consumerName,
                                         ConsumerStatus.ACTIVE,
-                                        req.streamArn
+                                        req.streamArn,
+                                        stream.consumers
+                                          .get(r.consumer.consumerName)
+                                          .map(_.tags)
+                                          .getOrElse(Tags.empty)
                                       )
                                     )
                                   )

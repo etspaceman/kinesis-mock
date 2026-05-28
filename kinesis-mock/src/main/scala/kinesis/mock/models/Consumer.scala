@@ -30,7 +30,8 @@ final case class Consumer(
     consumerCreationTimestamp: Instant,
     consumerName: ConsumerName,
     consumerStatus: ConsumerStatus,
-    streamArn: StreamArn
+    streamArn: StreamArn,
+    tags: Tags
 )
 
 object Consumer:
@@ -44,23 +45,26 @@ object Consumer:
       consumerCreationTimestamp,
       consumerName,
       ConsumerStatus.CREATING,
-      streamArn
+      streamArn,
+      Tags.empty
     )
   def consumerCirceEncoder(using
       EI: circe.Encoder[Instant]
-  ): circe.Encoder[Consumer] = circe.Encoder.forProduct5(
+  ): circe.Encoder[Consumer] = circe.Encoder.forProduct6(
     "ConsumerARN",
     "ConsumerCreationTimestamp",
     "ConsumerName",
     "ConsumerStatus",
-    "StreamARN"
+    "StreamARN",
+    "Tags"
   )(x =>
     (
       x.consumerArn,
       x.consumerCreationTimestamp,
       x.consumerName,
       x.consumerStatus,
-      x.streamArn
+      x.streamArn,
+      x.tags
     )
   )
 
@@ -75,12 +79,14 @@ object Consumer:
       consumerName <- x.downField("ConsumerName").as[ConsumerName]
       consumerStatus <- x.downField("ConsumerStatus").as[ConsumerStatus]
       streamArn <- x.downField("StreamARN").as[StreamArn]
+      tags <- x.downField("Tags").as[Option[Tags]].map(_.getOrElse(Tags.empty))
     yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus,
-      streamArn
+      streamArn,
+      tags
     )
 
   given Encoder[Consumer] = Encoder.instance(
@@ -98,4 +104,5 @@ object Consumer:
       x.consumerCreationTimestamp.getEpochSecond === y.consumerCreationTimestamp.getEpochSecond &&
       x.consumerName === y.consumerName &&
       x.consumerStatus === y.consumerStatus &&
-      x.streamArn === y.streamArn
+      x.streamArn === y.streamArn &&
+      x.tags === y.tags
