@@ -39,6 +39,8 @@ class ApiCirceTests extends CirceTests:
   identityLawTest[ListShardsResponse]
   identityLawTest[ListStreamsRequest]
   identityLawTest[ListStreamsResponse]
+  identityLawTest[ListTagsForResourceRequest]
+  identityLawTest[ListTagsForResourceResponse]
   identityLawTest[ListTagsForStreamRequest]
   identityLawTest[ListTagsForStreamResponse]
   identityLawTest[MergeShardsRequest]

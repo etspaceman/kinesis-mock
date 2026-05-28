@@ -1564,6 +1564,47 @@ class Cache private (
         )
       )
 
+  def listTagsForResource(
+      req: ListTagsForResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[ListTagsForResourceResponse]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing ListTagsForResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.listTagsForResource.tryAcquireRelease(
+          req
+            .listTagsForResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Listing tags for resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully listed tags for the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)(
+              "Rate limit exceeded for ListTagsForResource"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for ListTagsForResource"
+                )
+              )
+            )
+        )
+      )
+
   def untagResource(
       req: UntagResourceRequest,
       context: LoggingContext,

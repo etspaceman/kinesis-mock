@@ -511,6 +511,7 @@ object KinesisMockRoutes:
       listShardsEE: EntityEncoder[IO, ListShardsResponse],
       listStreamConsumersEE: EntityEncoder[IO, ListStreamConsumersResponse],
       listStreamsEE: EntityEncoder[IO, ListStreamsResponse],
+      listTagsResourceEE: EntityEncoder[IO, ListTagsForResourceResponse],
       listTagsEE: EntityEncoder[IO, ListTagsForStreamResponse],
       putRecordEE: EntityEncoder[IO, PutRecordResponse],
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
@@ -766,6 +767,21 @@ object KinesisMockRoutes:
             req =>
               cache
                 .listStreams(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
+      case KinesisAction.ListTagsForResource =>
+        request
+          .attemptAs[ListTagsForResourceRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .listTagsForResource(req, loggingContext, isCbor, region)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
