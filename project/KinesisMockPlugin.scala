@@ -55,7 +55,7 @@ object KinesisMockPlugin extends AutoPlugin {
   }
 
   override def buildSettings: Seq[Setting[?]] = Seq(
-    tlBaseVersion := "0.5",
+    tlBaseVersion := "0.6",
     tlCiScalafixCheck := true,
     tlCiHeaderCheck := true,
     tlCiScalafmtCheck := true,
