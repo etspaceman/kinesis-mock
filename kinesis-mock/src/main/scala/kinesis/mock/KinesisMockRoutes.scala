@@ -916,15 +916,16 @@ object KinesisMockRoutes:
             req =>
               cache
                 .subscribeToShard(req, loggingContext, isCbor, region)
-                .flatMap { byteStream =>
-                  Ok("", responseHeaders*).map(
-                    _.withContentType(
+                .map { byteStream =>
+                  HResponse[IO](Ok)
+                    .putHeaders(responseHeaders*)
+                    .withContentType(
                       `Content-Type`(
                         org.http4s.MediaType
                           .unsafeParse("application/vnd.amazon.eventstream")
                       )
-                    ).withBodyStream(byteStream)
-                  )
+                    )
+                    .withBodyStream(byteStream)
                 }
           )
       case KinesisAction.UpdateShardCount =>
