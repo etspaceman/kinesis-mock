@@ -909,13 +909,24 @@ object KinesisMockRoutes:
                 )
           )
       case KinesisAction.SubscribeToShard =>
-        NotFound(
-          ErrorResponse(
-            "ApiNotImplemented",
-            "SubscribeToShard is not yet supported"
-          ),
-          responseHeaders*
-        )
+        request
+          .attemptAs[SubscribeToShardRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .subscribeToShard(req, loggingContext, isCbor, region)
+                .flatMap { byteStream =>
+                  Ok("", responseHeaders*).map(
+                    _.withContentType(
+                      `Content-Type`(
+                        org.http4s.MediaType
+                          .unsafeParse("application/vnd.amazon.eventstream")
+                      )
+                    ).withBodyStream(byteStream)
+                  )
+                }
+          )
       case KinesisAction.UpdateShardCount =>
         request
           .attemptAs[UpdateShardCountRequest]
