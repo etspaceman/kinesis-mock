@@ -20,13 +20,12 @@ package models
 import cats.Eq
 import cats.syntax.all.*
 
-enum ResourceArn:
-  case Stream(streamArn: StreamArn)
+enum ResourceArn(val resourceArn: String):
+  case Stream(streamArn: StreamArn) extends ResourceArn(streamArn.streamArn)
   case Consumer(consumerArn: ConsumerArn)
+      extends ResourceArn(consumerArn.consumerArn)
 
-  def asString: String = this match
-    case Stream(sa)   => sa.streamArn
-    case Consumer(ca) => ca.consumerArn
+  override def toString: String = resourceArn
 
 object ResourceArn:
   def fromString(s: String): Either[KinesisMockException, ResourceArn] =
