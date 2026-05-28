@@ -17,6 +17,8 @@
 package kinesis.mock
 package cache
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 import cats.effect.std.{Semaphore, Supervisor}
 import cats.syntax.all.*
@@ -26,17 +28,21 @@ import io.circe.Printer
 import io.circe.fs2.*
 import io.circe.syntax.*
 import org.typelevel.log4cats.SelfAwareStructuredLogger
+import scodec.bits.ByteVector
 
 import kinesis.mock.api.*
+import kinesis.mock.eventstream.*
 import kinesis.mock.models.*
 import kinesis.mock.syntax.semaphore.*
+import kinesis.mock.validations.CommonValidations
 
 class Cache private (
     streamsRef: Ref[IO, Streams],
     semaphores: Ref[IO, Map[AwsRegion, CacheSemaphores]],
     persistDataSemaphore: Semaphore[IO],
     config: CacheConfig,
-    supervisor: Supervisor[IO]
+    supervisor: Supervisor[IO],
+    subscriptionRegistry: SubscriptionRegistry
 ):
   self =>
 
@@ -1505,6 +1511,103 @@ class Cache private (
           .void
       yield result)
 
+  /** Returns a byte stream of AWS event-stream framed SubscribeToShardEvents.
+    * Per the AWS spec a subscription lives up to 5 minutes and only one
+    * active subscription per (consumerArn, shardId) is allowed.
+    */
+  def subscribeToShard(
+      req: SubscribeToShardRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Stream[IO, Byte]] =
+    val _ = region
+    val ctx =
+      context +
+        ("consumerArn" -> req.consumerArn.consumerArn) +
+        ("shardId" -> req.shardId)
+    logger.debug(ctx.context)("Processing SubscribeToShard request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      streamsRef.get.map { streams =>
+        val validation = CommonValidations
+          .findStreamByConsumerArn(req.consumerArn, streams)
+          .flatMap { case (_, stream) =>
+            CommonValidations
+              .isStreamActiveOrUpdating(stream.streamArn, streams)
+              .as(stream)
+          }
+
+        validation match
+          case Left(err) =>
+            Stream.chunk(Chunk.byteVector(exceptionFrame(err))).covary[IO]
+          case Right(stream) =>
+            Stream
+              .resource(
+                subscriptionRegistry.lease(req.consumerArn, req.shardId)
+              )
+              .flatMap {
+                case None =>
+                  Stream.chunk(
+                    Chunk.byteVector(
+                      exceptionFrame(
+                        ResourceInUseException(
+                          s"Another active subscription exists for consumer ${req.consumerArn.consumerArn} on shard ${req.shardId}"
+                        )
+                      )
+                    )
+                  )
+                case Some(_) =>
+                  heartbeatStream(req, stream)
+              }
+      }
+
+  private def heartbeatStream(
+      req: SubscribeToShardRequest,
+      stream: StreamData
+  ): Stream[IO, Byte] =
+    val startingSeq = stream.shards.keys
+      .find(_.shardId.shardId == req.shardId)
+      .map(_.sequenceNumberRange.startingSequenceNumber)
+      .getOrElse(SequenceNumber("0"))
+
+    Stream
+      .awakeEvery[IO](1.second)
+      .map { _ =>
+        val event = SubscribeToShardEvent(
+          records = scala.collection.immutable.Queue.empty,
+          continuationSequenceNumber = startingSeq,
+          millisBehindLatest = 0L,
+          childShards = None
+        )
+        given io.circe.Encoder[SubscribeToShardEvent] =
+          Encoder[SubscribeToShardEvent].circeEncoder
+        val payload = ByteVector(
+          Printer.noSpaces.print(event.asJson).getBytes("UTF-8")
+        )
+        EventStreamMessage.encode(
+          EventStreamMessage.event(
+            "SubscribeToShardEvent",
+            "application/json",
+            payload
+          )
+        )
+      }
+      .interruptAfter(5.minutes)
+      .flatMap(bv => Stream.chunk(Chunk.byteVector(bv)))
+
+  private def exceptionFrame(err: KinesisMockException): ByteVector =
+    val safeMsg = Option(err.getMessage).getOrElse("").replace("\"", "\\\"")
+    val body = ByteVector(s"""{"message":"$safeMsg"}""".getBytes("UTF-8"))
+    EventStreamMessage.encode(
+      EventStreamMessage.exception(
+        err.getClass.getSimpleName,
+        "application/json",
+        body
+      )
+    )
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
@@ -1556,12 +1659,14 @@ object Cache:
       .toResource
     persistDataSemaphore <- Semaphore[IO](1).toResource
     supervisor <- Supervisor[IO]
+    subscriptionRegistry <- SubscriptionRegistry.create.toResource
   yield new Cache(
     ref,
     semaphoresRef,
     persistDataSemaphore,
     config,
-    supervisor
+    supervisor,
+    subscriptionRegistry
   )
 
   def loadFromFile(

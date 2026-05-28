@@ -23,7 +23,11 @@ import kinesis.mock.models.*
 
 class SubscriptionRegistryTests extends munit.CatsEffectSuite:
   private val testArn = ConsumerArn(
-    StreamArn(AwsRegion.US_EAST_1, StreamName("s"), AwsAccountId("000000000000")),
+    StreamArn(
+      AwsRegion.US_EAST_1,
+      StreamName("s"),
+      AwsAccountId("000000000000")
+    ),
     ConsumerName("c"),
     Instant.ofEpochSecond(1_700_000_000L)
   )
@@ -55,7 +59,10 @@ class SubscriptionRegistryTests extends munit.CatsEffectSuite:
       reg <- SubscriptionRegistry.create
       _ <- reg.lease(testArn, testShardId).use {
         case Some(_) => cats.effect.IO.unit
-        case None    => cats.effect.IO.raiseError(new AssertionError("first lease should acquire"))
+        case None    =>
+          cats.effect.IO.raiseError(
+            new AssertionError("first lease should acquire")
+          )
       }
       // After use{} exits, the slot is free again
       a <- reg.tryAcquire(testArn, testShardId)
