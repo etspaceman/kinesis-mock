@@ -630,6 +630,55 @@ object arbitrary:
     )
   )
 
+  given Arbitrary[StartingPosition] =
+    Arbitrary(
+      for
+        shardIteratorType <- Arbitrary.arbitrary[ShardIteratorType]
+        sequenceNumber <- shardIteratorType match
+          case ShardIteratorType.AFTER_SEQUENCE_NUMBER |
+              ShardIteratorType.AT_SEQUENCE_NUMBER =>
+            Arbitrary.arbitrary[SequenceNumber].map(Some(_))
+          case _ => Gen.const(None)
+        timestamp <- shardIteratorType match
+          case ShardIteratorType.AT_TIMESTAMP => nowGen.map(Some(_))
+          case _                              => Gen.const(None)
+      yield StartingPosition(shardIteratorType, sequenceNumber, timestamp)
+    )
+
+  given Arbitrary[SubscribeToShardEvent] =
+    Arbitrary(
+      for
+        records <- Gen.choose(0, 10).flatMap(n =>
+          Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord])
+        )
+        continuationSequenceNumber <- Arbitrary.arbitrary[SequenceNumber]
+        millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
+        childShards <- Gen.option(
+          Gen.choose(0, 3).flatMap(n =>
+            Gen.listOfN(n, childShardGen).map(_.toVector)
+          )
+        )
+      yield SubscribeToShardEvent(
+        scala.collection.immutable.Queue.from(records),
+        continuationSequenceNumber,
+        millisBehindLatest,
+        childShards
+      )
+    )
+
+  given Arbitrary[SubscribeToShardRequest] =
+    Arbitrary(
+      for
+        consumer <- Arbitrary.arbitrary[Consumer]
+        shardId <- Arbitrary.arbitrary[ShardId]
+        startingPosition <- Arbitrary.arbitrary[StartingPosition]
+      yield SubscribeToShardRequest(
+        consumer.consumerArn,
+        shardId.shardId,
+        startingPosition
+      )
+    )
+
   given Arbitrary[GetShardIteratorRequest] =
     Arbitrary(
       for

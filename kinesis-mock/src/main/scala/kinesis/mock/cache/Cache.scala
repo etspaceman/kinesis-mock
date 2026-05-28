@@ -36,7 +36,8 @@ class Cache private (
     semaphores: Ref[IO, Map[AwsRegion, CacheSemaphores]],
     persistDataSemaphore: Semaphore[IO],
     config: CacheConfig,
-    supervisor: Supervisor[IO]
+    supervisor: Supervisor[IO],
+    subscriptionRegistry: SubscriptionRegistry
 ):
   self =>
 
@@ -1505,6 +1506,23 @@ class Cache private (
           .void
       yield result)
 
+  def subscribeToShard(
+      req: SubscribeToShardRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Stream[IO, Byte]] =
+    val ctx =
+      context +
+        ("consumerArn" -> req.consumerArn.consumerArn) +
+        ("shardId" -> req.shardId) +
+        ("region" -> region.getOrElse(config.awsRegion).entryName)
+    logger.debug(ctx.context)("Processing SubscribeToShard request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      req.subscribeToShard(streamsRef, subscriptionRegistry)
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
@@ -1556,12 +1574,14 @@ object Cache:
       .toResource
     persistDataSemaphore <- Semaphore[IO](1).toResource
     supervisor <- Supervisor[IO]
+    subscriptionRegistry <- SubscriptionRegistry.create.toResource
   yield new Cache(
     ref,
     semaphoresRef,
     persistDataSemaphore,
     config,
-    supervisor
+    supervisor,
+    subscriptionRegistry
   )
 
   def loadFromFile(

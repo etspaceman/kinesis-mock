@@ -58,6 +58,8 @@ class ApiCodecTests extends CodecTests:
   identityLawTest[RegisterStreamConsumerRequest]
   identityLawTest[RegisterStreamConsumerResponse]
   identityLawTest[SplitShardRequest]
+  identityLawTest[SubscribeToShardRequest]
+  identityLawTest[SubscribeToShardEvent]
   identityLawTest[StartStreamEncryptionRequest]
   identityLawTest[StopStreamEncryptionRequest]
   identityLawTest[UpdateShardCountRequest]
