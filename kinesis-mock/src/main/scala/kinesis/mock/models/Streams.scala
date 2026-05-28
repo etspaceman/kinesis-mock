@@ -27,8 +27,8 @@ import io.circe.*
 
 final case class Streams(
     streams: SortedMap[StreamArn, StreamData],
-    resourcePolicies: Map[String, String] = Map.empty,
-    accountSettings: AccountSettings = AccountSettings.default
+    resourcePolicies: Map[String, String],
+    accountSettings: AccountSettings
 ):
   def updateStream(stream: StreamData): Streams =
     copy(streams = streams ++ Seq(stream.streamArn -> stream))
@@ -82,7 +82,8 @@ final case class Streams(
     copy(streams = streams.filterNot { case (x, _) => streamArn == x })
 
 object Streams:
-  val empty: Streams = Streams(SortedMap.empty)
+  val empty: Streams =
+    Streams(SortedMap.empty, Map.empty, AccountSettings.default)
   given Encoder[Streams] =
     Encoder.forProduct3("streams", "resourcePolicies", "accountSettings")(x =>
       (x.streams, x.resourcePolicies, x.accountSettings)

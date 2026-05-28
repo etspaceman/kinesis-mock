@@ -1124,7 +1124,13 @@ object arbitrary:
       .suchThat(x =>
         x.groupBy(_.streamArn).filter { case (_, x) => x.length > 1 }.isEmpty
       )
-      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamArn -> sd))))
+      .map(x =>
+        Streams(
+          SortedMap.from(x.map(sd => sd.streamArn -> sd)),
+          Map.empty,
+          AccountSettings.default
+        )
+      )
   }
 
   given Arbitrary[UpdateStreamModeRequest] =
