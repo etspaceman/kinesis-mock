@@ -1527,6 +1527,43 @@ class Cache private (
       ) *>
       req.subscribeToShard(streamsRef, subscriptionRegistry)
 
+  def tagResource(
+      req: TagResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing TagResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.tagResource.tryAcquireRelease(
+          req
+            .tagResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Tagging resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully tagged the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for TagResource")
+            .as(
+              Left(
+                LimitExceededException("Rate limit exceeded for TagResource")
+              )
+            )
+        )
+      )
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(
