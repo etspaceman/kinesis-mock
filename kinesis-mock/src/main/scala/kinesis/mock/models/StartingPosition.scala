@@ -61,4 +61,8 @@ object StartingPosition:
       startingPositionCirceDecoder(using instantLongCirceDecoder)
     )
 
-  given Eq[StartingPosition] = Eq.fromUniversalEquals
+  given Eq[StartingPosition] = (x, y) =>
+    x.`type` == y.`type` &&
+      x.sequenceNumber == y.sequenceNumber &&
+      x.timestamp.map(_.getEpochSecond()) ==
+      y.timestamp.map(_.getEpochSecond())
