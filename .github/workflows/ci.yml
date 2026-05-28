@@ -274,6 +274,19 @@ jobs:
         scala: [3]
         java: [temurin@21]
     runs-on: ${{ matrix.os }}
+    permissions:
+      actions: none
+      checks: none
+      contents: read
+      deployments: none
+      id-token: write
+      issues: none
+      packages: read
+      pages: none
+      pull-requests: none
+      repository-projects: none
+      security-events: none
+      statuses: none
     steps:
       - name: Checkout current branch (full)
         uses: actions/checkout@v6
@@ -306,19 +319,30 @@ jobs:
 
       - name: Setup Node
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 25
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm (>=11.5.1 for trusted publishing)
+        if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
+        run: npm install -g npm@latest
 
       - name: Install artifacts to NPM
         if: matrix.java == 'temurin@21' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' npmPackageInstall
 
-      - name: Publish artifacts to NPM
+      - name: Build NPM package
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' npmPackageNpmrc npmPackagePublish
+        run: sbt '++ ${{ matrix.scala }}' 'project kinesis-mock-rootJS' Compile/npmPackage
+
+      - name: Publish artifacts to NPM (trusted publishing + provenance)
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          NPM_DIR=$(find . -type f -name package.json -path '*/npm-package/package.json' -not -path '*/node_modules/*' | head -1 | xargs dirname)
+          echo "Publishing from $NPM_DIR"
+          cd "$NPM_DIR"
+          npm publish --provenance --access public
 
   publishAssembly:
     name: Publish Fat JAR

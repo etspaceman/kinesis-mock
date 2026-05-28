@@ -249,11 +249,17 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Use(
-              UseRef.Public("actions", "setup-node", "v3"),
+              UseRef.Public("actions", "setup-node", "v4"),
               name = Some("Setup Node"),
               params = Map(
-                "node-version" -> "25"
+                "node-version" -> "24",
+                "registry-url" -> "https://registry.npmjs.org"
               ),
+              cond = Some(primaryJavaOSCond.value)
+            ),
+            WorkflowStep.Run(
+              List("npm install -g npm@latest"),
+              name = Some("Upgrade npm (>=11.5.1 for trusted publishing)"),
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
@@ -262,19 +268,33 @@ object KinesisMockPlugin extends AutoPlugin {
               cond = Some(primaryJavaOSCond.value)
             ),
             WorkflowStep.Sbt(
-              List("npmPackageNpmrc", "npmPackagePublish"),
-              name = Some("Publish artifacts to NPM"),
-              cond = Some(onlyReleases.value),
-              env = Map(
-                "NPM_TOKEN" -> "${{ secrets.NPM_TOKEN }}" // https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server
-              )
+              List("Compile/npmPackage"),
+              name = Some("Build NPM package"),
+              cond = Some(onlyReleases.value)
+            ),
+            WorkflowStep.Run(
+              List(
+                "NPM_DIR=$(find . -type f -name package.json -path '*/npm-package/package.json' -not -path '*/node_modules/*' | head -1 | xargs dirname)",
+                "echo \"Publishing from $NPM_DIR\"",
+                "cd \"$NPM_DIR\"",
+                "npm publish --provenance --access public"
+              ),
+              name = Some(
+                "Publish artifacts to NPM (trusted publishing + provenance)"
+              ),
+              cond = Some(onlyReleases.value)
             )
           ),
         sbtStepPreamble =
           List("++ ${{ matrix.scala }}", "project kinesis-mock-rootJS"),
         scalas = githubWorkflowScalaVersions.value.toList,
         javas = githubWorkflowJavaVersions.value.toList,
-        needs = List("build")
+        needs = List("build"),
+        permissions = Some(
+          Permissions.Specify.defaultRestrictive.withIdToken(
+            PermissionValue.Write
+          )
+        )
       ),
       WorkflowJob(
         "publishAssembly",
