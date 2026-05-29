@@ -56,12 +56,11 @@ class SubscribeToShardTests extends AwsFunctionalTests:
         received = new ConcurrentLinkedQueue[Record]()
         handler = SubscribeToShardResponseHandler
           .builder()
-          .subscriber(new Consumer[SubscribeToShardEventStream] {
+          .subscriber(new Consumer[SubscribeToShardEventStream]:
             def accept(t: SubscribeToShardEventStream): Unit = t match
               case e: SubscribeToShardEvent =>
                 e.records().asScala.foreach(received.add)
-              case _ => ()
-          })
+              case _ => ())
           .build()
         subFib <- IO(
           resources.kinesisClient.subscribeToShard(
@@ -94,7 +93,11 @@ class SubscribeToShardTests extends AwsFunctionalTests:
         _ <- subFib.cancel
         records = received.asScala.toVector
       yield
-        assertEquals(records.size, 1, s"expected exactly 1 record, got: $records")
+        assertEquals(
+          records.size,
+          1,
+          s"expected exactly 1 record, got: $records"
+        )
         val r = records.head
         assertEquals(r.partitionKey(), partitionKey)
         assertEquals(r.data().asUtf8String(), payload)

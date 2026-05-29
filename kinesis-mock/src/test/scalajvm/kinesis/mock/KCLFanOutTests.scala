@@ -42,9 +42,9 @@ import software.amazon.kinesis.lifecycle.LifecycleConfig
 import software.amazon.kinesis.metrics.MetricsConfig
 import software.amazon.kinesis.processor.ProcessorConfig
 import software.amazon.kinesis.processor.SingleStreamTracker
+import software.amazon.kinesis.retrieval.KinesisClientRecord
 import software.amazon.kinesis.retrieval.RetrievalConfig
 import software.amazon.kinesis.retrieval.fanout.FanOutConfig
-import software.amazon.kinesis.retrieval.KinesisClientRecord
 
 import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.syntax.id.*
