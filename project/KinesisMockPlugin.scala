@@ -378,7 +378,7 @@ object KinesisMockPlugin extends AutoPlugin {
     ),
     addCommandAlias(
       "itTest",
-      ";set Test/testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test/testOnly;set Test/testOptions := (Test/testOptions).value"
+      ";project kinesis-mockJVM;set Test / testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test / testOnly;set Test / testOptions := (Test / testOptions).value;project kinesis-mock-rootJVM"
     )
   ).flatten
 }
