@@ -57,7 +57,8 @@ class ListTagsForStreamTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- cache
@@ -65,7 +66,8 @@ class ListTagsForStreamTests
                 AddTagsToStreamRequest(Some(streamName), None, tags),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             res <- cache
@@ -73,7 +75,8 @@ class ListTagsForStreamTests
                 ListTagsForStreamRequest(None, None, Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(Tags.fromTagList(res.tags) == tags)

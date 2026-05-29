@@ -58,7 +58,8 @@ class SplitShardTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -76,7 +77,8 @@ class SplitShardTests
                 listShardsReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.shards.head)
@@ -92,7 +94,8 @@ class SplitShardTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             describeStreamSummaryReq = DescribeStreamSummaryRequest(
@@ -104,7 +107,8 @@ class SplitShardTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.splitShardDuration.plus(500.millis))
@@ -113,7 +117,8 @@ class SplitShardTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             checkShards <- cache
@@ -121,7 +126,8 @@ class SplitShardTests
                 listShardsReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             newShards = checkShards.shards.filter(shard =>

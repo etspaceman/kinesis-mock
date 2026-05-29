@@ -56,7 +56,8 @@ class DescribeStreamSummaryTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             res <- cache
@@ -64,7 +65,8 @@ class DescribeStreamSummaryTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             expected = StreamDescriptionSummary(

@@ -59,7 +59,8 @@ class StopStreamEncryptionTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -74,7 +75,8 @@ class StopStreamEncryptionTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(
@@ -90,7 +92,8 @@ class StopStreamEncryptionTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             describeReq = DescribeStreamSummaryRequest(Some(streamName), None)
@@ -99,7 +102,8 @@ class StopStreamEncryptionTests
                 describeReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(
@@ -110,7 +114,8 @@ class StopStreamEncryptionTests
                 describeReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(

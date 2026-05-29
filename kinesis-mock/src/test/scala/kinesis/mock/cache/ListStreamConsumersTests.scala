@@ -61,7 +61,8 @@ class ListStreamConsumersTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -70,7 +71,8 @@ class ListStreamConsumersTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.streamDescriptionSummary.streamArn)

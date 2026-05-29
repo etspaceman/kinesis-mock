@@ -59,7 +59,8 @@ class GetShardIteratorTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -76,7 +77,8 @@ class GetShardIteratorTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.shards.head)
@@ -92,7 +94,8 @@ class GetShardIteratorTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.shardIterator)

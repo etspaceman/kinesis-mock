@@ -44,7 +44,8 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
               CreateStreamRequest(Some(1), None, streamName, None, None, None),
               ctx,
               isCbor = false,
-              Some(region)
+              Some(region),
+              None
             )
             .rethrow
           _ <- IO.sleep(cfg.createStreamDuration.plus(400.millis))
@@ -91,7 +92,8 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
               CreateStreamRequest(Some(1), None, streamName, None, None, None),
               ctx,
               isCbor = false,
-              Some(region)
+              Some(region),
+              None
             )
             .rethrow
           _ <- IO.sleep(cfg.createStreamDuration.plus(400.millis))
@@ -129,7 +131,8 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
               ),
               ctx,
               isCbor = false,
-              Some(region)
+              Some(region),
+              None
             )
             .rethrow
           bytes <- collectFib.joinWithNever

@@ -57,7 +57,8 @@ class RemoveTagsFromStreamTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- cache
@@ -65,7 +66,8 @@ class RemoveTagsFromStreamTests
                 AddTagsToStreamRequest(Some(streamName), None, tags),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- cache.removeTagsFromStream(
@@ -76,14 +78,16 @@ class RemoveTagsFromStreamTests
               ),
               context,
               isCbor = false,
-              Some(awsRegion)
+              Some(awsRegion),
+              None
             )
             res <- cache
               .listTagsForStream(
                 ListTagsForStreamRequest(None, None, Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(res.tags.tags.isEmpty)

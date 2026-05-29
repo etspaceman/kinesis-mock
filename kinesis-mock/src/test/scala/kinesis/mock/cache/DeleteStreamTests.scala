@@ -58,7 +58,8 @@ class DeleteStreamTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -67,7 +68,8 @@ class DeleteStreamTests
                 DeleteStreamRequest(Some(streamName), None, None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             describeStreamSummaryReq = DescribeStreamSummaryRequest(
@@ -78,14 +80,16 @@ class DeleteStreamTests
               describeStreamSummaryReq,
               context,
               isCbor = false,
-              Some(awsRegion)
+              Some(awsRegion),
+              None
             )
             _ <- IO.sleep(cacheConfig.deleteStreamDuration.plus(400.millis))
             checkStream2 <- cache.describeStreamSummary(
               describeStreamSummaryReq,
               context,
               isCbor = false,
-              Some(awsRegion)
+              Some(awsRegion),
+              None
             )
           yield assert(
             checkStream1.exists(

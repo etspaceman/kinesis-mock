@@ -61,7 +61,8 @@ class PutRecordsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -76,7 +77,7 @@ class PutRecordsTests
               )
             )
             _ <- cache
-              .putRecords(req, context, isCbor = false, Some(awsRegion))
+              .putRecords(req, context, isCbor = false, Some(awsRegion), None)
               .rethrow
             shard <- cache
               .listShards(
@@ -91,7 +92,8 @@ class PutRecordsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.shards.head)
@@ -107,7 +109,8 @@ class PutRecordsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(_.shardIterator)
@@ -116,7 +119,8 @@ class PutRecordsTests
                 GetRecordsRequest(None, shardIterator, None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(
