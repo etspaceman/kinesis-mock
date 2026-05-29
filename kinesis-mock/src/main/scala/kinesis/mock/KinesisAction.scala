@@ -58,6 +58,7 @@ object KinesisAction extends Enum[KinesisAction]:
   case object UpdateMaxRecordSize extends KinesisAction
   case object UpdateShardCount extends KinesisAction
   case object UpdateStreamMode extends KinesisAction
+  case object UpdateStreamWarmThroughput extends KinesisAction
 
   given QueryParamDecoder[KinesisAction] =
     QueryParamDecoder[String].emap(x =>

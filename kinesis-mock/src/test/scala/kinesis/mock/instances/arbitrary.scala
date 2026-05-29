@@ -1140,6 +1140,30 @@ object arbitrary:
       )
     )
 
+  given Arbitrary[UpdateStreamWarmThroughputRequest] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        warmThroughputMiBps <- Gen.choose(0, 1000)
+      yield UpdateStreamWarmThroughputRequest(
+        streamName,
+        streamArn,
+        warmThroughputMiBps
+      )
+    )
+
+  given Arbitrary[UpdateStreamWarmThroughputResponse] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        warmThroughputMiBps <- Gen.choose(0, 1000)
+      yield UpdateStreamWarmThroughputResponse(
+        streamName,
+        streamArn,
+        warmThroughputMiBps
+      )
+    )
+
   given streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
     for
       consumersSize <- Gen.choose(0, 20)

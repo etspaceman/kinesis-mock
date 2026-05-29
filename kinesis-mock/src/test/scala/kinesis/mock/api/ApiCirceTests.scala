@@ -61,3 +61,5 @@ class ApiCirceTests extends CirceTests:
   identityLawTest[UpdateShardCountRequest]
   identityLawTest[UpdateShardCountResponse]
   identityLawTest[UpdateStreamModeRequest]
+  identityLawTest[UpdateStreamWarmThroughputRequest]
+  identityLawTest[UpdateStreamWarmThroughputResponse]

@@ -1688,6 +1688,56 @@ class Cache private (
         )
       )
 
+  def updateStreamWarmThroughput(
+      req: UpdateStreamWarmThroughputRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[UpdateStreamWarmThroughputResponse]] =
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
+    logger.debug(ctx.context)(
+      "Processing UpdateStreamWarmThroughput request"
+    ) *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateStreamWarmThroughput.tryAcquireRelease(
+          req
+            .updateStreamWarmThroughput(
+              streamsRef,
+              region.getOrElse(config.awsRegion),
+              config.awsAccountId
+            )
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Updating warm throughput was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully updated warm throughput"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)(
+              "Rate limit exceeded for UpdateStreamWarmThroughput"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateStreamWarmThroughput"
+                )
+              )
+            )
+        )
+      )
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(

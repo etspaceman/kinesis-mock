@@ -517,7 +517,11 @@ object KinesisMockRoutes:
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
       updateMaxRecordSizeEE: EntityEncoder[IO, UpdateMaxRecordSizeResponse],
-      updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
+      updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse],
+      updateWarmThroughputEE: EntityEncoder[
+        IO,
+        UpdateStreamWarmThroughputResponse
+      ]
   ): IO[HResponse[IO]] =
     val isCbor = contentType match
       case ct if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
@@ -1017,6 +1021,26 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UpdateStreamWarmThroughput =>
+        request
+          .attemptAs[UpdateStreamWarmThroughputRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateStreamWarmThroughput(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region
+                )
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
