@@ -96,7 +96,13 @@ class PersistenceTests
               )
               _ <- recordRequests.traverse(req =>
                 cache
-                  .putRecord(req, context, isCbor = false, Some(awsRegion), None)
+                  .putRecord(
+                    req,
+                    context,
+                    isCbor = false,
+                    Some(awsRegion),
+                    None
+                  )
                   .rethrow
               )
               _ <- cache.persistToDisk(context)

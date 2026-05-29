@@ -186,7 +186,9 @@ class CacheConfigTests
   test("CacheConfig parses AKID_TO_ACCOUNT_ID pairs") {
     val raw = "AKIAONE:111111111111,AKIATWO:222222222222"
     assertEquals(
-      AkidAccountMap.parse(raw).map(_.resolve("AKIAONE", AwsAccountId("000000000000"))),
+      AkidAccountMap
+        .parse(raw)
+        .map(_.resolve("AKIAONE", AwsAccountId("000000000000"))),
       Right(AwsAccountId("111111111111"))
     )
   }

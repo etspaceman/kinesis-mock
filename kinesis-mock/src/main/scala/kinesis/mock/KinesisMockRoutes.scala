@@ -777,7 +777,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .getShardIterator(req, loggingContext, isCbor, region, accountId)
+                .getShardIterator(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -873,7 +879,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listTagsForStream(req, loggingContext, isCbor, region, accountId)
+                .listTagsForStream(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -1157,7 +1169,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .updateShardCount(req, loggingContext, isCbor, region, accountId)
+                .updateShardCount(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
