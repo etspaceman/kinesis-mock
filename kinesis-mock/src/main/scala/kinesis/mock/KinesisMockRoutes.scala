@@ -279,6 +279,8 @@ class KinesisMockRoutes(
                       case None =>
                         action match
                           case Some(ac) =>
+                            val credential =
+                              authParsed.getOrElse("Credential", "")
                             processAction(
                               request,
                               ac,
@@ -287,11 +289,9 @@ class KinesisMockRoutes(
                               lcWithContentType,
                               contentType,
                               Try(
-                                authParsed("Credential").split("/")(2)
+                                credential.split("/")(2)
                               ).toOption.flatMap(AwsRegion.withNameOption),
-                              KinesisMockRoutes.resolveAccountId(
-                                authParsed.getOrElse("Credential", "")
-                              )
+                              KinesisMockRoutes.resolveAccountId(credential)
                             )
                           case None =>
                             logger.warn(lcWithContentType.context)(
