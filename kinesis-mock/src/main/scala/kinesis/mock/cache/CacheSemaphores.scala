@@ -23,6 +23,7 @@ final case class CacheSemaphores private (
     addTagsToStream: Semaphore[IO],
     removeTagsFromStream: Semaphore[IO],
     createStream: Semaphore[IO],
+    deleteResourcePolicy: Semaphore[IO],
     deleteStream: Semaphore[IO],
     describeLimits: Semaphore[IO],
     describeStream: Semaphore[IO],
@@ -50,6 +51,7 @@ object CacheSemaphores:
     addTagsToStream <- Semaphore[IO](5)
     removeTagsFromStream <- Semaphore[IO](5)
     createStream <- Semaphore[IO](5)
+    deleteResourcePolicy <- Semaphore[IO](5)
     deleteStream <- Semaphore[IO](5)
     describeLimits <- Semaphore[IO](1)
     describeStream <- Semaphore[IO](10)
@@ -74,6 +76,7 @@ object CacheSemaphores:
     addTagsToStream,
     removeTagsFromStream,
     createStream,
+    deleteResourcePolicy,
     deleteStream,
     describeLimits,
     describeStream,

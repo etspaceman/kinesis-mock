@@ -855,6 +855,21 @@ object KinesisMockRoutes:
                   )
                 )
           )
+      case KinesisAction.DeleteResourcePolicy =>
+        request
+          .attemptAs[DeleteResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .deleteResourcePolicy(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
       case KinesisAction.GetResourcePolicy =>
         request
           .attemptAs[GetResourcePolicyRequest]

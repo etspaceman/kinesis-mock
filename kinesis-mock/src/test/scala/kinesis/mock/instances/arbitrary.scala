@@ -292,6 +292,9 @@ object arbitrary:
 
   given Arbitrary[ResourceArn] = Arbitrary(resourceArnGen)
 
+  given Arbitrary[DeleteResourcePolicyRequest] =
+    Arbitrary(resourceArnGen.map(DeleteResourcePolicyRequest(_)))
+
   given Arbitrary[GetResourcePolicyRequest] =
     Arbitrary(resourceArnGen.map(GetResourcePolicyRequest(_)))
 

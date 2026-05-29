@@ -1527,6 +1527,45 @@ class Cache private (
       ) *>
       req.subscribeToShard(streamsRef, subscriptionRegistry)
 
+  def deleteResourcePolicy(
+      req: DeleteResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
+    logger.debug(ctx.context)("Processing DeleteResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.deleteResourcePolicy.tryAcquireRelease(
+          req
+            .deleteResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Deleting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully deleted resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for DeleteResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for DeleteResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
   def getResourcePolicy(
       req: GetResourcePolicyRequest,
       context: LoggingContext,
