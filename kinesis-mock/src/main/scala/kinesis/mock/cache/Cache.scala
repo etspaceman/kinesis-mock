@@ -1802,6 +1802,48 @@ class Cache private (
         )
       )
 
+  def updateAccountSettings(
+      req: UpdateAccountSettingsRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    logger.debug(context.context)(
+      "Processing UpdateAccountSettings request"
+    ) *>
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateAccountSettings.tryAcquireRelease(
+          req
+            .updateAccountSettings(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(context.context, e)(
+                    "Updating account settings was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(context.context)(
+                    "Successfully updated account settings"
+                  )
+              )
+            ),
+          logger
+            .warn(context.context)(
+              "Rate limit exceeded for UpdateAccountSettings"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateAccountSettings"
+                )
+              )
+            )
+        )
+      )
+
   def updateMaxRecordSize(
       req: UpdateMaxRecordSizeRequest,
       context: LoggingContext,

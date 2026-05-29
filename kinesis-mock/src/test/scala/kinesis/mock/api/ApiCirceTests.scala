@@ -60,6 +60,7 @@ class ApiCirceTests extends CirceTests:
   identityLawTest[SplitShardRequest]
   identityLawTest[TagResourceRequest]
   identityLawTest[UntagResourceRequest]
+  identityLawTest[UpdateAccountSettingsRequest]
   identityLawTest[StartStreamEncryptionRequest]
   identityLawTest[StopStreamEncryptionRequest]
   identityLawTest[UpdateMaxRecordSizeRequest]

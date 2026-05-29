@@ -1161,6 +1161,13 @@ object arbitrary:
       )
     )
 
+  given Arbitrary[UpdateAccountSettingsRequest] =
+    Arbitrary(
+      Gen
+        .option(Gen.choose(0, 10000))
+        .map(UpdateAccountSettingsRequest(_))
+    )
+
   given Arbitrary[UpdateMaxRecordSizeRequest] =
     Arbitrary(
       for

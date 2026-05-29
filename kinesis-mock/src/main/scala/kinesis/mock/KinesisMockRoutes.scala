@@ -1044,6 +1044,21 @@ object KinesisMockRoutes:
                   )
                 )
           )
+      case KinesisAction.UpdateAccountSettings =>
+        request
+          .attemptAs[UpdateAccountSettingsRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateAccountSettings(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
       case KinesisAction.UpdateMaxRecordSize =>
         request
           .attemptAs[UpdateMaxRecordSizeRequest]
