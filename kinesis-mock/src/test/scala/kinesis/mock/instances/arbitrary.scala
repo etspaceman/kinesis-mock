@@ -340,7 +340,20 @@ object arbitrary:
         shardCount <- Gen.option(Gen.choose(1, 1000))
         streamName <- streamNameGen
         streamModeDetails <- Gen.option(Arbitrary.arbitrary[StreamModeDetails])
-      yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
+        tags <- Gen.option(tagsGen)
+        maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
+        warmThroughputMiBps <-
+          if streamModeDetails.exists(_.streamMode == StreamMode.ON_DEMAND)
+          then Gen.option(Gen.choose(0, 1000))
+          else Gen.const(None)
+      yield CreateStreamRequest(
+        shardCount,
+        streamModeDetails,
+        streamName,
+        tags,
+        maxRecordSizeInKiB,
+        warmThroughputMiBps
+      )
     )
 
   val retentionPeriodHoursGen: Gen[Int] = Gen.choose(

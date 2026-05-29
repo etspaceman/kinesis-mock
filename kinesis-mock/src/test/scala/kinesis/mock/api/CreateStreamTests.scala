@@ -99,3 +99,179 @@ class CreateStreamTests
         yield assert(res.isLeft, s"req: $req\nres: $res")
     }
   )
+
+  test("It should create a stream with initial tags")(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
+      val tags = Tags(scala.collection.SortedMap("key1" -> "value1"))
+      val reqForTest = req.copy(tags = Some(tags))
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+        s <- streamsRef.get
+      yield assert(
+        res.isRight && s.streams.get(streamArn).exists(_.tags == tags),
+        s"req: $reqForTest\nres: $res"
+      )
+  })
+
+  test("It should create a stream with MaxRecordSizeInKiB")(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
+      val reqForTest = req.copy(maxRecordSizeInKiB = Some(2048))
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+        s <- streamsRef.get
+      yield assert(
+        res.isRight && s.streams
+          .get(streamArn)
+          .exists(_.maxRecordSizeInKiB.contains(2048)),
+        s"req: $reqForTest\nres: $res"
+      )
+  })
+
+  test("It should reject MaxRecordSizeInKiB below 1024")(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val reqForTest = req.copy(maxRecordSizeInKiB = Some(500))
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+      yield assert(res.isLeft, s"req: $reqForTest\nres: $res")
+  })
+
+  test("It should reject MaxRecordSizeInKiB above 10240")(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val reqForTest = req.copy(maxRecordSizeInKiB = Some(20480))
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+      yield assert(res.isLeft, s"req: $reqForTest\nres: $res")
+  })
+
+  test(
+    "It should create a stream with WarmThroughputMiBps when on-demand"
+  )(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
+      val reqForTest = req.copy(
+        streamModeDetails =
+          Some(StreamModeDetails(StreamMode.ON_DEMAND)),
+        warmThroughputMiBps = Some(10)
+      )
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+        s <- streamsRef.get
+      yield assert(
+        res.isRight && s.streams
+          .get(streamArn)
+          .exists(_.warmThroughputMiBps.contains(10)),
+        s"req: $reqForTest\nres: $res"
+      )
+  })
+
+  test(
+    "It should reject WarmThroughputMiBps on provisioned streams"
+  )(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val reqForTest = req.copy(
+        streamModeDetails =
+          Some(StreamModeDetails(StreamMode.PROVISIONED)),
+        warmThroughputMiBps = Some(10)
+      )
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+      yield assert(res.isLeft, s"req: $reqForTest\nres: $res")
+  })
+
+  test("It should reject negative WarmThroughputMiBps")(PropF.forAllF {
+    (
+        req: CreateStreamRequest,
+        awsRegion: AwsRegion,
+        awsAccountId: AwsAccountId
+    ) =>
+      val streams = Streams.empty
+      val reqForTest = req.copy(
+        streamModeDetails =
+          Some(StreamModeDetails(StreamMode.ON_DEMAND)),
+        warmThroughputMiBps = Some(-1)
+      )
+      for
+        streamsRef <- Ref.of[IO, Streams](streams)
+        res <- reqForTest.createStream(
+          streamsRef,
+          req.shardCount.getOrElse(4),
+          10,
+          awsRegion,
+          awsAccountId
+        )
+      yield assert(res.isLeft, s"req: $reqForTest\nres: $res")
+  })

@@ -29,7 +29,10 @@ import kinesis.mock.validations.CommonValidations
 final case class CreateStreamRequest(
     shardCount: Option[Int],
     streamModeDetails: Option[StreamModeDetails],
-    streamName: StreamName
+    streamName: StreamName,
+    tags: Option[Tags],
+    maxRecordSizeInKiB: Option[Int],
+    warmThroughputMiBps: Option[Int]
 ):
   def createStream(
       streamsRef: Ref[IO, Streams],
@@ -42,6 +45,9 @@ final case class CreateStreamRequest(
       streamsRef.modify { streams =>
         val shardCountOrDefault = shardCount.getOrElse(4)
         val streamArn = StreamArn(awsRegion, streamName, awsAccountId)
+        val isOnDemand = streamModeDetails
+          .map(_.streamMode)
+          .getOrElse(StreamMode.PROVISIONED) === StreamMode.ON_DEMAND
         (
           CommonValidations.validateStreamName(streamName),
           if streams.streams.contains(streamArn) then
@@ -66,15 +72,42 @@ final case class CreateStreamRequest(
             shardCountOrDefault,
             streams,
             shardLimit
-          )
-        ).mapN { (_, _, _, _, _, _) =>
+          ),
+          maxRecordSizeInKiB match
+            case Some(v) if v < 1024 || v > 10240 =>
+              InvalidArgumentException(
+                "MaxRecordSizeInKiB must be between 1024 and 10240"
+              ).asLeft
+            case _ => Right(())
+          ,
+          warmThroughputMiBps match
+            case Some(v) if v < 0 =>
+              InvalidArgumentException(
+                "WarmThroughputMiBps must be non-negative"
+              ).asLeft
+            case Some(_) if !isOnDemand =>
+              InvalidArgumentException(
+                "WarmThroughputMiBps is only valid for on-demand streams"
+              ).asLeft
+            case _ => Right(())
+          ,
+          tags match
+            case Some(t) => CommonValidations.validateTags(t, Tags.empty)
+            case None    => Right(Tags.empty)
+        ).mapN { (_, _, _, _, _, _, _, _, _) =>
           val newStream =
-            StreamData.create(
-              shardCountOrDefault,
-              streamArn,
-              streamModeDetails,
-              now
-            )
+            StreamData
+              .create(
+                shardCountOrDefault,
+                streamArn,
+                streamModeDetails,
+                now
+              )
+              .copy(
+                tags = tags.getOrElse(Tags.empty),
+                maxRecordSizeInKiB = maxRecordSizeInKiB,
+                warmThroughputMiBps = warmThroughputMiBps
+              )
           (
             streams
               .copy(streams = streams.streams ++ Seq(streamArn -> newStream)),
@@ -86,8 +119,22 @@ final case class CreateStreamRequest(
 
 object CreateStreamRequest:
   given createStreamRequestCirceEncoder: circe.Encoder[CreateStreamRequest] =
-    circe.Encoder.forProduct3("ShardCount", "StreamModeDetails", "StreamName")(
-      x => (x.shardCount, x.streamModeDetails, x.streamName)
+    circe.Encoder.forProduct6(
+      "ShardCount",
+      "StreamModeDetails",
+      "StreamName",
+      "Tags",
+      "MaxRecordSizeInKiB",
+      "WarmThroughputMiBps"
+    )(x =>
+      (
+        x.shardCount,
+        x.streamModeDetails,
+        x.streamName,
+        x.tags,
+        x.maxRecordSizeInKiB,
+        x.warmThroughputMiBps
+      )
     )
   given createStreamRequestCirceDecoder: circe.Decoder[CreateStreamRequest] =
     x =>
@@ -97,7 +144,21 @@ object CreateStreamRequest:
           .downField("StreamModeDetails")
           .as[Option[StreamModeDetails]]
         streamName <- x.downField("StreamName").as[StreamName]
-      yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
+        tags <- x.downField("Tags").as[Option[Tags]]
+        maxRecordSizeInKiB <- x
+          .downField("MaxRecordSizeInKiB")
+          .as[Option[Int]]
+        warmThroughputMiBps <- x
+          .downField("WarmThroughputMiBps")
+          .as[Option[Int]]
+      yield CreateStreamRequest(
+        shardCount,
+        streamModeDetails,
+        streamName,
+        tags,
+        maxRecordSizeInKiB,
+        warmThroughputMiBps
+      )
   given createStreamRequestEncoder: Encoder[CreateStreamRequest] =
     Encoder.derive
   given createStreamRequestDecoder: Decoder[CreateStreamRequest] =

@@ -42,7 +42,7 @@ class CacheConfigTests
         .initializeStreamsReader(awsRegion, s"$streamName:3")
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(Some(3), None, streamName)
+          CreateStreamRequest(Some(3), None, streamName, None, None, None)
         )
       )
 
@@ -66,9 +66,9 @@ class CacheConfigTests
 
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(Some(3), None, streamName1),
-          CreateStreamRequest(Some(2), None, streamName2),
-          CreateStreamRequest(Some(1), None, streamName3)
+          CreateStreamRequest(Some(3), None, streamName1, None, None, None),
+          CreateStreamRequest(Some(2), None, streamName2, None, None, None),
+          CreateStreamRequest(Some(1), None, streamName3, None, None, None)
         )
       )
 
@@ -100,13 +100,13 @@ class CacheConfigTests
 
       val expected = Map(
         awsRegion -> List(
-          CreateStreamRequest(Some(2), None, streamName2)
+          CreateStreamRequest(Some(2), None, streamName2, None, None, None)
         ),
         testRegion1 -> List(
-          CreateStreamRequest(Some(3), None, streamName1),
-          CreateStreamRequest(Some(1), None, streamName3)
+          CreateStreamRequest(Some(3), None, streamName1, None, None, None),
+          CreateStreamRequest(Some(1), None, streamName3, None, None, None)
         ),
-        testRegion2 -> List(CreateStreamRequest(Some(1), None, streamName4))
+        testRegion2 -> List(CreateStreamRequest(Some(1), None, streamName4, None, None, None))
       )
 
       assert(res == Right(expected), s"$res")

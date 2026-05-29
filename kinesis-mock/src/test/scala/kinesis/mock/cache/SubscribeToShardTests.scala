@@ -41,7 +41,7 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
           ctx <- LoggingContext.create
           _ <- cache
             .createStream(
-              CreateStreamRequest(Some(1), None, streamName),
+              CreateStreamRequest(Some(1), None, streamName, None, None, None),
               ctx,
               isCbor = false,
               Some(region)
@@ -83,7 +83,7 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
           ctx <- LoggingContext.create
           _ <- cache
             .createStream(
-              CreateStreamRequest(Some(1), None, streamName),
+              CreateStreamRequest(Some(1), None, streamName, None, None, None),
               ctx,
               isCbor = false,
               Some(region)
