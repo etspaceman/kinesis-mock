@@ -38,7 +38,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 import kinesis.mock.api.*
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s.{given, *}
-import kinesis.mock.models.{AwsAccountId, AwsRegion}
+import kinesis.mock.models.{AkidAccountMap, AwsAccountId, AwsRegion}
 
 class KinesisMockRoutes(
     cache: Cache,
@@ -289,7 +289,11 @@ class KinesisMockRoutes(
                               Try(
                                 authParsed("Credential").split("/")(2)
                               ).toOption.flatMap(AwsRegion.withNameOption),
-                              None
+                              KinesisMockRoutes.resolveAccountId(
+                                authParsed.getOrElse("Credential", ""),
+                                cache.config.akidToAccountId,
+                                cache.config.awsAccountId
+                              )
                             )
                           case None =>
                             logger.warn(lcWithContentType.context)(
@@ -379,7 +383,13 @@ class KinesisMockRoutes(
                               Try(x.split("/")(2)).toOption
                                 .flatMap(AwsRegion.withNameOption)
                             ),
-                            None
+                            queryAuthCredential.flatMap(x =>
+                              KinesisMockRoutes.resolveAccountId(
+                                x,
+                                cache.config.akidToAccountId,
+                                cache.config.awsAccountId
+                              )
+                            )
                           )
                         case None =>
                           logger.warn(lcWithContentType.context)(
@@ -459,6 +469,15 @@ class KinesisMockRoutes(
   }
 
 object KinesisMockRoutes:
+  def resolveAccountId(
+      credential: String,
+      map: AkidAccountMap,
+      default: AwsAccountId
+  ): Option[AwsAccountId] =
+    Try(credential.split("/")(0)).toOption
+      .filter(_.nonEmpty)
+      .map(akid => map.resolve(akid, default))
+
   def emptyOk(
       responseHeaders: Vector[Header.ToRaw],
       contentType: `Content-Type`

@@ -35,7 +35,7 @@ class Cache private (
     streamsRef: Ref[IO, Streams],
     semaphores: Ref[IO, Map[AwsRegion, CacheSemaphores]],
     persistDataSemaphore: Semaphore[IO],
-    config: CacheConfig,
+    val config: CacheConfig,
     supervisor: Supervisor[IO],
     subscriptionRegistry: SubscriptionRegistry
 ):
