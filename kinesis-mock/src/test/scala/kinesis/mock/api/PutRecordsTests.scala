@@ -95,6 +95,51 @@ class PutRecordsTests
     }
   )
 
+  test(
+    "It should mark oversized entries with an error code per AWS contract"
+  )(PropF.forAllF {
+    (
+        streamArn: StreamArn,
+        initReq: PutRecordsRequest,
+        validEntry: PutRecordsRequestEntry
+    ) =>
+      val oversized = validEntry.copy(data = new Array[Byte](2 * 1024 * 1024))
+      val entries = Vector(validEntry, oversized)
+      for
+        now <- Utils.now
+        streams = Streams.empty.addStream(1, streamArn, None, now)
+        active = streams.findAndUpdateStream(streamArn)(s =>
+          s.copy(
+            streamStatus = StreamStatus.ACTIVE,
+            maxRecordSizeInKiB = Some(1024)
+          )
+        )
+        req = initReq.copy(
+          streamArn = Some(streamArn),
+          streamName = None,
+          records = entries
+        )
+        streamsRef <- Ref.of[IO, Streams](active)
+        res <- req.putRecords(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
+      yield assert(
+        res.exists { r =>
+          r.failedRecordCount == 1 &&
+          r.records.length == 2 &&
+          r.records(0).errorCode.isEmpty &&
+          r.records(1)
+            .errorCode
+            .contains(
+              PutRecordsErrorCode.InvalidArgumentException
+            )
+        },
+        s"res: $res"
+      )
+  })
+
   test("It should reject when the shard is closed")(
     PropF.forAllF {
       (

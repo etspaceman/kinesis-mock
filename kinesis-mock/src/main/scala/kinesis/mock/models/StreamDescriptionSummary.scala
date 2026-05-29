@@ -29,13 +29,15 @@ final case class StreamDescriptionSummary(
     encryptionType: Option[EncryptionType],
     enhancedMonitoring: Vector[ShardLevelMetrics],
     keyId: Option[String],
+    maxRecordSizeInKiB: Option[Int],
     openShardCount: Int,
     retentionPeriodHours: Int,
     streamArn: StreamArn,
     streamCreationTimestamp: Instant,
     streamModeDetails: StreamModeDetails,
     streamName: StreamName,
-    streamStatus: StreamStatus
+    streamStatus: StreamStatus,
+    warmThroughput: Option[WarmThroughput]
 )
 
 object StreamDescriptionSummary:
@@ -45,42 +47,48 @@ object StreamDescriptionSummary:
       Some(streamData.encryptionType),
       streamData.enhancedMonitoring,
       streamData.keyId,
+      streamData.maxRecordSizeInKiB,
       streamData.shards.keys.count(_.isOpen),
       streamData.retentionPeriod.toHours.toInt,
       streamData.streamArn,
       streamData.streamCreationTimestamp,
       streamData.streamModeDetails,
       streamData.streamName,
-      streamData.streamStatus
+      streamData.streamStatus,
+      streamData.warmThroughputMiBps.map(v => WarmThroughput(v, v))
     )
 
   def streamDescriptionSummaryCirceEncoder(using
       EI: circe.Encoder[Instant]
-  ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct11(
+  ): circe.Encoder[StreamDescriptionSummary] = circe.Encoder.forProduct13(
     "ConsumerCount",
     "EncryptionType",
     "EnhancedMonitoring",
     "KeyId",
+    "MaxRecordSizeInKiB",
     "OpenShardCount",
     "RetentionPeriodHours",
     "StreamARN",
     "StreamCreationTimestamp",
     "StreamModeDetails",
     "StreamName",
-    "StreamStatus"
+    "StreamStatus",
+    "WarmThroughput"
   )(x =>
     (
       x.consumerCount,
       x.encryptionType,
       x.enhancedMonitoring,
       x.keyId,
+      x.maxRecordSizeInKiB,
       x.openShardCount,
       x.retentionPeriodHours,
       x.streamArn,
       x.streamCreationTimestamp,
       x.streamModeDetails,
       x.streamName,
-      x.streamStatus
+      x.streamStatus,
+      x.warmThroughput
     )
   )
 
@@ -94,6 +102,7 @@ object StreamDescriptionSummary:
         .downField("EnhancedMonitoring")
         .as[Vector[ShardLevelMetrics]]
       keyId <- x.downField("KeyId").as[Option[String]]
+      maxRecordSizeInKiB <- x.downField("MaxRecordSizeInKiB").as[Option[Int]]
       openShardCount <- x.downField("OpenShardCount").as[Int]
       retentionPeriodHours <- x.downField("RetentionPeriodHours").as[Int]
       streamArn <- x.downField("StreamARN").as[StreamArn]
@@ -105,18 +114,21 @@ object StreamDescriptionSummary:
         .as[StreamModeDetails]
       streamName <- x.downField("StreamName").as[StreamName]
       streamStatus <- x.downField("StreamStatus").as[StreamStatus]
+      warmThroughput <- x.downField("WarmThroughput").as[Option[WarmThroughput]]
     yield StreamDescriptionSummary(
       consumerCount,
       encryptionType,
       enhancedMonitoring,
       keyId,
+      maxRecordSizeInKiB,
       openShardCount,
       retentionPeriodHours,
       streamArn,
       streamCreationTimestamp,
       streamModeDetails,
       streamName,
-      streamStatus
+      streamStatus,
+      warmThroughput
     )
 
   given streamDescriptionSummaryEncoder: Encoder[StreamDescriptionSummary] =
@@ -137,9 +149,11 @@ object StreamDescriptionSummary:
         x.encryptionType == y.encryptionType &&
         x.enhancedMonitoring == y.enhancedMonitoring &&
         x.keyId == y.keyId &&
+        x.maxRecordSizeInKiB == y.maxRecordSizeInKiB &&
         x.openShardCount == y.openShardCount &&
         x.retentionPeriodHours == y.retentionPeriodHours &&
         x.streamArn == y.streamArn &&
         x.streamCreationTimestamp.getEpochSecond == y.streamCreationTimestamp.getEpochSecond &&
         x.streamName == y.streamName &&
-        x.streamStatus == y.streamStatus
+        x.streamStatus == y.streamStatus &&
+        x.warmThroughput == y.warmThroughput

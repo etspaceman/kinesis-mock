@@ -26,7 +26,9 @@ class EventStreamCodecTests extends munit.FunSuite:
     assertEquals(EventStreamHeader.encode(h), expected)
   }
 
-  test("encode message: total length, headers length, prelude crc, message crc") {
+  test(
+    "encode message: total length, headers length, prelude crc, message crc"
+  ) {
     val msg = EventStreamMessage(
       headers = List(EventStreamHeader(":message-type", "event")),
       payload = ByteVector.empty
@@ -55,5 +57,8 @@ class EventStreamCodecTests extends munit.FunSuite:
       payload = payload
     )
     val encoded = EventStreamMessage.encode(msg)
-    assert(encoded.containsSlice(payload), "payload bytes missing from encoded frame")
+    assert(
+      encoded.containsSlice(payload),
+      "payload bytes missing from encoded frame"
+    )
   }

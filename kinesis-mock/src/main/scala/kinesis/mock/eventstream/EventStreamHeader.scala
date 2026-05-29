@@ -18,8 +18,8 @@ package kinesis.mock.eventstream
 
 import scodec.bits.ByteVector
 
-/** An AWS event-stream header. Wire format:
-  *   name_len (u8) | name (UTF-8) | value_type (u8) | value_len (u16 BE) | value (UTF-8)
+/** An AWS event-stream header. Wire format: name_len (u8) | name (UTF-8) |
+  * value_type (u8) | value_len (u16 BE) | value (UTF-8)
   *
   * Only the String value type (7) is needed by SubscribeToShard.
   */

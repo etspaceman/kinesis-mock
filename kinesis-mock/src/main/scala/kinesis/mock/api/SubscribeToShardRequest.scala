@@ -93,7 +93,10 @@ final case class SubscribeToShardRequest(
 
     val initialData = SubscribeToShardRequest.shardRecords(stream, shardId)
     val initialIndex =
-      SubscribeToShardRequest.resolveStartingIndex(initialData, startingPosition)
+      SubscribeToShardRequest.resolveStartingIndex(
+        initialData,
+        startingPosition
+      )
 
     given io.circe.Encoder[SubscribeToShardEvent] =
       Encoder[SubscribeToShardEvent].circeEncoder
@@ -165,8 +168,8 @@ object SubscribeToShardRequest:
       startingPosition: StartingPosition
   ): Int =
     startingPosition.`type` match
-      case ShardIteratorType.LATEST       => data.length
-      case ShardIteratorType.TRIM_HORIZON => 0
+      case ShardIteratorType.LATEST             => data.length
+      case ShardIteratorType.TRIM_HORIZON       => 0
       case ShardIteratorType.AT_SEQUENCE_NUMBER =>
         startingPosition.sequenceNumber
           .map(sn => data.indexWhere(_.sequenceNumber == sn))

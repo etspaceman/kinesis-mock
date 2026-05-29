@@ -82,6 +82,66 @@ class PutRecordTests
     }
   )
 
+  test("It should reject record exceeding stream's maxRecordSizeInKiB")(
+    PropF.forAllF {
+      (
+          streamArn: StreamArn,
+          initReq: PutRecordRequest
+      ) =>
+        for
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(
+              streamStatus = StreamStatus.ACTIVE,
+              maxRecordSizeInKiB = Some(1024)
+            )
+          )
+          req = initReq.copy(
+            streamArn = Some(streamArn),
+            streamName = None,
+            data = new Array[Byte](2 * 1024 * 1024)
+          )
+          streamsRef <- Ref.of[IO, Streams](active)
+          res <- req.putRecord(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
+        yield assert(res.isLeft, s"res: $res")
+    }
+  )
+
+  test("It should accept a record at exactly the maxRecordSizeInKiB limit")(
+    PropF.forAllF {
+      (
+          streamArn: StreamArn,
+          initReq: PutRecordRequest
+      ) =>
+        for
+          now <- Utils.now
+          streams = Streams.empty.addStream(1, streamArn, None, now)
+          active = streams.findAndUpdateStream(streamArn)(s =>
+            s.copy(
+              streamStatus = StreamStatus.ACTIVE,
+              maxRecordSizeInKiB = Some(1024)
+            )
+          )
+          req = initReq.copy(
+            streamArn = Some(streamArn),
+            streamName = None,
+            data = new Array[Byte](1024 * 1024)
+          )
+          streamsRef <- Ref.of[IO, Streams](active)
+          res <- req.putRecord(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
+        yield assert(res.isRight, s"res: $res")
+    }
+  )
+
   test("It should reject when the shard is closed")(
     PropF.forAllF {
       (
