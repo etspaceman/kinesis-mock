@@ -22,29 +22,49 @@ import cats.effect.{IO, Ref}
 import kinesis.mock.models.*
 
 class UpdateAccountSettingsTests extends munit.CatsEffectSuite:
-  test("It should update the minimum throughput billing commitment"):
+  test(
+    "It should set the minimum throughput billing commitment when ENABLED"
+  ):
     for
       streamsRef <- Ref.of[IO, Streams](Streams.empty)
-      _ <- UpdateAccountSettingsRequest(Some(100))
-        .updateAccountSettings(streamsRef)
-      res <- DescribeAccountSettingsRequest().describeAccountSettings(streamsRef)
-    yield assertEquals(res, DescribeAccountSettingsResponse(Some(100)))
+      _ <- UpdateAccountSettingsRequest(
+        Some(
+          MinimumThroughputBillingCommitmentInput(
+            MinimumThroughputBillingCommitmentStatus.ENABLED
+          )
+        )
+      ).updateAccountSettings(streamsRef)
+      res <- DescribeAccountSettingsRequest().describeAccountSettings(
+        streamsRef
+      )
+    yield assertEquals(
+      res.minimumThroughputBillingCommitment.map(_.status),
+      Some(MinimumThroughputBillingCommitmentStatus.ENABLED)
+    )
 
-  test("It should clear the minimum throughput billing commitment when None"):
+  test(
+    "It should clear the minimum throughput billing commitment when DISABLED"
+  ):
     for
       streamsRef <- Ref.of[IO, Streams](
-        Streams.empty.copy(accountSettings = AccountSettings(Some(50)))
+        Streams.empty.copy(accountSettings =
+          AccountSettings(
+            Some(
+              MinimumThroughputBillingCommitment(
+                MinimumThroughputBillingCommitmentStatus.ENABLED
+              )
+            )
+          )
+        )
       )
-      _ <- UpdateAccountSettingsRequest(None).updateAccountSettings(streamsRef)
-      res <- DescribeAccountSettingsRequest().describeAccountSettings(streamsRef)
+      _ <- UpdateAccountSettingsRequest(
+        Some(
+          MinimumThroughputBillingCommitmentInput(
+            MinimumThroughputBillingCommitmentStatus.DISABLED
+          )
+        )
+      ).updateAccountSettings(streamsRef)
+      res <- DescribeAccountSettingsRequest().describeAccountSettings(
+        streamsRef
+      )
     yield assertEquals(res, DescribeAccountSettingsResponse(None))
-
-  test("It should reject a negative value with InvalidArgumentException"):
-    for
-      streamsRef <- Ref.of[IO, Streams](Streams.empty)
-      res <- UpdateAccountSettingsRequest(Some(-1))
-        .updateAccountSettings(streamsRef)
-    yield assert(
-      res.left.exists(_.isInstanceOf[InvalidArgumentException]),
-      s"res: $res"
-    )

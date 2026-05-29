@@ -21,11 +21,18 @@ import cats.Eq
 import io.circe
 
 final case class AccountSettings(
-    minimumThroughputBillingCommitment: Option[Int]
+    minimumThroughputBillingCommitment: Option[
+      MinimumThroughputBillingCommitment
+    ]
 )
 
 object AccountSettings:
   val default: AccountSettings = AccountSettings(None)
+
+  private given circe.Encoder[MinimumThroughputBillingCommitment] =
+    Encoder[MinimumThroughputBillingCommitment].circeEncoder
+  private given circe.Decoder[MinimumThroughputBillingCommitment] =
+    Decoder[MinimumThroughputBillingCommitment].circeDecoder
 
   given circe.Encoder[AccountSettings] =
     circe.Encoder.forProduct1("minimumThroughputBillingCommitment")(x =>
@@ -33,6 +40,6 @@ object AccountSettings:
     )
   given circe.Decoder[AccountSettings] = x =>
     x.downField("minimumThroughputBillingCommitment")
-      .as[Option[Int]]
+      .as[Option[MinimumThroughputBillingCommitment]]
       .map(AccountSettings(_))
   given Eq[AccountSettings] = Eq.fromUniversalEquals

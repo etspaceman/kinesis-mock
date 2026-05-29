@@ -438,10 +438,38 @@ object arbitrary:
   given Arbitrary[DescribeAccountSettingsRequest] =
     Arbitrary(Gen.const(DescribeAccountSettingsRequest()))
 
+  given Arbitrary[MinimumThroughputBillingCommitmentStatus] =
+    Arbitrary(
+      Gen.oneOf(MinimumThroughputBillingCommitmentStatus.values)
+    )
+
+  given Arbitrary[MinimumThroughputBillingCommitment] =
+    Arbitrary(
+      for
+        status <- Arbitrary
+          .arbitrary[MinimumThroughputBillingCommitmentStatus]
+        startedAt <- Gen.option(nowGen)
+        endedAt <- Gen.option(nowGen)
+        earliestAllowedEndAt <- Gen.option(nowGen)
+      yield MinimumThroughputBillingCommitment(
+        status,
+        startedAt,
+        endedAt,
+        earliestAllowedEndAt
+      )
+    )
+
+  given Arbitrary[MinimumThroughputBillingCommitmentInput] =
+    Arbitrary(
+      Arbitrary
+        .arbitrary[MinimumThroughputBillingCommitmentStatus]
+        .map(MinimumThroughputBillingCommitmentInput(_))
+    )
+
   given Arbitrary[DescribeAccountSettingsResponse] =
     Arbitrary(
       Gen
-        .option(Gen.choose(0, 10000))
+        .option(Arbitrary.arbitrary[MinimumThroughputBillingCommitment])
         .map(DescribeAccountSettingsResponse(_))
     )
 
@@ -775,15 +803,15 @@ object arbitrary:
   given Arbitrary[SubscribeToShardEvent] =
     Arbitrary(
       for
-        records <- Gen.choose(0, 10).flatMap(n =>
-          Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord])
-        )
+        records <- Gen
+          .choose(0, 10)
+          .flatMap(n => Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord]))
         continuationSequenceNumber <- Arbitrary.arbitrary[SequenceNumber]
         millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
         childShards <- Gen.option(
-          Gen.choose(0, 3).flatMap(n =>
-            Gen.listOfN(n, childShardGen).map(_.toVector)
-          )
+          Gen
+            .choose(0, 3)
+            .flatMap(n => Gen.listOfN(n, childShardGen).map(_.toVector))
         )
       yield SubscribeToShardEvent(
         scala.collection.immutable.Queue.from(records),
@@ -1175,7 +1203,7 @@ object arbitrary:
   given Arbitrary[UpdateAccountSettingsRequest] =
     Arbitrary(
       Gen
-        .option(Gen.choose(0, 10000))
+        .option(Arbitrary.arbitrary[MinimumThroughputBillingCommitmentInput])
         .map(UpdateAccountSettingsRequest(_))
     )
 
@@ -1219,11 +1247,11 @@ object arbitrary:
     Arbitrary(
       for
         (streamName, streamArn) <- streamNameOrArnGen
-        warmThroughputMiBps <- Gen.choose(0, 1000)
+        warmThroughput <- Arbitrary.arbitrary[WarmThroughput]
       yield UpdateStreamWarmThroughputResponse(
         streamName,
         streamArn,
-        warmThroughputMiBps
+        warmThroughput
       )
     )
 

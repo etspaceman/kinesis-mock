@@ -17,26 +17,68 @@
 package kinesis.mock
 package api
 
+import java.time.Instant
+
 import cats.Eq
 import io.circe
 
+import kinesis.mock.instances.circe.*
+import kinesis.mock.models.*
+
 final case class DescribeAccountSettingsResponse(
-    minimumThroughputBillingCommitment: Option[Int]
+    minimumThroughputBillingCommitment: Option[
+      MinimumThroughputBillingCommitment
+    ]
 )
 
 object DescribeAccountSettingsResponse:
-  given describeAccountSettingsResponseCirceEncoder
-      : circe.Encoder[DescribeAccountSettingsResponse] =
+  def describeAccountSettingsResponseCirceEncoder(using
+      EI: circe.Encoder[Instant]
+  ): circe.Encoder[DescribeAccountSettingsResponse] =
+    given circe.Encoder[MinimumThroughputBillingCommitment] =
+      MinimumThroughputBillingCommitment.minimumThroughputBillingCommitmentCirceEncoder
     circe.Encoder.forProduct1("MinimumThroughputBillingCommitment")(
       _.minimumThroughputBillingCommitment
     )
+
+  def describeAccountSettingsResponseCirceDecoder(using
+      DI: circe.Decoder[Instant]
+  ): circe.Decoder[DescribeAccountSettingsResponse] =
+    given circe.Decoder[MinimumThroughputBillingCommitment] =
+      MinimumThroughputBillingCommitment.minimumThroughputBillingCommitmentCirceDecoder
+    x =>
+      x.downField("MinimumThroughputBillingCommitment")
+        .as[Option[MinimumThroughputBillingCommitment]]
+        .map(DescribeAccountSettingsResponse(_))
+
+  given describeAccountSettingsResponseCirceEncoder
+      : circe.Encoder[DescribeAccountSettingsResponse] =
+    describeAccountSettingsResponseCirceEncoder(using instantDoubleCirceEncoder)
+
   given describeAccountSettingsResponseCirceDecoder
-      : circe.Decoder[DescribeAccountSettingsResponse] = x =>
-    x.downField("MinimumThroughputBillingCommitment")
-      .as[Option[Int]]
-      .map(DescribeAccountSettingsResponse(_))
+      : circe.Decoder[DescribeAccountSettingsResponse] =
+    describeAccountSettingsResponseCirceDecoder(using instantDoubleCirceDecoder)
+
   given describeAccountSettingsResponseEncoder
-      : Encoder[DescribeAccountSettingsResponse] = Encoder.derive
+      : Encoder[DescribeAccountSettingsResponse] = Encoder.instance(
+    describeAccountSettingsResponseCirceEncoder(using
+      instantDoubleCirceEncoder
+    ),
+    describeAccountSettingsResponseCirceEncoder(using instantLongCirceEncoder)
+  )
   given describeAccountSettingsResponseDecoder
-      : Decoder[DescribeAccountSettingsResponse] = Decoder.derive
-  given Eq[DescribeAccountSettingsResponse] = Eq.fromUniversalEquals
+      : Decoder[DescribeAccountSettingsResponse] = Decoder.instance(
+    describeAccountSettingsResponseCirceDecoder(using
+      instantDoubleCirceDecoder
+    ),
+    describeAccountSettingsResponseCirceDecoder(using instantLongCirceDecoder)
+  )
+  given Eq[DescribeAccountSettingsResponse] = (x, y) =>
+    (
+      x.minimumThroughputBillingCommitment,
+      y.minimumThroughputBillingCommitment
+    ) match
+      case (None, None)       => true
+      case (Some(a), Some(b)) =>
+        Eq[MinimumThroughputBillingCommitment].eqv(a, b)
+      case _ => false

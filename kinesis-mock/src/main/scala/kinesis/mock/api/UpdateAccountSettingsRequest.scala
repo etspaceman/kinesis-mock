@@ -19,34 +19,56 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
-import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.*
-import kinesis.mock.syntax.either.*
+
+final case class MinimumThroughputBillingCommitmentInput(
+    status: MinimumThroughputBillingCommitmentStatus
+)
+
+object MinimumThroughputBillingCommitmentInput:
+  given circe.Encoder[MinimumThroughputBillingCommitmentInput] =
+    circe.Encoder.forProduct1("Status")(_.status)
+  given circe.Decoder[MinimumThroughputBillingCommitmentInput] = x =>
+    x.downField("Status")
+      .as[MinimumThroughputBillingCommitmentStatus]
+      .map(MinimumThroughputBillingCommitmentInput(_))
+  given Eq[MinimumThroughputBillingCommitmentInput] = Eq.fromUniversalEquals
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_UpdateAccountSettings.html
 final case class UpdateAccountSettingsRequest(
-    minimumThroughputBillingCommitment: Option[Int]
+    minimumThroughputBillingCommitment: Option[
+      MinimumThroughputBillingCommitmentInput
+    ]
 ):
   def updateAccountSettings(
       streamsRef: Ref[IO, Streams]
-  ): IO[Response[Unit]] = streamsRef.modify { streams =>
-    (
-      if minimumThroughputBillingCommitment.exists(_ < 0) then
-        InvalidArgumentException(
-          "MinimumThroughputBillingCommitment must be non-negative"
-        ).asLeft
-      else Right(())
-    ).map(_ =>
+  ): IO[Response[Unit]] = for
+    now <- Utils.now
+    _ <- streamsRef.update { streams =>
+      val nextCommitment = minimumThroughputBillingCommitment.flatMap { input =>
+        input.status match
+          case MinimumThroughputBillingCommitmentStatus.ENABLED =>
+            Some(
+              MinimumThroughputBillingCommitment(
+                status = MinimumThroughputBillingCommitmentStatus.ENABLED,
+                startedAt = Some(now),
+                endedAt = None,
+                earliestAllowedEndAt = Some(now)
+              )
+            )
+          case MinimumThroughputBillingCommitmentStatus.DISABLED => None
+          case MinimumThroughputBillingCommitmentStatus.ENABLED_UNTIL_EARLIEST_ALLOWED_END =>
+            streams.accountSettings.minimumThroughputBillingCommitment
+      }
       streams.copy(accountSettings =
-        streams.accountSettings.copy(minimumThroughputBillingCommitment =
-          minimumThroughputBillingCommitment
+        streams.accountSettings.copy(
+          minimumThroughputBillingCommitment = nextCommitment
         )
       )
-    ).map(updated => (updated, ()))
-      .sequenceWithDefault(streams)
-  }
+    }
+  yield Right(())
 
 object UpdateAccountSettingsRequest:
   given updateAccountSettingsRequestCirceEncoder
@@ -57,7 +79,7 @@ object UpdateAccountSettingsRequest:
   given updateAccountSettingsRequestCirceDecoder
       : circe.Decoder[UpdateAccountSettingsRequest] = x =>
     x.downField("MinimumThroughputBillingCommitment")
-      .as[Option[Int]]
+      .as[Option[MinimumThroughputBillingCommitmentInput]]
       .map(UpdateAccountSettingsRequest(_))
   given updateAccountSettingsRequestEncoder
       : Encoder[UpdateAccountSettingsRequest] = Encoder.derive

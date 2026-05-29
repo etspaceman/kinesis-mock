@@ -25,22 +25,30 @@ class DescribeAccountSettingsTests extends munit.CatsEffectSuite:
   test("It should return the default account settings"):
     for
       streamsRef <- Ref.of[IO, Streams](Streams.empty)
-      res <- DescribeAccountSettingsRequest().describeAccountSettings(streamsRef)
+      res <- DescribeAccountSettingsRequest().describeAccountSettings(
+        streamsRef
+      )
     yield assertEquals(
       res,
       DescribeAccountSettingsResponse(None)
     )
 
   test("It should return the configured minimum throughput billing commitment"):
+    val commitment =
+      MinimumThroughputBillingCommitment(
+        MinimumThroughputBillingCommitmentStatus.ENABLED
+      )
     for
       streamsRef <- Ref.of[IO, Streams](Streams.empty)
       _ <- streamsRef.update(
         _.copy(accountSettings =
-          AccountSettings(minimumThroughputBillingCommitment = Some(100))
+          AccountSettings(minimumThroughputBillingCommitment = Some(commitment))
         )
       )
-      res <- DescribeAccountSettingsRequest().describeAccountSettings(streamsRef)
+      res <- DescribeAccountSettingsRequest().describeAccountSettings(
+        streamsRef
+      )
     yield assertEquals(
       res,
-      DescribeAccountSettingsResponse(Some(100))
+      DescribeAccountSettingsResponse(Some(commitment))
     )
