@@ -32,9 +32,9 @@ class CapacityControlsIntegrationTests extends AwsFunctionalTests:
   private def createOnDemandStream(
       resources: KinesisFunctionalTestResources,
       streamName: String,
-      maxRecordSizeInKiB: Option[Int] = None,
-      warmThroughputMiBps: Option[Int] = None,
-      tags: Map[String, String] = Map.empty
+      maxRecordSizeInKiB: Option[Int],
+      warmThroughputMiBps: Option[Int],
+      tags: Map[String, String]
   ): IO[Unit] =
     for
       _ <- resources.kinesisClient.createStream {
@@ -140,7 +140,7 @@ class CapacityControlsIntegrationTests extends AwsFunctionalTests:
     val streamName = streamNameGen.one.streamName
     val resourceCleanup = deleteStream(resources, streamName).attempt.void
     val test = for
-      _ <- createOnDemandStream(resources, streamName)
+      _ <- createOnDemandStream(resources, streamName, None, None, Map.empty)
       arnSummary <- describeStreamSummary(resources.kinesisClient, streamName)
       streamArn = arnSummary.streamDescriptionSummary().streamARN()
       _ <- resources.kinesisClient

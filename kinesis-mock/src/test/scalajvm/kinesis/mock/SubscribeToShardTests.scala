@@ -102,7 +102,7 @@ class SubscribeToShardTests extends AwsFunctionalTests:
         assertEquals(r.partitionKey(), partitionKey)
         assertEquals(r.data().asUtf8String(), payload)
         assert(
-          r.sequenceNumber() != null && r.sequenceNumber().nonEmpty,
+          Option(r.sequenceNumber()).exists(_.nonEmpty),
           s"sequence number missing on record: $r"
         )
     }

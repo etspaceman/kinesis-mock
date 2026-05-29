@@ -39,9 +39,9 @@ class DeleteResourcePolicyTests
           .deleteResourcePolicy(streamsRef)
         getRes <- GetResourcePolicyRequest(arn).getResourcePolicy(streamsRef)
       yield assert(
-        delRes.isRight && getRes.left.exists(
-          _.isInstanceOf[ResourceNotFoundException]
-        ),
+        delRes.isRight && (getRes match
+          case Left(_: ResourceNotFoundException) => true
+          case _                                  => false),
         s"delRes: $delRes\ngetRes: $getRes"
       )
     }
@@ -88,7 +88,9 @@ class DeleteResourcePolicyTests
         res <- DeleteResourcePolicyRequest(ResourceArn.Stream(streamArn))
           .deleteResourcePolicy(streamsRef)
       yield assert(
-        res.left.exists(_.isInstanceOf[ResourceNotFoundException]),
+        res match
+          case Left(_: ResourceNotFoundException) => true
+          case _                                  => false,
         s"res: $res"
       )
     }

@@ -75,7 +75,9 @@ class GetResourcePolicyTests
       req = GetResourcePolicyRequest(ResourceArn.Stream(streamArn))
       res <- req.getResourcePolicy(streamsRef)
     yield assert(
-      res.left.exists(_.isInstanceOf[ResourceNotFoundException]),
+      res match
+        case Left(_: ResourceNotFoundException) => true
+        case _                                  => false,
       s"res: $res"
     )
   })
@@ -87,7 +89,9 @@ class GetResourcePolicyTests
         req = GetResourcePolicyRequest(ResourceArn.Stream(streamArn))
         res <- req.getResourcePolicy(streamsRef)
       yield assert(
-        res.left.exists(_.isInstanceOf[ResourceNotFoundException]),
+        res match
+          case Left(_: ResourceNotFoundException) => true
+          case _                                  => false,
         s"res: $res"
       )
     }
