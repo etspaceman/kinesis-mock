@@ -854,6 +854,21 @@ object KinesisMockRoutes:
                   )
                 )
           )
+      case KinesisAction.PutResourcePolicy =>
+        request
+          .attemptAs[PutResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .putResourcePolicy(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
       case KinesisAction.RegisterStreamConsumer =>
         request
           .attemptAs[RegisterStreamConsumerRequest]

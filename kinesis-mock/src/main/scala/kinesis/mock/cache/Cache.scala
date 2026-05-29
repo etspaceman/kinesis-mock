@@ -1527,6 +1527,45 @@ class Cache private (
       ) *>
       req.subscribeToShard(streamsRef, subscriptionRegistry)
 
+  def putResourcePolicy(
+      req: PutResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing PutResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.putResourcePolicy.tryAcquireRelease(
+          req
+            .putResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Putting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully put resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for PutResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for PutResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
   def tagResource(
       req: TagResourceRequest,
       context: LoggingContext,

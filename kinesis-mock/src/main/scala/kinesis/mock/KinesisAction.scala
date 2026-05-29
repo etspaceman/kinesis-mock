@@ -47,6 +47,7 @@ object KinesisAction extends Enum[KinesisAction]:
   case object MergeShards extends KinesisAction
   case object PutRecord extends KinesisAction
   case object PutRecords extends KinesisAction
+  case object PutResourcePolicy extends KinesisAction
   case object RegisterStreamConsumer extends KinesisAction
   case object RemoveTagsFromStream extends KinesisAction
   case object SplitShard extends KinesisAction

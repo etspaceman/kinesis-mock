@@ -36,6 +36,7 @@ final case class CacheSemaphores private (
     listTagsForResource: Semaphore[IO],
     listTagsForStream: Semaphore[IO],
     mergeShards: Semaphore[IO],
+    putResourcePolicy: Semaphore[IO],
     splitShard: Semaphore[IO],
     tagResource: Semaphore[IO],
     untagResource: Semaphore[IO],
@@ -61,6 +62,7 @@ object CacheSemaphores:
     listTagsForResource <- Semaphore[IO](5)
     listTagsForStream <- Semaphore[IO](5)
     mergeShards <- Semaphore[IO](5)
+    putResourcePolicy <- Semaphore[IO](5)
     splitShard <- Semaphore[IO](5)
     tagResource <- Semaphore[IO](5)
     untagResource <- Semaphore[IO](5)
@@ -83,6 +85,7 @@ object CacheSemaphores:
     listTagsForResource,
     listTagsForStream,
     mergeShards,
+    putResourcePolicy,
     splitShard,
     tagResource,
     untagResource,

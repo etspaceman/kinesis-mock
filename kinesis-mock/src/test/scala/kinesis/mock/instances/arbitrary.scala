@@ -274,6 +274,25 @@ object arbitrary:
       yield AddTagsToStreamRequest(streamName, streamArn, tags)
     )
 
+  val resourcePolicyGen: Gen[String] =
+    Gen.alphaNumStr.suchThat(_.nonEmpty)
+
+  given Arbitrary[PutResourcePolicyRequest] =
+    Arbitrary(
+      for
+        streamArn <- streamArnGen
+        useConsumer <- Arbitrary.arbitrary[Boolean]
+        consumerName <- consumerNameGen
+        creationTime <- nowGen
+        policy <- resourcePolicyGen
+      yield
+        val arn =
+          if useConsumer then
+            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
+          else streamArn.streamArn
+        PutResourcePolicyRequest(arn, policy)
+    )
+
   given Arbitrary[TagResourceRequest] =
     Arbitrary(
       for
