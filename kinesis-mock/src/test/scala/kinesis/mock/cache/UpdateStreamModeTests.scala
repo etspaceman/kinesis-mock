@@ -59,7 +59,8 @@ class UpdateStreamModeTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -78,7 +79,8 @@ class UpdateStreamModeTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.updateStreamModeDuration.plus(400.millis))
@@ -87,7 +89,8 @@ class UpdateStreamModeTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(

@@ -38,7 +38,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 import kinesis.mock.api.*
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s.{given, *}
-import kinesis.mock.models.AwsRegion
+import kinesis.mock.models.{AwsAccountId, AwsRegion}
 
 class KinesisMockRoutes(
     cache: Cache,
@@ -288,7 +288,8 @@ class KinesisMockRoutes(
                               contentType,
                               Try(
                                 authParsed("Credential").split("/")(2)
-                              ).toOption.flatMap(AwsRegion.withNameOption)
+                              ).toOption.flatMap(AwsRegion.withNameOption),
+                              None
                             )
                           case None =>
                             logger.warn(lcWithContentType.context)(
@@ -377,7 +378,8 @@ class KinesisMockRoutes(
                             queryAuthCredential.flatMap(x =>
                               Try(x.split("/")(2)).toOption
                                 .flatMap(AwsRegion.withNameOption)
-                            )
+                            ),
+                            None
                           )
                         case None =>
                           logger.warn(lcWithContentType.context)(
@@ -497,7 +499,8 @@ object KinesisMockRoutes:
       responseHeaders: Vector[Header.ToRaw],
       loggingContext: LoggingContext,
       contentType: `Content-Type`,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   )(using
       errEE: EntityEncoder[IO, ErrorResponse],
       descAccountSettingsEE: EntityEncoder[
@@ -541,7 +544,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .addTagsToStream(req, loggingContext, isCbor, region)
+                .addTagsToStream(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -556,7 +559,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .createStream(req, loggingContext, isCbor, region)
+                .createStream(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -571,7 +574,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .decreaseStreamRetention(req, loggingContext, isCbor, region)
+                .decreaseStreamRetention(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -586,7 +595,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .deleteStream(req, loggingContext, isCbor, region)
+                .deleteStream(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -627,7 +636,7 @@ object KinesisMockRoutes:
       case KinesisAction.DescribeLimits =>
         request.as[Unit] *>
           cache
-            .describeLimits(loggingContext, region)
+            .describeLimits(loggingContext, region, accountId)
             .flatMap(
               _.fold(
                 err => handleKinesisMockError(err, responseHeaders),
@@ -641,7 +650,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStream(req, loggingContext, isCbor, region)
+                .describeStream(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -671,7 +680,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .describeStreamSummary(req, loggingContext, isCbor, region)
+                .describeStreamSummary(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -686,7 +701,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .disableEnhancedMonitoring(req, loggingContext, isCbor, region)
+                .disableEnhancedMonitoring(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -701,7 +722,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .enableEnhancedMonitoring(req, loggingContext, isCbor, region)
+                .enableEnhancedMonitoring(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -716,7 +743,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .getRecords(req, loggingContext, isCbor, region)
+                .getRecords(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -731,7 +758,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .getShardIterator(req, loggingContext, isCbor, region)
+                .getShardIterator(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -746,7 +773,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .increaseStreamRetention(req, loggingContext, isCbor, region)
+                .increaseStreamRetention(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -761,7 +794,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listShards(req, loggingContext, isCbor, region)
+                .listShards(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -791,7 +824,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listStreams(req, loggingContext, isCbor, region)
+                .listStreams(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -821,7 +854,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .listTagsForStream(req, loggingContext, isCbor, region)
+                .listTagsForStream(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -836,7 +869,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .mergeShards(req, loggingContext, isCbor, region)
+                .mergeShards(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -851,7 +884,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .putRecord(req, loggingContext, isCbor, region)
+                .putRecord(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -866,7 +899,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .putRecords(req, loggingContext, isCbor, region)
+                .putRecords(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -941,7 +974,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .removeTagsFromStream(req, loggingContext, isCbor, region)
+                .removeTagsFromStream(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -956,7 +995,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .splitShard(req, loggingContext, isCbor, region)
+                .splitShard(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -971,7 +1010,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .startStreamEncryption(req, loggingContext, isCbor, region)
+                .startStreamEncryption(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -986,7 +1031,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .stopStreamEncryption(req, loggingContext, isCbor, region)
+                .stopStreamEncryption(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -1066,7 +1117,13 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .updateMaxRecordSize(req, loggingContext, isCbor, region)
+                .updateMaxRecordSize(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region,
+                  accountId
+                )
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -1081,7 +1138,7 @@ object KinesisMockRoutes:
             err => handleDecodeError(err, responseHeaders),
             req =>
               cache
-                .updateShardCount(req, loggingContext, isCbor, region)
+                .updateShardCount(req, loggingContext, isCbor, region, accountId)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
@@ -1115,7 +1172,8 @@ object KinesisMockRoutes:
                   req,
                   loggingContext,
                   isCbor,
-                  region
+                  region,
+                  accountId
                 )
                 .flatMap(
                   _.fold(

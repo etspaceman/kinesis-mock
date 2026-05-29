@@ -142,7 +142,13 @@ object KinesisMockService extends ResourceApp.Forever:
     ): IO[Boolean] =
       val descReq = DescribeStreamSummaryRequest(Some(streamName), None)
       cache
-        .describeStreamSummary(descReq, context, isCbor = false, Some(region))
+        .describeStreamSummary(
+          descReq,
+          context,
+          isCbor = false,
+          Some(region),
+          None
+        )
         .map {
           case Left(_)  => false
           case Right(v) =>
@@ -155,7 +161,13 @@ object KinesisMockService extends ResourceApp.Forever:
           s"Initializing stream '${req.streamName}' " +
             s"(shardCount=${req.shardCount})"
         )
-        _ <- cache.createStream(req, context, isCbor = false, Some(region))
+        _ <- cache.createStream(
+          req,
+          context,
+          isCbor = false,
+          Some(region),
+          None
+        )
         _ <- retryingOnFailures[Boolean](
           RetryPolicies
             .limitRetries[IO](3)

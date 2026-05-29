@@ -56,7 +56,8 @@ class DescribeStreamTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             res <- cache
@@ -64,7 +65,8 @@ class DescribeStreamTests
                 DescribeStreamRequest(None, None, Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             shardSummary <- cache
@@ -80,7 +82,8 @@ class DescribeStreamTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(x => x.shards)

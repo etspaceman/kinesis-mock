@@ -82,7 +82,8 @@ class PersistenceTests
                   ),
                   context,
                   isCbor = false,
-                  Some(awsRegion)
+                  Some(awsRegion),
+                  None
                 )
                 .rethrow
               _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -95,7 +96,7 @@ class PersistenceTests
               )
               _ <- recordRequests.traverse(req =>
                 cache
-                  .putRecord(req, context, isCbor = false, Some(awsRegion))
+                  .putRecord(req, context, isCbor = false, Some(awsRegion), None)
                   .rethrow
               )
               _ <- cache.persistToDisk(context)
@@ -122,7 +123,8 @@ class PersistenceTests
                   ),
                   context,
                   isCbor = false,
-                  Some(awsRegion)
+                  Some(awsRegion),
+                  None
                 )
                 .rethrow
                 .map(_.shards.head)
@@ -138,7 +140,8 @@ class PersistenceTests
                   ),
                   context,
                   isCbor = false,
-                  Some(awsRegion)
+                  Some(awsRegion),
+                  None
                 )
                 .rethrow
                 .map(_.shardIterator)
@@ -147,7 +150,8 @@ class PersistenceTests
                   GetRecordsRequest(None, shardIterator, None),
                   context,
                   isCbor = false,
-                  Some(awsRegion)
+                  Some(awsRegion),
+                  None
                 )
                 .rethrow
             yield assert(

@@ -63,7 +63,8 @@ class ListStreamsTests extends munit.CatsEffectSuite:
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           )
@@ -72,7 +73,8 @@ class ListStreamsTests extends munit.CatsEffectSuite:
               ListStreamsRequest(None, None),
               context,
               isCbor = false,
-              Some(awsRegion)
+              Some(awsRegion),
+              None
             )
             .rethrow
         yield assert(

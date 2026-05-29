@@ -58,7 +58,8 @@ class DecreaseStreamRetentionPeriodTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -71,7 +72,8 @@ class DecreaseStreamRetentionPeriodTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- cache
@@ -83,7 +85,8 @@ class DecreaseStreamRetentionPeriodTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             res <- cache
@@ -91,7 +94,8 @@ class DecreaseStreamRetentionPeriodTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(

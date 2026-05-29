@@ -47,14 +47,15 @@ class Cache private (
   private def getStreamArn(
       streamArn: Option[StreamArn],
       streamName: Option[StreamName],
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[StreamArn] = IO.fromOption(
     streamArn.orElse(
       streamName.map(name =>
         StreamArn(
           region.getOrElse(config.awsRegion),
           name,
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
       )
     )
@@ -79,7 +80,8 @@ class Cache private (
       req: AddTagsToStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -95,7 +97,7 @@ class Cache private (
             .addTagsToStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatTap(
               _.fold(
@@ -124,7 +126,8 @@ class Cache private (
       req: RemoveTagsFromStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -140,7 +143,7 @@ class Cache private (
             .removeTagsFromStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatTap(
               _.fold(
@@ -170,7 +173,8 @@ class Cache private (
       req: CreateStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx = context + ("streamName" -> req.streamName.streamName)
     logger.debug(ctx.context)("Processing CreateStream request") *>
@@ -186,7 +190,7 @@ class Cache private (
                 config.shardLimit,
                 config.onDemandStreamCountLimit,
                 region.getOrElse(config.awsRegion),
-                config.awsAccountId
+                accountId.getOrElse(config.awsAccountId)
               )
             _ <- createStreamsRes.fold(
               e =>
@@ -213,7 +217,7 @@ class Cache private (
                         StreamArn(
                           region.getOrElse(config.awsRegion),
                           req.streamName,
-                          config.awsAccountId
+                          accountId.getOrElse(config.awsAccountId)
                         )
                       )(x => x.copy(streamStatus = StreamStatus.ACTIVE))
                     )
@@ -236,7 +240,8 @@ class Cache private (
       req: DeleteStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -252,7 +257,7 @@ class Cache private (
             deleteStreamRes <- req.deleteStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             _ <- deleteStreamRes.fold(
               e =>
@@ -277,7 +282,8 @@ class Cache private (
                   streamArn <- getStreamArn(
                     req.streamArn,
                     req.streamName,
-                    region
+                    region,
+                    accountId
                   )
                   _ <- streamsRef.update(x => x.removeStream(streamArn))
                 yield ()
@@ -300,7 +306,8 @@ class Cache private (
       req: DecreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -316,7 +323,7 @@ class Cache private (
         .decreaseStreamRetention(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatTap(
           _.fold(
@@ -335,7 +342,8 @@ class Cache private (
       req: IncreaseStreamRetentionPeriodRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -351,7 +359,7 @@ class Cache private (
         .increaseStreamRetention(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatTap(
           _.fold(
@@ -411,7 +419,8 @@ class Cache private (
 
   def describeLimits(
       context: LoggingContext,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[DescribeLimitsResponse]] =
     logger.debug(context.context)("Processing DescribeLimits request") *>
       getSemaphores(region).flatMap(
@@ -422,7 +431,7 @@ class Cache private (
               config.onDemandStreamCountLimit,
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap(response =>
               logger
@@ -449,7 +458,8 @@ class Cache private (
       req: DescribeStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[DescribeStreamResponse]] =
     val ctx =
       context ++
@@ -467,7 +477,7 @@ class Cache private (
             .describeStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap { response =>
               response.fold(
@@ -501,7 +511,8 @@ class Cache private (
       req: DescribeStreamSummaryRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[DescribeStreamSummaryResponse]] =
     val ctx =
       context ++
@@ -519,7 +530,7 @@ class Cache private (
             .describeStreamSummary(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap(response =>
               response.fold(
@@ -766,7 +777,8 @@ class Cache private (
       req: DisableEnhancedMonitoringRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[DisableEnhancedMonitoringResponse]] =
     val ctx =
       context ++
@@ -782,7 +794,7 @@ class Cache private (
         .disableEnhancedMonitoring(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response.fold(
@@ -807,7 +819,8 @@ class Cache private (
       req: EnableEnhancedMonitoringRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[EnableEnhancedMonitoringResponse]] =
     val ctx =
       context ++
@@ -823,7 +836,7 @@ class Cache private (
         .enableEnhancedMonitoring(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response.fold(
@@ -848,7 +861,8 @@ class Cache private (
       req: ListShardsRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[ListShardsResponse]] =
     logger.debug(context.context)(
       "Processing ListShards request"
@@ -862,7 +876,7 @@ class Cache private (
             .listShards(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap(response =>
               response.fold(
@@ -940,7 +954,8 @@ class Cache private (
       req: ListStreamsRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[ListStreamsResponse]] =
     logger.debug(context.context)(
       "Processing ListStreams request"
@@ -954,7 +969,7 @@ class Cache private (
             .listStreams(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap(response =>
               response.fold(
@@ -990,7 +1005,8 @@ class Cache private (
       req: ListTagsForStreamRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[ListTagsForStreamResponse]] =
     val ctx =
       context ++
@@ -1008,7 +1024,7 @@ class Cache private (
             .listTagsForStream(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatMap(response =>
               response.fold(
@@ -1044,7 +1060,8 @@ class Cache private (
       req: StartStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -1060,7 +1077,7 @@ class Cache private (
         .startStreamEncryption(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response
@@ -1087,7 +1104,8 @@ class Cache private (
                       streamArn <- getStreamArn(
                         req.streamArn,
                         req.streamName,
-                        region
+                        region,
+                        accountId
                       )
                       _ <- streamsRef
                         .update(updated =>
@@ -1105,7 +1123,8 @@ class Cache private (
       req: StopStreamEncryptionRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -1121,7 +1140,7 @@ class Cache private (
         .stopStreamEncryption(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response
@@ -1149,7 +1168,8 @@ class Cache private (
                         streamArn <- getStreamArn(
                           req.streamArn,
                           req.streamName,
-                          region
+                          region,
+                          accountId
                         )
                         _ <- streamsRef
                           .update(updated =>
@@ -1168,7 +1188,8 @@ class Cache private (
       req: GetShardIteratorRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[GetShardIteratorResponse]] =
     val ctx =
       context ++
@@ -1184,7 +1205,7 @@ class Cache private (
         .getShardIterator(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response
@@ -1210,7 +1231,8 @@ class Cache private (
       req: GetRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[GetRecordsResponse]] =
     logger.debug(context.context)(
       "Processing GetRecords request"
@@ -1222,7 +1244,7 @@ class Cache private (
         .getRecords(
           streamsRef,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         .flatMap(response =>
           response
@@ -1248,7 +1270,8 @@ class Cache private (
       req: PutRecordRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[PutRecordResponse]] =
     val ctx =
       context ++
@@ -1262,7 +1285,7 @@ class Cache private (
       res <- req.putRecord(
         streamsRef,
         region.getOrElse(config.awsRegion),
-        config.awsAccountId
+        accountId.getOrElse(config.awsAccountId)
       )
       _ <- res.fold(
         e =>
@@ -1284,7 +1307,8 @@ class Cache private (
       req: PutRecordsRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[PutRecordsResponse]] =
     val ctx = context ++
       req.streamName.map(x => "streamName" -> x.streamName).toList ++
@@ -1297,7 +1321,7 @@ class Cache private (
       res <- req.putRecords(
         streamsRef,
         region.getOrElse(config.awsRegion),
-        config.awsAccountId
+        accountId.getOrElse(config.awsAccountId)
       )
       _ <- res.fold(
         e =>
@@ -1319,7 +1343,8 @@ class Cache private (
       req: MergeShardsRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -1337,7 +1362,7 @@ class Cache private (
             result <- req.mergeShards(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             _ <- result.fold(
               e =>
@@ -1363,7 +1388,8 @@ class Cache private (
                   streamArn <- getStreamArn(
                     req.streamArn,
                     req.streamName,
-                    region
+                    region,
+                    accountId
                   )
                   _ <- streamsRef
                     .update(updated =>
@@ -1387,7 +1413,8 @@ class Cache private (
       req: SplitShardRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[Unit]] =
     val ctx =
       context ++
@@ -1406,7 +1433,7 @@ class Cache private (
               streamsRef,
               config.shardLimit,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             _ <- result.fold(
               e =>
@@ -1432,7 +1459,8 @@ class Cache private (
                   streamArn <- getStreamArn(
                     req.streamArn,
                     req.streamName,
-                    region
+                    region,
+                    accountId
                   )
                   _ <- streamsRef
                     .update(updated =>
@@ -1456,7 +1484,8 @@ class Cache private (
       req: UpdateShardCountRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[UpdateShardCountResponse]] =
     val ctx =
       context ++
@@ -1472,7 +1501,7 @@ class Cache private (
           streamsRef,
           config.shardLimit,
           region.getOrElse(config.awsRegion),
-          config.awsAccountId
+          accountId.getOrElse(config.awsAccountId)
         )
         _ <- result.fold(
           e =>
@@ -1495,7 +1524,12 @@ class Cache private (
               _ <- logger.debug(context.context)(
                 s"Setting the stream to active"
               )
-              streamArn <- getStreamArn(req.streamArn, req.streamName, region)
+              streamArn <- getStreamArn(
+                req.streamArn,
+                req.streamName,
+                region,
+                accountId
+              )
               _ <- streamsRef
                 .update(updated =>
                   updated.findAndUpdateStream(
@@ -1848,7 +1882,8 @@ class Cache private (
       req: UpdateMaxRecordSizeRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[UpdateMaxRecordSizeResponse]] =
     val ctx =
       context ++
@@ -1864,7 +1899,7 @@ class Cache private (
             .updateMaxRecordSize(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatTap(
               _.fold(
@@ -1894,7 +1929,8 @@ class Cache private (
       req: UpdateStreamWarmThroughputRequest,
       context: LoggingContext,
       isCbor: Boolean,
-      region: Option[AwsRegion]
+      region: Option[AwsRegion],
+      accountId: Option[AwsAccountId]
   ): IO[Response[UpdateStreamWarmThroughputResponse]] =
     val ctx =
       context ++
@@ -1912,7 +1948,7 @@ class Cache private (
             .updateStreamWarmThroughput(
               streamsRef,
               region.getOrElse(config.awsRegion),
-              config.awsAccountId
+              accountId.getOrElse(config.awsAccountId)
             )
             .flatTap(
               _.fold(

@@ -58,7 +58,8 @@ class MergeShardsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -74,7 +75,8 @@ class MergeShardsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             describeStreamSummaryReq = DescribeStreamSummaryRequest(
@@ -86,7 +88,8 @@ class MergeShardsTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.mergeShardsDuration.plus(500.millis))
@@ -95,7 +98,8 @@ class MergeShardsTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             checkShards <- cache
@@ -111,7 +115,8 @@ class MergeShardsTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(

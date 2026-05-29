@@ -58,7 +58,8 @@ class UpdateShardCountTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.createStreamDuration.plus(400.millis))
@@ -72,7 +73,8 @@ class UpdateShardCountTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             describeStreamSummaryReq = DescribeStreamSummaryRequest(
@@ -84,7 +86,8 @@ class UpdateShardCountTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- IO.sleep(cacheConfig.updateShardCountDuration.plus(400.millis))
@@ -93,7 +96,8 @@ class UpdateShardCountTests
                 describeStreamSummaryReq,
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             checkShards <- cache
@@ -109,7 +113,8 @@ class UpdateShardCountTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
           yield assert(

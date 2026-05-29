@@ -56,7 +56,8 @@ class DisableEnhancedMonitoringTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             _ <- cache
@@ -68,7 +69,8 @@ class DisableEnhancedMonitoringTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             res <- cache
@@ -80,7 +82,8 @@ class DisableEnhancedMonitoringTests
                 ),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
             streamMonitoring <- cache
@@ -88,7 +91,8 @@ class DisableEnhancedMonitoringTests
                 DescribeStreamSummaryRequest(Some(streamName), None),
                 context,
                 isCbor = false,
-                Some(awsRegion)
+                Some(awsRegion),
+                None
               )
               .rethrow
               .map(
