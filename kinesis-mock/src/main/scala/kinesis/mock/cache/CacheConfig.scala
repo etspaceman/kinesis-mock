@@ -44,7 +44,8 @@ final case class CacheConfig(
     awsRegion: AwsRegion,
     persistConfig: PersistConfig,
     onDemandStreamCountLimit: Int,
-    logLevel: ConsoleLogger.LogLevel
+    logLevel: ConsoleLogger.LogLevel,
+    akidToAccountId: AkidAccountMap
 )
 
 final case class CacheConfigStep1(
@@ -64,7 +65,8 @@ final case class CacheConfigStep1(
     awsRegion: AwsRegion,
     persistConfig: PersistConfig,
     onDemandStreamCountLimit: Int,
-    logLevel: ConsoleLogger.LogLevel
+    logLevel: ConsoleLogger.LogLevel,
+    akidToAccountId: AkidAccountMap
 )
 
 object CacheConfig:
@@ -109,6 +111,9 @@ object CacheConfig:
     onDemandStreamCountLimit <- env("ON_DEMAND_STREAM_COUNT_LIMIT")
       .default("10")
       .as[Int]
+    akidToAccountId <- env("AKID_TO_ACCOUNT_ID")
+      .default("")
+      .as[AkidAccountMap]
     logLevel <- ConsoleLogger.LogLevel.read
   yield CacheConfigStep1(
     initializeStreamsStr,
@@ -127,7 +132,8 @@ object CacheConfig:
     awsRegion,
     persistConfig,
     onDemandStreamCountLimit,
-    logLevel
+    logLevel,
+    akidToAccountId
   )
 
   def read: ConfigValue[Effect, CacheConfig] = readStep1.flatMap(step1 =>
@@ -151,7 +157,8 @@ object CacheConfig:
             step1.awsRegion,
             step1.persistConfig,
             step1.onDemandStreamCountLimit,
-            step1.logLevel
+            step1.logLevel,
+            step1.akidToAccountId
           )
         )
 
@@ -177,14 +184,15 @@ object CacheConfig:
                 step1.awsRegion,
                 step1.persistConfig,
                 step1.onDemandStreamCountLimit,
-                step1.logLevel
+                step1.logLevel,
+                step1.akidToAccountId
               )
             )
         )
   )
 
   given Encoder[CacheConfig] =
-    Encoder.forProduct16(
+    Encoder.forProduct17(
       "initializeStreams",
       "createStreamDuration",
       "deleteStreamDuration",
@@ -200,7 +208,8 @@ object CacheConfig:
       "awsRegion",
       "persistConfig",
       "onDemandStreamCountLimit",
-      "logLevel"
+      "logLevel",
+      "akidToAccountId"
     )(x =>
       (
         x.initializeStreams,
@@ -218,7 +227,8 @@ object CacheConfig:
         x.awsRegion,
         x.persistConfig,
         x.onDemandStreamCountLimit,
-        x.logLevel
+        x.logLevel,
+        x.akidToAccountId
       )
     )
 
