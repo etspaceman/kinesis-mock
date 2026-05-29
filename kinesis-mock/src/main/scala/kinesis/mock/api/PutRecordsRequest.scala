@@ -62,7 +62,6 @@ final case class PutRecordsRequest(
                                 .validateExplicitHashKey(explHashKey)
                             case None => Right(())
                           ,
-                          CommonValidations.validateData(x.data),
                           CommonValidations
                             .computeShard(
                               x.partitionKey,
@@ -74,7 +73,7 @@ final case class PutRecordsRequest(
                                 .isShardOpen(shard)
                                 .map(_ => (shard, records))
                             }
-                        ).mapN { case (_, _, _, (shard, records)) =>
+                        ).mapN { case (_, _, (shard, records)) =>
                           (shard, records, x)
                         }
                       )
@@ -83,39 +82,18 @@ final case class PutRecordsRequest(
               )
           }
           .map { case (stream, recs) =>
-            val asRecords = PutRecordsRequest
-              .getIndexByShard(recs)
-              .map { case (shard, records, entry, index) =>
-                val seqNo = SequenceNumber.create(
-                  shard.createdAtTimestamp,
-                  shard.shardId.index,
-                  None,
-                  if records.isEmpty then Some(1 + index)
-                  else Some(1 + records.length + index),
-                  Some(now)
-                )
+            val limitBytes =
+              stream.maxRecordSizeInKiB.getOrElse(1024) * 1024
+            val (validRecs, asRecords) =
+              PutRecordsRequest.processEntries(
+                recs,
+                stream,
+                limitBytes,
+                now
+              )
 
-                (
-                  shard,
-                  records,
-                  KinesisRecord(
-                    now,
-                    entry.data,
-                    stream.encryptionType,
-                    entry.partitionKey,
-                    seqNo
-                  ),
-                  PutRecordsResultEntry(
-                    None,
-                    None,
-                    Some(seqNo),
-                    Some(shard.shardId.shardId)
-                  )
-                )
-              }
-
-            val newShards = asRecords
-              .groupBy { case (shard, currentRecords, _, _) =>
+            val newShards = validRecs
+              .groupBy { case (shard, currentRecords, _) =>
                 (shard, currentRecords)
               }
               .map { case ((shard, currentRecords), recordsToAdd) =>
@@ -133,10 +111,8 @@ final case class PutRecordsRequest(
               ),
               PutRecordsResponse(
                 stream.encryptionType,
-                0,
-                asRecords.map { case (_, _, _, entry) =>
-                  entry
-                }
+                asRecords.count(_.errorCode.isDefined),
+                asRecords
               )
             )
           }
@@ -145,16 +121,61 @@ final case class PutRecordsRequest(
     }
 
 object PutRecordsRequest:
-  private def getIndexByShard(
-      records: Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry)]
-  ): Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry, Int)] =
+  private def processEntries(
+      recs: Vector[(Shard, Vector[KinesisRecord], PutRecordsRequestEntry)],
+      stream: StreamData,
+      limitBytes: Int,
+      now: java.time.Instant
+  ): (
+      Vector[(Shard, Vector[KinesisRecord], KinesisRecord)],
+      Vector[PutRecordsResultEntry]
+  ) =
     val indexMap: HashMap[Shard, Int] = new HashMap()
-
-    records.map { case (shard, records, entry) =>
-      val i = indexMap.get(shard).fold(0)(_ + 1)
-      indexMap += shard -> i
-      (shard, records, entry, i)
+    val written =
+      Vector.newBuilder[(Shard, Vector[KinesisRecord], KinesisRecord)]
+    val results = Vector.newBuilder[PutRecordsResultEntry]
+    recs.foreach { case (shard, records, entry) =>
+      if entry.data.length > limitBytes then
+        results += PutRecordsResultEntry(
+          Some(PutRecordsErrorCode.InvalidArgumentException),
+          Some(
+            s"Record data size ${entry.data.length} exceeds the stream's max record size of $limitBytes bytes"
+          ),
+          None,
+          None
+        )
+      else
+        val i = indexMap.get(shard).fold(0)(_ + 1)
+        indexMap += shard -> i
+        val seqNo = SequenceNumber.create(
+          shard.createdAtTimestamp,
+          shard.shardId.index,
+          None,
+          if records.isEmpty then Some(1 + i)
+          else Some(1 + records.length + i),
+          Some(now)
+        )
+        written += (
+          (
+            shard,
+            records,
+            KinesisRecord(
+              now,
+              entry.data,
+              stream.encryptionType,
+              entry.partitionKey,
+              seqNo
+            )
+          )
+        )
+        results += PutRecordsResultEntry(
+          None,
+          None,
+          Some(seqNo),
+          Some(shard.shardId.shardId)
+        )
     }
+    (written.result(), results.result())
 
   given putRecordsRequestCirceEncoder: circe.Encoder[PutRecordsRequest] =
     circe.Encoder.forProduct3("Records", "StreamName", "StreamARN")(x =>

@@ -50,10 +50,16 @@ final case class PutRecordRequest(
               CommonValidations
                 .findStream(arn, streams)
                 .flatMap { stream =>
+                  val limitBytes =
+                    stream.maxRecordSizeInKiB.getOrElse(1024) * 1024
                   (
                     CommonValidations
                       .isStreamActiveOrUpdating(arn, streams),
-                    CommonValidations.validateData(data),
+                    if data.length > limitBytes then
+                      InvalidArgumentException(
+                        s"Record data size ${data.length} exceeds the stream's max record size of $limitBytes bytes"
+                      ).asLeft
+                    else Right(data),
                     sequenceNumberForOrdering match
                       case None        => Right(())
                       case Some(seqNo) =>
