@@ -57,14 +57,16 @@ final case class UpdateStreamWarmThroughputRequest(
               Right(
                 (
                   streams.updateStream(
-                    stream.copy(warmThroughputMiBps =
-                      Some(warmThroughputMiBps)
-                    )
+                    stream.copy(warmThroughputMiBps = Some(warmThroughputMiBps))
                   ),
                   UpdateStreamWarmThroughputResponse(
                     streamName,
                     streamArn,
-                    warmThroughputMiBps
+                    WarmThroughput(
+                      currentMiBps = stream.warmThroughputMiBps
+                        .getOrElse(warmThroughputMiBps),
+                      targetMiBps = warmThroughputMiBps
+                    )
                   )
                 )
               )

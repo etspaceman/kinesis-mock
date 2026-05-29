@@ -25,7 +25,7 @@ import kinesis.mock.models.*
 final case class UpdateStreamWarmThroughputResponse(
     streamName: Option[StreamName],
     streamArn: Option[StreamArn],
-    warmThroughputMiBps: Int
+    warmThroughput: WarmThroughput
 )
 
 object UpdateStreamWarmThroughputResponse:
@@ -34,18 +34,18 @@ object UpdateStreamWarmThroughputResponse:
     circe.Encoder.forProduct3(
       "StreamName",
       "StreamARN",
-      "WarmThroughputMiBps"
-    )(x => (x.streamName, x.streamArn, x.warmThroughputMiBps))
+      "WarmThroughput"
+    )(x => (x.streamName, x.streamArn, x.warmThroughput))
   given updateStreamWarmThroughputResponseCirceDecoder
       : circe.Decoder[UpdateStreamWarmThroughputResponse] = x =>
     for
       streamName <- x.downField("StreamName").as[Option[StreamName]]
       streamArn <- x.downField("StreamARN").as[Option[StreamArn]]
-      warmThroughputMiBps <- x.downField("WarmThroughputMiBps").as[Int]
+      warmThroughput <- x.downField("WarmThroughput").as[WarmThroughput]
     yield UpdateStreamWarmThroughputResponse(
       streamName,
       streamArn,
-      warmThroughputMiBps
+      warmThroughput
     )
   given updateStreamWarmThroughputResponseEncoder
       : Encoder[UpdateStreamWarmThroughputResponse] =
