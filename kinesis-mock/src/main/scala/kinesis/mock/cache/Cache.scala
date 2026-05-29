@@ -1527,13 +1527,52 @@ class Cache private (
       ) *>
       req.subscribeToShard(streamsRef, subscriptionRegistry)
 
+  def getResourcePolicy(
+      req: GetResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[GetResourcePolicyResponse]] =
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
+    logger.debug(ctx.context)("Processing GetResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.getResourcePolicy.tryAcquireRelease(
+          req
+            .getResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Getting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully got resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for GetResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for GetResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
   def putResourcePolicy(
       req: PutResourcePolicyRequest,
       context: LoggingContext,
       isCbor: Boolean,
       region: Option[AwsRegion]
   ): IO[Response[Unit]] =
-    val ctx = context + ("resourceArn" -> req.resourceArn)
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
     logger.debug(ctx.context)("Processing PutResourcePolicy request") *>
       logger.trace(ctx.addEncoded("request", req, isCbor).context)(
         "Logging request"

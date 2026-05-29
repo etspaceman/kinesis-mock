@@ -30,6 +30,7 @@ final case class CacheSemaphores private (
     deregisterStreamConsumer: Semaphore[IO],
     describeStreamConsumer: Semaphore[IO],
     describeStreamSummary: Semaphore[IO],
+    getResourcePolicy: Semaphore[IO],
     listShards: Semaphore[IO],
     listStreamConsumers: Semaphore[IO],
     listStreams: Semaphore[IO],
@@ -56,6 +57,7 @@ object CacheSemaphores:
     deregisterStreamConsumer <- Semaphore[IO](5)
     describeStreamConsumer <- Semaphore[IO](10)
     describeStreamSummary <- Semaphore[IO](20)
+    getResourcePolicy <- Semaphore[IO](5)
     listShards <- Semaphore[IO](100)
     listStreamConsumers <- Semaphore[IO](5)
     listStreams <- Semaphore[IO](5)
@@ -79,6 +81,7 @@ object CacheSemaphores:
     deregisterStreamConsumer,
     describeStreamConsumer,
     describeStreamSummary,
+    getResourcePolicy,
     listShards,
     listStreamConsumers,
     listStreams,

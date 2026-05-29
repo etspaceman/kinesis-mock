@@ -23,29 +23,28 @@ import org.scalacheck.effect.PropF
 import kinesis.mock.instances.arbitrary.given
 import kinesis.mock.models.*
 
-class PutResourcePolicyTests
+class GetResourcePolicyTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite:
-  test("It should store a policy for a stream ARN")(PropF.forAllF {
-    (streamArn: StreamArn) =>
+  test("It should return the policy after PutResourcePolicy on a stream ARN")(
+    PropF.forAllF { (streamArn: StreamArn) =>
       val policy = """{"Version":"2012-10-17","Statement":[]}"""
+      val arn = ResourceArn.Stream(streamArn)
       for
         now <- Utils.now
         streams = Streams.empty.addStream(1, streamArn, None, now)
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = PutResourcePolicyRequest(ResourceArn.Stream(streamArn), policy)
-        res <- req.putResourcePolicy(streamsRef)
-        s <- streamsRef.get
+        _ <- PutResourcePolicyRequest(arn, policy).putResourcePolicy(streamsRef)
+        res <- GetResourcePolicyRequest(arn).getResourcePolicy(streamsRef)
       yield assert(
-        res.isRight && s.resourcePolicies
-          .get(streamArn.streamArn)
-          .contains(policy),
-        s"req: $req\nres: $res"
+        res.exists(_.policy == policy),
+        s"res: $res"
       )
-  })
+    }
+  )
 
-  test("It should store a policy for a consumer ARN")(PropF.forAllF {
-    (streamArn: StreamArn, consumerName: ConsumerName) =>
+  test("It should return the policy after PutResourcePolicy on a consumer ARN")(
+    PropF.forAllF { (streamArn: StreamArn, consumerName: ConsumerName) =>
       val policy = """{"Version":"2012-10-17","Statement":[]}"""
       for
         now <- Utils.now
@@ -56,30 +55,40 @@ class PutResourcePolicyTests
         )
         streams = Streams.empty.updateStream(stream)
         streamsRef <- Ref.of[IO, Streams](streams)
-        req = PutResourcePolicyRequest(
-          ResourceArn.Consumer(consumer.consumerArn),
-          policy
-        )
-        res <- req.putResourcePolicy(streamsRef)
-        s <- streamsRef.get
+        arn = ResourceArn.Consumer(consumer.consumerArn)
+        _ <- PutResourcePolicyRequest(arn, policy).putResourcePolicy(streamsRef)
+        res <- GetResourcePolicyRequest(arn).getResourcePolicy(streamsRef)
       yield assert(
-        res.isRight && s.resourcePolicies
-          .get(consumer.consumerArn.consumerArn)
-          .contains(policy),
-        s"req: $req\nres: $res"
+        res.exists(_.policy == policy),
+        s"res: $res"
       )
+    }
+  )
+
+  test(
+    "It should return ResourceNotFoundException when no policy was ever set"
+  )(PropF.forAllF { (streamArn: StreamArn) =>
+    for
+      now <- Utils.now
+      streams = Streams.empty.addStream(1, streamArn, None, now)
+      streamsRef <- Ref.of[IO, Streams](streams)
+      req = GetResourcePolicyRequest(ResourceArn.Stream(streamArn))
+      res <- req.getResourcePolicy(streamsRef)
+    yield assert(
+      res.left.exists(_.isInstanceOf[ResourceNotFoundException]),
+      s"res: $res"
+    )
   })
 
-  test("It should reject an unknown stream ARN with ResourceNotFoundException")(
+  test("It should return ResourceNotFoundException for an unknown ARN")(
     PropF.forAllF { (streamArn: StreamArn) =>
-      val policy = "{}"
       for
         streamsRef <- Ref.of[IO, Streams](Streams.empty)
-        req = PutResourcePolicyRequest(ResourceArn.Stream(streamArn), policy)
-        res <- req.putResourcePolicy(streamsRef)
+        req = GetResourcePolicyRequest(ResourceArn.Stream(streamArn))
+        res <- req.getResourcePolicy(streamsRef)
       yield assert(
         res.left.exists(_.isInstanceOf[ResourceNotFoundException]),
-        s"req: $req\nres: $res"
+        s"res: $res"
       )
     }
   )

@@ -37,6 +37,7 @@ object KinesisAction extends Enum[KinesisAction]:
   case object DisableEnhancedMonitoring extends KinesisAction
   case object EnableEnhancedMonitoring extends KinesisAction
   case object GetRecords extends KinesisAction
+  case object GetResourcePolicy extends KinesisAction
   case object GetShardIterator extends KinesisAction
   case object IncreaseStreamRetentionPeriod extends KinesisAction
   case object ListShards extends KinesisAction

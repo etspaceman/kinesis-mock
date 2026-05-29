@@ -19,6 +19,7 @@ package models
 
 import cats.Eq
 import cats.syntax.all.*
+import io.circe
 
 enum ResourceArn(val resourceArn: String):
   case Stream(streamArn: StreamArn) extends ResourceArn(streamArn.streamArn)
@@ -54,4 +55,16 @@ object ResourceArn:
           ResourceArn.Stream(_)
         )
 
-  given Eq[ResourceArn] = Eq.fromUniversalEquals
+  given resourceArnCirceEncoder: circe.Encoder[ResourceArn] =
+    circe.Encoder[String].contramap(_.resourceArn)
+  given resourceArnCirceDecoder: circe.Decoder[ResourceArn] =
+    circe.Decoder[String].emap(fromString(_).leftMap(_.getMessage))
+  given resourceArnEncoder: kinesis.mock.Encoder[ResourceArn] =
+    kinesis.mock.Encoder.derive
+  given resourceArnDecoder: kinesis.mock.Decoder[ResourceArn] =
+    kinesis.mock.Decoder.derive
+  given Eq[ResourceArn] = (x, y) =>
+    (x, y) match
+      case (Stream(a), Stream(b))     => a === b
+      case (Consumer(a), Consumer(b)) => a === b
+      case _                          => false

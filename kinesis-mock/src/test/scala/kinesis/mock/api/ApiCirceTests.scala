@@ -50,6 +50,8 @@ class ApiCirceTests extends CirceTests:
   identityLawTest[PutRecordsRequestEntry]
   identityLawTest[PutRecordsResponse]
   identityLawTest[PutRecordsResultEntry]
+  identityLawTest[GetResourcePolicyRequest]
+  identityLawTest[GetResourcePolicyResponse]
   identityLawTest[PutResourcePolicyRequest]
   identityLawTest[RegisterStreamConsumerRequest]
   identityLawTest[SplitShardRequest]

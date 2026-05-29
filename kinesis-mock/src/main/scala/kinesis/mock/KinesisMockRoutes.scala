@@ -507,6 +507,7 @@ object KinesisMockRoutes:
       disableMonitoringEE: EntityEncoder[IO, DisableEnhancedMonitoringResponse],
       enableMonitoringEE: EntityEncoder[IO, EnableEnhancedMonitoringResponse],
       getRecordsEE: EntityEncoder[IO, GetRecordsResponse],
+      getResourcePolicyEE: EntityEncoder[IO, GetResourcePolicyResponse],
       getShardIteratorEE: EntityEncoder[IO, GetShardIteratorResponse],
       listShardsEE: EntityEncoder[IO, ListShardsResponse],
       listStreamConsumersEE: EntityEncoder[IO, ListStreamConsumersResponse],
@@ -847,6 +848,21 @@ object KinesisMockRoutes:
             req =>
               cache
                 .putRecords(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
+      case KinesisAction.GetResourcePolicy =>
+        request
+          .attemptAs[GetResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .getResourcePolicy(req, loggingContext, isCbor, region)
                 .flatMap(
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),

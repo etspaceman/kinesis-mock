@@ -19,6 +19,7 @@ package api
 
 import cats.Eq
 import cats.effect.{IO, Ref}
+import cats.syntax.all.*
 import io.circe
 
 import kinesis.mock.models.*
@@ -27,33 +28,22 @@ import kinesis.mock.validations.CommonValidations
 
 // https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutResourcePolicy.html
 final case class PutResourcePolicyRequest(
-    resourceArn: String,
+    resourceArn: ResourceArn,
     policy: String
 ):
   def putResourcePolicy(
       streamsRef: Ref[IO, Streams]
   ): IO[Response[Unit]] = streamsRef.modify { streams =>
-    ResourceArn
-      .fromString(resourceArn)
-      .flatMap {
-        case ResourceArn.Stream(streamArn) =>
-          CommonValidations
-            .findStream(streamArn, streams)
-            .map(_ =>
-              streams.copy(resourcePolicies =
-                streams.resourcePolicies.updated(resourceArn, policy)
-              )
-            )
-        case ResourceArn.Consumer(consumerArn) =>
-          CommonValidations
-            .findStreamByConsumerArn(consumerArn, streams)
-            .map(_ =>
-              streams.copy(resourcePolicies =
-                streams.resourcePolicies.updated(resourceArn, policy)
-              )
-            )
-      }
-      .map(updated => (updated, ()))
+    (resourceArn match
+      case ResourceArn.Stream(streamArn) =>
+        CommonValidations.findStream(streamArn, streams).void
+      case ResourceArn.Consumer(consumerArn) =>
+        CommonValidations.findStreamByConsumerArn(consumerArn, streams).void
+    ).map(_ =>
+      streams.copy(resourcePolicies =
+        streams.resourcePolicies.updated(resourceArn.resourceArn, policy)
+      )
+    ).map(updated => (updated, ()))
       .sequenceWithDefault(streams)
   }
 
@@ -66,11 +56,12 @@ object PutResourcePolicyRequest:
   given putResourcePolicyRequestCirceDecoder
       : circe.Decoder[PutResourcePolicyRequest] = x =>
     for
-      resourceArn <- x.downField("ResourceARN").as[String]
+      resourceArn <- x.downField("ResourceARN").as[ResourceArn]
       policy <- x.downField("Policy").as[String]
     yield PutResourcePolicyRequest(resourceArn, policy)
   given putResourcePolicyRequestEncoder: Encoder[PutResourcePolicyRequest] =
     Encoder.derive
   given putResourcePolicyRequestDecoder: Decoder[PutResourcePolicyRequest] =
     Decoder.derive
-  given Eq[PutResourcePolicyRequest] = Eq.fromUniversalEquals
+  given Eq[PutResourcePolicyRequest] = (x, y) =>
+    x.resourceArn === y.resourceArn && x.policy === y.policy

@@ -57,6 +57,8 @@ class ApiCodecTests extends CodecTests:
   identityLawTest[PutRecordsRequestEntry]
   identityLawTest[PutRecordsResponse]
   identityLawTest[PutRecordsResultEntry]
+  identityLawTest[GetResourcePolicyRequest]
+  identityLawTest[GetResourcePolicyResponse]
   identityLawTest[PutResourcePolicyRequest]
   identityLawTest[RegisterStreamConsumerRequest]
   identityLawTest[RegisterStreamConsumerResponse]

@@ -277,20 +277,33 @@ object arbitrary:
   val resourcePolicyGen: Gen[String] =
     Gen.alphaNumStr.suchThat(_.nonEmpty)
 
+  val resourceArnGen: Gen[ResourceArn] =
+    for
+      streamArn <- streamArnGen
+      useConsumer <- Arbitrary.arbitrary[Boolean]
+      consumerName <- consumerNameGen
+      creationTime <- nowGen
+    yield
+      if useConsumer then
+        ResourceArn.Consumer(
+          ConsumerArn(streamArn, consumerName, creationTime)
+        )
+      else ResourceArn.Stream(streamArn)
+
+  given Arbitrary[ResourceArn] = Arbitrary(resourceArnGen)
+
+  given Arbitrary[GetResourcePolicyRequest] =
+    Arbitrary(resourceArnGen.map(GetResourcePolicyRequest(_)))
+
+  given Arbitrary[GetResourcePolicyResponse] =
+    Arbitrary(resourcePolicyGen.map(GetResourcePolicyResponse(_)))
+
   given Arbitrary[PutResourcePolicyRequest] =
     Arbitrary(
       for
-        streamArn <- streamArnGen
-        useConsumer <- Arbitrary.arbitrary[Boolean]
-        consumerName <- consumerNameGen
-        creationTime <- nowGen
+        arn <- resourceArnGen
         policy <- resourcePolicyGen
-      yield
-        val arn =
-          if useConsumer then
-            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
-          else streamArn.streamArn
-        PutResourcePolicyRequest(arn, policy)
+      yield PutResourcePolicyRequest(arn, policy)
     )
 
   given Arbitrary[TagResourceRequest] =
