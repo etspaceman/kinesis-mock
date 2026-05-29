@@ -1642,6 +1642,52 @@ class Cache private (
         )
       )
 
+  def updateMaxRecordSize(
+      req: UpdateMaxRecordSizeRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[UpdateMaxRecordSizeResponse]] =
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
+    logger.debug(ctx.context)("Processing UpdateMaxRecordSize request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateMaxRecordSize.tryAcquireRelease(
+          req
+            .updateMaxRecordSize(
+              streamsRef,
+              region.getOrElse(config.awsRegion),
+              config.awsAccountId
+            )
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Updating max record size was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully updated max record size"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for UpdateMaxRecordSize")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateMaxRecordSize"
+                )
+              )
+            )
+        )
+      )
+
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)
       .ifM(

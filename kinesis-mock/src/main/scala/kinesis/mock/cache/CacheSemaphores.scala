@@ -38,7 +38,8 @@ final case class CacheSemaphores private (
     mergeShards: Semaphore[IO],
     splitShard: Semaphore[IO],
     tagResource: Semaphore[IO],
-    untagResource: Semaphore[IO]
+    untagResource: Semaphore[IO],
+    updateMaxRecordSize: Semaphore[IO]
 )
 
 object CacheSemaphores:
@@ -62,6 +63,7 @@ object CacheSemaphores:
     splitShard <- Semaphore[IO](5)
     tagResource <- Semaphore[IO](5)
     untagResource <- Semaphore[IO](5)
+    updateMaxRecordSize <- Semaphore[IO](5)
   yield new CacheSemaphores(
     addTagsToStream,
     removeTagsFromStream,
@@ -81,5 +83,6 @@ object CacheSemaphores:
     mergeShards,
     splitShard,
     tagResource,
-    untagResource
+    untagResource,
+    updateMaxRecordSize
   )

@@ -516,6 +516,7 @@ object KinesisMockRoutes:
       putRecordEE: EntityEncoder[IO, PutRecordResponse],
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
+      updateMaxRecordSizeEE: EntityEncoder[IO, UpdateMaxRecordSizeResponse],
       updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
   ): IO[HResponse[IO]] =
     val isCbor = contentType match
@@ -971,6 +972,21 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UpdateMaxRecordSize =>
+        request
+          .attemptAs[UpdateMaxRecordSizeRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateMaxRecordSize(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )

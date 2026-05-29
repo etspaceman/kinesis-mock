@@ -1116,6 +1116,30 @@ object arbitrary:
       )
     )
 
+  given Arbitrary[UpdateMaxRecordSizeRequest] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        maxRecordSizeInKiB <- Gen.choose(1024, 10240)
+      yield UpdateMaxRecordSizeRequest(
+        streamName,
+        streamArn,
+        maxRecordSizeInKiB
+      )
+    )
+
+  given Arbitrary[UpdateMaxRecordSizeResponse] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        maxRecordSizeInKiB <- Gen.choose(1024, 10240)
+      yield UpdateMaxRecordSizeResponse(
+        streamName,
+        streamArn,
+        maxRecordSizeInKiB
+      )
+    )
+
   given streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
     for
       consumersSize <- Gen.choose(0, 20)
