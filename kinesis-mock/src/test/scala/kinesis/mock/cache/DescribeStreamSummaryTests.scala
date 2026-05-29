@@ -65,13 +65,15 @@ class DescribeStreamSummaryTests
               Some(EncryptionType.NONE),
               Vector(ShardLevelMetrics(Vector.empty)),
               None,
+              None,
               1,
               24,
               StreamArn(awsRegion, streamName, cacheConfig.awsAccountId),
               res.streamDescriptionSummary.streamCreationTimestamp,
               StreamModeDetails(StreamMode.PROVISIONED),
               streamName,
-              StreamStatus.CREATING
+              StreamStatus.CREATING,
+              None
             )
           yield assert(
             res.streamDescriptionSummary == expected,

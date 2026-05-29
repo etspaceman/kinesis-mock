@@ -568,6 +568,13 @@ object arbitrary:
     }
   )
 
+  given Arbitrary[WarmThroughput] = Arbitrary(
+    for
+      currentMiBps <- Gen.choose(0, 1000)
+      targetMiBps <- Gen.choose(0, 1000)
+    yield WarmThroughput(currentMiBps, targetMiBps)
+  )
+
   given Arbitrary[StreamDescriptionSummary] =
     Arbitrary(
       for
@@ -582,6 +589,7 @@ object arbitrary:
             )
           )
         keyId <- Gen.option(keyIdGen)
+        maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
         openShardCount <- Gen.choose(1, 50)
         retentionPeriodHours <- retentionPeriodHoursGen
         streamCreationTimestamp <- nowGen
@@ -591,18 +599,21 @@ object arbitrary:
         awsAccountId <- awsAccountIdGen
         streamArn = StreamArn(awsRegion, streamName, awsAccountId)
         streamStatus <- Arbitrary.arbitrary[StreamStatus]
+        warmThroughput <- Gen.option(Arbitrary.arbitrary[WarmThroughput])
       yield StreamDescriptionSummary(
         consumerCount,
         encryptionType,
         enhancedMonitoring,
         keyId,
+        maxRecordSizeInKiB,
         openShardCount,
         retentionPeriodHours,
         streamArn,
         streamCreationTimestamp,
         streamModeDetails,
         streamName,
-        streamStatus
+        streamStatus,
+        warmThroughput
       )
     )
 
