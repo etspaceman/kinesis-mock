@@ -98,4 +98,4 @@ object MinimumThroughputBillingCommitment:
       x.startedAt.map(_.toEpochMilli) == y.startedAt.map(_.toEpochMilli) &&
       x.endedAt.map(_.toEpochMilli) == y.endedAt.map(_.toEpochMilli) &&
       x.earliestAllowedEndAt.map(_.toEpochMilli) ==
-        y.earliestAllowedEndAt.map(_.toEpochMilli)
+      y.earliestAllowedEndAt.map(_.toEpochMilli)

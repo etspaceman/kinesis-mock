@@ -71,7 +71,8 @@ class TagResourceIntegrationTests extends AwsFunctionalTests:
     yield
       val tagged = afterTag.tags().asScala.map(t => t.key() -> t.value()).toMap
       assertEquals(tagged, Map("k1" -> "v1", "k2" -> "v2"))
-      val untagged = afterUntag.tags().asScala.map(t => t.key() -> t.value()).toMap
+      val untagged =
+        afterUntag.tags().asScala.map(t => t.key() -> t.value()).toMap
       assertEquals(untagged, Map("k2" -> "v2"))
   }
 

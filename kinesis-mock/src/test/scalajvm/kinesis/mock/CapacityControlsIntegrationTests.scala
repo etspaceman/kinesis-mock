@@ -37,28 +37,26 @@ class CapacityControlsIntegrationTests extends AwsFunctionalTests:
       tags: Map[String, String] = Map.empty
   ): IO[Unit] =
     for
-      _ <- resources.kinesisClient
-        .createStream {
-          val builder = CreateStreamRequest
-            .builder()
-            .streamName(streamName)
-            .streamModeDetails(
-              StreamModeDetails
-                .builder()
-                .streamMode(StreamMode.ON_DEMAND)
-                .build()
-            )
-          maxRecordSizeInKiB.foreach(v =>
-            val _ = builder.maxRecordSizeInKiB(Integer.valueOf(v))
+      _ <- resources.kinesisClient.createStream {
+        val builder = CreateStreamRequest
+          .builder()
+          .streamName(streamName)
+          .streamModeDetails(
+            StreamModeDetails
+              .builder()
+              .streamMode(StreamMode.ON_DEMAND)
+              .build()
           )
-          warmThroughputMiBps.foreach(v =>
-            val _ = builder.warmThroughputMiBps(Integer.valueOf(v))
-          )
-          if tags.nonEmpty then
-            val _ = builder.tags(tags.asJava)
-          builder.build()
-        }
-        .toIO
+        maxRecordSizeInKiB.foreach(v =>
+          val _ = builder.maxRecordSizeInKiB(Integer.valueOf(v))
+        )
+        warmThroughputMiBps.foreach(v =>
+          val _ = builder.warmThroughputMiBps(Integer.valueOf(v))
+        )
+        if tags.nonEmpty then
+          val _ = builder.tags(tags.asJava)
+        builder.build()
+      }.toIO
       _ <- IO.sleep(resources.cacheConfig.createStreamDuration.plus(400.millis))
     yield ()
 
@@ -191,7 +189,6 @@ class CapacityControlsIntegrationTests extends AwsFunctionalTests:
         .toIO
     yield rejected match
       case Left(_: InvalidArgumentException) => ()
-      case other =>
+      case other                             =>
         fail(s"expected InvalidArgumentException, got: $other")
   }
-

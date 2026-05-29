@@ -74,7 +74,7 @@ class ResourcePolicyIntegrationTests extends AwsFunctionalTests:
       assertEquals(got.policy(), policy)
       afterDelete match
         case Left(_: ResourceNotFoundException) => ()
-        case other =>
+        case other                              =>
           fail(s"expected ResourceNotFoundException after delete, got: $other")
   }
 
@@ -136,6 +136,6 @@ class ResourcePolicyIntegrationTests extends AwsFunctionalTests:
       assertEquals(got.policy(), policy)
       afterDelete match
         case Left(_: ResourceNotFoundException) => ()
-        case other =>
+        case other                              =>
           fail(s"expected ResourceNotFoundException after delete, got: $other")
   }
