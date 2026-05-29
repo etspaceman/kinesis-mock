@@ -18,8 +18,8 @@ package kinesis.mock.eventstream
 
 import scodec.bits.ByteVector
 
-/** An AWS event-stream message. Wire layout:
-  *   prelude (12) | headers (var) | payload (var) | message_crc (4)
+/** An AWS event-stream message. Wire layout: prelude (12) | headers (var) |
+  * payload (var) | message_crc (4)
   *
   * Prelude = total_len (u32 BE) | headers_len (u32 BE) | prelude_crc (u32 BE)
   */
@@ -56,7 +56,9 @@ object EventStreamMessage:
       payload = payload
     )
 
-  /** Build an `exception` frame, used to surface errors mid-stream (e.g. ResourceInUse). */
+  /** Build an `exception` frame, used to surface errors mid-stream (e.g.
+    * ResourceInUse).
+    */
   def exception(
       exceptionType: String,
       contentType: String,

@@ -500,6 +500,10 @@ object KinesisMockRoutes:
       region: Option[AwsRegion]
   )(using
       errEE: EntityEncoder[IO, ErrorResponse],
+      descAccountSettingsEE: EntityEncoder[
+        IO,
+        DescribeAccountSettingsResponse
+      ],
       descLimitsEE: EntityEncoder[IO, DescribeLimitsResponse],
       descStreamEE: EntityEncoder[IO, DescribeStreamResponse],
       descStreamConsumerEE: EntityEncoder[IO, DescribeStreamConsumerResponse],
@@ -507,15 +511,22 @@ object KinesisMockRoutes:
       disableMonitoringEE: EntityEncoder[IO, DisableEnhancedMonitoringResponse],
       enableMonitoringEE: EntityEncoder[IO, EnableEnhancedMonitoringResponse],
       getRecordsEE: EntityEncoder[IO, GetRecordsResponse],
+      getResourcePolicyEE: EntityEncoder[IO, GetResourcePolicyResponse],
       getShardIteratorEE: EntityEncoder[IO, GetShardIteratorResponse],
       listShardsEE: EntityEncoder[IO, ListShardsResponse],
       listStreamConsumersEE: EntityEncoder[IO, ListStreamConsumersResponse],
       listStreamsEE: EntityEncoder[IO, ListStreamsResponse],
+      listTagsResourceEE: EntityEncoder[IO, ListTagsForResourceResponse],
       listTagsEE: EntityEncoder[IO, ListTagsForStreamResponse],
       putRecordEE: EntityEncoder[IO, PutRecordResponse],
       putRecordsEE: EntityEncoder[IO, PutRecordsResponse],
       registerConsumerEE: EntityEncoder[IO, RegisterStreamConsumerResponse],
-      updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse]
+      updateMaxRecordSizeEE: EntityEncoder[IO, UpdateMaxRecordSizeResponse],
+      updateShardCountEE: EntityEncoder[IO, UpdateShardCountResponse],
+      updateWarmThroughputEE: EntityEncoder[
+        IO,
+        UpdateStreamWarmThroughputResponse
+      ]
   ): IO[HResponse[IO]] =
     val isCbor = contentType match
       case ct if ct.mediaType == KinesisMockMediaTypes.amazonCbor =>
@@ -595,6 +606,21 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.DescribeAccountSettings =>
+        request
+          .attemptAs[DescribeAccountSettingsRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .describeAccountSettings(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )
@@ -773,6 +799,21 @@ object KinesisMockRoutes:
                   )
                 )
           )
+      case KinesisAction.ListTagsForResource =>
+        request
+          .attemptAs[ListTagsForResourceRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .listTagsForResource(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
       case KinesisAction.ListTagsForStream =>
         request
           .attemptAs[ListTagsForStreamRequest]
@@ -830,6 +871,51 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
+      case KinesisAction.DeleteResourcePolicy =>
+        request
+          .attemptAs[DeleteResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .deleteResourcePolicy(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.GetResourcePolicy =>
+        request
+          .attemptAs[GetResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .getResourcePolicy(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
+      case KinesisAction.PutResourcePolicy =>
+        request
+          .attemptAs[PutResourcePolicyRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .putResourcePolicy(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
                   )
                 )
           )
@@ -928,6 +1014,66 @@ object KinesisMockRoutes:
                     .withBodyStream(byteStream)
                 }
           )
+      case KinesisAction.TagResource =>
+        request
+          .attemptAs[TagResourceRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .tagResource(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UntagResource =>
+        request
+          .attemptAs[UntagResourceRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .untagResource(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UpdateAccountSettings =>
+        request
+          .attemptAs[UpdateAccountSettingsRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateAccountSettings(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UpdateMaxRecordSize =>
+        request
+          .attemptAs[UpdateMaxRecordSizeRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateMaxRecordSize(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
+                  )
+                )
+          )
       case KinesisAction.UpdateShardCount =>
         request
           .attemptAs[UpdateShardCountRequest]
@@ -955,6 +1101,26 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.UpdateStreamWarmThroughput =>
+        request
+          .attemptAs[UpdateStreamWarmThroughputRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .updateStreamWarmThroughput(
+                  req,
+                  loggingContext,
+                  isCbor,
+                  region
+                )
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )

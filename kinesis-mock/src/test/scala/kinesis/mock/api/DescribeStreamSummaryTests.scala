@@ -52,6 +52,80 @@ class DescribeStreamSummaryTests
       )
   })
 
+  test("It should surface maxRecordSizeInKiB when set")(PropF.forAllF {
+    (
+      streamArn: StreamArn
+    ) =>
+      for
+        now <- Utils.now
+        streams = Streams.empty
+          .addStream(1, streamArn, None, now)
+          .findAndUpdateStream(streamArn)(
+            _.copy(maxRecordSizeInKiB = Some(2048))
+          )
+        streamsRef <- Ref.of[IO, Streams](streams)
+        req = DescribeStreamSummaryRequest(None, Some(streamArn))
+        res <- req.describeStreamSummary(
+          streamsRef,
+          streamArn.awsRegion,
+          streamArn.awsAccountId
+        )
+      yield assert(
+        res.exists(
+          _.streamDescriptionSummary.maxRecordSizeInKiB.contains(2048)
+        ),
+        s"res: $res"
+      )
+  })
+
+  test(
+    "It should surface warmThroughput when warmThroughputMiBps is set"
+  )(PropF.forAllF { (streamArn: StreamArn) =>
+    for
+      now <- Utils.now
+      streams = Streams.empty
+        .addStream(1, streamArn, None, now)
+        .findAndUpdateStream(streamArn)(
+          _.copy(warmThroughputMiBps = Some(10))
+        )
+      streamsRef <- Ref.of[IO, Streams](streams)
+      req = DescribeStreamSummaryRequest(None, Some(streamArn))
+      res <- req.describeStreamSummary(
+        streamsRef,
+        streamArn.awsRegion,
+        streamArn.awsAccountId
+      )
+    yield assert(
+      res.exists(
+        _.streamDescriptionSummary.warmThroughput
+          .contains(WarmThroughput(10, 10))
+      ),
+      s"res: $res"
+    )
+  })
+
+  test(
+    "It should describe maxRecordSizeInKiB and warmThroughput as None by default"
+  )(PropF.forAllF { (streamArn: StreamArn) =>
+    for
+      now <- Utils.now
+      streams = Streams.empty.addStream(1, streamArn, None, now)
+      streamsRef <- Ref.of[IO, Streams](streams)
+      req = DescribeStreamSummaryRequest(None, Some(streamArn))
+      res <- req.describeStreamSummary(
+        streamsRef,
+        streamArn.awsRegion,
+        streamArn.awsAccountId
+      )
+    yield assert(
+      res.exists { r =>
+        r.streamDescriptionSummary.maxRecordSizeInKiB.isEmpty &&
+        r.streamDescriptionSummary.warmThroughput.isEmpty
+      },
+      s"res: $res"
+    )
+  })
+
   test("It should reject if the stream does not exist")(PropF.forAllF {
     (
         req: DescribeStreamSummaryRequest,
