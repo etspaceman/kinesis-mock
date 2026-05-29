@@ -86,11 +86,9 @@ object UpdateMaxRecordSizeRequest:
       maxRecordSizeInKiB
     )
 
-  given updateMaxRecordSizeRequestEncoder
-      : Encoder[UpdateMaxRecordSizeRequest] =
+  given updateMaxRecordSizeRequestEncoder: Encoder[UpdateMaxRecordSizeRequest] =
     Encoder.derive
-  given updateMaxRecordSizeRequestDecoder
-      : Decoder[UpdateMaxRecordSizeRequest] =
+  given updateMaxRecordSizeRequestDecoder: Decoder[UpdateMaxRecordSizeRequest] =
     Decoder.derive
 
   given Eq[UpdateMaxRecordSizeRequest] =

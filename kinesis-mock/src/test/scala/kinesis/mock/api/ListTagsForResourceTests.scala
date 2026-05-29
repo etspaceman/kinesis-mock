@@ -26,7 +26,9 @@ import kinesis.mock.models.*
 class ListTagsForResourceTests
     extends munit.CatsEffectSuite
     with munit.ScalaCheckEffectSuite:
-  test("It should return the tags that AddTagsToStream wrote (unified storage)")(
+  test(
+    "It should return the tags that AddTagsToStream wrote (unified storage)"
+  )(
     PropF.forAllF { (streamArn: StreamArn, tags: Tags) =>
       for
         now <- Utils.now

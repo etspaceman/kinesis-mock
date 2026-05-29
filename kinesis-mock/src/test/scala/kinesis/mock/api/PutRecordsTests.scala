@@ -130,9 +130,11 @@ class PutRecordsTests
           r.failedRecordCount == 1 &&
           r.records.length == 2 &&
           r.records(0).errorCode.isEmpty &&
-          r.records(1).errorCode.contains(
-            PutRecordsErrorCode.InvalidArgumentException
-          )
+          r.records(1)
+            .errorCode
+            .contains(
+              PutRecordsErrorCode.InvalidArgumentException
+            )
         },
         s"res: $res"
       )

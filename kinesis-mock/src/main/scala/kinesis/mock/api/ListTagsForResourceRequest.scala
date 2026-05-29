@@ -45,9 +45,7 @@ final case class ListTagsForResourceRequest(
               .findStreamByConsumerArn(consumerArn, streams)
               .map { case (consumer, _) => consumer.tags }
         }
-        .map(tags =>
-          ListTagsForResourceResponse(TagList.fromTags(tags), None)
-        )
+        .map(tags => ListTagsForResourceResponse(TagList.fromTags(tags), None))
     }
 
 object ListTagsForResourceRequest:
@@ -62,8 +60,8 @@ object ListTagsForResourceRequest:
       resourceArn <- x.downField("ResourceARN").as[String]
       nextToken <- x.downField("NextToken").as[Option[String]]
     yield ListTagsForResourceRequest(resourceArn, nextToken)
-  given listTagsForResourceRequestEncoder
-      : Encoder[ListTagsForResourceRequest] = Encoder.derive
-  given listTagsForResourceRequestDecoder
-      : Decoder[ListTagsForResourceRequest] = Decoder.derive
+  given listTagsForResourceRequestEncoder: Encoder[ListTagsForResourceRequest] =
+    Encoder.derive
+  given listTagsForResourceRequestDecoder: Decoder[ListTagsForResourceRequest] =
+    Decoder.derive
   given Eq[ListTagsForResourceRequest] = Eq.fromUniversalEquals

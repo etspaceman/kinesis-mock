@@ -62,7 +62,12 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
             "shardId-000000000000",
             StartingPosition(ShardIteratorType.LATEST, None, None)
           )
-          stream <- cache.subscribeToShard(req, ctx, isCbor = false, Some(region))
+          stream <- cache.subscribeToShard(
+            req,
+            ctx,
+            isCbor = false,
+            Some(region)
+          )
           bytes <- stream.interruptAfter(3.seconds).compile.toVector
         yield assert(
           bytes.size >= 12,
@@ -104,7 +109,12 @@ class SubscribeToShardTests extends munit.CatsEffectSuite:
             "shardId-000000000000",
             StartingPosition(ShardIteratorType.LATEST, None, None)
           )
-          stream <- cache.subscribeToShard(req, ctx, isCbor = false, Some(region))
+          stream <- cache.subscribeToShard(
+            req,
+            ctx,
+            isCbor = false,
+            Some(region)
+          )
           collectFib <- stream.interruptAfter(5.seconds).compile.toVector.start
           _ <- IO.sleep(1.second)
           _ <- cache

@@ -204,8 +204,7 @@ class CreateStreamTests
       val streams = Streams.empty
       val streamArn = StreamArn(awsRegion, req.streamName, awsAccountId)
       val reqForTest = req.copy(
-        streamModeDetails =
-          Some(StreamModeDetails(StreamMode.ON_DEMAND)),
+        streamModeDetails = Some(StreamModeDetails(StreamMode.ON_DEMAND)),
         warmThroughputMiBps = Some(10)
       )
       for
@@ -236,8 +235,7 @@ class CreateStreamTests
     ) =>
       val streams = Streams.empty
       val reqForTest = req.copy(
-        streamModeDetails =
-          Some(StreamModeDetails(StreamMode.PROVISIONED)),
+        streamModeDetails = Some(StreamModeDetails(StreamMode.PROVISIONED)),
         warmThroughputMiBps = Some(10)
       )
       for
@@ -260,8 +258,7 @@ class CreateStreamTests
     ) =>
       val streams = Streams.empty
       val reqForTest = req.copy(
-        streamModeDetails =
-          Some(StreamModeDetails(StreamMode.ON_DEMAND)),
+        streamModeDetails = Some(StreamModeDetails(StreamMode.ON_DEMAND)),
         warmThroughputMiBps = Some(-1)
       )
       for

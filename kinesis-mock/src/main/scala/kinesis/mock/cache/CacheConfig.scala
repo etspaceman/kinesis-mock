@@ -232,12 +232,26 @@ object CacheConfig:
       .traverse {
         case name :: Nil if name.nonEmpty =>
           Some(
-            defaultRegion -> CreateStreamRequest(None, None, StreamName(name), None, None, None)
+            defaultRegion -> CreateStreamRequest(
+              None,
+              None,
+              StreamName(name),
+              None,
+              None,
+              None
+            )
           )
         case name :: count :: Nil if name.nonEmpty =>
           if count.isEmpty then
             Some(
-              defaultRegion -> CreateStreamRequest(None, None, StreamName(name), None, None, None)
+              defaultRegion -> CreateStreamRequest(
+                None,
+                None,
+                StreamName(name),
+                None,
+                None,
+                None
+              )
             )
           else
             count.toIntOption.map(x =>

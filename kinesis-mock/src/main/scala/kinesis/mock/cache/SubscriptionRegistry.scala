@@ -20,9 +20,9 @@ import cats.effect.{IO, Ref, Resource}
 
 import kinesis.mock.models.ConsumerArn
 
-/** Tracks active SubscribeToShard subscriptions. AWS allows at most one
-  * active subscription per (consumer, shard) pair — a duplicate request must
-  * be rejected with ResourceInUseException until the previous one releases.
+/** Tracks active SubscribeToShard subscriptions. AWS allows at most one active
+  * subscription per (consumer, shard) pair — a duplicate request must be
+  * rejected with ResourceInUseException until the previous one releases.
   */
 final class SubscriptionRegistry private (
     ref: Ref[IO, Set[(ConsumerArn, String)]]
@@ -53,4 +53,6 @@ final class SubscriptionRegistry private (
 
 object SubscriptionRegistry:
   def create: IO[SubscriptionRegistry] =
-    Ref.of[IO, Set[(ConsumerArn, String)]](Set.empty).map(new SubscriptionRegistry(_))
+    Ref
+      .of[IO, Set[(ConsumerArn, String)]](Set.empty)
+      .map(new SubscriptionRegistry(_))
