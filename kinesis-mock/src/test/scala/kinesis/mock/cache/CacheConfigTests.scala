@@ -21,7 +21,7 @@ import org.scalacheck.{Gen, Prop, Test}
 
 import kinesis.mock.api.CreateStreamRequest
 import kinesis.mock.instances.arbitrary.given
-import kinesis.mock.models.{AkidAccountMap, AwsAccountId, AwsRegion, StreamName}
+import kinesis.mock.models.{AwsRegion, StreamName}
 import kinesis.mock.syntax.scalacheck.*
 
 class CacheConfigTests
@@ -176,19 +176,3 @@ class CacheConfigTests
         assert(res.forall(_.isLeft), s"${res.map(_.isLeft)}")
     }
   )
-
-  test("CacheConfig defaults akidToAccountId to empty when env var unset") {
-    CacheConfig.read.load[cats.effect.IO].map { cfg =>
-      assertEquals(cfg.akidToAccountId, AkidAccountMap.empty)
-    }
-  }
-
-  test("CacheConfig parses AKID_TO_ACCOUNT_ID pairs") {
-    val raw = "AKIAONE:111111111111,AKIATWO:222222222222"
-    assertEquals(
-      AkidAccountMap
-        .parse(raw)
-        .map(_.resolve("AKIAONE", AwsAccountId("000000000000"))),
-      Right(AwsAccountId("111111111111"))
-    )
-  }

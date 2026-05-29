@@ -38,7 +38,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 import kinesis.mock.api.*
 import kinesis.mock.cache.Cache
 import kinesis.mock.instances.http4s.{given, *}
-import kinesis.mock.models.{AkidAccountMap, AwsAccountId, AwsRegion}
+import kinesis.mock.models.{AwsAccountId, AwsRegion}
 
 class KinesisMockRoutes(
     cache: Cache,
@@ -290,9 +290,7 @@ class KinesisMockRoutes(
                                 authParsed("Credential").split("/")(2)
                               ).toOption.flatMap(AwsRegion.withNameOption),
                               KinesisMockRoutes.resolveAccountId(
-                                authParsed.getOrElse("Credential", ""),
-                                cache.config.akidToAccountId,
-                                cache.config.awsAccountId
+                                authParsed.getOrElse("Credential", "")
                               )
                             )
                           case None =>
@@ -383,12 +381,8 @@ class KinesisMockRoutes(
                               Try(x.split("/")(2)).toOption
                                 .flatMap(AwsRegion.withNameOption)
                             ),
-                            queryAuthCredential.flatMap(x =>
-                              KinesisMockRoutes.resolveAccountId(
-                                x,
-                                cache.config.akidToAccountId,
-                                cache.config.awsAccountId
-                              )
+                            queryAuthCredential.flatMap(
+                              KinesisMockRoutes.resolveAccountId
                             )
                           )
                         case None =>
@@ -469,14 +463,16 @@ class KinesisMockRoutes(
   }
 
 object KinesisMockRoutes:
-  def resolveAccountId(
-      credential: String,
-      map: AkidAccountMap,
-      default: AwsAccountId
-  ): Option[AwsAccountId] =
+  /** Resolves the AWS account for a request from the access key id (the first
+    * segment of the SigV4 `Credential`). A client selects an account by signing
+    * with the 12-digit account id as its access key id; any other access key
+    * (opaque, AWS-format, or malformed) yields `None`, so the caller falls back
+    * to the configured `AWS_ACCOUNT_ID`.
+    */
+  def resolveAccountId(credential: String): Option[AwsAccountId] =
     Try(credential.split("/")(0)).toOption
-      .filter(_.nonEmpty)
-      .map(akid => map.resolve(akid, default))
+      .filter(_.matches("\\d{12}"))
+      .map(AwsAccountId(_))
 
   def emptyOk(
       responseHeaders: Vector[Header.ToRaw],

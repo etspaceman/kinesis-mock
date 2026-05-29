@@ -20,36 +20,32 @@ import kinesis.mock.models.*
 
 class KinesisMockRoutesAkidTests extends munit.FunSuite:
 
-  private val default = AwsAccountId("000000000000")
-  private val map = AkidAccountMap(
-    Map(
-      "AKIAONE" -> AwsAccountId("111111111111"),
-      "AKIATWO" -> AwsAccountId("222222222222")
-    )
-  )
-
-  test("resolveAccountId returns mapped account for known AKID"):
-    val credential = "AKIAONE/20260529/us-east-1/kinesis/aws4_request"
+  test("resolveAccountId returns the account when the AKID is a 12-digit id"):
+    val credential = "111111111111/20260529/us-east-1/kinesis/aws4_request"
     assertEquals(
-      KinesisMockRoutes.resolveAccountId(credential, map, default),
+      KinesisMockRoutes.resolveAccountId(credential),
       Some(AwsAccountId("111111111111"))
     )
 
-  test("resolveAccountId falls back to default for unknown AKID"):
-    val credential = "UNKNOWNKEY/20260529/us-east-1/kinesis/aws4_request"
+  test("resolveAccountId handles a bare 12-digit AKID without slashes"):
     assertEquals(
-      KinesisMockRoutes.resolveAccountId(credential, map, default),
-      Some(default)
+      KinesisMockRoutes.resolveAccountId("222222222222"),
+      Some(AwsAccountId("222222222222"))
     )
 
-  test("resolveAccountId returns None for empty credential"):
-    assertEquals(
-      KinesisMockRoutes.resolveAccountId("", map, default),
-      None
-    )
+  test("resolveAccountId returns None for an opaque access key"):
+    val credential =
+      "mock-kinesis-access-key/20260529/us-east-1/kinesis/aws4_request"
+    assertEquals(KinesisMockRoutes.resolveAccountId(credential), None)
 
-  test("resolveAccountId handles credential without slashes"):
-    assertEquals(
-      KinesisMockRoutes.resolveAccountId("AKIAONE", map, default),
-      Some(AwsAccountId("111111111111"))
-    )
+  test("resolveAccountId returns None for an AWS-format access key"):
+    val credential =
+      "AKIAIOSFODNN7EXAMPLE/20260529/us-east-1/kinesis/aws4_request"
+    assertEquals(KinesisMockRoutes.resolveAccountId(credential), None)
+
+  test("resolveAccountId returns None for a non-12-digit number"):
+    assertEquals(KinesisMockRoutes.resolveAccountId("11111111111"), None)
+    assertEquals(KinesisMockRoutes.resolveAccountId("1111111111111"), None)
+
+  test("resolveAccountId returns None for an empty credential"):
+    assertEquals(KinesisMockRoutes.resolveAccountId(""), None)
