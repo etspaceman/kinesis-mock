@@ -366,6 +366,49 @@ class Cache private (
           )
         )
 
+  def describeAccountSettings(
+      req: DescribeAccountSettingsRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[DescribeAccountSettingsResponse]] =
+    logger.debug(context.context)(
+      "Processing DescribeAccountSettings request"
+    ) *>
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.describeAccountSettings.tryAcquireRelease(
+          req
+            .describeAccountSettings(streamsRef)
+            .flatMap(response =>
+              logger
+                .debug(context.context)(
+                  "Successfully described account settings"
+                ) *>
+                logger
+                  .trace(
+                    context.addJson("response", response.asJson).context
+                  )(
+                    "Logging response"
+                  )
+                  .as(Right(response))
+            ),
+          logger
+            .warn(context.context)(
+              "Rate limit exceeded for DescribeAccountSettings"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for DescribeAccountSettings"
+                )
+              )
+            )
+        )
+      )
+
   def describeLimits(
       context: LoggingContext,
       region: Option[AwsRegion]
@@ -561,7 +604,11 @@ class Cache private (
                                         r.consumer.consumerCreationTimestamp,
                                         r.consumer.consumerName,
                                         ConsumerStatus.ACTIVE,
-                                        req.streamArn
+                                        req.streamArn,
+                                        stream.consumers
+                                          .get(r.consumer.consumerName)
+                                          .map(_.tags)
+                                          .getOrElse(Tags.empty)
                                       )
                                     )
                                   )
@@ -1522,6 +1569,376 @@ class Cache private (
         "Logging request"
       ) *>
       req.subscribeToShard(streamsRef, subscriptionRegistry)
+
+  def deleteResourcePolicy(
+      req: DeleteResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
+    logger.debug(ctx.context)("Processing DeleteResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.deleteResourcePolicy.tryAcquireRelease(
+          req
+            .deleteResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Deleting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully deleted resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for DeleteResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for DeleteResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
+  def getResourcePolicy(
+      req: GetResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[GetResourcePolicyResponse]] =
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
+    logger.debug(ctx.context)("Processing GetResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.getResourcePolicy.tryAcquireRelease(
+          req
+            .getResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Getting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully got resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for GetResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for GetResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
+  def putResourcePolicy(
+      req: PutResourcePolicyRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context.addEncoded("resourceArn", req.resourceArn, isCbor)
+    logger.debug(ctx.context)("Processing PutResourcePolicy request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.putResourcePolicy.tryAcquireRelease(
+          req
+            .putResourcePolicy(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Putting resource policy was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully put resource policy"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for PutResourcePolicy")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for PutResourcePolicy"
+                )
+              )
+            )
+        )
+      )
+
+  def tagResource(
+      req: TagResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing TagResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.tagResource.tryAcquireRelease(
+          req
+            .tagResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Tagging resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully tagged the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for TagResource")
+            .as(
+              Left(
+                LimitExceededException("Rate limit exceeded for TagResource")
+              )
+            )
+        )
+      )
+
+  def listTagsForResource(
+      req: ListTagsForResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[ListTagsForResourceResponse]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing ListTagsForResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.listTagsForResource.tryAcquireRelease(
+          req
+            .listTagsForResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Listing tags for resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully listed tags for the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)(
+              "Rate limit exceeded for ListTagsForResource"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for ListTagsForResource"
+                )
+              )
+            )
+        )
+      )
+
+  def untagResource(
+      req: UntagResourceRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    val ctx = context + ("resourceArn" -> req.resourceArn)
+    logger.debug(ctx.context)("Processing UntagResource request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.untagResource.tryAcquireRelease(
+          req
+            .untagResource(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Untagging resource was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully untagged the resource"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for UntagResource")
+            .as(
+              Left(
+                LimitExceededException("Rate limit exceeded for UntagResource")
+              )
+            )
+        )
+      )
+
+  def updateAccountSettings(
+      req: UpdateAccountSettingsRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[Unit]] =
+    logger.debug(context.context)(
+      "Processing UpdateAccountSettings request"
+    ) *>
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateAccountSettings.tryAcquireRelease(
+          req
+            .updateAccountSettings(streamsRef)
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(context.context, e)(
+                    "Updating account settings was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(context.context)(
+                    "Successfully updated account settings"
+                  )
+              )
+            ),
+          logger
+            .warn(context.context)(
+              "Rate limit exceeded for UpdateAccountSettings"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateAccountSettings"
+                )
+              )
+            )
+        )
+      )
+
+  def updateMaxRecordSize(
+      req: UpdateMaxRecordSizeRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[UpdateMaxRecordSizeResponse]] =
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
+    logger.debug(ctx.context)("Processing UpdateMaxRecordSize request") *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateMaxRecordSize.tryAcquireRelease(
+          req
+            .updateMaxRecordSize(
+              streamsRef,
+              region.getOrElse(config.awsRegion),
+              config.awsAccountId
+            )
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Updating max record size was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully updated max record size"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)("Rate limit exceeded for UpdateMaxRecordSize")
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateMaxRecordSize"
+                )
+              )
+            )
+        )
+      )
+
+  def updateStreamWarmThroughput(
+      req: UpdateStreamWarmThroughputRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[UpdateStreamWarmThroughputResponse]] =
+    val ctx =
+      context ++
+        req.streamName.map(x => "streamName" -> x.streamName).toList ++
+        req.streamArn.map(x => "streamArn" -> x.streamArn).toList
+    logger.debug(ctx.context)(
+      "Processing UpdateStreamWarmThroughput request"
+    ) *>
+      logger.trace(ctx.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.updateStreamWarmThroughput.tryAcquireRelease(
+          req
+            .updateStreamWarmThroughput(
+              streamsRef,
+              region.getOrElse(config.awsRegion),
+              config.awsAccountId
+            )
+            .flatTap(
+              _.fold(
+                e =>
+                  logger.warn(ctx.context, e)(
+                    "Updating warm throughput was unsuccessful"
+                  ),
+                _ =>
+                  logger.debug(ctx.context)(
+                    "Successfully updated warm throughput"
+                  )
+              )
+            ),
+          logger
+            .warn(ctx.context)(
+              "Rate limit exceeded for UpdateStreamWarmThroughput"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for UpdateStreamWarmThroughput"
+                )
+              )
+            )
+        )
+      )
 
   def persistToDisk(context: LoggingContext): IO[Unit] =
     IO.pure(config.persistConfig.shouldPersist)

@@ -24,19 +24,20 @@ import scodec.bits.ByteVector
 object Crc32:
   private val table: Array[Int] =
     Array.tabulate(256) { i =>
-      var c = i
-      var j = 0
-      while j < 8 do
-        c = if (c & 1) != 0 then 0xedb88320 ^ (c >>> 1) else c >>> 1
-        j += 1
-      c
+      @annotation.tailrec
+      def step(c: Int, j: Int): Int =
+        if j >= 8 then c
+        else
+          val next =
+            if (c & 1) != 0 then 0xedb88320 ^ (c >>> 1) else c >>> 1
+          step(next, j + 1)
+      step(i, 0)
     }
 
   def compute(bytes: ByteVector): Long =
-    var c = 0xffffffff
     val arr = bytes.toArray
-    var i = 0
-    while i < arr.length do
-      c = table((c ^ arr(i)) & 0xff) ^ (c >>> 8)
-      i += 1
-    (c ^ 0xffffffff).toLong & 0xffffffffL
+    @annotation.tailrec
+    def step(c: Int, i: Int): Int =
+      if i >= arr.length then c
+      else step(table((c ^ arr(i)) & 0xff) ^ (c >>> 8), i + 1)
+    (step(0xffffffff, 0) ^ 0xffffffff).toLong & 0xffffffffL

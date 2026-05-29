@@ -115,12 +115,14 @@ object arbitrary:
         consumerCreationTimestamp
       )
       consumerStatus <- Arbitrary.arbitrary[ConsumerStatus]
+      tags <- Arbitrary.arbitrary[Tags]
     yield Consumer(
       consumerArn,
       consumerCreationTimestamp,
       consumerName,
       consumerStatus,
-      streamArn
+      streamArn,
+      tags
     )
   )
 
@@ -272,6 +274,97 @@ object arbitrary:
       yield AddTagsToStreamRequest(streamName, streamArn, tags)
     )
 
+  val resourcePolicyGen: Gen[String] =
+    Gen.alphaNumStr.suchThat(_.nonEmpty)
+
+  val resourceArnGen: Gen[ResourceArn] =
+    for
+      streamArn <- streamArnGen
+      useConsumer <- Arbitrary.arbitrary[Boolean]
+      consumerName <- consumerNameGen
+      creationTime <- nowGen
+    yield
+      if useConsumer then
+        ResourceArn.Consumer(
+          ConsumerArn(streamArn, consumerName, creationTime)
+        )
+      else ResourceArn.Stream(streamArn)
+
+  given Arbitrary[ResourceArn] = Arbitrary(resourceArnGen)
+
+  given Arbitrary[DeleteResourcePolicyRequest] =
+    Arbitrary(resourceArnGen.map(DeleteResourcePolicyRequest(_)))
+
+  given Arbitrary[GetResourcePolicyRequest] =
+    Arbitrary(resourceArnGen.map(GetResourcePolicyRequest(_)))
+
+  given Arbitrary[GetResourcePolicyResponse] =
+    Arbitrary(resourcePolicyGen.map(GetResourcePolicyResponse(_)))
+
+  given Arbitrary[PutResourcePolicyRequest] =
+    Arbitrary(
+      for
+        arn <- resourceArnGen
+        policy <- resourcePolicyGen
+      yield PutResourcePolicyRequest(arn, policy)
+    )
+
+  given Arbitrary[TagResourceRequest] =
+    Arbitrary(
+      for
+        streamArn <- streamArnGen
+        useConsumer <- Arbitrary.arbitrary[Boolean]
+        consumerName <- consumerNameGen
+        creationTime <- nowGen
+        tags <- tagsGen
+      yield
+        val arn =
+          if useConsumer then
+            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
+          else streamArn.streamArn
+        TagResourceRequest(arn, tags)
+    )
+
+  given Arbitrary[UntagResourceRequest] =
+    Arbitrary(
+      for
+        streamArn <- streamArnGen
+        useConsumer <- Arbitrary.arbitrary[Boolean]
+        consumerName <- consumerNameGen
+        creationTime <- nowGen
+        tags <- tagsGen
+      yield
+        val arn =
+          if useConsumer then
+            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
+          else streamArn.streamArn
+        UntagResourceRequest(arn, tags.tags.keys.toList)
+    )
+
+  given Arbitrary[ListTagsForResourceRequest] =
+    Arbitrary(
+      for
+        streamArn <- streamArnGen
+        useConsumer <- Arbitrary.arbitrary[Boolean]
+        consumerName <- consumerNameGen
+        creationTime <- nowGen
+        nextToken <- Gen.option(Gen.alphaNumStr.suchThat(_.nonEmpty))
+      yield
+        val arn =
+          if useConsumer then
+            ConsumerArn(streamArn, consumerName, creationTime).consumerArn
+          else streamArn.streamArn
+        ListTagsForResourceRequest(arn, nextToken)
+    )
+
+  given Arbitrary[ListTagsForResourceResponse] =
+    Arbitrary(
+      for
+        tags <- Arbitrary.arbitrary[TagList]
+        nextToken <- Gen.option(Gen.alphaNumStr.suchThat(_.nonEmpty))
+      yield ListTagsForResourceResponse(tags, nextToken)
+    )
+
   given Arbitrary[StreamModeDetails] = Arbitrary(
     Arbitrary.arbitrary[StreamMode].map(StreamModeDetails.apply)
   )
@@ -282,7 +375,20 @@ object arbitrary:
         shardCount <- Gen.option(Gen.choose(1, 1000))
         streamName <- streamNameGen
         streamModeDetails <- Gen.option(Arbitrary.arbitrary[StreamModeDetails])
-      yield CreateStreamRequest(shardCount, streamModeDetails, streamName)
+        tags <- Gen.option(tagsGen)
+        maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
+        warmThroughputMiBps <-
+          if streamModeDetails.exists(_.streamMode == StreamMode.ON_DEMAND)
+          then Gen.option(Gen.choose(0, 1000))
+          else Gen.const(None)
+      yield CreateStreamRequest(
+        shardCount,
+        streamModeDetails,
+        streamName,
+        tags,
+        maxRecordSizeInKiB,
+        warmThroughputMiBps
+      )
     )
 
   val retentionPeriodHoursGen: Gen[Int] = Gen.choose(
@@ -328,6 +434,44 @@ object arbitrary:
       streamArn
     )
   )
+
+  given Arbitrary[DescribeAccountSettingsRequest] =
+    Arbitrary(Gen.const(DescribeAccountSettingsRequest()))
+
+  given Arbitrary[MinimumThroughputBillingCommitmentStatus] =
+    Arbitrary(
+      Gen.oneOf(MinimumThroughputBillingCommitmentStatus.values)
+    )
+
+  given Arbitrary[MinimumThroughputBillingCommitment] =
+    Arbitrary(
+      for
+        status <- Arbitrary
+          .arbitrary[MinimumThroughputBillingCommitmentStatus]
+        startedAt <- Gen.option(nowGen)
+        endedAt <- Gen.option(nowGen)
+        earliestAllowedEndAt <- Gen.option(nowGen)
+      yield MinimumThroughputBillingCommitment(
+        status,
+        startedAt,
+        endedAt,
+        earliestAllowedEndAt
+      )
+    )
+
+  given Arbitrary[MinimumThroughputBillingCommitmentInput] =
+    Arbitrary(
+      Arbitrary
+        .arbitrary[MinimumThroughputBillingCommitmentStatus]
+        .map(MinimumThroughputBillingCommitmentInput(_))
+    )
+
+  given Arbitrary[DescribeAccountSettingsResponse] =
+    Arbitrary(
+      Gen
+        .option(Arbitrary.arbitrary[MinimumThroughputBillingCommitment])
+        .map(DescribeAccountSettingsResponse(_))
+    )
 
   given Arbitrary[DescribeLimitsResponse] =
     Arbitrary(
@@ -452,6 +596,13 @@ object arbitrary:
     }
   )
 
+  given Arbitrary[WarmThroughput] = Arbitrary(
+    for
+      currentMiBps <- Gen.choose(0, 1000)
+      targetMiBps <- Gen.choose(0, 1000)
+    yield WarmThroughput(currentMiBps, targetMiBps)
+  )
+
   given Arbitrary[StreamDescriptionSummary] =
     Arbitrary(
       for
@@ -466,6 +617,7 @@ object arbitrary:
             )
           )
         keyId <- Gen.option(keyIdGen)
+        maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
         openShardCount <- Gen.choose(1, 50)
         retentionPeriodHours <- retentionPeriodHoursGen
         streamCreationTimestamp <- nowGen
@@ -475,18 +627,21 @@ object arbitrary:
         awsAccountId <- awsAccountIdGen
         streamArn = StreamArn(awsRegion, streamName, awsAccountId)
         streamStatus <- Arbitrary.arbitrary[StreamStatus]
+        warmThroughput <- Gen.option(Arbitrary.arbitrary[WarmThroughput])
       yield StreamDescriptionSummary(
         consumerCount,
         encryptionType,
         enhancedMonitoring,
         keyId,
+        maxRecordSizeInKiB,
         openShardCount,
         retentionPeriodHours,
         streamArn,
         streamCreationTimestamp,
         streamModeDetails,
         streamName,
-        streamStatus
+        streamStatus,
+        warmThroughput
       )
     )
 
@@ -648,15 +803,15 @@ object arbitrary:
   given Arbitrary[SubscribeToShardEvent] =
     Arbitrary(
       for
-        records <- Gen.choose(0, 10).flatMap(n =>
-          Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord])
-        )
+        records <- Gen
+          .choose(0, 10)
+          .flatMap(n => Gen.listOfN(n, Arbitrary.arbitrary[KinesisRecord]))
         continuationSequenceNumber <- Arbitrary.arbitrary[SequenceNumber]
         millisBehindLatest <- Gen.choose(0L, 1.day.toMillis)
         childShards <- Gen.option(
-          Gen.choose(0, 3).flatMap(n =>
-            Gen.listOfN(n, childShardGen).map(_.toVector)
-          )
+          Gen
+            .choose(0, 3)
+            .flatMap(n => Gen.listOfN(n, childShardGen).map(_.toVector))
         )
       yield SubscribeToShardEvent(
         scala.collection.immutable.Queue.from(records),
@@ -1045,6 +1200,61 @@ object arbitrary:
       )
     )
 
+  given Arbitrary[UpdateAccountSettingsRequest] =
+    Arbitrary(
+      Gen
+        .option(Arbitrary.arbitrary[MinimumThroughputBillingCommitmentInput])
+        .map(UpdateAccountSettingsRequest(_))
+    )
+
+  given Arbitrary[UpdateMaxRecordSizeRequest] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        maxRecordSizeInKiB <- Gen.choose(1024, 10240)
+      yield UpdateMaxRecordSizeRequest(
+        streamName,
+        streamArn,
+        maxRecordSizeInKiB
+      )
+    )
+
+  given Arbitrary[UpdateMaxRecordSizeResponse] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        maxRecordSizeInKiB <- Gen.choose(1024, 10240)
+      yield UpdateMaxRecordSizeResponse(
+        streamName,
+        streamArn,
+        maxRecordSizeInKiB
+      )
+    )
+
+  given Arbitrary[UpdateStreamWarmThroughputRequest] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        warmThroughputMiBps <- Gen.choose(0, 1000)
+      yield UpdateStreamWarmThroughputRequest(
+        streamName,
+        streamArn,
+        warmThroughputMiBps
+      )
+    )
+
+  given Arbitrary[UpdateStreamWarmThroughputResponse] =
+    Arbitrary(
+      for
+        (streamName, streamArn) <- streamNameOrArnGen
+        warmThroughput <- Arbitrary.arbitrary[WarmThroughput]
+      yield UpdateStreamWarmThroughputResponse(
+        streamName,
+        streamArn,
+        warmThroughput
+      )
+    )
+
   given streamDataArbitrary: Arbitrary[StreamData] = Arbitrary(
     for
       consumersSize <- Gen.choose(0, 20)
@@ -1096,6 +1306,8 @@ object arbitrary:
       shardCountUpdates <- Gen
         .choose(0, 10)
         .flatMap(size => Gen.containerOfN[Vector, Instant](size, nowGen))
+      maxRecordSizeInKiB <- Gen.option(Gen.choose(1024, 10240))
+      warmThroughputMiBps <- Gen.option(Gen.choose(0, 10000))
     yield StreamData(
       consumers,
       encryptionType,
@@ -1109,7 +1321,9 @@ object arbitrary:
       streamName,
       streamStatus,
       tags,
-      shardCountUpdates
+      shardCountUpdates,
+      maxRecordSizeInKiB,
+      warmThroughputMiBps
     )
   )
 
@@ -1120,7 +1334,13 @@ object arbitrary:
       .suchThat(x =>
         x.groupBy(_.streamArn).filter { case (_, x) => x.length > 1 }.isEmpty
       )
-      .map(x => Streams(SortedMap.from(x.map(sd => sd.streamArn -> sd))))
+      .map(x =>
+        Streams(
+          SortedMap.from(x.map(sd => sd.streamArn -> sd)),
+          Map.empty,
+          AccountSettings.default
+        )
+      )
   }
 
   given Arbitrary[UpdateStreamModeRequest] =

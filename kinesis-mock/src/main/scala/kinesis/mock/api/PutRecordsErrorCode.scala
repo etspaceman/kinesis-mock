@@ -27,4 +27,5 @@ object PutRecordsErrorCode
   override val values: IndexedSeq[PutRecordsErrorCode] = findValues
 
   case object InternalFailure extends PutRecordsErrorCode
+  case object InvalidArgumentException extends PutRecordsErrorCode
   case object ProvisionedThroughputExceededException extends PutRecordsErrorCode

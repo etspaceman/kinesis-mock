@@ -48,40 +48,9 @@ final case class AddTagsToStreamRequest(
             CommonValidations
               .findStream(StreamArn(awsRegion, name, awsAccountId), streams)
               .flatMap(stream =>
-                (
-                  CommonValidations.validateTagKeys(tags.tags.keys), {
-                    val valuesTooLong =
-                      tags.tags.values.filter(x => x.length() > 256)
-                    if valuesTooLong.nonEmpty then
-                      InvalidArgumentException(
-                        s"Values must be less than 256 characters. Invalid values: ${valuesTooLong.mkString(", ")}"
-                      ).asLeft
-                    else Right(())
-                  }, {
-                    val invalidValues = tags.tags.values.filterNot(x =>
-                      x.matches("^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$")
-                    )
-                    if invalidValues.nonEmpty then
-                      InvalidArgumentException(
-                        s"Values contain invalid characters. Invalid values: ${invalidValues.mkString(", ")}"
-                      ).asLeft
-                    else Right(())
-                  }, {
-                    val numberOfTags = tags.size
-                    if numberOfTags > 10 then
-                      InvalidArgumentException(
-                        s"Can only add 10 tags with a single request. Request contains $numberOfTags tags"
-                      ).asLeft
-                    else Right(())
-                  }, {
-                    val totalTagsAfterAppend = (stream.tags |+| tags).size
-                    if totalTagsAfterAppend > 50 then
-                      InvalidArgumentException(
-                        s"AWS resources can only have 50 tags. Request would result in $totalTagsAfterAppend tags"
-                      ).asLeft
-                    else Right(())
-                  }
-                ).mapN((_, _, _, _, _) => stream)
+                CommonValidations
+                  .validateTags(tags, stream.tags)
+                  .map(_ => stream)
               )
           )
           .map(stream =>

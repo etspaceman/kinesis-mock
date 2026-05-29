@@ -47,7 +47,14 @@ class RemoveTagsFromStreamTests
             context <- LoggingContext.create
             _ <- cache
               .createStream(
-                CreateStreamRequest(Some(1), None, streamName),
+                CreateStreamRequest(
+                  Some(1),
+                  None,
+                  streamName,
+                  None,
+                  None,
+                  None
+                ),
                 context,
                 isCbor = false,
                 Some(awsRegion)

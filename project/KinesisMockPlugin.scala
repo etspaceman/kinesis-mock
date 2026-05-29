@@ -35,6 +35,15 @@ object KinesisMockPlugin extends AutoPlugin {
     s"matrix.java == '${java.render}' && matrix.os == '${os}'"
   }
 
+  // Equivalent of typelevel-ci's `primaryAxisCond` but with the boolean /
+  // numeric matrix axes compared without quotes, since sbt-github-actions
+  // emits the matrix values as unquoted YAML scalars.
+  private val primaryFullAxisCond = Def.setting {
+    val java = githubWorkflowJavaVersions.value.head
+    val os = githubWorkflowOSes.value.head
+    s"matrix.java == '${java.render}' && matrix.os == '${os}' && matrix.cbor_enabled == true && matrix.service_port == 4567"
+  }
+
   // JS-only steps gated to the JS matrix bucket: JS link, docker compose lifecycle,
   // and the JVM integration tests (which run against the docker-hosted JS-built mock).
   // matrix.project is auto-populated by tlCrossRootProject using the platform
@@ -55,10 +64,17 @@ object KinesisMockPlugin extends AutoPlugin {
   }
 
   override def buildSettings: Seq[Setting[?]] = Seq(
-    tlBaseVersion := "0.5",
-    tlCiScalafixCheck := true,
-    tlCiHeaderCheck := true,
-    tlCiScalafmtCheck := true,
+    tlBaseVersion := "0.6",
+    // The typelevel-injected scalafix/header/fmt steps use a matrix
+    // condition like `matrix.cbor_enabled == 'true' && matrix.service_port
+    // == '4567'`, but sbt-github-actions emits those matrix values as
+    // unquoted YAML scalars (boolean / number). GitHub Actions then
+    // compares boolean `true` to string `'true'` and silently skips the
+    // step. We disable the broken auto-injected checks and add our own
+    // unconditional equivalents in `githubWorkflowBuild` below.
+    tlCiScalafixCheck := false,
+    tlCiHeaderCheck := false,
+    tlCiScalafmtCheck := false,
     organization := "io.github.etspaceman",
     startYear := Some(2021),
     licenses := Seq(License.MIT),
@@ -87,7 +103,23 @@ object KinesisMockPlugin extends AutoPlugin {
     ),
     githubWorkflowBuild ++= {
       val jsCond = scalaJsCond.value
+      val checkCond = primaryFullAxisCond.value
       List(
+        WorkflowStep.Sbt(
+          List(
+            "headerCheckAll",
+            "scalafmtCheckAll",
+            "project /",
+            "scalafmtSbtCheck"
+          ),
+          name = Some("Check headers and formatting"),
+          cond = Some(checkCond)
+        ),
+        WorkflowStep.Sbt(
+          List("scalafixAll --check"),
+          name = Some("Check scalafix lints"),
+          cond = Some(checkCond)
+        ),
         WorkflowStep.Sbt(
           List("fastLinkJS"),
           name = Some("Link JS"),
@@ -378,7 +410,7 @@ object KinesisMockPlugin extends AutoPlugin {
     ),
     addCommandAlias(
       "itTest",
-      ";set Test/testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test/testOnly;set Test/testOptions := (Test/testOptions).value"
+      ";project kinesis-mockJVM;set Test / testOptions := Seq(Tests.Argument(TestFrameworks.MUnit, \"--include-tags=integration\"));Test / testOnly;set Test / testOptions := (Test / testOptions).value;project kinesis-mock-rootJVM"
     )
   ).flatten
 }

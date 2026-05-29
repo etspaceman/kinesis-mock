@@ -379,6 +379,3 @@ object MyApp {
   )
 }
 ```
-
-# Known issues
-- Does not currently support SubscribeToShard due to lack of push-promise support (https://github.com/http4s/http4s/issues/4624)
