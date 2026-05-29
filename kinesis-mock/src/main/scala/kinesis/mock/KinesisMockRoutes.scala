@@ -500,6 +500,10 @@ object KinesisMockRoutes:
       region: Option[AwsRegion]
   )(using
       errEE: EntityEncoder[IO, ErrorResponse],
+      descAccountSettingsEE: EntityEncoder[
+        IO,
+        DescribeAccountSettingsResponse
+      ],
       descLimitsEE: EntityEncoder[IO, DescribeLimitsResponse],
       descStreamEE: EntityEncoder[IO, DescribeStreamResponse],
       descStreamConsumerEE: EntityEncoder[IO, DescribeStreamConsumerResponse],
@@ -602,6 +606,21 @@ object KinesisMockRoutes:
                   _.fold(
                     err => handleKinesisMockError(err, responseHeaders),
                     _ => emptyOk(responseHeaders, contentType)
+                  )
+                )
+          )
+      case KinesisAction.DescribeAccountSettings =>
+        request
+          .attemptAs[DescribeAccountSettingsRequest]
+          .foldF(
+            err => handleDecodeError(err, responseHeaders),
+            req =>
+              cache
+                .describeAccountSettings(req, loggingContext, isCbor, region)
+                .flatMap(
+                  _.fold(
+                    err => handleKinesisMockError(err, responseHeaders),
+                    res => Ok(res, responseHeaders*)
                   )
                 )
           )

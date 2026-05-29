@@ -366,6 +366,49 @@ class Cache private (
           )
         )
 
+  def describeAccountSettings(
+      req: DescribeAccountSettingsRequest,
+      context: LoggingContext,
+      isCbor: Boolean,
+      region: Option[AwsRegion]
+  ): IO[Response[DescribeAccountSettingsResponse]] =
+    logger.debug(context.context)(
+      "Processing DescribeAccountSettings request"
+    ) *>
+      logger.trace(context.addEncoded("request", req, isCbor).context)(
+        "Logging request"
+      ) *>
+      getSemaphores(region).flatMap(
+        _.describeAccountSettings.tryAcquireRelease(
+          req
+            .describeAccountSettings(streamsRef)
+            .flatMap(response =>
+              logger
+                .debug(context.context)(
+                  "Successfully described account settings"
+                ) *>
+                logger
+                  .trace(
+                    context.addJson("response", response.asJson).context
+                  )(
+                    "Logging response"
+                  )
+                  .as(Right(response))
+            ),
+          logger
+            .warn(context.context)(
+              "Rate limit exceeded for DescribeAccountSettings"
+            )
+            .as(
+              Left(
+                LimitExceededException(
+                  "Rate limit exceeded for DescribeAccountSettings"
+                )
+              )
+            )
+        )
+      )
+
   def describeLimits(
       context: LoggingContext,
       region: Option[AwsRegion]

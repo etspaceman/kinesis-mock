@@ -31,6 +31,7 @@ object KinesisAction extends Enum[KinesisAction]:
   case object DeleteStream extends KinesisAction
   case object DeleteResourcePolicy extends KinesisAction
   case object DeregisterStreamConsumer extends KinesisAction
+  case object DescribeAccountSettings extends KinesisAction
   case object DescribeLimits extends KinesisAction
   case object DescribeStream extends KinesisAction
   case object DescribeStreamConsumer extends KinesisAction

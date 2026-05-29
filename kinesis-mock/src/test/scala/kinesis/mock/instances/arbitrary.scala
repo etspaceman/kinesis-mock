@@ -435,6 +435,16 @@ object arbitrary:
     )
   )
 
+  given Arbitrary[DescribeAccountSettingsRequest] =
+    Arbitrary(Gen.const(DescribeAccountSettingsRequest()))
+
+  given Arbitrary[DescribeAccountSettingsResponse] =
+    Arbitrary(
+      Gen
+        .option(Gen.choose(0, 10000))
+        .map(DescribeAccountSettingsResponse(_))
+    )
+
   given Arbitrary[DescribeLimitsResponse] =
     Arbitrary(
       for

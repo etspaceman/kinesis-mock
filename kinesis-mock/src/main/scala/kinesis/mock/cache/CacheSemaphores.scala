@@ -25,6 +25,7 @@ final case class CacheSemaphores private (
     createStream: Semaphore[IO],
     deleteResourcePolicy: Semaphore[IO],
     deleteStream: Semaphore[IO],
+    describeAccountSettings: Semaphore[IO],
     describeLimits: Semaphore[IO],
     describeStream: Semaphore[IO],
     registerStreamConsumer: Semaphore[IO],
@@ -53,6 +54,7 @@ object CacheSemaphores:
     createStream <- Semaphore[IO](5)
     deleteResourcePolicy <- Semaphore[IO](5)
     deleteStream <- Semaphore[IO](5)
+    describeAccountSettings <- Semaphore[IO](1)
     describeLimits <- Semaphore[IO](1)
     describeStream <- Semaphore[IO](10)
     registerStreamConsumer <- Semaphore[IO](5)
@@ -78,6 +80,7 @@ object CacheSemaphores:
     createStream,
     deleteResourcePolicy,
     deleteStream,
+    describeAccountSettings,
     describeLimits,
     describeStream,
     registerStreamConsumer,

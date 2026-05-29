@@ -25,6 +25,8 @@ class ApiCirceTests extends CirceTests:
   identityLawTest[DecreaseStreamRetentionPeriodRequest]
   identityLawTest[DeleteStreamRequest]
   identityLawTest[DeregisterStreamConsumerRequest]
+  identityLawTest[DescribeAccountSettingsRequest]
+  identityLawTest[DescribeAccountSettingsResponse]
   identityLawTest[DescribeLimitsResponse]
   identityLawTest[DescribeStreamConsumerRequest]
   identityLawTest[DescribeStreamRequest]
