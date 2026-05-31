@@ -9,7 +9,8 @@ docker/image/lib/
 **/metals.sbt
 logs
 errlogs
-.claude/
+.claude/*
+!.claude/settings.json
 .jvm/
 .js/
 .sbt/
