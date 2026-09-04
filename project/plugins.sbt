@@ -16,5 +16,5 @@ addSbtPlugin("com.github.sbt" % "sbt-header" % "5.11.0")
 addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.0")
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-nop" % "2.0.18"
+  "org.slf4j" % "slf4j-nop" % "2.0.19"
 )
