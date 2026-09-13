@@ -22,6 +22,7 @@ import scala.collection.SortedMap
 import java.time.Instant
 
 import cats.effect.{IO, Ref}
+import cats.syntax.all.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.effect.PropF
 
@@ -434,6 +435,70 @@ class GetShardIteratorTests
         )
     }
   )
+
+  test(
+    "It should reject AT_SEQUENCE_NUMBER and AFTER_SEQUENCE_NUMBER at the ending sequence number of a closed shard"
+  )(PropF.forAllF { (streamArn: StreamArn) =>
+    for
+      now <- Utils.now
+      streams = Streams.empty.addStream(1, streamArn, None, now)
+      shard = streams.streams(streamArn).shards.head._1
+      records = Arbitrary
+        .arbitrary[KinesisRecord]
+        .take(10)
+        .toVector
+        .zipWithIndex
+        .map { case (record, index) =>
+          record.copy(sequenceNumber =
+            SequenceNumber.create(
+              shard.createdAtTimestamp,
+              shard.shardId.index,
+              None,
+              Some(index),
+              Some(record.approximateArrivalTimestamp)
+            )
+          )
+        }
+      closedShard = shard.copy(sequenceNumberRange =
+        shard.sequenceNumberRange.copy(endingSequenceNumber =
+          Some(SequenceNumber.shardEnd)
+        )
+      )
+      withRecords = streams.findAndUpdateStream(streamArn) { s =>
+        s.copy(
+          shards = SortedMap(closedShard -> records),
+          streamStatus = StreamStatus.ACTIVE
+        )
+      }
+      streamsRef <- Ref.of[IO, Streams](withRecords)
+      results <- List(
+        ShardIteratorType.AT_SEQUENCE_NUMBER,
+        ShardIteratorType.AFTER_SEQUENCE_NUMBER
+      ).traverse { iteratorType =>
+        val req = GetShardIteratorRequest(
+          closedShard.shardId.shardId,
+          iteratorType,
+          Some(SequenceNumber.shardEnd),
+          None,
+          Some(streamArn),
+          None
+        )
+        req
+          .getShardIterator(
+            streamsRef,
+            streamArn.awsRegion,
+            streamArn.awsAccountId
+          )
+          .map(res => (req, res))
+      }
+    yield assert(
+      results.forall {
+        case (_, Left(_: InvalidArgumentException)) => true
+        case _                                      => false
+      },
+      s"results: $results\n"
+    )
+  })
 
   test("It should reject for AT_TIMESTAMP with no timestamp")(PropF.forAllF {
     (
