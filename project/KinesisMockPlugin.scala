@@ -423,7 +423,7 @@ object KinesisMockPluginKeys {
   lazy val npmCopyExtraFiles =
     taskKey[Unit]("Copy extra files to the NPM install directory")
 
-  val Scala3 = "3.3.8"
+  val Scala3 = "3.9.0"
 
   val testDependencies = Def.setting(
     Seq(
