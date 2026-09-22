@@ -155,6 +155,18 @@ final case class GetShardIteratorRequest(
                                   )
                                 )
                             case (
+                                  ShardIteratorType.AT_SEQUENCE_NUMBER |
+                                  ShardIteratorType.AFTER_SEQUENCE_NUMBER,
+                                  Some(seqNo),
+                                  _
+                                )
+                                if shard.sequenceNumberRange.endingSequenceNumber
+                                  .contains(seqNo) =>
+                              InvalidArgumentException(
+                                s"Invalid SequenceNumber for ShardIteratorType $shardIteratorType, SequenceNumber has reached max possible value for the shard."
+                              ).asLeft
+
+                            case (
                                   ShardIteratorType.AT_SEQUENCE_NUMBER,
                                   Some(seqNo),
                                   _
