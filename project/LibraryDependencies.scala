@@ -4,7 +4,7 @@ import sbt._
 object LibraryDependencies {
   val ScodecBits = Def.setting("org.scodec" %%% "scodec-bits" % "1.2.5")
   val ScalaParserCombinators = Def.setting(
-    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0"
+    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.5.0"
   )
   val Logback = "ch.qos.logback" % "logback-classic" % "1.5.38"
 
