@@ -13,7 +13,7 @@ addSbtPlugin("org.portable-scala" % "sbt-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.21.0")
 addSbtPlugin("com.github.sbt" % "sbt-header" % "5.11.0")
-addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.0")
+addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.1")
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "2.0.20"
