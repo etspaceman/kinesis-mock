@@ -11,7 +11,7 @@ addSbtPlugin("org.typelevel" % "sbt-typelevel-kernel" % "0.8.6")
 addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.8.6")
 addSbtPlugin("org.portable-scala" % "sbt-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.21.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.22.0")
 addSbtPlugin("com.github.sbt" % "sbt-header" % "5.11.0")
 addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package" % "0.2.0")
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
